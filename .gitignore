@@ -1,0 +1,6 @@
+.directory
+*.make
+Makefile
+obj/
+bin/
+
