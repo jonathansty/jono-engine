@@ -7,12 +7,7 @@
 
 #pragma once
 
-#if defined(WIN32)
-#include <tchar.h>			// support for both unicode and MBCS
-#endif
-
-using TCHAR = char;
-
+using TCHAR = wchar_t;
 
 //-----------------------------------------------------------------
 // String Class

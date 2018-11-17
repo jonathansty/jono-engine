@@ -53,11 +53,11 @@ private:
 	//---------------------------
 	// Datamembers
 	//---------------------------
-	__int64 m_BaseTime;
-	__int64 m_PausedTime;
-	__int64 m_StopTime;
-	__int64 m_PrevTime;
-	__int64 m_CurrTime;
+	int64_t m_BaseTime;
+	int64_t m_PausedTime;
+	int64_t m_StopTime;
+	int64_t m_PrevTime;
+	int64_t m_CurrTime;
 
 	bool m_bStopped;
 

@@ -8,7 +8,8 @@ project "Game"
    targetdir "bin/%{cfg.buildcfg}"
 
    includedirs{
-       "Box2D/"
+       "Box2D/",
+       "src"
    }
 
    libdirs{
@@ -16,13 +17,18 @@ project "Game"
    }
 
    links{
-       "box2D"
+       "box2D",
+       "SDL2"
    }
 
-   files { "**.h", "**.cpp" }
+   files { "src/**.h", "src/**.cpp" }
+   removefiles{
+       "src/EngineFiles/SVGParser.cpp",
+       "src/EngineFiles/SVGParser.h",
+   }
 
-   pchheader("src/stdafx.h")
-   pchsource("src/stdafx.cpp");
+   pchheader("stdafx.h")
+   pchsource("stdafx.cpp");
 
    filter "configurations:Debug"
       defines { "DEBUG" }

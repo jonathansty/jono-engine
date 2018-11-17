@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "../stdafx.h"
 
 #include "GameEngine.h"
 #include "../ContactListener.h"
@@ -1256,6 +1255,7 @@ bool GameEngine::IsMouseButtonReleased(int button) const
 }
 
 
+#if defined(WIN32)
 LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	HDC         hDC;
@@ -1400,6 +1400,11 @@ LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lP
 	}
 
 	return DefWindowProc(hWindow, msg, wParam, lParam);
+}
+#endif
+
+bool GameEngine::HandleEvent(SDL_Window* window, SDL_Event e){
+
 }
 
 // Create resources which are not bound

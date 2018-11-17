@@ -9,7 +9,6 @@
 // not for Win7
 #if !defined(WINDOWS7) && defined(WIN32)
 
-
 //-----------------------------------------------------------------
 // AudioDecoder Class: decodes music files (including mp3, no mid)
 //-----------------------------------------------------------------

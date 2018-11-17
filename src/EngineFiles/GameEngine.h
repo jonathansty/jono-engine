@@ -30,7 +30,7 @@ void OutputDebugString(const String& textRef);
 //-----------------------------------------------------------------
 // Windows Procedure Declarations
 //-----------------------------------------------------------------
-LRESULT CALLBACK	WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+// LRESULT CALLBACK	WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #include <Box2D/Dynamics/b2WorldCallbacks.h>
 
@@ -43,7 +43,7 @@ private:
 
 public:
 	//! Destructor
-	virtual ~GameEngine();
+	~GameEngine();
 
 	// C++11 make the class non-copyable
 	GameEngine(const GameEngine&) = delete;
@@ -57,7 +57,10 @@ public:
 	int 			Run(HINSTANCE hInstance, int iCmdShow);
 	bool			RegisterWindowClass();
 	bool			OpenWindow(int iCmdShow);
+	#if defined(WIN32)
 	LRESULT			HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
+	#endif
+	bool 			HandleEvent(SDL_Window* window, SDL_Event e);
 	void			QuitGame(void);
 	//! Create a messagebox
 	//! @param text the text to display

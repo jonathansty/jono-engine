@@ -4,7 +4,6 @@
 // Copyright DAE Programming Team
 // http://www.digitalartsandentertainment.be/
 //-----------------------------------------------------------------
-#pragma once
 
 //-----------------------------------------------------------------
 // Include Files
@@ -13,6 +12,7 @@
 
 #ifdef WIN32
 #include <windows.h>
+#include <tchar.h>			// support for both unicode and MBCS
 
 #undef MessageBox
 
@@ -26,6 +26,8 @@
 #include <fstream>			// SVGParser
 #include <iostream>
 #include <iomanip>			// precision
+
+// Windows specific includes
 #if defined(WIN32)
 #include <io.h>				// console
 
@@ -42,22 +44,27 @@
 using namespace D2D1;
 #endif
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 // Box2D 
 // copy the headers box2d map in a folder with somename:  projectdir/somepath/box2d
 // additional include directories: do NOT add ./ to make this include <> work, use ./somepath instead -> bug in vs2013?
 #include <Box2D/Box2D.h>
-#if defined(DEBUG) | defined(_DEBUG)
-#pragma comment(lib, "Box2DDebug.lib")		
-#else
-#pragma comment(lib, "Box2DRelease.lib")		
-#endif
+#include <SDL2/SDL.h>
 
+#include <GL/glew.h>
+#include <GL/gl.h>
+
+#if !defined(_BODY_TYPE)
+#define _BODY_TYPE
 //! BodyType enumeration
 //! @enum Box2D enumerations
 enum class BodyType
 {
 	STATIC, DYNAMIC, KINEMATIC
 };
+#endif
 
 // Define M_PI and other constants
 #define _USE_MATH_DEFINES 
@@ -70,6 +77,17 @@ enum class BodyType
 #else
 #define tstring std::string
 #define tstringstream std::stringstream
+#endif
+
+// Include Direct2DVK
+#if !defined(WIN32)
+#include "Compat/D2DPoint.h"
+
+using BYTE = uint8_t;
+using WORD = uint16_t;
+using HINSTANCE = uint64_t;
+using HWND = uint64_t;
+
 #endif
 
 #include "EngineFiles/String.h"

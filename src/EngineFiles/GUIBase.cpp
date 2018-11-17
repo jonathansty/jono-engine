@@ -1,5 +1,4 @@
 #include "stdafx.h"    // for compiler
-#include "../stdafx.h" // for intellisense
 #include "GUIBase.h"
 
 //------------------------------------------------------------------------------

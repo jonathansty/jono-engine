@@ -9,7 +9,9 @@
 // Include Files
 //-----------------------------------------------------------------
 #include "stdafx.h"		// include file to use the game engine
-#include "../Resource.h"	// include file to use resources
+#if defined(WIN32)
+#include "../Resource.h"// include file to use resources
+#endif
 #include "AbstractGame.h"
 
 //-----------------------------------------------------------------
