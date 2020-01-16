@@ -1,0 +1,667 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Game Files">
+      <UniqueIdentifier>{5f3577f5-a3e6-41a5-aa09-27634f59f47e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files">
+      <UniqueIdentifier>{3704762e-d04c-4dfb-8a47-714a3a382eee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Box2D">
+      <UniqueIdentifier>{6272c07e-35d6-45db-ba6b-84d8a4d21b6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Core">
+      <UniqueIdentifier>{69583d6a-e6fd-4c7e-a2ba-ceb1669bfa43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Core\GUI">
+      <UniqueIdentifier>{3b562f72-de2b-4817-bebf-8882e6d54acd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Core\Sound">
+      <UniqueIdentifier>{5719e219-9e15-4bdb-987c-1fa7ff9bee5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\Core\Box2D">
+      <UniqueIdentifier>{62b4ac1d-499b-4b58-a0be-524e8053d28e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Files\Managers">
+      <UniqueIdentifier>{cb05324a-cc38-443d-a4b4-76741d1d69fa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Files\Entities">
+      <UniqueIdentifier>{eecff76a-9e6d-49d4-8f71-444566230fb0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Files\game">
+      <UniqueIdentifier>{6ef9f0df-d284-48f4-b4d4-14ae40ce2728}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Files\Animations">
+      <UniqueIdentifier>{d5798fa1-3f8a-47aa-914f-d6f724ba7b57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Files\Enemies">
+      <UniqueIdentifier>{ae285ef3-41f3-4db3-bed9-7ec974666395}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Files\Pickups">
+      <UniqueIdentifier>{6fe40951-36a3-4738-b02f-459b26fe61e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Files\BaseObjects">
+      <UniqueIdentifier>{986bdb4c-5396-4b43-9a65-fc83c3e83bc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Files\HUD">
+      <UniqueIdentifier>{4ad4ba58-3fc7-496b-8970-23ad9c1ec1fe}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AbstractGame.cpp">
+      <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\GameEngine.cpp">
+      <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\Button.cpp">
+      <Filter>Engine Files\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\GUIBase.cpp">
+      <Filter>Engine Files\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\TextBox.cpp">
+      <Filter>Engine Files\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\AudioDecoder.cpp">
+      <Filter>Engine Files\Core\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\AudioSystem.cpp">
+      <Filter>Engine Files\Core\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\Sound.cpp">
+      <Filter>Engine Files\Core\Sound</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\Bitmap.cpp">
+      <Filter>Engine Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\Box2DDebugRenderer.cpp">
+      <Filter>Engine Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\Font.cpp">
+      <Filter>Engine Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\GameSettings.cpp">
+      <Filter>Engine Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\InputManager.cpp">
+      <Filter>Engine Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\PrecisionTimer.cpp">
+      <Filter>Engine Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\Structs.cpp">
+      <Filter>Engine Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\SVGParser.cpp">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\PhysicsActor.cpp">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\PhysicsDistanceJoint.cpp">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\PhysicsPrismaticJoint.cpp">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\PhysicsRevoluteJoint.cpp">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/ElectronicJonaJoy.cpp">
+      <Filter>Game Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Arrow.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/BitmapManager.cpp">
+      <Filter>Game Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Avatar.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Game.cpp">
+      <Filter>Game Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/StartMenu.cpp">
+      <Filter>Game Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Entity.cpp">
+      <Filter>Game Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Camera.cpp">
+      <Filter>Game Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Level.cpp">
+      <Filter>Game Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Sprite.cpp">
+      <Filter>Game Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Bullet.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/CheckPoint.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/RotLight.cpp">
+      <Filter>Game Files\Animations</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Enemy.cpp">
+      <Filter>Game Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/EnemyHorizontal.cpp">
+      <Filter>Game Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/EnemyRotater.cpp">
+      <Filter>Game Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/EnemyShooter.cpp">
+      <Filter>Game Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Coin.cpp">
+      <Filter>Game Files\Pickups</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/AttackBeam.cpp">
+      <Filter>Game Files\Animations</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/EntityList.cpp">
+      <Filter>Game Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/AttackBeamList.cpp">
+      <Filter>Game Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Teleport.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/CheckPointBg.cpp">
+      <Filter>Game Files\Animations</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/SoundManager.cpp">
+      <Filter>Game Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/EnemyList.cpp">
+      <Filter>Game Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/EnemyRocketLauncher.cpp">
+      <Filter>Game Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/EnemyRocket.cpp">
+      <Filter>Game Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/PickUp.cpp">
+      <Filter>Game Files\Pickups</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/CoinList.cpp">
+      <Filter>Game Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/AnimationList.cpp">
+      <Filter>Game Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Animation.cpp">
+      <Filter>Game Files\Animations</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/CombRotLightCpBg.cpp">
+      <Filter>Game Files\Animations</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/LevelEnd.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Trail.cpp">
+      <Filter>Game Files\Animations</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/LevelList.cpp">
+      <Filter>Game Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/EntityDestroy.cpp">
+      <Filter>Game Files\Animations</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Slider.cpp">
+      <Filter>Game Files\BaseObjects</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/HUD.cpp">
+      <Filter>Game Files\HUD</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/BlockSlide.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Gate.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/ArrowShooter.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/EnemyLaser.cpp">
+      <Filter>Game Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/CameraTrigger.cpp">
+      <Filter>Game Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/CameraTriggerRotate.cpp">
+      <Filter>Game Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/TriggerList.cpp">
+      <Filter>Game Files\game</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/MetalFans.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/StickyWall.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Lever.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/FileManager.cpp">
+      <Filter>Game Files\Managers</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Slicer.cpp">
+      <Filter>Game Files\Enemies</Filter>
+    </ClCompile>
+    <ClCompile Include="GameFiles/NpcHinter.cpp">
+      <Filter>Game Files\Entities</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="GameFiles/ContactListener.cpp" />
+    <ClCompile Include="EngineFiles\EString.cpp">
+      <Filter>Engine Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="GameWinMain.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Box2D.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Collision\b2BroadPhase.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Collision\b2Collision.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Collision\b2Distance.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Collision\b2DynamicTree.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Collision\b2TimeOfImpact.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Collision\Shapes\b2ChainShape.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Collision\Shapes\b2CircleShape.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Collision\Shapes\b2EdgeShape.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Collision\Shapes\b2PolygonShape.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Collision\Shapes\b2Shape.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2BlockAllocator.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2Draw.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2GrowableStack.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2Math.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2Settings.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2StackAllocator.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2Timer.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2Body.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2ContactManager.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2Fixture.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2Island.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2TimeStep.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2World.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2WorldCallbacks.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2ChainAndCircleContact.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2ChainAndPolygonContact.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2CircleContact.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2Contact.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2ContactSolver.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2EdgeAndCircleContact.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2EdgeAndPolygonContact.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2PolygonAndCircleContact.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2PolygonContact.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2DistanceJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2FrictionJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2GearJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2Joint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2MotorJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2MouseJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2PrismaticJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2PulleyJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2RevoluteJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2RopeJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2WeldJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2WheelJoint.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="Box2DInclude\Box2D\Rope\b2Rope.h">
+      <Filter>Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\GameEngine.h">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Button.h">
+      <Filter>Engine Files\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\GUIBase.h">
+      <Filter>Engine Files\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\TextBox.h">
+      <Filter>Engine Files\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\AudioDecoder.h">
+      <Filter>Engine Files\Core\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\AudioSystem.h">
+      <Filter>Engine Files\Core\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Sound.h">
+      <Filter>Engine Files\Core\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Bitmap.h">
+      <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Box2DDebugRenderer.h">
+      <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Font.h">
+      <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\GameSettings.h">
+      <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\InputManager.h">
+      <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\PrecisionTimer.h">
+      <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Structs.h">
+      <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\SVGParser.h">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\PhysicsActor.h">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\PhysicsDistanceJoint.h">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\PhysicsPrismaticJoint.h">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\PhysicsRevoluteJoint.h">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/ElectronicJonaJoy.h">
+      <Filter>Game Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Arrow.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/BitmapManager.h">
+      <Filter>Game Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Game.h">
+      <Filter>Game Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/StartMenu.h">
+      <Filter>Game Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Entity.h">
+      <Filter>Game Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Camera.h">
+      <Filter>Game Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Level.h">
+      <Filter>Game Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Sprite.h">
+      <Filter>Game Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Bullet.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/CheckPoint.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Avatar.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/RotLight.h">
+      <Filter>Game Files\Animations</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Enemy.h">
+      <Filter>Game Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/EnemyShooter.h">
+      <Filter>Game Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/EnemyHorizontal.h">
+      <Filter>Game Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/EnemyRotater.h">
+      <Filter>Game Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Coin.h">
+      <Filter>Game Files\Pickups</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/AttackBeam.h">
+      <Filter>Game Files\Animations</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/EntityList.h">
+      <Filter>Game Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/AttackBeamList.h">
+      <Filter>Game Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/CoinList.h">
+      <Filter>Game Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Teleport.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/CheckPointBg.h">
+      <Filter>Game Files\Animations</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/SoundManager.h">
+      <Filter>Game Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/EnemyList.h">
+      <Filter>Game Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/EnemyRocketLauncher.h">
+      <Filter>Game Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/EnemyRocket.h">
+      <Filter>Game Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/PickUp.h">
+      <Filter>Game Files\Pickups</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/AnimationList.h">
+      <Filter>Game Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Animation.h">
+      <Filter>Game Files\Animations</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/CombRotLightCpBg.h">
+      <Filter>Game Files\Animations</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/LevelEnd.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Trail.h">
+      <Filter>Game Files\Animations</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/LevelList.h">
+      <Filter>Game Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/EntityDestroy.h">
+      <Filter>Game Files\Animations</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Slider.h">
+      <Filter>Game Files\BaseObjects</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/HUD.h">
+      <Filter>Game Files\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/BlockSlide.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Gate.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/ArrowShooter.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/EnemyLaser.h">
+      <Filter>Game Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/CameraTrigger.h">
+      <Filter>Game Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/CameraTriggerRotate.h">
+      <Filter>Game Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/TriggerList.h">
+      <Filter>Game Files\game</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/MetalFans.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/StickyWall.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Lever.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/FileManager.h">
+      <Filter>Game Files\Managers</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/Slicer.h">
+      <Filter>Game Files\Enemies</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFiles/NpcHinter.h">
+      <Filter>Game Files\Entities</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="GameFiles/AbstractGame.h" />
+    <ClInclude Include="GameFiles/ContactListener.h" />
+    <ClInclude Include="EngineFiles\EString.h">
+      <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="GameWinMain.h" />
+    <ClInclude Include="EngineFiles\singleton.h">
+      <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="small.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="big.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="Box2DInclude\Box2DDebug.lib">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </Library>
+    <Library Include="Box2DInclude\Box2DRelease.lib">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ElectronicJonaJoy.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Box2DInclude\box2d.pdb">
+      <Filter>Engine Files\Core\Box2D</Filter>
+    </None>
+  </ItemGroup>
+</Project>

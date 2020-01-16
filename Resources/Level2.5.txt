@@ -1,0 +1,72 @@
+// Steyfkens, Jonathan - prog2 1DAE01
+// Make sure you load in this order.
+// Level - Avatar - then all the rest
+//
+<LevelMap
+	bitmap="Resources/Level/Level2.5/level2.png"
+	svg="Resources/Level/Level2.5/level2.svg"
+	svgBounds="NULL"
+/>
+<Avatar
+	position="1696,1762"
+	respawnPosition="1696,1762"
+	bitmap="Resources/Player/p1_spritesheet.png"
+	gravityScale="4"
+	jumpheight="1000"
+/>
+<Camera
+	position="1696,1762"
+	startPosition="1696,1762"
+	speed="350"
+	scale="1"
+	mode="automatic"
+/>
+<levelSound
+	soundPath="Resources/Sound/BgMusic/Popskyy - ABXY - 02 Falling With Style.mp3"
+/>
+<EnemyRocketLauncher
+	name="EnemyRocketLauncher1"
+	position="1500,1762"
+	angle="0"
+/>
+<EnemyRocketLauncher
+	name="EnemyRocketLauncher2"
+	position="1848,1762"
+	angle="0"
+/>
+<EnemyRocketLauncher
+	name="EnemyRocketLauncher2"
+	position="2196,1762"
+	angle="0"
+/>
+<EnemyRocketLauncher
+	name="EnemyRocketLauncher3"
+	position="2544,1762"
+	angle="0"
+/>
+<EnemyRocketLauncher
+	name="EnemyRocketLauncher4"
+	position="2892,1762"
+	angle="0"
+/>
+<EnemyRocketLauncher
+	name="EnemyRocketLauncher5"
+	position="3240,1762"
+	angle="0"
+/>
+<EnemyRocketLauncher
+	name="EnemyRocketLauncher6"
+	position="3588,1762"
+	angle="0"
+/>
+<EnemyRocketLauncher
+	name="EnemyRocketLauncher7"
+	position="3936,1762"
+	angle="0"
+/>
+<LevelEnd
+	position="4486,1715"
+/>
+
+
+//end of line comments do not work yet.

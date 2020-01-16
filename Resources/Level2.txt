@@ -1,0 +1,106 @@
+// Steyfkens, Jonathan - prog2 1DAE01
+// Make sure you load in this order.
+// Level - Avatar - then all the rest
+//
+<LevelMap
+	bitmap="Resources/Level/Level2/level.png"
+	svg="Resources/Level/Level2/level.svg"
+	svgBounds="Resources/Level/Level2/levelBounds.svg"
+/>
+<Avatar
+	position="576,2406"
+	respawnPosition="576,2406"
+	bitmap="Resources/Player/p1_spritesheet.png"
+	bitmapEpicMode="Resources/Player/p1_EPICMODE.png"
+	gravityScale="4"
+	jumpheight="1100"
+/>
+<Camera
+	position="640,460"
+	startPosition="640,460"
+	speed="250"
+	mode="followAvatar"
+/>
+<levelSound
+	soundPath="Resources/Sound/BgMusic/Popskyy - ABXY - 03 Excursion.mp3"
+/>
+<NpcHinter
+	name="Hinter01"
+	position="376.62,2286"
+	facing="RIGHT"
+	tipText="Time for a B.R.I.C.K. ? "
+/>
+<Arrow
+	name="Arrow2"
+	position="1080,2062"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1600"
+/>
+<StickyWall
+	name="StickyWall1"
+	position="900,2064.68"
+	width="15"
+	height="200"
+/>
+<CheckPoint
+	name="CheckPoint1"
+	cameraPosition="921,1789"
+	cameraAngle="0"
+	position="921,1789"
+	bitmap="Resources/Interactions/checkpoint.png"
+/>
+<MetalFan
+	name="MetalFan1"
+	position="692,1820"
+	angle="0"
+	repulsionForce="100"
+	frictionForce="15"
+/>
+
+<StickyWall
+	name="StickyWall01"
+	position="324,1500"
+	width="15"
+	height="350"
+/>
+<StickyWall
+	name="StickyWall02"
+	position="537,1300"
+	width="15"
+	height="280"
+/>
+<StickyWall
+	name="StickyWall2"
+	position="393,1146"
+	width="15"
+	height="200"
+/>
+<StickyWall
+	name="StickyWall3"
+	position="606,1099"
+	width="15"
+	height="200"
+/>
+<StickyWall
+	name="StickyWall4"
+	position="459,700"
+	width="15"
+	height="450"
+/>
+<Arrow
+	name="Arrow3"
+	position="739,587"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1600"
+/>
+<StickyWall
+	name="StickyWall5"
+	position="1020,391"
+	width="20"
+	height="350"
+/>
+<LevelEnd
+	position="750,180"
+/>

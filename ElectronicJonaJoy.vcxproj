@@ -1,0 +1,317 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{65FE775A-8525-4C8D-97DC-AD30A84B2A2E}</ProjectGuid>
+    <Keyword>x64Proj</Keyword>
+    <RootNamespace>ElectronicJonaJoy</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <LibraryPath>$(ProjectDir)Box2DInclude;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)/EngineFiles;$(ProjectDir)/GameFiles;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>x64;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>./Box2DInclude</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <ExceptionHandling>Async</ExceptionHandling>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>Box2DDebug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PreBuildEvent>
+      <Command>xcopy "$(ProjectDir)\Box2DInclude\box2d.pdb" "$(OutDir)" /y /D</Command>
+    </PreBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>x64;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>./Box2DInclude</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="AbstractGame.cpp" />
+    <ClInclude Include="EngineFiles\singleton.h" />
+    <ClInclude Include="resource.h" />
+    <ClCompile Include="EngineFiles\AudioDecoder.cpp" />
+    <ClCompile Include="EngineFiles\AudioSystem.cpp" />
+    <ClCompile Include="EngineFiles\Bitmap.cpp" />
+    <ClCompile Include="EngineFiles\Box2DDebugRenderer.cpp" />
+    <ClCompile Include="EngineFiles\Button.cpp" />
+    <ClCompile Include="EngineFiles\Font.cpp" />
+    <ClCompile Include="EngineFiles\GameEngine.cpp" />
+    <ClCompile Include="EngineFiles\GameSettings.cpp" />
+    <ClCompile Include="GameWinMain.cpp" />
+    <ClInclude Include="GameWinMain.h" />
+    <ClCompile Include="EngineFiles\GUIBase.cpp" />
+    <ClCompile Include="EngineFiles\InputManager.cpp" />
+    <ClCompile Include="EngineFiles\PhysicsActor.cpp" />
+    <ClCompile Include="EngineFiles\PhysicsDistanceJoint.cpp" />
+    <ClCompile Include="EngineFiles\PhysicsPrismaticJoint.cpp" />
+    <ClCompile Include="EngineFiles\PhysicsRevoluteJoint.cpp" />
+    <ClCompile Include="EngineFiles\PrecisionTimer.cpp" />
+    <ClCompile Include="EngineFiles\Sound.cpp" />
+    <ClCompile Include="EngineFiles\EString.cpp" />
+    <ClCompile Include="EngineFiles\Structs.cpp" />
+    <ClCompile Include="EngineFiles\SVGParser.cpp" />
+    <ClCompile Include="EngineFiles\TextBox.cpp" />
+    <ClInclude Include="stdafx.h" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="GameFiles/Arrow.cpp" />
+    <ClCompile Include="GameFiles/BitmapManager.cpp" />
+    <ClCompile Include="GameFiles/Camera.cpp" />
+    <ClCompile Include="GameFiles/Enemy.cpp" />
+    <ClCompile Include="GameFiles/CheckPointBg.cpp" />
+    <ClCompile Include="GameFiles/Slider.cpp" />
+    <ClCompile Include="GameFiles/ElectronicJonaJoy.cpp" />
+    <ClCompile Include="GameFiles/ContactListener.cpp" />
+    <ClCompile Include="GameFiles/Avatar.cpp" />
+    <ClCompile Include="GameFiles/Level.cpp" />
+    <ClCompile Include="GameFiles/Entity.cpp" />
+    <ClCompile Include="GameFiles/Game.cpp" />
+    <ClCompile Include="GameFiles/StartMenu.cpp" />
+    <ClCompile Include="GameFiles/EnemyShooter.cpp" />
+    <ClCompile Include="GameFiles/Sprite.cpp" />
+    <ClCompile Include="GameFiles/Bullet.cpp" />
+    <ClCompile Include="GameFiles/CheckPoint.cpp" />
+    <ClCompile Include="GameFiles/RotLight.cpp" />
+    <ClCompile Include="GameFiles/EnemyRotater.cpp" />
+    <ClCompile Include="GameFiles/EnemyHorizontal.cpp" />
+    <ClCompile Include="GameFiles/Coin.cpp" />
+    <ClCompile Include="GameFiles/CoinList.cpp" />
+    <ClCompile Include="GameFiles/AttackBeam.cpp" />
+    <ClCompile Include="GameFiles/AttackBeamList.cpp" />
+    <ClCompile Include="GameFiles/EntityList.cpp" />
+    <ClCompile Include="GameFiles/Teleport.cpp" />
+    <ClCompile Include="GameFiles/SoundManager.cpp" />
+    <ClCompile Include="GameFiles/HUD.cpp" />
+    <ClCompile Include="GameFiles/EnemyList.cpp" />
+    <ClCompile Include="GameFiles/EnemyRocketLauncher.cpp" />
+    <ClCompile Include="GameFiles/EnemyRocket.cpp" />
+    <ClCompile Include="GameFiles/PickUp.cpp" />
+    <ClCompile Include="GameFiles/AnimationList.cpp" />
+    <ClCompile Include="GameFiles/Animation.cpp" />
+    <ClCompile Include="GameFiles/CombRotLightCpBg.cpp" />
+    <ClCompile Include="GameFiles/LevelEnd.cpp" />
+    <ClCompile Include="GameFiles/Trail.cpp" />
+    <ClCompile Include="GameFiles/LevelList.cpp" />
+    <ClCompile Include="GameFiles/EntityDestroy.cpp" />
+    <ClCompile Include="GameFiles/BlockSlide.cpp" />
+    <ClCompile Include="GameFiles/Gate.cpp" />
+    <ClCompile Include="GameFiles/ArrowShooter.cpp" />
+    <ClCompile Include="GameFiles/EnemyLaser.cpp" />
+    <ClCompile Include="GameFiles/CameraTrigger.cpp" />
+    <ClCompile Include="GameFiles/CameraTriggerRotate.cpp" />
+    <ClCompile Include="GameFiles/TriggerList.cpp" />
+    <ClCompile Include="GameFiles/MetalFans.cpp" />
+    <ClCompile Include="GameFiles/StickyWall.cpp" />
+    <ClCompile Include="GameFiles/Lever.cpp" />
+    <ClCompile Include="GameFiles/FileManager.cpp" />
+    <ClCompile Include="GameFiles/Slicer.cpp" />
+    <ClCompile Include="GameFiles/NpcHinter.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GameFiles/AbstractGame.h" />
+    <ClInclude Include="GameFiles/Arrow.h" />
+    <ClInclude Include="GameFiles/BitmapManager.h" />
+    <ClInclude Include="GameFiles/Camera.h" />
+    <ClInclude Include="EngineFiles\AudioDecoder.h" />
+    <ClInclude Include="EngineFiles\AudioSystem.h" />
+    <ClInclude Include="EngineFiles\Bitmap.h" />
+    <ClInclude Include="EngineFiles\Box2DDebugRenderer.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Box2D.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Collision\b2BroadPhase.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Collision\b2Collision.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Collision\b2Distance.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Collision\b2DynamicTree.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Collision\b2TimeOfImpact.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Collision\Shapes\b2ChainShape.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Collision\Shapes\b2CircleShape.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Collision\Shapes\b2EdgeShape.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Collision\Shapes\b2PolygonShape.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Collision\Shapes\b2Shape.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2BlockAllocator.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2Draw.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2GrowableStack.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2Math.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2Settings.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2StackAllocator.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Common\b2Timer.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2Body.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2ContactManager.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2Fixture.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2Island.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2TimeStep.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2World.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\b2WorldCallbacks.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2ChainAndCircleContact.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2ChainAndPolygonContact.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2CircleContact.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2Contact.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2ContactSolver.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2EdgeAndCircleContact.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2EdgeAndPolygonContact.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2PolygonAndCircleContact.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Contacts\b2PolygonContact.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2DistanceJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2FrictionJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2GearJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2Joint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2MotorJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2MouseJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2PrismaticJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2PulleyJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2RevoluteJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2RopeJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2WeldJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Dynamics\Joints\b2WheelJoint.h" />
+    <ClInclude Include="Box2DInclude\Box2D\Rope\b2Rope.h" />
+    <ClInclude Include="EngineFiles\Button.h" />
+    <ClInclude Include="EngineFiles\Font.h" />
+    <ClInclude Include="EngineFiles\GameEngine.h" />
+    <ClInclude Include="EngineFiles\GameSettings.h" />
+    <ClInclude Include="EngineFiles\EString.h" />
+    <ClInclude Include="EngineFiles\Structs.h" />
+    <ClInclude Include="EngineFiles\SVGParser.h" />
+    <ClInclude Include="EngineFiles\TextBox.h" />
+    <ClInclude Include="GameFiles/Enemy.h" />
+    <ClInclude Include="EngineFiles\GUIBase.h" />
+    <ClInclude Include="EngineFiles\InputManager.h" />
+    <ClInclude Include="EngineFiles\PhysicsActor.h" />
+    <ClInclude Include="EngineFiles\PhysicsDistanceJoint.h" />
+    <ClInclude Include="EngineFiles\PhysicsPrismaticJoint.h" />
+    <ClInclude Include="EngineFiles\PhysicsRevoluteJoint.h" />
+    <ClInclude Include="EngineFiles\PrecisionTimer.h" />
+    <ClInclude Include="EngineFiles\Sound.h" />
+    <ClInclude Include="GameFiles/CheckPointBg.h" />
+    <ClInclude Include="GameFiles/Slider.h" />
+    <ClInclude Include="GameFiles/ElectronicJonaJoy.h" />
+    <ClInclude Include="GameFiles/ContactListener.h" />
+    <ClInclude Include="GameFiles/Avatar.h" />
+    <ClInclude Include="GameFiles/Level.h" />
+    <ClInclude Include="GameFiles/Entity.h" />
+    <ClInclude Include="GameFiles/Game.h" />
+    <ClInclude Include="GameFiles/StartMenu.h" />
+    <ClInclude Include="GameFiles/EnemyShooter.h" />
+    <ClInclude Include="GameFiles/Sprite.h" />
+    <ClInclude Include="GameFiles/Bullet.h" />
+    <ClInclude Include="GameFiles/CheckPoint.h" />
+    <ClInclude Include="GameFiles/RotLight.h" />
+    <ClInclude Include="GameFiles/EnemyRotater.h" />
+    <ClInclude Include="GameFiles/EnemyHorizontal.h" />
+    <ClInclude Include="GameFiles/Coin.h" />
+    <ClInclude Include="GameFiles/CoinList.h" />
+    <ClInclude Include="GameFiles/AttackBeam.h" />
+    <ClInclude Include="GameFiles/AttackBeamList.h" />
+    <ClInclude Include="GameFiles/EntityList.h" />
+    <ClInclude Include="GameFiles/Teleport.h" />
+    <ClInclude Include="GameFiles/SoundManager.h" />
+    <ClInclude Include="GameFiles/HUD.h" />
+    <ClInclude Include="GameFiles/EnemyList.h" />
+    <ClInclude Include="GameFiles/EnemyRocketLauncher.h" />
+    <ClInclude Include="GameFiles/EnemyRocket.h" />
+    <ClInclude Include="GameFiles/PickUp.h" />
+    <ClInclude Include="GameFiles/AnimationList.h" />
+    <ClInclude Include="GameFiles/Animation.h" />
+    <ClInclude Include="GameFiles/CombRotLightCpBg.h" />
+    <ClInclude Include="GameFiles/LevelEnd.h" />
+    <ClInclude Include="GameFiles/Trail.h" />
+    <ClInclude Include="GameFiles/LevelList.h" />
+    <ClInclude Include="GameFiles/EntityDestroy.h" />
+    <ClInclude Include="GameFiles/BlockSlide.h" />
+    <ClInclude Include="GameFiles/Gate.h" />
+    <ClInclude Include="GameFiles/ArrowShooter.h" />
+    <ClInclude Include="GameFiles/EnemyLaser.h" />
+    <ClInclude Include="GameFiles/CameraTrigger.h" />
+    <ClInclude Include="GameFiles/CameraTriggerRotate.h" />
+    <ClInclude Include="GameFiles/TriggerList.h" />
+    <ClInclude Include="GameFiles/MetalFans.h" />
+    <ClInclude Include="GameFiles/StickyWall.h" />
+    <ClInclude Include="GameFiles/Lever.h" />
+    <ClInclude Include="GameFiles/FileManager.h" />
+    <ClInclude Include="GameFiles/Slicer.h" />
+    <ClInclude Include="GameFiles/NpcHinter.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="big.ico" />
+    <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Box2DInclude\box2d.pdb" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="ElectronicJonaJoy.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="Box2DInclude\Box2DDebug.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Library>
+    <Library Include="Box2DInclude\Box2DRelease.lib">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Library>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

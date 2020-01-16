@@ -1,0 +1,19 @@
+<MusicList>
+	music_0="Resources/Sound/BgMusic/NielsSwekMusic.mp3"
+	music_1="Resources/Sound/BgMusic/main.mp3"
+	music_2="Resources/Sound/BgMusic/Popskyy - ABXY - 03 Excursion.mp3"
+	music_3="Resources/Sound/BgMusic/Exhilarate.mp3"
+</MusicList>
+<LevelList>
+	level_0="Resources/tutorial_Level.txt"
+	level_1="Resources/Level1.txt"
+	level_2="Resources/Level2.txt"
+	level_3="Resources/Level3.txt"
+</LevelList>
+<AvatarControls>
+	jump="90"
+	attack="88"
+	left="37"
+	right="39"
+	god="71"
+</AvatarControls>

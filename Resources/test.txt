@@ -1,0 +1,49 @@
+<LevelMap
+	bitmap="Resources/Level/Level1/level.png"
+	svg="Resources/Level/Level1/level.svg"
+	svgBounds="Resources/Level/Level1/levelBounds.svg"
+/>
+<Avatar
+	position="640,460"
+	respawnPosition="640,460"
+	bitmap="Resources/Player/p1_spritesheet.png"
+	gravityScale="4"
+	jumpheight="1000"
+/>
+<Camera
+	position="640,460"
+	speed="1"
+/>
+<Arrow
+	name="Arrow1"
+	position="2440,531"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<EnemyShooter
+	name="EnemyShooter1"
+	position="1008,630"
+	bitmap="Resources/Entity/EnemyShooter.png"
+	angle="3.14"
+	mirror="true"
+/>
+<EnemyRotater
+	name="EnemyRotater1"
+	position="1425,350"
+	bitmap="Resources/Entity/EnemySpinner.png"
+/>
+<EnemyHorizontal
+	name="EnemyHorizontal1"
+	position="3956,830"
+	bitmap="Resources/Enemy/EnemyHorizontal.png"
+	velocity="0,-46"
+	offset="0,30"
+/>
+<EnemyHorizontal
+	name="EnemyHorizontal2"
+	position="4895,1340"
+	bitmap="Resources/Enemy/EnemyHorizontal.png"
+	velocity="0,-40"
+	offset="0,30"
+/>

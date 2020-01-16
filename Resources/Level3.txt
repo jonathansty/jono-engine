@@ -1,0 +1,333 @@
+// Steyfkens, Jonathan - prog2 1DAE01
+// Make sure you load in this order.
+// Level - Avatar - then all the rest
+//
+<LevelMap
+	bitmap="Resources/Level/Level3/level.png"
+	svg="Resources/Level/Level3/level.svg"
+	svgBounds="NULL"
+/>
+<Avatar
+	position="96,597"
+	respawnPosition="96,597"
+	bitmap="Resources/Player/p1_spritesheet.png"
+	bitmapEpicMode="Resources/Player/p1_EPICMODE.png"
+	gravityScale="4"
+	jumpheight="1100"
+/>
+//239
+<Camera
+	position="640,550"
+	startPosition="640,550"
+	speed="250"
+	scale="1.3"
+	mode="automatic"
+/>
+<Arrow
+	name="arrow1"
+	position="381,792"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<Arrow
+	name="arrow2"
+	position="620,792"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<Arrow
+	name="arrow2.5"
+	position="808,792"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<Arrow
+	name="arrow3"
+	position="1001,792"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<Arrow
+	name="arrow4"
+	position="1240,792"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<CheckPoint
+	position="1444,735"
+	cameraPosition="1444,550"
+	bitmap="Resources/Interactions/checkpoint.png"
+/>
+<Arrow
+	name="arrow6"
+	position="2130,640"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<Arrow
+	name="arrow7"
+	position="2130,550"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<Teleport
+	name="Teleport1"
+	entrancePos="2324,825"
+	exitPos="2510,499"
+	bitmap="Resources/Entity/Teleport.png"
+/>
+<Arrow
+	name="arrow8"
+	position="2587,638"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<Teleport
+	name="Teleport2"
+	entrancePos="2836,900"
+	exitPos="2920,372"
+	bitmap="Resources/Entity/Teleport.png"
+/>
+<Arrow
+	name="arrow9"
+	position="3074,590"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<Arrow
+	name="arrow10"
+	position="3162,671"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<Arrow
+	name="arrow11"
+	position="3251,583"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<Teleport
+	name="Teleport3"
+	entrancePos="3501,829"
+	exitPos="3883,262"
+	bitmap="Resources/Entity/Teleport.png"
+/>
+<Gate
+	name="Gate1"
+	triggerPosition="4110,654"
+	gatePosition="4307,1016"
+/>
+<Teleport
+	name="Teleport4"
+	entrancePos="4422,863"
+	exitPos="4558,228"
+	bitmap="Resources/Entity/Teleport.png"
+/>
+<CheckPoint
+	name="CheckPoint3"
+	position="4695,642"
+	cameraPosition="4695,550"
+	bitmap="Resources/Interactions/checkpoint.png"
+/>
+<Arrow
+	name="arrow12"
+	position="4582,986"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1000"
+/>
+<Teleport
+	name="Teleport5"
+	entrancePos="5255,874"
+	exitPos="5280,477"
+	bitmap="Resources/Entity/Teleport.png"
+/>
+<Arrow
+	name="arrow13"
+	position="5937,842"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1600"
+/>
+<CheckPoint
+	name="CheckPoint4"
+	position="6615,686"
+	cameraPosition="6615,550"
+	bitmap="Resources/Interactions/checkpoint.png"
+/>
+<Teleport
+	name="Teleport6"
+	entrancePos="6830,702"
+	exitPos="7163,526"
+	bitmap="Resources/Entity/Teleport.png"
+/>
+<JumpShooter
+	name="ArrowShooter1"
+	position="7510,896"
+	direction="5,-1"
+	pushpower="1200"
+	intervalTime="0.7"
+/>
+<JumpShooter
+	name="ArrowShooter2"
+	position="8255,787"
+	direction="268,-269"
+	pushpower="1200"
+	intervalTime="1"
+/>
+<Teleport
+	name="Teleport7"
+	entrancePos="8669,668"
+	exitPos="9384,332"
+	bitmap="Resources/Entity/Teleport.png"
+/>
+<JumpShooter
+	name="ArrowShooter2"
+	position="9425,770"
+	direction="456,-434"
+	pushpower="1200"
+	intervalTime="0.5"
+/>
+<CheckPoint
+	name="CheckPoint5"
+	position="9999,240"
+	cameraPosition="9999,550"
+	bitmap="Resources/Interactions/checkpoint.png"
+/>
+<BlockSlide
+	name="BlockSlide1"
+	position="10381,380"
+	width="400"
+	height="25"
+/>
+<BlockSlide
+	name="BlockSlide2"
+	position="10897,410"
+	width="400"
+	height="25"
+/>
+<CheckPoint
+	name="CheckPoint6"
+	position="11635,460"
+	cameraPosition="11635,550"
+	bitmap="Resources/Interactions/checkpoint.png"
+/>
+<Teleport
+	name="Teleport8"
+	entrancePos="11833,682"
+	exitPos="11986,164"
+	bitmap="Resources/Entity/Teleport.png"
+/>
+<Laser
+	name="Laser1"
+	position="12136,504"
+	angularVelocity="1.3"
+/>
+<Teleport	
+	name="Teleport9"
+	entrancePos="12194,798"
+	exitPos="12438,344"
+	bitmap="Resources/Entity/Teleport.png"
+/>
+<Arrow
+	name="arrow14"
+	position="13031,775"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="2000"
+/>
+<Arrow
+	name="arrow15"
+	position="13526,775"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="2000"
+/>
+<LevelEnd
+	position="15060,670"
+	Lever0Position="2758,765"
+	Lever1Position="4125,919"
+	Lever2Position="4982,914"
+	
+	
+/>
+
+//end of line comments do not work yet.
+// -------------- TEMPLATES ---------------
+// 
+// -------------- TEMPLATES ---------------
+//<LevelMap
+//	bitmap="Resources/Level/Level1/level.png"
+//	svg="Resources/Level/Level1/level.svg"
+//	svgBounds="Resources/Level/Level1/levelBounds.svg"
+///>
+//<Avatar
+//	position="640,460"
+//	respawnPosition="640,460"
+//	bitmap="Resources/Player/p1_spritesheet.png"
+//	gravityScale="4"
+//	jumpheight="1100"
+///>
+//<Camera
+//	position="640,460"
+//	speed="1"
+///>
+//<Arrow
+//	position="2440,531"
+//	bitmap="Resources/Interactions/arrowUp.png"
+//	gravityScale="1"
+//	pushpower="1400"
+///>
+//<EnemyShooter
+//	name="EnemyShooter1"
+//	position="1008,630"
+//	bitmap="Resources/Entity/EnemyShooter.png"
+//	angle="3.14"
+//	mirror="true"
+///>
+//<EnemyRotater
+//	name="EnemyRotater1"
+//	position="1425,350"
+//	bitmap="Resources/Entity/EnemySpinner.png"
+///>
+//<EnemyHorizontal
+//	name="EnemyHorizontal1"
+//	position="3956,830"
+//	bitmap="Resources/Enemy/EnemyHorizontal.png"
+//	velocity="0,-46"
+//	offset="0,30"
+///>
+//<EnemyRocketLauncher
+//	name="EnemyRocketLauncher1"
+//	position="3956,1014"
+//	angle="3.14"
+///>
+//<CheckPoint
+//	position="1796,455"
+//	bitmap="Resources/Interactions/checkpoint.png"
+///>
+//<Teleport
+//	entrancePos="1185,585"
+//	exitPos="1408,-32"
+//	bitmap="Resources/Entity/Teleport.png"
+///>
+//<Coin
+//	name="Coin1"
+//	position="710,470"
+//	bitmap="Resources/Pickups/coinBronze.png"
+//	value="1"
+///>
+//<LevelEnd
+//	position="7768,1951"
+///>

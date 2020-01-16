@@ -1,0 +1,26 @@
+<MusicList>
+	music_0="Resources/Sound/BgMusic/Popskyy - ABXY - 01 Forever.mp3"
+	//music_1="Resources/Sound/BgMusic/NielsSwekMusic.mp3"
+	//music_2="Resources/Sound/BgMusic/Popskyy - ABXY - 02 Falling With Style.mp3"
+	//music_3="Resources/Sound/BgMusic/Popskyy - ABXY - 03 Excursion.mp3"
+	//music_4="Resources/Sound/BgMusic/Popskyy - ABXY - 04 ABXY (ft. AdhesiveWombat).mp3"
+	//music_5="Resources/Sound/BgMusic/What is love - Jim Carrey.mp3"
+	//music_6="Resources/Sound/BgMusic/main.mp3"
+	//music_7="Resources/Sound/BgMusic/Exhilarate.mp3"
+</MusicList>
+<LevelList>
+	level_0=""
+	level_1=""
+	level_2=""
+	level_3=""
+</LevelList>
+
+// use ASCII values
+// http://www.asciitable.com/
+<AvatarControls>
+	jump="90"
+	attack="88"
+	left="37"
+	right="39"
+	god="71"
+</AvatarControls>

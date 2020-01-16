@@ -1,0 +1,328 @@
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>13:13:46</Time>
+	</Start>
+	<End>
+		<Date>2015:06:11</Date>
+		<Time>13:16:12</Time>
+		<Deaths>4</Deaths>
+		<Money>3795</Money>
+		<LifeTime>1.5e+002</LifeTime>
+		<LastLevel>5</LastLevel>
+	</End>
+</Session><Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>18:30:08</Time>
+	</Start>
+	<End>
+		<Date>1900:01:00</Date>
+		<Time>00:00:00</Time>
+		<Deaths>0</Deaths>
+		<Money>0</Money>
+		<LifeTime>6.5</LifeTime>
+		<LastLevel>0
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>18:31:41</Time>
+	</Start>
+	<End>
+		<Date>1900:01:00</Date>
+		<Time>00:00:00</Time>
+		<Deaths>3</Deaths>
+		<Money>63</Money>
+		<LifeTime>16</LifeTime>
+		<LastLevel>2
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>18:33:48</Time>
+	</Start>
+	<End>
+		<Date>1900:01:00</Date>
+		<Time>00:00:00</Time>
+		<Deaths>0</Deaths>
+		<Money>0</Money>
+		<LifeTime>27</LifeTime>
+		<LastLevel>0
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>18:35:44</Time>
+	</Start>
+	<End>
+		<Date>1900:01:00</Date>
+		<Time>00:00:00</Time>
+		<Deaths>2</Deaths>
+		<Money>0</Money>
+		<LifeTime>26</LifeTime>
+		<LastLevel>0
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>18:56:29</Time>
+	</Start>
+	<End>
+		<Date>1900:01:00</Date>
+		<Time>00:00:00</Time>
+		<Deaths>13</Deaths>
+		<Money>63</Money>
+		<LifeTime>56</LifeTime>
+		<LastLevel>1
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>18:57:40</Time>
+	</Start>
+	<End>
+		<Date>1900:01:00</Date>
+		<Time>00:00:00</Time>
+		<Deaths>13</Deaths>
+		<Money>63</Money>
+		<LifeTime>58</LifeTime>
+		<LastLevel>1
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>19:50:00</Time>
+	</Start>
+	<End>
+		<Date>2015:06:11</Date>
+		<Time>19:52:51</Time>
+		<Deaths>7</Deaths>
+		<Money>3792</Money>
+		<LifeTime>1.7e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>19:50:00</Time>
+	</Start>
+	<End>
+		<Date>2015:06:11</Date>
+		<Time>19:54:56</Time>
+		<Deaths>7</Deaths>
+		<Money>3792</Money>
+		<LifeTime>1.7e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>21:23:56</Time>
+	</Start>
+	<End>
+		<Date>2015:06:11</Date>
+		<Time>21:23:58</Time>
+		<Deaths>0</Deaths>
+		<Money>0</Money>
+		<LifeTime>1.8</LifeTime>
+		<LastLevel>0
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>21:50:47</Time>
+	</Start>
+	<End>
+		<Date>2015:06:11</Date>
+		<Time>21:51:31</Time>
+		<Deaths>3</Deaths>
+		<Money>2</Money>
+		<LifeTime>37</LifeTime>
+		<LastLevel>0
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>21:52:51</Time>
+	</Start>
+	<End>
+		<Date>2015:06:11</Date>
+		<Time>21:53:15</Time>
+		<Deaths>4</Deaths>
+		<Money>0</Money>
+		<LifeTime>18</LifeTime>
+		<LastLevel>3
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:11</Date>
+		<Time>21:53:34</Time>
+	</Start>
+	<End>
+		<Date>2015:06:11</Date>
+		<Time>21:54:11</Time>
+		<Deaths>4</Deaths>
+		<Money>1</Money>
+		<LifeTime>35</LifeTime>
+		<LastLevel>3
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:12</Date>
+		<Time>07:40:09</Time>
+	</Start>
+	<End>
+		<Date>2015:06:12</Date>
+		<Time>07:43:05</Time>
+		<Deaths>6</Deaths>
+		<Money>3793</Money>
+		<LifeTime>1.7e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:12</Date>
+		<Time>09:24:17</Time>
+	</Start>
+	<End>
+		<Date>2015:06:12</Date>
+		<Time>09:27:44</Time>
+		<Deaths>14</Deaths>
+		<Money>3792</Money>
+		<LifeTime>2.1e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:12</Date>
+		<Time>09:24:17</Time>
+	</Start>
+	<End>
+		<Date>2015:06:12</Date>
+		<Time>09:28:17</Time>
+		<Deaths>14</Deaths>
+		<Money>3792</Money>
+		<LifeTime>2.1e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:12</Date>
+		<Time>10:08:39</Time>
+	</Start>
+	<End>
+		<Date>2015:06:12</Date>
+		<Time>10:15:27</Time>
+		<Deaths>16</Deaths>
+		<Money>3793</Money>
+		<LifeTime>3.9e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:12</Date>
+		<Time>10:15:38</Time>
+	</Start>
+	<End>
+		<Date>2015:06:12</Date>
+		<Time>10:15:51</Time>
+		<Deaths>18</Deaths>
+		<Money>3793</Money>
+		<LifeTime>4e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:12</Date>
+		<Time>10:40:56</Time>
+	</Start>
+	<End>
+		<Date>2015:06:12</Date>
+		<Time>10:44:54</Time>
+		<Deaths>11</Deaths>
+		<Money>3793</Money>
+		<LifeTime>2.4e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2015:06:12</Date>
+		<Time>10:40:56</Time>
+	</Start>
+	<End>
+		<Date>2015:06:12</Date>
+		<Time>10:45:09</Time>
+		<Deaths>11</Deaths>
+		<Money>3793</Money>
+		<LifeTime>2.4e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2016:01:27</Date>
+		<Time>12:28:53</Time>
+	</Start>
+	<End>
+		<Date>2016:01:27</Date>
+		<Time>12:34:35</Time>
+		<Deaths>27</Deaths>
+		<Money>3793</Money>
+		<LifeTime>3.1e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2016:01:27</Date>
+		<Time>12:28:53</Time>
+	</Start>
+	<End>
+		<Date>2016:01:27</Date>
+		<Time>12:38:19</Time>
+		<Deaths>27</Deaths>
+		<Money>3793</Money>
+		<LifeTime>3.1e+002</LifeTime>
+		<LastLevel>4
+</LastLevel>
+	</End>
+</Session>

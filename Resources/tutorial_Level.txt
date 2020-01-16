@@ -1,0 +1,162 @@
+// Steyfkens, Jonathan - prog2 1DAE01
+// Make sure you load in this order.
+// Level - Avatar - then all the rest
+//
+<LevelMap
+	bitmap="Resources/Level/tutorial_Level/level.png"
+	svg="Resources/Level/tutorial_Level/level.svg"
+	svgBounds="Resources/Level/tutorial_Level/levelBounds.svg"
+/>
+<Avatar
+	position="631,684.84"
+	respawnPosition="631,684"
+	bitmap="Resources/Player/p1_spritesheet.png"
+	bitmapEpicMode="Resources/Player/p1_spritesheet.png"
+	gravityScale="4"
+	jumpheight="1000"
+/>
+<Camera
+	position="640,360"
+	startPosition="640,360"
+	speed="200"
+	scale="1"
+	mode="followAvatar"
+/>
+<levelSound
+	soundPath="Resources/Sound/BgMusic/main.mp3"
+/>
+
+//All entities
+<Arrow
+	name="Arrow1"
+	position="1877.59,660"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<NpcHinter
+	name="Hinter01"
+	position="1089.81,670"
+	facing="RIGHT"
+	tipText="ooh, I haven't seen you here before. Are you new here?"
+/>
+<NpcHinter
+	name="Hinter02"
+	position="1406.27,690"
+	facing="LEFT"
+	tipText="Seems like we have a new recruit!"
+/>
+<NpcHinter
+	name="Hinter03"
+	position="1230.72,425"
+	facing="LEFT"
+	tipText="Better get moving, kid."
+/>
+
+<BlockSlide
+	name="BlockSlide1"
+	position="2465.20,454.75"
+	width="400"
+	height="25"
+/>
+<Slicer
+	name="Slicer"
+	position="3376.11,232.77"
+	barPosition="3376.11,232.77"
+	radius="100"
+/>
+<NpcHinter
+	name="Hinter04"
+	position="2988.98,391.41"
+	facing="LEFT"
+	tipText="Watch out! Don't hit it!"
+/>
+<NpcHinter
+	name="Hinter05"
+	position="3601.99,590"
+	facing="RIGHT"
+	tipText="Use X while in the air to attack!"
+/>
+<EnemyHorizontal
+	name="EnemyHorizontal1"
+	position="3825.40,710"
+	bitmap="Resources/Enemy/EnemyHorizontal.png"
+	velocity="0,-46"
+	lifes="1"
+	offset="0,30"
+/>
+<NpcHinter
+	name="Hinter06"
+	position="3986.76,670"
+	facing="RIGHT"
+	tipText="Watch out! Some monsters have more lifes!"
+/>
+<StickyWall
+	name="StickyWall1"
+	position="4221.73,545"
+	width="15"
+	height="315"
+/>
+<StickyWall
+	name="StickyWall2"
+	position="4092,345"
+	width="15"
+	height="400"
+/>
+<CheckPoint
+	name="CheckPoint1"
+	cameraPosition="4289.72,363.87"
+	position="4289.72,363.87"
+	bitmap="Resources/Interactions/checkpoint.png"
+/>
+<EnemyHorizontal
+	name="EnemyHorizontal2"
+	position="4415.76,455"
+	bitmap="Resources/Enemy/EnemyHorizontalStrong.png"
+	velocity="0,-46"
+	lifes="2"
+	offset="0,30"
+/>
+<EnemyShooter
+	name="EnemyShooter1"
+	position="4534.31,101.97"
+	bitmap="Resources/Entity/EnemyShooter.png"
+	angle="0"
+	mirror="false"
+/>
+<NpcHinter
+	name="Hinter06"
+	position="4884.61,480"
+	facing="RIGHT"
+	tipText="That looks dangerous! "
+/>
+<EnemyRocketLauncher
+	name="EnemyRocketLauncher1"
+	position="5302.65,149.18"
+	angle="3.14"
+/>
+<Arrow
+	name="Arrow2"
+	position="5455.37,662.22"
+	bitmap="Resources/Interactions/arrowUp.png"
+	gravityScale="1"
+	pushpower="1400"
+/>
+<MetalFan
+	name="MetalFan1"
+	position="6006,697.20"
+	angle="0"
+	repulsionForce="50"
+	frictionForce="15"
+/>
+<NpcHinter
+	name="Hinter07"
+	position="6389,732"
+	facing="LEFT"
+	tipText="Watch out for other monsters! An adventure awaits!"
+/>
+<LevelEnd
+	position="6647,658"
+/>
+
+//end of line comments do not work yet.
