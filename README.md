@@ -11,36 +11,36 @@ Video: https://www.youtube.com/watch?v=jKIbhicOz88
 
 # Feature Overview
 Game Parts Description:
-	+ Player:
-		- Can run, jump.
-		- Has an attack: Jump and press X will smash the ground and destroy enemies, rockets and other things
-		- Can receive power ups like flying, superspeed, etc
-		- Triggers checkpoints
-		- is targeted by rockets
-		- when he dies he spawns at the previous checkpoint
-		- When he dies you can fast respawn with `r` and then you get 'beamed up'
-	+ enemies:
-		- Not that much enemies. Need to add more.
-		- Simple bugs that go up and down and other go left and right
-		- Rocket launchers that keep shooting rockets at a certain interval and the rockets follow the enemy the change of angle is small. So the rocket turns slowly.
-		- Lazers that hit the walls and then stop and possibly rotate
-		- Rotating fans that kill you
-	+ Interactions:
-		- Player interacts with enemies, keys, powerups, pickups.
-		- I'm gonna add coins so I can add some more things involving the coins as a pickup
-		- Rockets aim at the players
-		- Small npc's have 1 line of text and talk when the player enters the area.
-		- Arrows that when hit launch the player upwards or in the direction of the arrow.		
-		- Stars that do the same thing but with a different visual.
-		- Teleport field that let's you trhough certain parts.
-		- Sticky walls that the player can hold onto and when space is pressed slide upwards
-	+ Pick-Ups:
-		- Wings pickup
-		- need to invent own pick ups: Magnet to collect coins faster, double points. Invincibility, remove all rockets
-	+ HUD: 
-		- Shows objective when in a boss battle.
-		- Shows a timer
-		- Maybe show score? Active powerup? Enemies killed? Points received
++ Player:
+    - Can run, jump.
+    - Has an attack: Jump and press X will smash the ground and destroy enemies, rockets and other things
+    - Can receive power ups like flying, superspeed, etc
+    - Triggers checkpoints
+    - is targeted by rockets
+    - when he dies he spawns at the previous checkpoint
+    - When he dies you can fast respawn with `r` and then you get 'beamed up'
++ enemies:
+    - Not that much enemies. Need to add more.
+    - Simple bugs that go up and down and other go left and right
+    - Rocket launchers that keep shooting rockets at a certain interval and the rockets follow the enemy the change of angle is small. So the rocket turns slowly.
+    - Lazers that hit the walls and then stop and possibly rotate
+    - Rotating fans that kill you
++ Interactions:
+    - Player interacts with enemies, keys, powerups, pickups.
+    - I'm gonna add coins so I can add some more things involving the coins as a pickup
+    - Rockets aim at the players
+    - Small npc's have 1 line of text and talk when the player enters the area.
+    - Arrows that when hit launch the player upwards or in the direction of the arrow.		
+    - Stars that do the same thing but with a different visual.
+    - Teleport field that let's you trhough certain parts.
+    - Sticky walls that the player can hold onto and when space is pressed slide upwards
++ Pick-Ups:
+    - Wings pickup
+    - need to invent own pick ups: Magnet to collect coins faster, double points. Invincibility, remove all rockets
++ HUD: 
+    - Shows objective when in a boss battle.
+    - Shows a timer
+    - Maybe show score? Active powerup? Enemies killed? Points received
 		
 
 Required Applied Physics functionality:
