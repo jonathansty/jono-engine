@@ -18,7 +18,7 @@ Game Parts Description:
 		- Triggers checkpoints
 		- is targeted by rockets
 		- when he dies he spawns at the previous checkpoint
-		- When he dies you can fast respawn with 'r' and then you get 'beamed up'
+		- When he dies you can fast respawn with `r` and then you get 'beamed up'
 	+ enemies:
 		- Not that much enemies. Need to add more.
 		- Simple bugs that go up and down and other go left and right
@@ -34,7 +34,6 @@ Game Parts Description:
 		- Stars that do the same thing but with a different visual.
 		- Teleport field that let's you trhough certain parts.
 		- Sticky walls that the player can hold onto and when space is pressed slide upwards
-
 	+ Pick-Ups:
 		- Wings pickup
 		- need to invent own pick ups: Magnet to collect coins faster, double points. Invincibility, remove all rockets
