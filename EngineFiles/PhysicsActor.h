@@ -241,7 +241,7 @@ private:
 	//! private internal member function, not for students
 	bool SetBody(DOUBLE2 pos, double angle, BodyType bodyType);
 	bool m_bGhost = false, m_bTrigger = false;
-	std::string m_Name;
+	std::wstring m_Name;
 	b2Body* m_BodyPtr = nullptr;
 	// pointer is held by body -> b2Fixture *m_FixturePtr = nullptr;
 

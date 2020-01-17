@@ -2,6 +2,8 @@
 #include "../stdafx.h" // for intellisense
 
 #include "Sound.h"
+#include <locale>
+#include <codecvt>
 
 // not for Win7
 #ifndef WINDOWS7
@@ -70,11 +72,8 @@ void Sound::Create(const String& filenameRef)
 	//from String to tstring
 	tstring tFilename(filenameRef.C_str());
 
-	//from tstring to std::string
-	std::string filename(tFilename.begin(), tFilename.end());
-
 	// load mp3 using media foundation architecture: sourcereader
-	AudioDecoder(filename, m_Buffer, &m_Wfx);
+	AudioDecoder(tFilename, m_Buffer, &m_Wfx);
 
 	// 3. Create a source voice by calling the IXAudio2::CreateSourceVoice method on an instance of the XAudio2 engine.
 	// Bart: We are friends with AudioSystem class, could use game engine singleton instead

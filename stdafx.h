@@ -26,11 +26,15 @@
 #include <wincodec.h>		// WIC: image loading
 #include <d2d1.h>
 #include <d2d1helper.h>
+#include <d3d11.h>
+#include <dxgi.h>
 
 // libs used for Direct2D
+#pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d2d1.lib")			// Direct2D
 #pragma comment(lib, "WindowsCodecs.lib")	// Image Loading
 #pragma comment(lib, "dwrite.lib")			// Draw Text
+#pragma comment(lib, "d3d11.lib")
 using namespace D2D1;
 
 // Box2D 

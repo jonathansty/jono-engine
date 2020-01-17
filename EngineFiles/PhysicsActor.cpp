@@ -27,8 +27,7 @@ PhysicsActor::~PhysicsActor()
 
 void PhysicsActor::SetName(String name)
 {
-	tstring stdName = name.C_str();
-	m_Name = std::string(stdName.begin(), stdName.end());
+	m_Name = name.C_str();
 }
 
 String PhysicsActor::GetName()
@@ -103,7 +102,7 @@ bool PhysicsActor::AddBoxShapeWithOffset(double width, double height, DOUBLE2 of
 
     // The extents are the half-widths of the box.
     b2PolygonShape shape;
-    shape.SetAsBox((float)width / 2, (float)height / 2,b2Vec2(offset.x,offset.y),0);
+    shape.SetAsBox((float)width / 2, (float)height / 2,b2Vec2((float32)offset.x,(float32)offset.y),0);
     // Define the dynamic body fixture.	
     fixtureDef.shape = &shape;
 
@@ -172,7 +171,7 @@ bool PhysicsActor::AddPolygonShape(const std::vector<DOUBLE2>& vertexArrRef, dou
 
 	//pass array to the shape
 	b2PolygonShape polygonShape;
-	polygonShape.Set(vecArr.data(), vecArr.size());
+	polygonShape.Set(vecArr.data(), int32(vecArr.size()));
 
 	// Define the dynamic body fixture.	
 	fixtureDef.shape = &polygonShape;
@@ -217,8 +216,8 @@ bool PhysicsActor::AddChainShape(const std::vector<DOUBLE2>& vertexArrRef, bool 
 
 	//pass array to the shape
 	b2ChainShape chainShape;
-	if (closed)chainShape.CreateLoop(vecArr.data(), vecArr.size());
-	else chainShape.CreateChain(vecArr.data(), vecArr.size());
+	if (closed)chainShape.CreateLoop(vecArr.data(), int32(vecArr.size()));
+	else chainShape.CreateChain(vecArr.data(), int32(vecArr.size()));
 
 	// Define the dynamic body fixture.	
 	fixtureDef.shape = &chainShape;

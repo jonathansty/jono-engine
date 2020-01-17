@@ -51,7 +51,11 @@ GameEngine::GameEngine() :
 	m_ConsoleHandle(NULL),
 	m_bVSync(true),
 	m_InputPtr(nullptr),
-	m_XaudioPtr(nullptr)
+	m_XaudioPtr(nullptr),
+	m_D3DDevicePtr(nullptr),
+	m_D3DDeviceContextPtr(nullptr),
+	m_DXGIFactoryPtr(nullptr),
+	m_DXGISwapchainPtr(nullptr)
 {
 	m_Gravity = DOUBLE2(0, 9.81);
 
@@ -86,6 +90,10 @@ GameEngine::~GameEngine()
 	DiscardDeviceResources();
 
 	//Direct2D Device independent related stuff
+	m_D3DDeviceContextPtr->Release();
+	m_D3DDevicePtr->Release();
+	m_DXGIFactoryPtr->Release();
+
 	m_DWriteFactoryPtr->Release();
 	m_WICFactoryPtr->Release();
 	m_D2DFactoryPtr->Release();
@@ -244,6 +252,8 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 				// Paint using vsynch
 				ExecuteDirect2DPaint();
 
+				// Present
+				m_DXGISwapchainPtr->Present(1, 0);
 			}
 			else WaitMessage(); // if the engine is sleeping or the game loop isn't supposed to run, wait for the next windows message.
 		}
@@ -1128,7 +1138,7 @@ IWICImagingFactory* GameEngine::GetWICImagingFactory() const
 	return m_WICFactoryPtr;
 }
 
-ID2D1HwndRenderTarget* GameEngine::GetHwndRenderTarget() const
+ID2D1RenderTarget* GameEngine::GetHwndRenderTarget() const
 {
 	return m_RenderTargetPtr;
 }
@@ -1408,6 +1418,15 @@ LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lP
 //
 void GameEngine::CreateDeviceIndependentResources()
 {
+	// Create Direct3D 11 factory
+	{
+		CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&m_DXGIFactoryPtr);
+
+		D3D_FEATURE_LEVEL levels = D3D_FEATURE_LEVEL_11_0;
+		D3D_FEATURE_LEVEL featureLevel;
+		SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT, &levels, 1, D3D11_SDK_VERSION, &m_D3DDevicePtr, &featureLevel, &m_D3DDeviceContextPtr));
+	}
+
 	CreateD2DFactory();
 	CreateWICFactory();
 	CreateWriteFactory();
@@ -1474,9 +1493,33 @@ void GameEngine::CreateDeviceResources()
 {
 	HRESULT hr = S_OK;
 
-	if (!m_RenderTargetPtr)
+	if (!m_DXGISwapchainPtr)
 	{
-		D2D1_SIZE_U size = D2D1::SizeU((UINT)GetWidth(), (UINT)GetHeight());
+		DXGI_SWAP_CHAIN_DESC desc{};
+		desc.BufferDesc.Width = GetWidth();
+		desc.BufferDesc.Height = GetHeight();
+		desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+		desc.BufferDesc.RefreshRate.Numerator = 60;
+		desc.BufferDesc.RefreshRate.Denominator = 1;
+		desc.SampleDesc.Count = 1;
+		desc.SampleDesc.Quality = 0;
+		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		desc.OutputWindow = GetWindow();
+		desc.Windowed = TRUE;
+		desc.BufferCount = 2;
+		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+		SUCCEEDED(m_DXGIFactoryPtr->CreateSwapChain(m_D3DDevicePtr, &desc, &m_DXGISwapchainPtr));
+
+		SetDebugName(m_DXGISwapchainPtr, "DXGISwapchain");
+		SetDebugName(m_DXGIFactoryPtr, "DXGIFactory");
+
+
+		ID3D11Texture2D* backBuffer;
+		m_DXGISwapchainPtr->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+		SetDebugName(backBuffer, "DXGIBackBuffer");
+		assert(backBuffer);
+		m_D3DDevicePtr->CreateRenderTargetView(backBuffer, NULL, &m_D3DBackBufferView);
+		m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, NULL);
 
 		// Create a Direct2D render target.
 		// EndPaint waits till VBLank !!! when OPTIONS_NONE
@@ -1495,11 +1538,15 @@ void GameEngine::CreateDeviceResources()
 			pres_opt = D2D1_PRESENT_OPTIONS_IMMEDIATELY;
 		}
 
-		//Peter: DPI setting van Display kan verschillen, waardoor client area niet correct afmetingen heeft
-		D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties();
-		rtp.dpiX = 96;
-		rtp.dpiY = 96;
-		hr = m_D2DFactoryPtr->CreateHwndRenderTarget(rtp, D2D1::HwndRenderTargetProperties(m_hWindow, size, pres_opt), &m_RenderTargetPtr);
+		UINT dpi = GetDpiForWindow(GetWindow());
+		D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)dpi, (FLOAT)dpi);
+
+		IDXGISurface* dxgiBackBuffer;
+		m_DXGISwapchainPtr->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
+		assert(dxgiBackBuffer);
+		hr = m_D2DFactoryPtr->CreateDxgiSurfaceRenderTarget(dxgiBackBuffer, rtp, &m_RenderTargetPtr);
+
+		dxgiBackBuffer->Release();
 
 		if (FAILED(hr))
 		{
@@ -1537,6 +1584,12 @@ void GameEngine::DiscardDeviceResources()
 		m_RenderTargetPtr->Release();
 		m_RenderTargetPtr = nullptr;
 	}
+
+	m_D3DBackBufferView->Release();
+	m_D3DBackBufferView = nullptr;
+
+	m_DXGISwapchainPtr->Release();
+	m_DXGISwapchainPtr = nullptr;
 }
 
 void GameEngine::D2DBeginPaint()

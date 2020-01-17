@@ -2,5 +2,14 @@
 *.make
 Makefile
 obj/
-bin/
+Debug/
+Release/
+ipch/
+.vs/
+*.sdf
+*.v12.suo
+*.VC.db
+*.aps
+*.vcxproj.user
+
 

@@ -24,7 +24,7 @@
 class AudioDecoder final
 {
 public:
-	AudioDecoder(const std::string& filenameRef, XAUDIO2_BUFFER& bufferRef, WAVEFORMATEXTENSIBLE* pWfx);
+	AudioDecoder(const std::wstring& filenameRef, XAUDIO2_BUFFER& bufferRef, WAVEFORMATEXTENSIBLE* pWfx);
 	virtual ~AudioDecoder();
 
 	HRESULT Open(const std::wstring& wFilenameRef, XAUDIO2_BUFFER& bufferRef, WAVEFORMATEXTENSIBLE* pWfx);

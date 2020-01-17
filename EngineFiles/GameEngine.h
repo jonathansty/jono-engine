@@ -8,6 +8,13 @@
 #pragma once
 #include "singleton.h"
 
+template<typename T>
+HRESULT SetDebugName(T* obj, std::string const& n)
+{
+	return obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(n.size()), n.data());
+}
+
+
 //-----------------------------------------------------------------
 // ggngine Forward Declarations
 //-----------------------------------------------------------------
@@ -341,7 +348,7 @@ public:
 	// Internal use only
 	IWICImagingFactory*		GetWICImagingFactory() const;
 	// Internal use only
-	ID2D1HwndRenderTarget*	GetHwndRenderTarget() const;
+	ID2D1RenderTarget*	GetHwndRenderTarget() const;
 	// Internal use only
 	IDWriteFactory*			GetDWriteFactory() const;
 	// Returns a POINT containing the window coordinates of the mouse
@@ -424,9 +431,15 @@ private:
 	bool				m_bVSync;
 	// Direct2D
 	bool							m_bInitialized;
+	IDXGIFactory* m_DXGIFactoryPtr;
+	ID3D11Device* m_D3DDevicePtr;
+	ID3D11DeviceContext* m_D3DDeviceContextPtr;
+	IDXGISwapChain* m_DXGISwapchainPtr;
+	ID3D11RenderTargetView* m_D3DBackBufferView;
+
 	ID2D1Factory*					m_D2DFactoryPtr;
 	IWICImagingFactory*				m_WICFactoryPtr;
-	ID2D1HwndRenderTarget*			m_RenderTargetPtr;
+	ID2D1RenderTarget*			m_RenderTargetPtr;
 	IDWriteFactory*					m_DWriteFactoryPtr;
 	PrecisionTimer*						m_GameTickTimerPtr;
 

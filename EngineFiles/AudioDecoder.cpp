@@ -24,11 +24,10 @@ template <class T> void SafeRelease(T **ppT)
 //-----------------------------------------------------------------
 // AudioDecoder methods
 //-----------------------------------------------------------------
-AudioDecoder::AudioDecoder(const std::string& filenameRef, XAUDIO2_BUFFER& bufferRef, WAVEFORMATEXTENSIBLE* pWfx)
+AudioDecoder::AudioDecoder(const std::wstring& filenameRef, XAUDIO2_BUFFER& bufferRef, WAVEFORMATEXTENSIBLE* pWfx)
 {
-	std::wstring wFileName(filenameRef.begin(), filenameRef.end());
 
-	HRESULT hr = Open(wFileName, bufferRef, pWfx);
+	HRESULT hr = Open(filenameRef, bufferRef, pWfx);
 	if (FAILED(hr))
 	{
 		MessageBoxA(NULL, "Error Loading sound", "GameEngine says NO", MB_OK);
