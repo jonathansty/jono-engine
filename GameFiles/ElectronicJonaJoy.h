@@ -54,6 +54,7 @@ public:
 	virtual void GameEnd();
 	virtual void GameTick(double deltaTime);
 	virtual void GamePaint(RECT rect);
+    virtual void DebugUI();
     void HandleGameState();
     void LoadNextLevel();
     void ReloadCurrentLevel();

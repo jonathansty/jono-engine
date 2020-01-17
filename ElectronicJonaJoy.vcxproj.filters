@@ -50,6 +50,9 @@
     <Filter Include="Game Files\HUD">
       <UniqueIdentifier>{4ad4ba58-3fc7-496b-8970-23ad9c1ec1fe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\imgui">
+      <UniqueIdentifier>{54e12575-ac2e-4a3d-a715-88beee2c2789}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AbstractGame.cpp">
@@ -271,6 +274,24 @@
       <Filter>Engine Files\Core</Filter>
     </ClCompile>
     <ClCompile Include="GameWinMain.cpp" />
+    <ClCompile Include="EngineFiles\imgui\imgui_impl_dx11.cpp">
+      <Filter>Engine Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\imgui\imgui_impl_win32.cpp">
+      <Filter>Engine Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\imgui\imgui.cpp">
+      <Filter>Engine Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\imgui\imgui_draw.cpp">
+      <Filter>Engine Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\imgui\imgui_widgets.cpp">
+      <Filter>Engine Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\imgui\imgui_demo.cpp">
+      <Filter>Engine Files\imgui</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -636,6 +657,30 @@
     <ClInclude Include="GameWinMain.h" />
     <ClInclude Include="EngineFiles\singleton.h">
       <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\imgui\imgui_impl_dx11.h">
+      <Filter>Engine Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\imgui\imgui_impl_win32.h">
+      <Filter>Engine Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\imgui\imconfig.h">
+      <Filter>Engine Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\imgui\imgui.h">
+      <Filter>Engine Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\imgui\imgui_internal.h">
+      <Filter>Engine Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\imgui\imstb_rectpack.h">
+      <Filter>Engine Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\imgui\imstb_textedit.h">
+      <Filter>Engine Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\imgui\imstb_truetype.h">
+      <Filter>Engine Files\imgui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

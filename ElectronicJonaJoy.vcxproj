@@ -88,6 +88,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AbstractGame.cpp" />
+    <ClInclude Include="EngineFiles\imgui\imconfig.h" />
+    <ClInclude Include="EngineFiles\imgui\imgui.h" />
+    <ClInclude Include="EngineFiles\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="EngineFiles\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="EngineFiles\imgui\imgui_internal.h" />
+    <ClInclude Include="EngineFiles\imgui\imstb_rectpack.h" />
+    <ClInclude Include="EngineFiles\imgui\imstb_textedit.h" />
+    <ClInclude Include="EngineFiles\imgui\imstb_truetype.h" />
     <ClInclude Include="EngineFiles\singleton.h" />
     <ClInclude Include="resource.h" />
     <ClCompile Include="EngineFiles\AudioDecoder.cpp" />
@@ -98,6 +106,12 @@
     <ClCompile Include="EngineFiles\Font.cpp" />
     <ClCompile Include="EngineFiles\GameEngine.cpp" />
     <ClCompile Include="EngineFiles\GameSettings.cpp" />
+    <ClCompile Include="EngineFiles\imgui\imgui.cpp" />
+    <ClCompile Include="EngineFiles\imgui\imgui_demo.cpp" />
+    <ClCompile Include="EngineFiles\imgui\imgui_draw.cpp" />
+    <ClCompile Include="EngineFiles\imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="EngineFiles\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="EngineFiles\imgui\imgui_widgets.cpp" />
     <ClCompile Include="GameWinMain.cpp" />
     <ClInclude Include="GameWinMain.h" />
     <ClCompile Include="EngineFiles\GUIBase.cpp" />

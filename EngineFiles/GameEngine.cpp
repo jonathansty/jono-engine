@@ -5,6 +5,9 @@
 #include "ContactListener.h"
 #include "AbstractGame.h"
 
+#include "imgui/imgui_impl_dx11.h"
+#include "imgui/imgui_impl_win32.h"
+
 //-----------------------------------------------------------------
 // Windows Functions
 //-----------------------------------------------------------------
@@ -164,9 +167,13 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 		return false;
 	}
 
+
 	// Initialize the Graphics Engine
 	CreateDeviceResources();
 
+	ImGui::CreateContext();
+	ImGui_ImplWin32_Init(GetWindow());
+	ImGui_ImplDX11_Init(m_D3DDevicePtr, m_D3DDeviceContextPtr);
 #pragma region Box2D
 	// Initialize Box2D
 	// Define the gravity vector.
@@ -186,6 +193,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	m_Box2DDebugRenderer.AppendFlags(b2Draw::e_pairBit);
 	m_Box2DWorldPtr->SetDebugDraw(&m_Box2DDebugRenderer);
 #pragma endregion
+
 
 	// User defined functions for start of the game
 	m_GamePtr->GameStart();
@@ -249,8 +257,22 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 					lag -= m_PhysicsTimeStep;
 				}
 
+				ImGui_ImplDX11_NewFrame();
+				ImGui_ImplWin32_NewFrame();
+				ImGui::NewFrame();
+				m_GamePtr->DebugUI();
+				ImGui::EndFrame();
+
+				ImGui::Render();
+
+				FLOAT color[4] = { 0.5f,0.5f,0.5f,0.0f };
+				m_D3DDeviceContextPtr->ClearRenderTargetView(m_D3DBackBufferView, color);
+				m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, nullptr);
 				// Paint using vsynch
 				ExecuteDirect2DPaint();
+
+
+				ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 				// Present
 				m_DXGISwapchainPtr->Present(1, 0);
@@ -264,6 +286,11 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 	// User defined code for exiting the game
 	m_GamePtr->GameEnd();
+
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+
+	ImGui::DestroyContext();
 
 	// Box2D
 	delete m_Box2DWorldPtr;
@@ -1407,7 +1434,11 @@ LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lP
 	//	break;
 	}
 
-	return DefWindowProc(hWindow, msg, wParam, lParam);
+	extern IMGUI_IMPL_API LRESULT  ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+	if (ImGui_ImplWin32_WndProcHandler(hWindow, msg, wParam, lParam) == 0)
+	{
+		return DefWindowProc(hWindow, msg, wParam, lParam);
+	}
 }
 
 // Create resources which are not bound

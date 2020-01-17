@@ -46,4 +46,5 @@ public :
 	virtual void GameEnd(void) {}																// empty definition
 	virtual void GamePaint(RECT rect) {}														// empty definition
 	virtual void GameTick(double deltaTime) {}													// empty definition
+	virtual void DebugUI() {}
 };

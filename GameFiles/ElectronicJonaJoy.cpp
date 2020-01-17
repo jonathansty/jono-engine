@@ -225,11 +225,19 @@ void ElectronicJonaJoy::GamePaint(RECT rect)
 		break;
 	}
 }
+
+void ElectronicJonaJoy::DebugUI()
+{
+	// Do game level debug UI 
+
+}
+
 void ElectronicJonaJoy::ReloadCurrentLevel()
 {
 	m_AccuTime = 0;
 	m_Game->LoadLevel(m_LevelListPtr->GetLevel(m_CurrentLevel));
 }
+
 void ElectronicJonaJoy::LoadNextLevel()
 {
 	m_AccuTime = 0;
@@ -240,6 +248,7 @@ void ElectronicJonaJoy::LoadNextLevel()
 	m_CurrentLevel = m_CurrentLevel%amountOfLevels;
 	m_Game->LoadLevel(m_LevelListPtr->GetLevel(m_CurrentLevel));
 }
+
 void ElectronicJonaJoy::HandleGameState()
 {
 	if (m_Menu != nullptr && m_Menu->startPressed())
@@ -280,7 +289,6 @@ void ElectronicJonaJoy::HandleGameState()
 		m_Menu->ReadKeyBindsForMenu(m_FileManagerPtr->GetKeyBinds());
 		m_CurrentLevel = 0;
 	}
-
 }
 
 

@@ -68,6 +68,8 @@ enum class BodyType
 #endif
 
 
+#include "imgui/imgui.h"
+
 #include "EngineFiles/EString.h"
 #include "EngineFiles/Structs.h"
 #include "EngineFiles/Box2DDebugRenderer.h"
