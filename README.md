@@ -44,8 +44,8 @@ Game Parts Description:
 		
 
 Required Applied Physics functionality:
-    + Force fields: Ventilators blowing you upwards.
-    + Triggers: Opening a locked part with that key. Key is the trigger. start firing rockets is probably also a trigger.
-    + Gliding level piece exists.
-    + Kinematic actor like the enemies that only move left and right and up and down
-    + Physics Joint:  Rotating fan is a physicsJoint. Implement elevator. Moving platforms and stuff like that.
++ Force fields: Ventilators blowing you upwards.
++ Triggers: Opening a locked part with that key. Key is the trigger. start firing rockets is probably also a trigger.
++ Gliding level piece exists.
++ Kinematic actor like the enemies that only move left and right and up and down
++ Physics Joint:  Rotating fan is a physicsJoint. Implement elevator. Moving platforms and stuff like that.
