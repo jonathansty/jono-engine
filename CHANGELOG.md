@@ -1,6 +1,11 @@
 
 
 # Changelog
+0.1.1:
+- Fix release build
+- Added GPU markers in the engine code 
+
+0.1:
 2020-01-17:
 - Added D3D11 backed and device (D2D uses the swapchain to draw to)
 - Added IMGUI support
