@@ -70,8 +70,6 @@ void ElectronicJonaJoy::GameStart()
 	m_LevelListPtr = m_FileManagerPtr->LoadLevels(CONFIGPATH);
 	m_FileManagerPtr->LoadAvatarKeybinds(CONFIGPATH);
 	m_Game->SetFileManager(m_FileManagerPtr);
-
-
 }
 
 

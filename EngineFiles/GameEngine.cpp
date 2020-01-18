@@ -533,8 +533,9 @@ void GameEngine::ConsolePrintString(const String& textRef)
 #ifdef _UNICODE
 	std::wcout << textRef.C_str() << std::endl;
 #else
-	std::cout << text.C_str() << std::endl;
+	std::cout << textRef.C_str() << std::endl;
 #endif
+	::OutputDebugString(textRef);
 }
 
 //void GameEngine::ConsolePrintString(string text)
