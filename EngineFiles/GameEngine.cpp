@@ -312,23 +312,34 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 				}
 
 
-				m_D3DDeviceContextPtr->Begin(gpuTimings[idx][0]);
-				m_D3DDeviceContextPtr->End(gpuTimings[idx][1]);
 
 
-				FLOAT color[4] = { 0.5f,0.5f,0.5f,0.0f };
-				m_D3DDeviceContextPtr->ClearRenderTargetView(m_D3DBackBufferView, color);
-				m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, nullptr);
+				{
+					GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Frame");
 
-				// Paint using vsynch
-				ExecuteDirect2DPaint();
-				ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+					m_D3DDeviceContextPtr->Begin(gpuTimings[idx][0]);
+					m_D3DDeviceContextPtr->End(gpuTimings[idx][1]);
 
-				// Present
-				m_DXGISwapchainPtr->Present(m_bVSync ? 1 : 0, 0);
 
-				m_D3DDeviceContextPtr->End(gpuTimings[idx][2]);
-				m_D3DDeviceContextPtr->End(gpuTimings[idx][0]);
+					FLOAT color[4] = { 0.5f,0.5f,0.5f,0.0f };
+					m_D3DDeviceContextPtr->ClearRenderTargetView(m_D3DBackBufferView, color);
+					m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, nullptr);
+
+					// Paint using vsynch
+					ExecuteDirect2DPaint();
+
+					{
+						GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"ImGui");
+						ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+					}
+
+					// Present
+					GPU_MARKER(m_D3DUserDefinedAnnotation, L"DrawEnd");
+					m_DXGISwapchainPtr->Present(m_bVSync ? 1 : 0, 0);
+
+					m_D3DDeviceContextPtr->End(gpuTimings[idx][2]);
+					m_D3DDeviceContextPtr->End(gpuTimings[idx][0]);
+				}
 			}
 			else WaitMessage(); // if the engine is sleeping or the game loop isn't supposed to run, wait for the next windows message.
 		}
@@ -353,6 +364,8 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 void GameEngine::ExecuteDirect2DPaint()
 {
+	GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Game2D");
+
 	D2DBeginPaint();
 	RECT usedClientRect = { 0, 0, GetWidth(), GetHeight() };
 
@@ -1520,6 +1533,7 @@ LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lP
 		break;
 	}
 
+	// Handle IMGUI
 	extern IMGUI_IMPL_API LRESULT  ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 	if (LRESULT v = ImGui_ImplWin32_WndProcHandler(hWindow, msg, wParam, lParam); v != 0)
 	{
@@ -1549,6 +1563,8 @@ void GameEngine::CreateDeviceIndependentResources()
 	CreateD2DFactory();
 	CreateWICFactory();
 	CreateWriteFactory();
+
+	m_D3DDeviceContextPtr->QueryInterface(IID_PPV_ARGS(&m_D3DUserDefinedAnnotation));
 }
 
 void GameEngine::CreateD2DFactory()

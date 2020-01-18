@@ -431,6 +431,7 @@ private:
 	ID3D11DeviceContext* m_D3DDeviceContextPtr;
 	IDXGISwapChain* m_DXGISwapchainPtr;
 	ID3D11RenderTargetView* m_D3DBackBufferView;
+	ID3DUserDefinedAnnotation* m_D3DUserDefinedAnnotation;
 
 	ID2D1Factory*					m_D2DFactoryPtr;
 	IWICImagingFactory*				m_WICFactoryPtr;
@@ -469,3 +470,29 @@ private:
 	std::shared_ptr<MetricsOverlay> m_MetricsOverlay;
 	std::shared_ptr<OverlayManager> m_OverlayManager;
 };
+
+class ScopedGPUEvent
+{
+public:
+	ScopedGPUEvent(ID3DUserDefinedAnnotation* annotation, std::wstring name)
+		: _name(name)
+		, _annotation(annotation)
+	{
+		annotation->BeginEvent(name.c_str());
+	}
+	~ScopedGPUEvent()
+	{
+		_annotation->EndEvent();
+	}
+private:
+	ID3DUserDefinedAnnotation* _annotation;
+	std::wstring _name;
+};
+
+#ifdef _DEBUG
+#define GPU_SCOPED_EVENT(ctx, name) ScopedGPUEvent perf##__LINE__##Event = ScopedGPUEvent(ctx, name)
+#define GPU_MARKER(ctx, name) ctx->SetMarker(name);
+#else
+#define GPU_SCOPED_EVENT(ctx, name) 
+#define GPU_MARKER(ctx, name) 
+#endif
