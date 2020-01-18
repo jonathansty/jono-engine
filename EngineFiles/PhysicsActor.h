@@ -7,6 +7,13 @@
 
 #pragma once
 
+//! BodyType enumeration
+//! @enum Box2D enumerations
+enum class BodyType
+{
+	STATIC, DYNAMIC, KINEMATIC
+};
+
 //-----------------------------------------------------------------
 // PhysicsActor Class
 //-----------------------------------------------------------------
@@ -223,7 +230,7 @@ public:
 	//! Sets the category for a collision filtering
 	//! see http://www.iforce2d.net/b2dtut/collision-filtering
 	void SetCollisionFilter(const b2Filter &filterRef);
-	b2Filter PhysicsActor::GetCollisionFilter();
+	b2Filter GetCollisionFilter();
 
 	// Internal use. Box2D has constrains to dimensions of objects, pixels are not meters
 	static const int SCALE = 100;

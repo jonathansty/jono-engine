@@ -1,16 +1,4 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015 
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
 #pragma once
-
-//-----------------------------------------------------------------
-// Include Files
-//-----------------------------------------------------------------
-
-#include "Resource.h"	
 
 // std lib includes
 #include <vector>			// std lib vector
@@ -45,12 +33,6 @@ using namespace D2D1;
 // copy the headers box2d map in a folder with somename:  projectdir/somepath/box2d
 // additional include directories: do NOT add ./ to make this include <> work, use ./somepath instead -> bug in vs2013?
 #include <Box2D/Box2D.h>
-#if defined(DEBUG) | defined(_DEBUG)
-#pragma comment(lib, "Box2DDebug.lib")		
-#else
-#pragma comment(lib, "Box2DRelease.lib")		
-#endif
-
 
 // Define M_PI and other constants
 #define _USE_MATH_DEFINES 
@@ -65,8 +47,8 @@ using namespace D2D1;
 #define tstringstream std::stringstream
 #endif
 
-
 #include "imgui/imgui.h"
+
 
 #include "EngineFiles/EString.h"
 #include "EngineFiles/Structs.h"
@@ -88,8 +70,7 @@ using namespace D2D1;
 #include "EngineFiles/PhysicsRevoluteJoint.h"
 #include "EngineFiles/PhysicsPrismaticJoint.h"
 #include "EngineFiles/PhysicsDistanceJoint.h"
+#include "GameEngine.h"
 
-using std::shared_ptr;
-using std::weak_ptr;
-
-
+#include "GameFiles/BitmapManager.h"
+#include "GameFiles/SoundManager.h"

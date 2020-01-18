@@ -15,16 +15,17 @@
     <Keyword>x64Proj</Keyword>
     <RootNamespace>ElectronicJonaJoy</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Engine</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
@@ -61,7 +62,7 @@
       <ExceptionHandling>Async</ExceptionHandling>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>NotSet</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>Box2DDebug.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
@@ -89,8 +90,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AbstractGame.cpp" />
-    <ClInclude Include="config.h" />
+    <ClInclude Include="EngineFiles\AbstractGame.h" />
+    <ClInclude Include="EngineFiles\ContactListener.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\MetricsOverlay.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\OverlayManager.h" />
     <ClInclude Include="EngineFiles\imgui\imconfig.h" />
@@ -103,11 +104,13 @@
     <ClInclude Include="EngineFiles\imgui\imstb_truetype.h" />
     <ClInclude Include="EngineFiles\singleton.h" />
     <ClInclude Include="resource.h" />
+    <ClCompile Include="EngineFiles\AbstractGame.cpp" />
     <ClCompile Include="EngineFiles\AudioDecoder.cpp" />
     <ClCompile Include="EngineFiles\AudioSystem.cpp" />
     <ClCompile Include="EngineFiles\Bitmap.cpp" />
     <ClCompile Include="EngineFiles\Box2DDebugRenderer.cpp" />
     <ClCompile Include="EngineFiles\Button.cpp" />
+    <ClCompile Include="EngineFiles\ContactListener.cpp" />
     <ClCompile Include="EngineFiles\DebugOverlays\MetricsOverlay.cpp" />
     <ClCompile Include="EngineFiles\DebugOverlays\OverlayMananager.cpp" />
     <ClCompile Include="EngineFiles\Font.cpp" />
@@ -119,8 +122,6 @@
     <ClCompile Include="EngineFiles\imgui\imgui_impl_dx11.cpp" />
     <ClCompile Include="EngineFiles\imgui\imgui_impl_win32.cpp" />
     <ClCompile Include="EngineFiles\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="GameWinMain.cpp" />
-    <ClInclude Include="GameWinMain.h" />
     <ClCompile Include="EngineFiles\GUIBase.cpp" />
     <ClCompile Include="EngineFiles\InputManager.cpp" />
     <ClCompile Include="EngineFiles\PhysicsActor.cpp" />
@@ -138,64 +139,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="GameFiles/Arrow.cpp" />
-    <ClCompile Include="GameFiles/BitmapManager.cpp" />
-    <ClCompile Include="GameFiles/Camera.cpp" />
-    <ClCompile Include="GameFiles/Enemy.cpp" />
-    <ClCompile Include="GameFiles/CheckPointBg.cpp" />
-    <ClCompile Include="GameFiles/Slider.cpp" />
-    <ClCompile Include="GameFiles/ElectronicJonaJoy.cpp" />
-    <ClCompile Include="GameFiles/ContactListener.cpp" />
-    <ClCompile Include="GameFiles/Avatar.cpp" />
-    <ClCompile Include="GameFiles/Level.cpp" />
-    <ClCompile Include="GameFiles/Entity.cpp" />
-    <ClCompile Include="GameFiles/Game.cpp" />
-    <ClCompile Include="GameFiles/StartMenu.cpp" />
-    <ClCompile Include="GameFiles/EnemyShooter.cpp" />
-    <ClCompile Include="GameFiles/Sprite.cpp" />
-    <ClCompile Include="GameFiles/Bullet.cpp" />
-    <ClCompile Include="GameFiles/CheckPoint.cpp" />
-    <ClCompile Include="GameFiles/RotLight.cpp" />
-    <ClCompile Include="GameFiles/EnemyRotater.cpp" />
-    <ClCompile Include="GameFiles/EnemyHorizontal.cpp" />
-    <ClCompile Include="GameFiles/Coin.cpp" />
-    <ClCompile Include="GameFiles/CoinList.cpp" />
-    <ClCompile Include="GameFiles/AttackBeam.cpp" />
-    <ClCompile Include="GameFiles/AttackBeamList.cpp" />
-    <ClCompile Include="GameFiles/EntityList.cpp" />
-    <ClCompile Include="GameFiles/Teleport.cpp" />
-    <ClCompile Include="GameFiles/SoundManager.cpp" />
-    <ClCompile Include="GameFiles/HUD.cpp" />
-    <ClCompile Include="GameFiles/EnemyList.cpp" />
-    <ClCompile Include="GameFiles/EnemyRocketLauncher.cpp" />
-    <ClCompile Include="GameFiles/EnemyRocket.cpp" />
-    <ClCompile Include="GameFiles/PickUp.cpp" />
-    <ClCompile Include="GameFiles/AnimationList.cpp" />
-    <ClCompile Include="GameFiles/Animation.cpp" />
-    <ClCompile Include="GameFiles/CombRotLightCpBg.cpp" />
-    <ClCompile Include="GameFiles/LevelEnd.cpp" />
-    <ClCompile Include="GameFiles/Trail.cpp" />
-    <ClCompile Include="GameFiles/LevelList.cpp" />
-    <ClCompile Include="GameFiles/EntityDestroy.cpp" />
-    <ClCompile Include="GameFiles/BlockSlide.cpp" />
-    <ClCompile Include="GameFiles/Gate.cpp" />
-    <ClCompile Include="GameFiles/ArrowShooter.cpp" />
-    <ClCompile Include="GameFiles/EnemyLaser.cpp" />
-    <ClCompile Include="GameFiles/CameraTrigger.cpp" />
-    <ClCompile Include="GameFiles/CameraTriggerRotate.cpp" />
-    <ClCompile Include="GameFiles/TriggerList.cpp" />
-    <ClCompile Include="GameFiles/MetalFans.cpp" />
-    <ClCompile Include="GameFiles/StickyWall.cpp" />
-    <ClCompile Include="GameFiles/Lever.cpp" />
-    <ClCompile Include="GameFiles/FileManager.cpp" />
-    <ClCompile Include="GameFiles/Slicer.cpp" />
-    <ClCompile Include="GameFiles/NpcHinter.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="GameFiles/AbstractGame.h" />
-    <ClInclude Include="GameFiles/Arrow.h" />
-    <ClInclude Include="GameFiles/BitmapManager.h" />
-    <ClInclude Include="GameFiles/Camera.h" />
     <ClInclude Include="EngineFiles\AudioDecoder.h" />
     <ClInclude Include="EngineFiles\AudioSystem.h" />
     <ClInclude Include="EngineFiles\Bitmap.h" />
@@ -255,7 +200,6 @@
     <ClInclude Include="EngineFiles\Structs.h" />
     <ClInclude Include="EngineFiles\SVGParser.h" />
     <ClInclude Include="EngineFiles\TextBox.h" />
-    <ClInclude Include="GameFiles/Enemy.h" />
     <ClInclude Include="EngineFiles\GUIBase.h" />
     <ClInclude Include="EngineFiles\InputManager.h" />
     <ClInclude Include="EngineFiles\PhysicsActor.h" />
@@ -264,54 +208,6 @@
     <ClInclude Include="EngineFiles\PhysicsRevoluteJoint.h" />
     <ClInclude Include="EngineFiles\PrecisionTimer.h" />
     <ClInclude Include="EngineFiles\Sound.h" />
-    <ClInclude Include="GameFiles/CheckPointBg.h" />
-    <ClInclude Include="GameFiles/Slider.h" />
-    <ClInclude Include="GameFiles/ElectronicJonaJoy.h" />
-    <ClInclude Include="GameFiles/ContactListener.h" />
-    <ClInclude Include="GameFiles/Avatar.h" />
-    <ClInclude Include="GameFiles/Level.h" />
-    <ClInclude Include="GameFiles/Entity.h" />
-    <ClInclude Include="GameFiles/Game.h" />
-    <ClInclude Include="GameFiles/StartMenu.h" />
-    <ClInclude Include="GameFiles/EnemyShooter.h" />
-    <ClInclude Include="GameFiles/Sprite.h" />
-    <ClInclude Include="GameFiles/Bullet.h" />
-    <ClInclude Include="GameFiles/CheckPoint.h" />
-    <ClInclude Include="GameFiles/RotLight.h" />
-    <ClInclude Include="GameFiles/EnemyRotater.h" />
-    <ClInclude Include="GameFiles/EnemyHorizontal.h" />
-    <ClInclude Include="GameFiles/Coin.h" />
-    <ClInclude Include="GameFiles/CoinList.h" />
-    <ClInclude Include="GameFiles/AttackBeam.h" />
-    <ClInclude Include="GameFiles/AttackBeamList.h" />
-    <ClInclude Include="GameFiles/EntityList.h" />
-    <ClInclude Include="GameFiles/Teleport.h" />
-    <ClInclude Include="GameFiles/SoundManager.h" />
-    <ClInclude Include="GameFiles/HUD.h" />
-    <ClInclude Include="GameFiles/EnemyList.h" />
-    <ClInclude Include="GameFiles/EnemyRocketLauncher.h" />
-    <ClInclude Include="GameFiles/EnemyRocket.h" />
-    <ClInclude Include="GameFiles/PickUp.h" />
-    <ClInclude Include="GameFiles/AnimationList.h" />
-    <ClInclude Include="GameFiles/Animation.h" />
-    <ClInclude Include="GameFiles/CombRotLightCpBg.h" />
-    <ClInclude Include="GameFiles/LevelEnd.h" />
-    <ClInclude Include="GameFiles/Trail.h" />
-    <ClInclude Include="GameFiles/LevelList.h" />
-    <ClInclude Include="GameFiles/EntityDestroy.h" />
-    <ClInclude Include="GameFiles/BlockSlide.h" />
-    <ClInclude Include="GameFiles/Gate.h" />
-    <ClInclude Include="GameFiles/ArrowShooter.h" />
-    <ClInclude Include="GameFiles/EnemyLaser.h" />
-    <ClInclude Include="GameFiles/CameraTrigger.h" />
-    <ClInclude Include="GameFiles/CameraTriggerRotate.h" />
-    <ClInclude Include="GameFiles/TriggerList.h" />
-    <ClInclude Include="GameFiles/MetalFans.h" />
-    <ClInclude Include="GameFiles/StickyWall.h" />
-    <ClInclude Include="GameFiles/Lever.h" />
-    <ClInclude Include="GameFiles/FileManager.h" />
-    <ClInclude Include="GameFiles/Slicer.h" />
-    <ClInclude Include="GameFiles/NpcHinter.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="big.ico" />

@@ -1,14 +1,6 @@
-//-----------------------------------------------------------------
-// Game File
-// C++ Source - ElectronicJonaJoy.cpp - version v2_16 jan 2015
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
-#include "stdafx.h"		// this include must be the first include line of every cpp file (due to using precompiled header)
+#include "stdafx.h"	
 #include "config.h"
-//-----------------------------------------------------------------
-// Include Files
-//-----------------------------------------------------------------
+
 #include "ElectronicJonaJoy.h"																				
 #include "Game.h"
 #include "StartMenu.h"
@@ -19,17 +11,16 @@
 #include <time.h>
 #include "Avatar.h"
 #include "FileManager.h"
-//-----------------------------------------------------------------
-// Defines
-//-----------------------------------------------------------------
+
 #define GAME_ENGINE (GameEngine::GetSingleton())
 #define BITMAP_MANAGER (BitmapManager::GetSingleton())
 #define SND_MANAGER (SoundManager::GetSingleton())
-//-----------------------------------------------------------------
-// ElectronicJonaJoy methods																				
-//-----------------------------------------------------------------
+
 const String ElectronicJonaJoy::CONFIGPATH = String("Resources/cfg/config.txt");
 ElectronicJonaJoy::ElectronicJonaJoy()
+	: m_BeginTime()
+	, m_EndTime()
+	, m_LevelListPtr()
 {
 	// nothing to create
 }
@@ -71,7 +62,6 @@ void ElectronicJonaJoy::GameStart()
 	m_FileManagerPtr->LoadAvatarKeybinds(CONFIGPATH);
 	m_Game->SetFileManager(m_FileManagerPtr);
 }
-
 
 void ElectronicJonaJoy::GameEnd()
 {
@@ -194,6 +184,7 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 	}
 
 }
+
 void ElectronicJonaJoy::GamePaint(RECT rect)
 {
 	switch (m_GameState)
@@ -232,7 +223,6 @@ void ElectronicJonaJoy::GamePaint(RECT rect)
 void ElectronicJonaJoy::DebugUI()
 {
 	// Do game level debug UI 
-
 }
 
 void ElectronicJonaJoy::ReloadCurrentLevel()

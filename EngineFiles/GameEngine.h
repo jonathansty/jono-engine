@@ -7,6 +7,7 @@
 
 #pragma once
 #include "singleton.h"
+#include "DebugOverlays/OverlayManager.h"
 #include "DebugOverlays/MetricsOverlay.h"
 
 template<typename T>

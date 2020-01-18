@@ -110,7 +110,7 @@ public:
     //! Returns the keybinds as a vector
     std::vector<std::pair<String, TCHAR>> GetKeyBinds();
     //! Sets the keysbinds for the avatar
-    void FileManager::SetKeyBinds(std::vector < std::pair<String, TCHAR>> tmpKeyBindsArr, String filePath);
+    void SetKeyBinds(std::vector < std::pair<String, TCHAR>> tmpKeyBindsArr, String filePath);
 
     //! Updates the m_LastLevel variable for use when saving and reading results
     void UpdateLastLevel(int lastLevel);
