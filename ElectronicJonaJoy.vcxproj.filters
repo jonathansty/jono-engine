@@ -697,6 +697,7 @@
     <ClInclude Include="EngineFiles\DebugOverlays\OverlayManager.h">
       <Filter>Engine Files\DebugOverlays</Filter>
     </ClInclude>
+    <ClInclude Include="config.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

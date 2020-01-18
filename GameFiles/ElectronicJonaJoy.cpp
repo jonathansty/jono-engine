@@ -5,6 +5,7 @@
 // http://www.digitalartsandentertainment.be/
 //-----------------------------------------------------------------
 #include "stdafx.h"		// this include must be the first include line of every cpp file (due to using precompiled header)
+#include "config.h"
 //-----------------------------------------------------------------
 // Include Files
 //-----------------------------------------------------------------
@@ -53,6 +54,10 @@ void ElectronicJonaJoy::GameInitialize(GameSettings &gameSettings)
 
 void ElectronicJonaJoy::GameStart()
 {
+	char msg[256];
+	sprintf_s(msg, "Electronic Jona Joy Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+	GameEngine::Instance()->ConsolePrintString(String(msg));
+
 	time_t beginTime;
 	time(&beginTime);
 	localtime_s(&m_BeginTime, &beginTime);

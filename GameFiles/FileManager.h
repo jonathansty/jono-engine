@@ -42,6 +42,7 @@ class LevelEnd;
 class TriggerList;
 class LevelList;
 class Game;
+
 class FileManager //: public ContactListener
 {
 public:
