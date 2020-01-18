@@ -7,6 +7,7 @@
 
 #pragma once
 #include "singleton.h"
+#include "DebugOverlays/MetricsOverlay.h"
 
 template<typename T>
 HRESULT SetDebugName(T* obj, std::string const& n)
@@ -81,7 +82,7 @@ public:
 
 	// Input methods
 
-	//! Returns true when button is down and was down the previous frame
+	//! Returns true when button is down and was down the previous GG
 	//! Example values for key are: VK_LEFT, 'A'. ONLY CAPITALS.
 	bool IsKeyboardKeyDown(int key) const;
 	//! Returns true when button is down and was up the previous frame
@@ -327,29 +328,22 @@ public:
 	COLOR			GetColor();
 
 	// Accessor Methods
-	// Internal use only
 	HINSTANCE				GetInstance() const;
-	// Internal use only
 	HWND					GetWindow() const;
-	// Internal use only
 	String					GetTitle() const;
-	// Internal use only
 	WORD					GetIcon() const;
-	// Internal use only
 	WORD					GetSmallIcon() const;
-	// Returns the width of the client area of the window
 	int						GetWidth() const;
-	// Returns the height of the client area of the window
 	int						GetHeight() const;
-	// Internal use only
 	bool					GetSleep() const;
-	// Internal use only
+
+	ID3D11Device* GetD3DDevice() const;
+	ID3D11DeviceContext* GetD3DDeviceContext() const;
+	ID3D11RenderTargetView* GetD3DBackBufferView() const;
+
 	ID2D1Factory*			GetD2DFactory() const;
-	// Internal use only
 	IWICImagingFactory*		GetWICImagingFactory() const;
-	// Internal use only
-	ID2D1RenderTarget*	GetHwndRenderTarget() const;
-	// Internal use only
+	ID2D1RenderTarget*		GetHwndRenderTarget() const;
 	IDWriteFactory*			GetDWriteFactory() const;
 	// Returns a POINT containing the window coordinates of the mouse
 	// Usage example:
@@ -370,7 +364,8 @@ public:
 	// Internal use only
 	void ApplyGameSettings(GameSettings &gameSettings);
 
-
+	void SetVSync(bool vsync);
+	bool GetVSync();
 private:
 	// Set when the game loses focus
 	void SetSleep(bool bSleep);
@@ -467,6 +462,10 @@ private:
 	std::vector<ImpulseData> m_ImpulseDataArr;
 	double m_PhysicsTimeStep = 1 / 60.0f;
 	DOUBLE2 m_Gravity; 
+	unsigned long m_FrameCounter = 0;
 
 	AudioSystem *m_XaudioPtr = nullptr;
+
+	std::shared_ptr<MetricsOverlay> m_MetricsOverlay;
+	std::shared_ptr<OverlayManager> m_OverlayManager;
 };

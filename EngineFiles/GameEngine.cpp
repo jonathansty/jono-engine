@@ -8,6 +8,8 @@
 #include "imgui/imgui_impl_dx11.h"
 #include "imgui/imgui_impl_win32.h"
 
+#include "DebugOverlays/MetricsOverlay.h"
+
 //-----------------------------------------------------------------
 // Windows Functions
 //-----------------------------------------------------------------
@@ -68,6 +70,11 @@ GameEngine::GameEngine() :
 	// Initialize Direct2D system
 	CoInitialize(0);
 	CreateDeviceIndependentResources();
+
+	m_OverlayManager = std::make_shared<OverlayManager>();
+	m_MetricsOverlay = std::make_shared<MetricsOverlay>();
+
+	m_OverlayManager->register_overlay(m_MetricsOverlay.get());
 
 
 	// Start up the keyboard thread
@@ -209,6 +216,18 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 	// Enter the main message loop
 
+	std::array<ID3D11Query*, 3> gpuTimings[2];
+	D3D11_QUERY_DESC desc{};
+	desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
+	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[0][0]);
+	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[1][0]);
+
+	desc.Query = D3D11_QUERY_TIMESTAMP;
+	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[0][1]);
+	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[0][2]);
+	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[1][1]);
+	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[1][2]);
+
 	// get time and make sure GameTick is fired before GamePaint
 	double previous = m_GameTickTimerPtr->GetGameTime() - m_PhysicsTimeStep;
 	double lag = 0; // keep left over time
@@ -230,13 +249,18 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 			// Make sure the game engine isn't sleeping
 			if (m_bSleep == false)
 			{
+
+				++m_FrameCounter;
 				
 				double current = m_GameTickTimerPtr->GetGameTime();
 				double elapsed = current - previous; // calc timedifference
+				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::FrameTime, (float)(elapsed * 1000.0f));
 				if (elapsed > 0.25) elapsed = 0.25; //prevent jumps in time when break point or sleeping
 				previous = current;  // reset
 				lag += elapsed;
 
+				Timer t{};
+				t.Start();
 				while (lag >= m_PhysicsTimeStep)
 				{
 					// Check the state of keyboard and mouse
@@ -256,26 +280,55 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 					CallListeners();
 					lag -= m_PhysicsTimeStep;
 				}
+				t.Stop();
+				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
+
 
 				ImGui_ImplDX11_NewFrame();
 				ImGui_ImplWin32_NewFrame();
 				ImGui::NewFrame();
-				m_GamePtr->DebugUI();
+				{
+					m_GamePtr->DebugUI();
+					m_MetricsOverlay->render_overlay();
+					m_OverlayManager->render_overlay();
+				}
 				ImGui::EndFrame();
-
 				ImGui::Render();
+
+				// Get pgu data 
+				size_t idx = m_FrameCounter % 2;
+				if (m_FrameCounter > 2)
+				{
+					size_t prev_idx = (m_FrameCounter - 1) % 2;
+					D3D11_QUERY_DATA_TIMESTAMP_DISJOINT timestampDisjoint;
+					UINT64 start;
+					UINT64 end;
+					while (S_OK != m_D3DDeviceContextPtr->GetData(gpuTimings[idx][0], &timestampDisjoint, sizeof(timestampDisjoint), 0)) {}
+					while (S_OK != m_D3DDeviceContextPtr->GetData(gpuTimings[idx][1], &start, sizeof(UINT64), 0)) {}
+					while (S_OK != m_D3DDeviceContextPtr->GetData(gpuTimings[idx][2], &end, sizeof(UINT64), 0)) {}
+
+					double diff = (double)(end - start) / (double)timestampDisjoint.Frequency;
+					m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::RenderGPU, (float)(diff * 1000.0));
+				}
+
+
+				m_D3DDeviceContextPtr->Begin(gpuTimings[idx][0]);
+				m_D3DDeviceContextPtr->End(gpuTimings[idx][1]);
+
 
 				FLOAT color[4] = { 0.5f,0.5f,0.5f,0.0f };
 				m_D3DDeviceContextPtr->ClearRenderTargetView(m_D3DBackBufferView, color);
 				m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, nullptr);
+
 				// Paint using vsynch
 				ExecuteDirect2DPaint();
-
-
 				ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 				// Present
-				m_DXGISwapchainPtr->Present(1, 0);
+				m_DXGISwapchainPtr->Present(m_bVSync ? 1 : 0, 0);
+
+				m_D3DDeviceContextPtr->End(gpuTimings[idx][2]);
+				m_D3DDeviceContextPtr->End(gpuTimings[idx][0]);
 			}
 			else WaitMessage(); // if the engine is sleeping or the game loop isn't supposed to run, wait for the next windows message.
 		}
@@ -1155,6 +1208,21 @@ bool GameEngine::GetSleep() const
 	return m_bSleep ? true : false;
 }
 
+ID3D11Device* GameEngine::GetD3DDevice() const
+{
+	return m_D3DDevicePtr;
+}
+
+ID3D11DeviceContext* GameEngine::GetD3DDeviceContext() const
+{
+	return m_D3DDeviceContextPtr;
+}
+
+ID3D11RenderTargetView* GameEngine::GetD3DBackBufferView() const
+{
+	return m_D3DBackBufferView;
+}
+
 ID2D1Factory* GameEngine::GetD2DFactory() const
 {
 	return m_D2DFactoryPtr;
@@ -1215,8 +1283,14 @@ void GameEngine::SetSleep(bool bSleep)
 		return;
 
 	m_bSleep = bSleep;
-	if (bSleep)m_GameTickTimerPtr->Stop();
-	else m_GameTickTimerPtr->Start();
+	if (bSleep)
+	{
+		m_GameTickTimerPtr->Stop();
+	}
+	else
+	{
+		m_GameTickTimerPtr->Start();
+	}
 }
 
 void GameEngine::EnableVSync(bool bEnable)
@@ -1251,12 +1325,26 @@ void GameEngine::GUIConsumeEvents()
 
 void GameEngine::ApplyGameSettings(GameSettings &gameSettings)
 {
-	GameEngine::GetSingleton()->SetWidth(gameSettings.GetWindowWidth());
-	GameEngine::GetSingleton()->SetHeight(gameSettings.GetWindowHeight());
-	GameEngine::GetSingleton()->SetTitle(gameSettings.GetWindowTitle());
-	if (gameSettings.IsConsoleEnabled())GameEngine::GetSingleton()->ConsoleCreate();
-	GameEngine::GetSingleton()->EnableVSync(gameSettings.IsVSync());
-	GameEngine::GetSingleton()->EnableAntiAlias(gameSettings.IsAntiAliasingEnabled());
+	SetWidth(gameSettings.GetWindowWidth());
+	SetHeight(gameSettings.GetWindowHeight());
+	SetTitle(gameSettings.GetWindowTitle());
+	EnableVSync(gameSettings.IsVSync());
+	EnableAntiAlias(gameSettings.IsAntiAliasingEnabled());
+
+	if (gameSettings.IsConsoleEnabled())
+	{
+		ConsoleCreate();
+	}
+}
+
+void GameEngine::SetVSync(bool vsync)
+{
+	m_bVSync = vsync;
+}
+
+bool GameEngine::GetVSync()
+{
+	return m_bVSync;
 }
 
 // Input methods
@@ -1420,25 +1508,25 @@ LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lP
 		return 0;
 
 	// Posted to the window with the keyboard focus when a nonsystem key is pressed. A nonsystem key is a key that is pressed when the ALT key is not pressed.
-	//case WM_KEYDOWN: 
-	//	m_InputPtr->KeyboardKeyPressed(wParam);
-	//	break;
-	//-ID------
-	// JONATHANSTEY
-	// Jonathan
-	// 3/27/2015 8:15:20 AM
-	// 40217f75-7631-4475-80c4-9a04ff65c495
-	//---------
-	//case WM_KEYUP:
-	//	m_InputPtr->KeyboardKeyReleased(wParam);
-	//	break;
+	case WM_KEYDOWN: 
+		//m_InputPtr->KeyboardKeyPressed(wParam);
+		break;
+	case WM_KEYUP:
+		//m_InputPtr->KeyboardKeyReleased(wParam);
+		if (wParam == VK_F9)
+		{
+			m_OverlayManager->set_visible(!m_OverlayManager->get_visible());
+		}
+		break;
 	}
 
 	extern IMGUI_IMPL_API LRESULT  ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	if (ImGui_ImplWin32_WndProcHandler(hWindow, msg, wParam, lParam) == 0)
+	if (LRESULT v = ImGui_ImplWin32_WndProcHandler(hWindow, msg, wParam, lParam); v != 0)
 	{
-		return DefWindowProc(hWindow, msg, wParam, lParam);
+		return v;
 	}
+
+	return DefWindowProc(hWindow, msg, wParam, lParam);
 }
 
 // Create resources which are not bound

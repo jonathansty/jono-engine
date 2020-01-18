@@ -95,6 +95,8 @@ void PrecisionTimer::Stop()
 		QueryPerformanceCounter((LARGE_INTEGER*)&currTime);
 
 		m_StopTime = currTime;
+
+		m_DeltaTime = (m_CurrTime - m_PrevTime - m_PausedTime) * m_SecondsPerCount;
 		m_bStopped = true;
 	}
 }
@@ -131,4 +133,30 @@ void PrecisionTimer::Tick()
 bool PrecisionTimer::IsStopped() const
 {
 	return m_bStopped;
+}
+
+void Timer::Start()
+{
+	assert(m_bStopped);
+	QueryPerformanceCounter((LARGE_INTEGER*)&m_BaseTime);
+	m_bStopped = false;
+}
+
+void Timer::Stop()
+{
+	assert(!m_bStopped);
+	QueryPerformanceCounter((LARGE_INTEGER*)&m_StopTime);
+	m_bStopped = true;
+
+}
+
+Timer::Timer()
+	: m_bStopped(true)
+{
+
+}
+
+Timer::~Timer()
+{
+
 }

@@ -68,3 +68,49 @@ private:
 	PrecisionTimer(const PrecisionTimer& sRef);
 	PrecisionTimer& operator=(const PrecisionTimer& sRef);
 };
+
+class Timer
+{
+public:
+	// -------------------------
+	// Constructors & Destructor
+	// -------------------------
+	Timer();
+	~Timer();
+
+	// -------------------------
+	// General Methods
+	// -------------------------
+
+	// Stores the start time
+	void Start(); // Call when unpaused.
+	// Stores the current time
+	void Stop();  // Call when paused.
+
+	// Returns the state
+	bool IsStopped() const { return m_StopTime; }
+
+	double GetTime() const 
+	{ 
+		LARGE_INTEGER freq;
+		::QueryPerformanceFrequency(&freq);
+		return (double)(m_StopTime - m_BaseTime) / freq.QuadPart;
+	}
+
+	double GetTimeInMS() const
+	{
+		return GetTime() * 1000.0;
+	}
+	
+
+
+private:
+
+	__int64 m_BaseTime;
+	__int64 m_StopTime;
+
+	bool m_bStopped;
+
+	Timer(const Timer& sRef);
+	Timer& operator=(const Timer& sRef);
+};

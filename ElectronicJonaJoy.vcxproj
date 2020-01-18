@@ -88,6 +88,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="AbstractGame.cpp" />
+    <ClInclude Include="EngineFiles\DebugOverlays\MetricsOverlay.h" />
+    <ClInclude Include="EngineFiles\DebugOverlays\OverlayManager.h" />
     <ClInclude Include="EngineFiles\imgui\imconfig.h" />
     <ClInclude Include="EngineFiles\imgui\imgui.h" />
     <ClInclude Include="EngineFiles\imgui\imgui_impl_dx11.h" />
@@ -103,6 +105,8 @@
     <ClCompile Include="EngineFiles\Bitmap.cpp" />
     <ClCompile Include="EngineFiles\Box2DDebugRenderer.cpp" />
     <ClCompile Include="EngineFiles\Button.cpp" />
+    <ClCompile Include="EngineFiles\DebugOverlays\MetricsOverlay.cpp" />
+    <ClCompile Include="EngineFiles\DebugOverlays\OverlayMananager.cpp" />
     <ClCompile Include="EngineFiles\Font.cpp" />
     <ClCompile Include="EngineFiles\GameEngine.cpp" />
     <ClCompile Include="EngineFiles\GameSettings.cpp" />

@@ -32,9 +32,6 @@
     <Filter Include="Game Files\Entities">
       <UniqueIdentifier>{eecff76a-9e6d-49d4-8f71-444566230fb0}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Game Files\game">
-      <UniqueIdentifier>{6ef9f0df-d284-48f4-b4d4-14ae40ce2728}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Game Files\Animations">
       <UniqueIdentifier>{d5798fa1-3f8a-47aa-914f-d6f724ba7b57}</UniqueIdentifier>
     </Filter>
@@ -52,6 +49,12 @@
     </Filter>
     <Filter Include="Engine Files\imgui">
       <UniqueIdentifier>{54e12575-ac2e-4a3d-a715-88beee2c2789}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game Files\Game">
+      <UniqueIdentifier>{6ef9f0df-d284-48f4-b4d4-14ae40ce2728}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine Files\DebugOverlays">
+      <UniqueIdentifier>{17139086-557d-45ab-a4b3-e92512a6c3c6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -137,10 +140,10 @@
       <Filter>Game Files</Filter>
     </ClCompile>
     <ClCompile Include="GameFiles/Camera.cpp">
-      <Filter>Game Files\game</Filter>
+      <Filter>Game Files\Game</Filter>
     </ClCompile>
     <ClCompile Include="GameFiles/Level.cpp">
-      <Filter>Game Files\game</Filter>
+      <Filter>Game Files\Game</Filter>
     </ClCompile>
     <ClCompile Include="GameFiles/Sprite.cpp">
       <Filter>Game Files</Filter>
@@ -242,13 +245,13 @@
       <Filter>Game Files\Enemies</Filter>
     </ClCompile>
     <ClCompile Include="GameFiles/CameraTrigger.cpp">
-      <Filter>Game Files\game</Filter>
+      <Filter>Game Files\Game</Filter>
     </ClCompile>
     <ClCompile Include="GameFiles/CameraTriggerRotate.cpp">
-      <Filter>Game Files\game</Filter>
+      <Filter>Game Files\Game</Filter>
     </ClCompile>
     <ClCompile Include="GameFiles/TriggerList.cpp">
-      <Filter>Game Files\game</Filter>
+      <Filter>Game Files\Game</Filter>
     </ClCompile>
     <ClCompile Include="GameFiles/MetalFans.cpp">
       <Filter>Game Files\Entities</Filter>
@@ -291,6 +294,12 @@
     </ClCompile>
     <ClCompile Include="EngineFiles\imgui\imgui_demo.cpp">
       <Filter>Engine Files\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\DebugOverlays\MetricsOverlay.cpp">
+      <Filter>Engine Files\DebugOverlays</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\DebugOverlays\OverlayMananager.cpp">
+      <Filter>Engine Files\DebugOverlays</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -514,10 +523,10 @@
       <Filter>Game Files</Filter>
     </ClInclude>
     <ClInclude Include="GameFiles/Camera.h">
-      <Filter>Game Files\game</Filter>
+      <Filter>Game Files\Game</Filter>
     </ClInclude>
     <ClInclude Include="GameFiles/Level.h">
-      <Filter>Game Files\game</Filter>
+      <Filter>Game Files\Game</Filter>
     </ClInclude>
     <ClInclude Include="GameFiles/Sprite.h">
       <Filter>Game Files</Filter>
@@ -622,13 +631,13 @@
       <Filter>Game Files\Enemies</Filter>
     </ClInclude>
     <ClInclude Include="GameFiles/CameraTrigger.h">
-      <Filter>Game Files\game</Filter>
+      <Filter>Game Files\Game</Filter>
     </ClInclude>
     <ClInclude Include="GameFiles/CameraTriggerRotate.h">
-      <Filter>Game Files\game</Filter>
+      <Filter>Game Files\Game</Filter>
     </ClInclude>
     <ClInclude Include="GameFiles/TriggerList.h">
-      <Filter>Game Files\game</Filter>
+      <Filter>Game Files\Game</Filter>
     </ClInclude>
     <ClInclude Include="GameFiles/MetalFans.h">
       <Filter>Game Files\Entities</Filter>
@@ -681,6 +690,12 @@
     </ClInclude>
     <ClInclude Include="EngineFiles\imgui\imstb_truetype.h">
       <Filter>Engine Files\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\DebugOverlays\MetricsOverlay.h">
+      <Filter>Engine Files\DebugOverlays</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\DebugOverlays\OverlayManager.h">
+      <Filter>Engine Files\DebugOverlays</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

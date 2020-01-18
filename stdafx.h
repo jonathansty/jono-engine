@@ -14,6 +14,9 @@
 
 // std lib includes
 #include <vector>			// std lib vector
+#include <array>
+#include <unordered_map>
+#include <map>
 #include <string>			// std lib to_string
 #include <sstream>			// std lib stringstream
 #include <fstream>			// SVGParser
@@ -93,5 +96,7 @@ enum class BodyType
 #include "GameFiles/BitmapManager.h"
 #include "GameFiles/SoundManager.h"
 
+using std::shared_ptr;
+using std::weak_ptr;
 
 
