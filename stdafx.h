@@ -32,6 +32,7 @@
 #include <d3d11.h>
 #include <d3d11_1.h>
 #include <dxgi.h>
+#include <dxgidebug.h>
 
 // libs used for Direct2D
 #pragma comment(lib, "dxgi.lib")
@@ -66,6 +67,7 @@ using namespace D2D1;
 #endif
 
 
+#include "EngineFiles/tinyxml2/tinyxml2.h"
 #include "imgui/imgui.h"
 
 #include "EngineFiles/EString.h"

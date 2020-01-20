@@ -1,13 +1,6 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE5
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
+#include "SoundManager.h"
 #include "FileManager.h"
 #include "ElectronicJonaJoy.h"																				
 #include "Entity.h"
@@ -51,14 +44,10 @@
 #include "Slicer.h"
 #include "NpcHinter.h"
 #include "Game.h"
-//---------------------------
-// Defines
-//---------------------------
+
 #define GAME_ENGINE (GameEngine::GetSingleton())
 #define BITMAP_MANAGER (BitmapManager::GetSingleton())
-//---------------------------
-// Constructor & Destructor
-//---------------------------
+
 FileManager::FileManager()
 {
     m_AnimationListPtr = new AnimationList();
@@ -91,51 +80,31 @@ FileManager::~FileManager()
     m_LevelEndPtr = nullptr;
 }
 
+using namespace tinyxml2;
 //! Reads the level file
-void FileManager::ReadGameInit(const String& filePath)
+void FileManager::ReadGameInit(const std::string& filePath)
 {
-    std::wifstream inputFile;
-    inputFile.open(filePath.C_str());
-    if (inputFile.fail())
-    {
-        GAME_ENGINE->MessageBox(String("Failed to open ") + filePath);
-    }
-    else
-    {
-        GAME_ENGINE->ConsolePrintString(String("Succesfully opened GameInit.txt."));
-    }
-    std::wstringstream expressionStream;
-    std::wstring extractedLine;
-    while (!(inputFile.eof()))
-    {
+    tinyxml2::XMLDocument document{};
+    document.LoadFile(filePath.c_str());
 
-        std::getline(inputFile, extractedLine);
-        expressionStream << extractedLine;
-        if (extractedLine.find(L"//") != std::string::npos)
-        {
-            expressionStream.str(L"");
-        }
-        else if (extractedLine.find(L"/>") != std::string::npos)
-        {
-            CreateObjects(expressionStream.str());
-            expressionStream.str(L"");
-
-        }
+    // For each child
+    for (XMLElement* current = document.FirstChildElement(); current; current = current->NextSiblingElement())
+    {
+        CreateObject(current);
     }
-    inputFile.close();
 }
 //! Reads the level file only for certain objects
-void FileManager::ReadGameInitForObject(const String& filePath, const String& objectName)
+void FileManager::ReadGameInitForObject(const std::string& filePath, const std::string& objectName)
 {
     std::wifstream inputFile;
-    inputFile.open(filePath.C_str());
+    inputFile.open(filePath);
     if (inputFile.fail())
     {
-        GAME_ENGINE->MessageBox(String("Failed to open ") + filePath);
+        GAME_ENGINE->MessageBox(String("Failed to open ") + String(filePath.c_str()));
     }
     else
     {
-        GAME_ENGINE->ConsolePrintString(String("Succesfully loaded GameInit.txt."));
+        GAME_ENGINE->ConsolePrintString(String("Successfully loaded GameInit.txt."));
     }
     std::wstringstream expressionStream;
     std::wstring extractedLine;
@@ -150,7 +119,7 @@ void FileManager::ReadGameInitForObject(const String& filePath, const String& ob
         }
         else if (extractedLine.find(L"/>") != std::string::npos)
         {
-            CreateSpecificObject(expressionStream.str(), objectName);
+            CreateSpecificObject(expressionStream.str(), String(objectName.c_str()));
             expressionStream.str(L"");
                 
         }
@@ -158,128 +127,148 @@ void FileManager::ReadGameInitForObject(const String& filePath, const String& ob
     inputFile.close();
 }
 //! Creates all the objects.
-void FileManager::CreateObjects(const std::wstring& expressionStringRef)
+void FileManager::CreateObject(tinyxml2::XMLElement* element)
 {
-    if (expressionStringRef.find(L"<levelSound") != std::string::npos)
+    std::string name = element->Name();
+    if (name.compare("LevelSound") == 0)
     {
-        ExtractBgMusic(expressionStringRef);
+        ExtractBgMusic(element);
     }
-    if (expressionStringRef.find(L"<Avatar") != std::string::npos)
+    if (name.compare("Avatar") == 0)
     {
-        ExtractAvatar(expressionStringRef);
+        ExtractAvatar(element);
     }
-    if (expressionStringRef.find(L"<LevelMap") != std::string::npos)
+    if (name.compare("LevelMap") == 0)
     {
-        ExtractLevel(expressionStringRef);
+        ExtractLevel(element);
     }
-    if (expressionStringRef.find(L"<LevelEnd") != std::string::npos)
+    if (name.compare("LevelEnd") == 0)
     {
-        ExtractLevelEnd(expressionStringRef);
+        ExtractLevelEnd(element);
     }
-    if (expressionStringRef.find(L"<Camera") != std::string::npos)
+    if (name.compare("Camera") == 0)
     {
-        ExtractCamera(expressionStringRef);
+        ExtractCamera(element);
     }
-    if (expressionStringRef.find(L"<BlockSlide") != std::string::npos)
+    if (name.compare("BlockSlide") == 0)
     {
-        ExtractBlockSlide(expressionStringRef);
+        ExtractBlockSlide(element);
     }
-    if (expressionStringRef.find(L"<Gate") != std::string::npos)
+    if (name.compare("Gate") == 0)
     {
-        ExtractGate(expressionStringRef);
+        ExtractGate(element);
     }
-    if (expressionStringRef.find(L"<Laser") != std::string::npos)
+    if (name.compare("Laser") == 0)
     {
-        ExtractLaser(expressionStringRef);
+        ExtractLaser(element);
     }
-    if (expressionStringRef.find(L"<JumpShooter") != std::string::npos)
+    if (name.compare("JumpShooter") == 0)
     {
-        ExtractArrowShooter(expressionStringRef);
+        ExtractArrowShooter(element);
     }
-    if (expressionStringRef.find(L"<Arrow") != std::string::npos)
+    if (name.compare("Arrow") == 0)
     {
-        ExtractArrow(expressionStringRef);
+        ExtractArrow(element);
     }
-    if (expressionStringRef.find(L"<EnemyShooter") != std::string::npos)
+    if (name.compare("EnemyShooter") == 0)
     {
-        ExtractEnemyShooter(expressionStringRef);
+        ExtractEnemyShooter(element);
     }
-    if (expressionStringRef.find(L"<CheckPoint") != std::string::npos)
+    if (name.compare("CheckPoint") == 0)
     {
-        ExtractCheckPoint(expressionStringRef);
+        ExtractCheckPoint(element);
     }
-    if (expressionStringRef.find(L"<EnemyRotater") != std::string::npos)
+    if (name.compare("EnemyRotater") == 0)
     {
-        ExtractEnemyRotater(expressionStringRef);
+        ExtractEnemyRotater(element);
     }
-    if (expressionStringRef.find(L"<EnemyHorizontal") != std::string::npos)
+    if (name.compare("EnemyHorizontal") == 0)
     {
-        ExtractEnemyHorizontal(expressionStringRef);
+        ExtractEnemyHorizontal(element);
     }
-    if (expressionStringRef.find(L"<Coin") != std::string::npos)
+    if (name.compare("Coin") == 0)
     {
-        ExtractCoin(expressionStringRef);
+        ExtractCoin(element);
     }
-    if (expressionStringRef.find(L"<Teleport") != std::string::npos)
+    if (name.compare("Teleport") == 0)
     {
-        ExtractTeleport(expressionStringRef);
+        ExtractTeleport(element);
     }
-    if (expressionStringRef.find(L"<EnemyRocketLauncher") != std::string::npos)
+    if (name.compare("EnemyRocketLauncher") == 0)
     {
-        ExtractEnemyRocketLauncher(expressionStringRef);
+        ExtractEnemyRocketLauncher(element);
     }
-    if (expressionStringRef.find(L"<MetalFan") != std::string::npos)
+    if (name.compare("MetalFan") == 0)
     {
-        ExtractMetalFan(expressionStringRef);
+        ExtractMetalFan(element);
     }
-    if (expressionStringRef.find(L"<StickyWall") != std::string::npos)
+    if (name.compare("StickyWall") == 0)
     {
-        ExtractStickyWall(expressionStringRef);
+        ExtractStickyWall(element);
     }
-    if (expressionStringRef.find(L"<Slicer") != std::string::npos)
+    if (name.compare("Slicer") == 0)
     {
-        ExtractSlicer(expressionStringRef);
+        ExtractSlicer(element);
     }
-    if (expressionStringRef.find(L"<NpcHinter")!= std::string::npos)
+    if (name.compare("NpcHinter") == 0)
     {
-        ExtractNpcHinter(expressionStringRef);
+        ExtractNpcHinter(element);
     }
 }
+
 /*  Methods for extracting every object
 *   
 */
-void FileManager::ExtractBgMusic(const std::wstring& expressionStringRef)
+void FileManager::ExtractBgMusic(tinyxml2::XMLElement* element)
 {
-    String filePath = String(GetValue(L"soundPath", expressionStringRef).c_str());
-    if (m_SndBgMusicPtr == nullptr)
+    const XMLAttribute* attribute = element->FindAttribute("soundPath");
+    if (attribute)
     {
-        m_SndBgMusicPtr = SoundManager::GetSingleton()->LoadMusic(filePath);
-        m_SndBgMusicPtr->Stop();
-    }
-    else
-    {
-        if (m_SndBgMusicPtr->GetPath() != filePath)
-        {
-            m_SndBgMusicPtr->Stop();
-            m_SndBgMusicPtr = SoundManager::GetSingleton()->LoadMusic(filePath);
-        }
+        String path = String(attribute->Value());
+		if (m_SndBgMusicPtr == nullptr)
+		{
+			m_SndBgMusicPtr = SoundManager::Instance()->LoadMusic(path);
+			m_SndBgMusicPtr->Stop();
+		}
+		else
+		{
+			if (m_SndBgMusicPtr->GetPath() != path)
+			{
+				m_SndBgMusicPtr->Stop();
+				m_SndBgMusicPtr = SoundManager::Instance()->LoadMusic(path);
+			}
+		}
+
     }
 }
-void FileManager::ExtractAvatar(const std::wstring& expressionStringRef)
+void FileManager::ExtractAvatar(tinyxml2::XMLElement* element)
 {
-    DOUBLE2 respawnPosition = StringToDouble2(GetValue(L"respawnPosition", expressionStringRef));
+
+    XMLAttribute const*  respawnPosAttribute = element->FindAttribute("respawnPosition");
+    assert(respawnPosAttribute);
+    XMLAttribute const*  posAttribute = element->FindAttribute("position");
+    assert(posAttribute);
+    XMLAttribute const*  bitmapAttribute = element->FindAttribute("bitmap");
+    assert(bitmapAttribute);
+    XMLAttribute const*  bitmapEpicModeAttr = element->FindAttribute("bitmapEpicMode");
+    assert(bitmapEpicModeAttr);
+    XMLAttribute const*  gravityScaleAttr = element->FindAttribute("gravityScale");
+    assert(gravityScaleAttr);
+    XMLAttribute const*  jumpheightAttr = element->FindAttribute("jumpheight");
+    assert(jumpheightAttr);
+
+    DOUBLE2 respawnPosition = StringToDouble2(respawnPosAttribute->Value());
     //double coins = m_AvatarPtr->GetAmountOfCoins();
     if (m_AvatarPtr != nullptr)
     {
         DOUBLE2 oldRespawn = m_AvatarPtr->GetRespawnPosition();
         //respawnPosition = oldRespawn;
-
     }
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    String bitmapName = String(GetValue(L"bitmap", expressionStringRef).c_str());
-    String bitmapEpicMode = String(GetValue(L"bitmapEpicMode", expressionStringRef).c_str());
-    double gravityScale = String(GetValue(L"gravityScale", expressionStringRef).c_str()).ToDouble();
-    double jumpHeight = String(GetValue(L"jumpheight", expressionStringRef).c_str()).ToDouble();
+    DOUBLE2 position = StringToDouble2(posAttribute->Value());
+    String bitmapName = String(bitmapAttribute->Value());
+    String bitmapEpicMode = String(bitmapEpicModeAttr->Value());
+    double gravityScale = gravityScaleAttr->DoubleValue();
+    double jumpHeight = jumpheightAttr->DoubleValue();
 
     if (m_AvatarPtr == nullptr)
     {
@@ -292,18 +281,26 @@ void FileManager::ExtractAvatar(const std::wstring& expressionStringRef)
     m_AvatarPtr->SetLevel(m_LevelPtr);
     m_AvatarPtr->SetJumpHeight(jumpHeight);
 
-    GAME_ENGINE->ConsolePrintString(String("Avatar succesfully created!"));
+    GameEngine::Instance()->ConsolePrintString(String("Avatar succesfully created!"));
 }
-void FileManager::ExtractLevel(const std::wstring& expressionStringRef)
+void FileManager::ExtractLevel(tinyxml2::XMLElement* element)
 {
     if (m_LevelPtr != nullptr && m_LevelPtr->GetBgBmpPtr())
     {
         BITMAP_MANAGER->RemoveBitmapFile(m_LevelPtr->GetBgBmpPtr()->GetFileName());
     }
 
-    String bitmapName = String(GetValue(L"bitmap", expressionStringRef).c_str());
-    String svgName = String(GetValue(L"svg", expressionStringRef).c_str());
-    String svgNameBounds = String(GetValue(L"svgBounds", expressionStringRef).c_str());
+    // Attributes
+    XMLAttribute const* bitmapAttr = element->FindAttribute("bitmap");
+    assert(bitmapAttr);
+    XMLAttribute const* svgAttr = element->FindAttribute("svg");
+    assert(svgAttr);
+    XMLAttribute const* svgBoundsAttr = element->FindAttribute("svgBounds");
+    assert(svgBoundsAttr);
+
+    String bitmapName = String(bitmapAttr->Value());
+    String svgName = String(svgAttr->Value());
+    String svgNameBounds = String(svgBoundsAttr->Value());
     if (m_LevelPtr != nullptr)
     {
         delete m_LevelPtr;
@@ -320,9 +317,11 @@ void FileManager::ExtractLevel(const std::wstring& expressionStringRef)
     }
     GAME_ENGINE->ConsolePrintString(String("Level succesfully created!"));
 }
-void FileManager::ExtractLevelEnd(const std::wstring& expressionStringRef)
+void FileManager::ExtractLevelEnd(tinyxml2::XMLElement* element)
 {
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
+    XMLAttribute const* attribute = element->FindAttribute("position");
+    assert(attribute);
+    DOUBLE2 position = StringToDouble2(attribute->Value());
 
     LevelEnd* tmpLevelEnd = new LevelEnd(position, String("Resources/test.txt"));
 
@@ -331,52 +330,50 @@ void FileManager::ExtractLevelEnd(const std::wstring& expressionStringRef)
         delete m_LevelEndPtr;
         m_LevelEndPtr = nullptr;
     }
-    //Reading amount of levers
+
+    //TODO: Fix levers to obey correct XML specs
     int i = 0;
+    XMLAttribute const* attr = nullptr;
+    std::string attrName = "";
 
-    while (expressionStringRef.find((String("Lever") + String(i) + String("Position")).C_str()) != std::string::npos)
-    {
-        String value = String("Lever") + String(i) + String("Position");
-        i++;
-        DOUBLE2 leverPosition = StringToDouble2(GetValue(value.C_str(), expressionStringRef));
-        Lever* tmpLeverPtr = nullptr;
-        int color = rand() & 3;
-        switch (color)
-        {
-        case 0:
-            tmpLeverPtr = new Lever(leverPosition, BITMAP_MANAGER->LoadBitmapFile(String("Resources/Interactions/buttonBlue.png")));
-            break;
-        case 1:
-            tmpLeverPtr = new Lever(leverPosition, BITMAP_MANAGER->LoadBitmapFile(String("Resources/Interactions/buttonYellow.png")));
-            break;
-        case 2:
-            tmpLeverPtr = new Lever(leverPosition, BITMAP_MANAGER->LoadBitmapFile(String("Resources/Interactions/buttonGreen.png")));
-            break;
-        case 3:
-            tmpLeverPtr = new Lever(leverPosition, BITMAP_MANAGER->LoadBitmapFile(String("Resources/Interactions/buttonOrange.png")));
-            break;
-        default:
-            break;
-        }
+    std::string paths[4] = {
+        "Resources/Interactions/buttonBlue.png",
+        "Resources/Interactions/buttonYellow.png",
+        "Resources/Interactions/buttonGreen.png",
+        "Resources/Interactions/buttonOrange.png",
+    };
+	do
+	{
+	    attrName = "Level" + std::to_string(i) + "Position";
+        attr = element->FindAttribute(attrName.c_str());
+        if (attr)
+		{
+            DOUBLE2 leverPosition = StringToDouble2(attr->Value());
+			Lever* tmpLeverPtr = nullptr;
+			int color = rand() & 3;
+			tmpLeverPtr = new Lever(leverPosition, BITMAP_MANAGER->LoadBitmapFile(String(paths[color].c_str())));
 
-        tmpLeverPtr->SetAvatar(m_AvatarPtr);
-        tmpLevelEnd->Add(tmpLeverPtr);
-    }
+			tmpLeverPtr->SetAvatar(m_AvatarPtr);
+			tmpLevelEnd->Add(tmpLeverPtr);
+		}
+		i++;
+    } while (attr);
     m_LevelEndPtr = tmpLevelEnd;
 
     GAME_ENGINE->ConsolePrintString(String("LevelEnd succesfully created!"));
 }
-void FileManager::ExtractCamera(const std::wstring& expressionStringRef)
+void FileManager::ExtractCamera(tinyxml2::XMLElement* element)
 {
-    if (expressionStringRef.find(L"<CameraTriggerRotate") != std::string::npos)
+    std::string name = element->Name();
+    if (name.compare("CameraTriggerRotate") == 0)
     {
-        DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
+        DOUBLE2 position = StringToDouble2(element->FindAttribute("position")->Value());
 
-        int width = String(GetValue(L"width", expressionStringRef).c_str()).ToInteger();
-        int height = String(GetValue(L"height", expressionStringRef).c_str()).ToInteger();
-        double lowerAngle = String(GetValue(L"lowerAngle", expressionStringRef).c_str()).ToDouble();
-        double upperAngle = String(GetValue(L"upperAngle", expressionStringRef).c_str()).ToDouble();
-        double angularVelocity = String(GetValue(L"angularVelocity", expressionStringRef).c_str()).ToDouble();
+        int width = element->FindAttribute("width")->IntValue();
+        int height = element->FindAttribute("height")->IntValue();
+        double lowerAngle = element->FindAttribute("lowerAngle")->DoubleValue();
+        double upperAngle = element->FindAttribute("upperAngle")->DoubleValue();
+        double angularVelocity = element->FindAttribute("angularVelocity")->DoubleValue();
         CameraTriggerRotate* tmpCameraTrigger = new CameraTriggerRotate(position, width, height);
         tmpCameraTrigger->SetAngleLimit(lowerAngle, upperAngle);
         tmpCameraTrigger->SetCamera(m_CameraPtr);
@@ -384,24 +381,24 @@ void FileManager::ExtractCamera(const std::wstring& expressionStringRef)
         m_TriggerListPtr->Add(tmpCameraTrigger);
 
     }
-    else if (expressionStringRef.find(L"<Camera") != std::string::npos)
+    else if (name.compare("Camera") == 0)
     {
-        DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-        DOUBLE2 startPosition = StringToDouble2(GetValue(L"startPosition", expressionStringRef));
-        double speed = String(GetValue(L"speed", expressionStringRef).c_str()).ToDouble();
+		DOUBLE2 position = StringToDouble2(element->FindAttribute("position")->Value());
+		DOUBLE2 startPosition = StringToDouble2(element->FindAttribute("startPosition")->Value());
+        double speed = element->FindAttribute("speed")->DoubleValue();
         double scale = 1;
-        if (expressionStringRef.find(L"scale") != std::string::npos)
+        if (XMLAttribute const* attr = element->FindAttribute("scale"); attr)
         {
-            scale = String(GetValue(L"scale", expressionStringRef).c_str()).ToDouble();
-            std::cout << "The scale has been set to " << scale << std::endl;
+            attr->QueryDoubleValue(&scale);
         }
+
         if (m_CameraPtr != nullptr)
         {
             delete m_CameraPtr;
             m_CameraPtr = nullptr;
         }
 
-        String controlState = String(GetValue(L"mode", expressionStringRef).c_str());
+        String controlState = String(element->FindAttribute("mode")->Value());
         Camera* tmpCamera = new Camera(m_LevelPtr, m_AvatarPtr, scale);
         if (controlState == String("manual"))
         {
@@ -427,23 +424,23 @@ void FileManager::ExtractCamera(const std::wstring& expressionStringRef)
         GAME_ENGINE->ConsolePrintString(String("Camera succesfully created!"));
     }
 }
-void FileManager::ExtractBlockSlide(const std::wstring& expressionStringRef)
+void FileManager::ExtractBlockSlide(tinyxml2::XMLElement* element)
 {
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    int width = String(GetValue(L"width", expressionStringRef).c_str()).ToInteger();
-    int height = String(GetValue(L"height", expressionStringRef).c_str()).ToInteger();
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    int width = String(GetValue("width", element).c_str()).ToInteger();
+    int height = String(GetValue("height", element).c_str()).ToInteger();
     BlockSlide* tmpBlockSlide = new BlockSlide(position, width, height);
     tmpBlockSlide->SetAvatar(m_AvatarPtr);
     tmpBlockSlide->SetName(name);
     m_EntityListPtr->Add(tmpBlockSlide);
     GAME_ENGINE->ConsolePrintString(name + String(" sucessfully created!"));
 }
-void FileManager::ExtractGate(const std::wstring& expressionStringRef)
+void FileManager::ExtractGate(tinyxml2::XMLElement* element)
 {
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 triggerPosition = StringToDouble2(GetValue(L"triggerPosition", expressionStringRef));
-    DOUBLE2 GatePosition = StringToDouble2(GetValue(L"gatePosition", expressionStringRef));
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 triggerPosition = StringToDouble2(GetValue("triggerPosition", element));
+    DOUBLE2 GatePosition = StringToDouble2(GetValue("gatePosition", element));
 
     Gate* tmpGate = new Gate(GatePosition, triggerPosition);
     tmpGate->SetAvatar(m_AvatarPtr);
@@ -451,11 +448,11 @@ void FileManager::ExtractGate(const std::wstring& expressionStringRef)
     m_EntityListPtr->Add(tmpGate);
     GAME_ENGINE->ConsolePrintString(name + String(" sucessfully created!"));
 }
-void FileManager::ExtractLaser(const std::wstring& expressionStringRef)
+void FileManager::ExtractLaser(tinyxml2::XMLElement* element)
 {
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    double angularVelocity = String(GetValue(L"angularVelocity", expressionStringRef).c_str()).ToDouble();
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    String name = String(GetValue("name", element).c_str());
+    double angularVelocity = String(GetValue("angularVelocity", element).c_str()).ToDouble();
     EnemyLaser* tmpLaser = new EnemyLaser(position);
     tmpLaser->setName(name);
     tmpLaser->SetAngularVelocity(angularVelocity);
@@ -463,12 +460,12 @@ void FileManager::ExtractLaser(const std::wstring& expressionStringRef)
     tmpLaser->SetAvatar(m_AvatarPtr);
     m_EnemyListPtr->Add(tmpLaser);
 }
-void FileManager::ExtractArrow(const std::wstring& expressionStringRef)
+void FileManager::ExtractArrow(tinyxml2::XMLElement* element)
 {
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    String bitmapName = String(GetValue(L"bitmap", expressionStringRef).c_str());
-    double pushpower = String(GetValue(L"pushpower", expressionStringRef).c_str()).ToDouble();
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    String name = String(GetValue("name", element).c_str());
+    String bitmapName = String(GetValue("bitmap", element).c_str());
+    double pushpower = String(GetValue("pushpower", element).c_str()).ToDouble();
     Arrow* tmpArrow = new Arrow(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName));
     tmpArrow->SetPushPower(pushpower);
     tmpArrow->SetName(name);
@@ -476,27 +473,27 @@ void FileManager::ExtractArrow(const std::wstring& expressionStringRef)
     m_EntityListPtr->Add(tmpArrow);
     GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
 }
-void FileManager::ExtractArrowShooter(const std::wstring& expressionStringRef)
+void FileManager::ExtractArrowShooter(tinyxml2::XMLElement* element)
 {
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    DOUBLE2 direction = StringToDouble2(GetValue(L"direction", expressionStringRef));
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    int pushpower = String(GetValue(L"pushpower", expressionStringRef).c_str()).ToInteger();
-    double intervalTime = String(GetValue(L"intervalTime", expressionStringRef).c_str()).ToDouble();
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    DOUBLE2 direction = StringToDouble2(GetValue("direction", element));
+    String name = String(GetValue("name", element).c_str());
+    int pushpower = String(GetValue("pushpower", element).c_str()).ToInteger();
+    double intervalTime = String(GetValue("intervalTime", element).c_str()).ToDouble();
     ArrowShooter* tmpArrowShooterPtr = new ArrowShooter(position, direction, intervalTime);
     tmpArrowShooterPtr->SetName(name);
     tmpArrowShooterPtr->SetPushPower(pushpower);
     m_EntityListPtr->Add(tmpArrowShooterPtr);
     GAME_ENGINE->ConsolePrintString(name + String(" sucessfully created!"));
 }
-void FileManager::ExtractEnemyShooter(const std::wstring& expressionStringRef)
+void FileManager::ExtractEnemyShooter(tinyxml2::XMLElement* element)
 {
-    String bitmapName = String(GetValue(L"bitmap", expressionStringRef).c_str());
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    double angle = String(GetValue(L"angle", expressionStringRef).c_str()).ToDouble();
-    bool mirror = StringToBool(GetValue(L"mirror", expressionStringRef.c_str()));
-    double gravityScale = String(GetValue(L"gravityScale", expressionStringRef).c_str()).ToDouble();
+    String bitmapName = String(GetValue("bitmap", element).c_str());
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    double angle = String(GetValue("angle", element).c_str()).ToDouble();
+    bool mirror = element->FindAttribute("mirror")->BoolValue();
+    double gravityScale = String(GetValue("gravityScale", element).c_str()).ToDouble();
     EnemyShooter* tmpEnemyPtr = new EnemyShooter(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName), angle);
     tmpEnemyPtr->SetMirror(mirror);
     tmpEnemyPtr->SetLevel(m_LevelPtr);
@@ -505,20 +502,20 @@ void FileManager::ExtractEnemyShooter(const std::wstring& expressionStringRef)
     m_EnemyListPtr->Add(tmpEnemyPtr);
     GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
 }
-void FileManager::ExtractCheckPoint(const std::wstring& expressionStringRef)
+void FileManager::ExtractCheckPoint(tinyxml2::XMLElement* element)
 {
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    String bitmapName = String(GetValue(L"bitmap", expressionStringRef).c_str());
+    String name = String(GetValue("name", element).c_str());
+    String bitmapName = String(GetValue("bitmap", element).c_str());
     double angle = 0;
-    if (expressionStringRef.find(L"cameraAngle") != std::string::npos)
+    if (auto it = element->FindAttribute("cameraAngle"); it) 
     {
-        angle = String(GetValue(L"cameraAngle", expressionStringRef).c_str()).ToDouble();
+        angle = String(GetValue("cameraAngle", element).c_str()).ToDouble();
     }
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
     DOUBLE2 cameraPosition = position;
-    if (expressionStringRef.find(L"cameraPosition") != std::string::npos)
+    if (element->FindAttribute("cameraPosition") )
     {
-        cameraPosition = StringToDouble2(GetValue(L"cameraPosition", expressionStringRef));
+        cameraPosition = StringToDouble2(GetValue("cameraPosition", element));
     }
     CheckPoint* tmpCheckPoint = new CheckPoint(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName));
     tmpCheckPoint->SetAvatar(m_AvatarPtr);
@@ -528,11 +525,11 @@ void FileManager::ExtractCheckPoint(const std::wstring& expressionStringRef)
     m_EntityListPtr->Add(tmpCheckPoint);
     GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
 }
-void FileManager::ExtractEnemyRotater(const std::wstring& expressionStringRef)
+void FileManager::ExtractEnemyRotater(tinyxml2::XMLElement* element)
 {
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    String bitmapName = String(GetValue(L"bitmap", expressionStringRef).c_str());
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    String bitmapName = String(GetValue("bitmap", element).c_str());
     EnemyRotater* tmpEnemyRotater = new EnemyRotater(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName));
     tmpEnemyRotater->SetLevel(m_LevelPtr);
     tmpEnemyRotater->SetAvatar(m_AvatarPtr);
@@ -540,17 +537,17 @@ void FileManager::ExtractEnemyRotater(const std::wstring& expressionStringRef)
     m_EnemyListPtr->Add(tmpEnemyRotater);
     GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
 }
-void FileManager::ExtractEnemyHorizontal(const std::wstring& expressionStringRef)
+void FileManager::ExtractEnemyHorizontal(tinyxml2::XMLElement* element)
 {
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    String bitmapname = String(GetValue(L"bitmap", expressionStringRef).c_str());
-    DOUBLE2 velocity = StringToDouble2(GetValue(L"velocity", expressionStringRef));
-    DOUBLE2 offset = StringToDouble2(GetValue(L"offset", expressionStringRef));
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    String name = String(GetValue("name", element).c_str());
+    String bitmapname = String(GetValue("bitmap", element).c_str());
+    DOUBLE2 velocity = StringToDouble2(GetValue("velocity", element));
+    DOUBLE2 offset = StringToDouble2(GetValue("offset", element));
     int lifes = 1;
-    if (expressionStringRef.find(L"lifes") != std::string::npos)
+    if (element->FindAttribute("lifes"))
     {
-        lifes = String(GetValue(L"lifes", expressionStringRef).c_str()).ToInteger();
+        lifes = String(GetValue("lifes", element).c_str()).ToInteger();
     }
     EnemyHorizontal* tmpEnemyPtr = new EnemyHorizontal(position, BITMAP_MANAGER->LoadBitmapFile(bitmapname), m_AvatarPtr);
     tmpEnemyPtr->SetLevel(m_LevelPtr);
@@ -561,24 +558,24 @@ void FileManager::ExtractEnemyHorizontal(const std::wstring& expressionStringRef
     m_EnemyListPtr->Add(tmpEnemyPtr);
     GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
 }
-void FileManager::ExtractCoin(const std::wstring& expressionStringRef)
+void FileManager::ExtractCoin(tinyxml2::XMLElement* element)
 {
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    String bitmapname = String(GetValue(L"bitmap", expressionStringRef).c_str());
-    int coinValue = String(GetValue(L"value", expressionStringRef).c_str()).ToInteger();
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    String bitmapname = String(GetValue("bitmap", element).c_str());
+    int coinValue = String(GetValue("value", element).c_str()).ToInteger();
     Coin* tmpCoin = new Coin(position, BITMAP_MANAGER->LoadBitmapFile(bitmapname));
     tmpCoin->SetCoinValue(coinValue);
     tmpCoin->SetName(name);
     m_CoinListPtr->Add(tmpCoin);
     GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
 }
-void FileManager::ExtractTeleport(const std::wstring& expressionStringRef)
+void FileManager::ExtractTeleport(tinyxml2::XMLElement* element)
 {
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 entrancePos = StringToDouble2(GetValue(L"entrancePos", expressionStringRef));
-    DOUBLE2 exitPos = StringToDouble2(GetValue(L"exitPos", expressionStringRef));
-    String bitmapname = String(GetValue(L"bitmap", expressionStringRef).c_str());
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 entrancePos = StringToDouble2(GetValue("entrancePos", element));
+    DOUBLE2 exitPos = StringToDouble2(GetValue("exitPos", element));
+    String bitmapname = String(GetValue("bitmap", element).c_str());
     Teleport* tmpTeleport = new Teleport(entrancePos, exitPos, BITMAP_MANAGER->LoadBitmapFile(bitmapname));
     tmpTeleport->SetAvatar(m_AvatarPtr);
     tmpTeleport->SetLevel(m_LevelPtr);
@@ -586,59 +583,59 @@ void FileManager::ExtractTeleport(const std::wstring& expressionStringRef)
     m_EntityListPtr->Add(tmpTeleport);
     GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
 }
-void FileManager::ExtractEnemyRocketLauncher(const std::wstring& expressionStringRef)
+void FileManager::ExtractEnemyRocketLauncher(tinyxml2::XMLElement* element)
 {
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    double angle = String(GetValue(L"angle", expressionStringRef).c_str()).ToDouble();
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    double angle = String(GetValue("angle", element).c_str()).ToDouble();
     EnemyRocketLauncher* tmpEnemyRocketLauncher = new EnemyRocketLauncher(position, angle);
     tmpEnemyRocketLauncher->SetAvatar(m_AvatarPtr);
     tmpEnemyRocketLauncher->setName(name);
     m_EnemyListPtr->Add(tmpEnemyRocketLauncher);
     GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
 }
-void FileManager::ExtractMetalFan(const std::wstring& expressionStringRef)
+void FileManager::ExtractMetalFan(tinyxml2::XMLElement* element)
 {
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    double angle = String(GetValue(L"angle", expressionStringRef).c_str()).ToDouble();
-    double repulsionForce = String(GetValue(L"repulsionForce", expressionStringRef).c_str()).ToDouble();
-    double frictionForce = String(GetValue(L"frictionForce", expressionStringRef).c_str()).ToDouble();
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    double angle = String(GetValue("angle", element).c_str()).ToDouble();
+    double repulsionForce = String(GetValue("repulsionForce", element).c_str()).ToDouble();
+    double frictionForce = String(GetValue("frictionForce", element).c_str()).ToDouble();
     MetalFans* tmpMetalFan = new MetalFans(position, angle);
     tmpMetalFan->SetRepulsionForce(repulsionForce);
     tmpMetalFan->SetFrictionForce(frictionForce);
     tmpMetalFan->SetAvatar(m_AvatarPtr);
     m_EntityListPtr->Add(tmpMetalFan);
 }
-void FileManager::ExtractStickyWall(const std::wstring& expressionStringRef)
+void FileManager::ExtractStickyWall(tinyxml2::XMLElement* element)
 {
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    int width = String(GetValue(L"width", expressionStringRef).c_str()).ToInteger();
-    int height = String(GetValue(L"height", expressionStringRef).c_str()).ToInteger();
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    int width = String(GetValue("width", element).c_str()).ToInteger();
+    int height = String(GetValue("height", element).c_str()).ToInteger();
     StickyWall* tmpStickyWall = new StickyWall(position, width, height);
     tmpStickyWall->SetName(name);
     tmpStickyWall->SetAvatar(m_AvatarPtr);
     m_EntityListPtr->Add(tmpStickyWall);
 }
-void FileManager::ExtractSlicer(const std::wstring& expressionStringRef)
+void FileManager::ExtractSlicer(tinyxml2::XMLElement* element)
 {
     Slicer* tmpSlicerPtr = nullptr;
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    DOUBLE2 barPosition = StringToDouble2(GetValue(L"barPosition", expressionStringRef));
-    int radius = String(GetValue(L"radius", expressionStringRef).c_str()).ToInteger();
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    DOUBLE2 barPosition = StringToDouble2(GetValue("barPosition", element));
+    int radius = String(GetValue("radius", element).c_str()).ToInteger();
     tmpSlicerPtr = new Slicer(position, barPosition,radius);
     tmpSlicerPtr->SetAvatar(m_AvatarPtr);
     tmpSlicerPtr->SetLevel(m_LevelPtr);
     m_EnemyListPtr->Add(tmpSlicerPtr);
 }
-void FileManager::ExtractNpcHinter(const std::wstring& expressionStringRef)
+void FileManager::ExtractNpcHinter(tinyxml2::XMLElement* element)
 {
-    String name = String(GetValue(L"name", expressionStringRef).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-    String tipText = String(GetValue(L"tipText", expressionStringRef).c_str());
-    String facing = String(GetValue(L"facing", expressionStringRef).c_str());
+    String name = String(GetValue("name", element).c_str());
+    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    String tipText = String(GetValue("tipText", element).c_str());
+    String facing = String(GetValue("facing", element).c_str());
     NpcHinter* tmpNpcHinterPtr = new NpcHinter(position, tipText);
     tmpNpcHinterPtr->SetAvatar(m_AvatarPtr);
     tmpNpcHinterPtr->SetName(name);
@@ -647,79 +644,70 @@ void FileManager::ExtractNpcHinter(const std::wstring& expressionStringRef)
 }
 
 //! Loads the background music
-void FileManager::LoadGameMusic(const String& filePath)
+void FileManager::LoadGameMusic(const std::string& filePath)
 {
-    std::wifstream inputFile;
-    inputFile.open(filePath.C_str());
-    if (inputFile.fail())
-    {
-        GAME_ENGINE->MessageBox(String("Failed to open ") + filePath);
-    }
-    else
-    {
-        GAME_ENGINE->ConsolePrintString(String("Succesfully opened GameInit.txt."));
-    }
-    std::wstringstream expressionStream;
-    std::wstring extractedLine;
-    while (!(inputFile.eof()))
-    {
 
-        std::getline(inputFile, extractedLine);
-        expressionStream << extractedLine;
-        if (extractedLine.find(L"//") != std::string::npos)
+    tinyxml2::XMLDocument musicDocument;
+    if(musicDocument.LoadFile(filePath.c_str()) != XML_SUCCESS)
+	{
+		GAME_ENGINE->MessageBox(String("Failed to open ") + String(filePath.c_str()));
+	}
+	else
+	{
+		GAME_ENGINE->ConsolePrintString(String("Succesfully opened GameInit.txt."));
+	}
+
+
+    XMLElement* m = musicDocument.FirstChildElement("MusicList");
+	if (m)
+	{
+        for (auto it = m->FirstChildElement("Music"); it; it = it->NextSiblingElement())
         {
-            expressionStream.str(L"");
-        }
-        else if (extractedLine.find(L"</") != std::string::npos)
-        {
-            std::wstring expressionStringRef = expressionStream.str();
-            if (expressionStringRef.find(L"<MusicList") != std::string::npos)
+            auto attr = it->FindAttribute("path");
+
+            if (attr)
             {
-                int i = 0;
-                std::wstringstream currentString;
-                currentString << L"music_";
-                currentString << i;
-                while (expressionStringRef.find(currentString.str()) != std::string::npos)
-                {
-                    String filePath = String(GetValue(currentString.str(), expressionStringRef).c_str());
-                    SoundManager::GetSingleton()->LoadMusic(filePath);
-                    i++;
-                    currentString.str(L"");
-                    currentString << L"music_";
-                    currentString << i;
-                }
-            }
-            
-            
-            expressionStream.str(L"");
+				String filePath = String(attr->Value());
+				SoundManager::GetSingleton()->LoadMusic(filePath);
 
+            }
         }
-    }
-    inputFile.close();
+	}
 }
 //! creates a specific object
 void FileManager::CreateSpecificObject(const std::wstring& expressionStringRef, const String& objectName)
 {
-    if (objectName == String("Arrow") && expressionStringRef.find(L"<Arrow") != std::string::npos)
-    {
-        DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
-        String name = String(GetValue(L"name", expressionStringRef).c_str());
-        String bitmapName = String(GetValue(L"bitmap", expressionStringRef).c_str());
-        double pushpower = String(GetValue(L"pushpower", expressionStringRef).c_str()).ToDouble();
-        Arrow* tmpArrow = new Arrow(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName));
-        tmpArrow->SetPushPower(pushpower);
-        tmpArrow->SetName(name);
-        m_EntityListPtr->Add(tmpArrow);
-        GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
-    }
+    assert("RELOADING not supported anymore");
+    //if (objectName == String("Arrow") && expressionStringRef.find(L"<Arrow") != std::string::npos)
+    //{
+    //    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
+    //    String name = String(GetValue(L"name", expressionStringRef).c_str());
+    //    String bitmapName = String(GetValue(L"bitmap", expressionStringRef).c_str());
+    //    double pushpower = String(GetValue(L"pushpower", expressionStringRef).c_str()).ToDouble();
+    //    Arrow* tmpArrow = new Arrow(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName));
+    //    tmpArrow->SetPushPower(pushpower);
+    //    tmpArrow->SetName(name);
+    //    m_EntityListPtr->Add(tmpArrow);
+    //    GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
+    //}
 }
-//! Gets the value of a property
+
+std::string FileManager::GetValue(const std::string& nameRef, XMLElement* el)
+{
+    if (auto attr = el->FindAttribute(nameRef.c_str()); attr)
+    {
+        return attr->Value();
+    }
+    return "";
+}
+
 std::wstring FileManager::GetValue(const std::wstring& nameRef, const std::wstring& objectRef)
 {
-    int idStart = objectRef.find(nameRef) + nameRef.size() + 2;
-    int idEnd = objectRef.find('\"', idStart + 1);
-    return objectRef.substr(idStart, idEnd - idStart);
+	int idStart = objectRef.find(nameRef) + nameRef.size() + 2;
+	int idEnd = objectRef.find('\"', idStart + 1);
+	return objectRef.substr(idStart, idEnd - idStart);
 }
+
 //! Converts a string to double2
 DOUBLE2 FileManager::StringToDouble2(const std::wstring& valueRef)
 {
@@ -729,18 +717,16 @@ DOUBLE2 FileManager::StringToDouble2(const std::wstring& valueRef)
     String secondNumber = String(valueRef.substr(idSeperator + 1, 1 + length - idSeperator).c_str());
     return DOUBLE2(firstNumber.ToInteger(), secondNumber.ToInteger());
 }
-//! Converts a string to bool
-bool FileManager::StringToBool(const std::wstring& valueRef)
+
+DOUBLE2 FileManager::StringToDouble2(const std::string& valueRef)
 {
-    if (valueRef == L"true")
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+	int idSeperator = valueRef.find(",");
+	int length = valueRef.size();
+	String firstNumber = String(valueRef.substr(0, idSeperator).c_str());
+	String secondNumber = String(valueRef.substr(idSeperator + 1, 1 + length - idSeperator).c_str());
+	return DOUBLE2(firstNumber.ToInteger(), secondNumber.ToInteger());
 }
+
 //! Returns the triggerList
 TriggerList* FileManager::GetTriggers()
 {
@@ -1011,62 +997,37 @@ std::vector<std::pair<String, TCHAR>> FileManager::GetKeyBinds()
     return m_KeyBindsArr;
 }
 //! Loads a list of levels from the filePath
-LevelList* FileManager::LoadLevels(const String& filePath)
+LevelList* FileManager::LoadLevels(const std::string& filePath)
 {
     LevelList* tmpLevelList = new LevelList();
-    std::wifstream configFile;
-    configFile.open(filePath.C_str());
-    if (configFile.fail())
+    tinyxml2::XMLDocument document{};
+    if(document.LoadFile(filePath.c_str()) != XML_SUCCESS)
     {
-        GAME_ENGINE->MessageBox(String("Failed to load levels!"));
+        GAME_ENGINE->MessageBox(String("Failed to open ") + String(filePath.c_str()));
         return nullptr;
-    }
-    std::wifstream inputFile;
-    inputFile.open(filePath.C_str());
-    if (inputFile.fail())
-    {
-        GAME_ENGINE->MessageBox(String("Failed to open ") + filePath);
     }
     else
     {
         GAME_ENGINE->ConsolePrintString(String("Succesfully opened GameInit.txt."));
     }
-    std::wstringstream expressionStream;
-    std::wstring extractedLine;
-    while (!(inputFile.eof()))
+    auto root = document.FirstChildElement("LevelList");
+    if (root)
     {
+		for (auto it = root->FirstChildElement("Level"); it; it = it->NextSiblingElement())
+		{
+			auto attr = it->FindAttribute("path");
 
-        std::getline(inputFile, extractedLine);
-        expressionStream << extractedLine;
-        if (extractedLine.find(L"//") != std::string::npos)
-        {
-            expressionStream.str(L"");
-        }
-        else if (extractedLine.find(L"</") != std::string::npos)
-        {
-            std::wstring expressionStringRef = expressionStream.str();
-            if (expressionStringRef.find(L"<LevelList") != std::string::npos)
+            if (attr)
             {
-                int i = 0;
-                std::wstringstream currentString;
-                currentString << L"level_";
-                currentString << i;
-                while (expressionStringRef.find(currentString.str()) != std::string::npos)
-                {
-                    String filePath = String(GetValue(currentString.str(), expressionStringRef).c_str());
-                    tmpLevelList->Add(filePath);
-                    GAME_ENGINE->ConsolePrintString(String("Added ") + String(currentString.str().c_str()) + String(" to the levelList."));
-                    i++;
-                    currentString.str(L"");
-                    currentString << L"level_";
-                    currentString << i;
-                }
-            }
-            expressionStream.str(L"");
+				std::string filePath = attr->Value();
+				tmpLevelList->Add(filePath);
+				GAME_ENGINE->ConsolePrintString(String("Added ") + String(filePath.c_str()) + String(" to the levelList."));
 
-        }
+            }
+
+		}
     }
-    inputFile.close();
+
     return tmpLevelList;
 }
 

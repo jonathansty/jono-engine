@@ -1,6 +1,10 @@
 
 
 # Changelog
+0.1.2:
+- Added tinyxml2
+- Refactored FileManager to now use tinyxml2 to read the level XML files. The goal is to slowly transition to a better serialisation system for levels and objects in general (RTTI)
+
 0.1.1:
 - Fix release build
 - Added GPU markers in the engine code 

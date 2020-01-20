@@ -64,7 +64,7 @@ public:
     void UnPause();
     void Unload();
     void LinkHUD(HUD* hudPtr);
-    void Reset(const String& fileName);
+    void Reset(const std::string& fileName);
     bool GetGameOver();
     bool GetLevelEnd();
     void Restart();
@@ -73,9 +73,9 @@ public:
     * InitializeAll() : Removes everything (lists)and initializes it again
     * LoadLevel() : Takes care of the not list objects
     */
-    void Initializeall(const String& fileName);
+    void Initializeall(const std::string& fileName);
     
-    void LoadLevel(const String& filePath);
+    void LoadLevel(const std::string& filePath);
 
 
     void SetFileManager(FileManager* tmpFileManager);
@@ -106,7 +106,7 @@ private:
     // Private Datamembers
     // -------------------------
     double m_TimeMultiplier = 1;
-    String m_Level;
+    std::string m_Level;
     int m_TotalDeaths = 0;
     Avatar* m_AvatarPtr = nullptr;
     Level* m_LevelPtr = nullptr;

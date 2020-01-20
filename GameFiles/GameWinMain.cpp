@@ -20,87 +20,10 @@
 #include "AbstractGame.h"
 	
 //-----------------------------------------------------------------
-// Defines
-//-----------------------------------------------------------------
-
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-//-----------------------------------------------------------------
 // Windows Functions
 //-----------------------------------------------------------------
 
-class TestGame : public AbstractGame
-{
-public:
-	void GameStart() override
-	{
-		_test = std::make_shared<Bitmap>(String("Resources/Pickups/coinBronze.png"));
-		_sound = new Sound(String("Resources/Sound/Entity/Jump.wav"));
-	}
-
-	void GameEnd() override
-	{
-		_sound->Stop();
-		delete _sound;
-	}
-
-	void GamePaint(RECT rect) override
-	{
-		GameEngine::Instance()->DrawSolidBackground(COLOR(0, 0, 0));
-		GameEngine::Instance()->SetColor(COLOR(255, 0, 0));
-		GameEngine::Instance()->DrawRect(0, 0, 100, 100);
-
-		GameEngine::Instance()->DrawBitmap(_test.get());
-
-		if (_sound->GetPlayState() != Sound::PlayState::Playing)
-		{
-			_sound->Play();
-		}
-	}
-private:
-	std::shared_ptr<Bitmap> _test;
-	Sound* _sound;
-
-};
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
 {
-	//notify user if heap is corrupt
-	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL,0);
-
-	// Enable run-time memory leak check for debug builds.
-	#if defined(DEBUG) | defined(_DEBUG)
-		_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
-
-		typedef HRESULT(__stdcall *fPtr)(const IID&, void**); 
-		HMODULE hDll = LoadLibrary(L"dxgidebug.dll"); 
-		fPtr DXGIGetDebugInterface = (fPtr)GetProcAddress(hDll, "DXGIGetDebugInterface"); 
-
-		IDXGIDebug* pDXGIDebug;
-		DXGIGetDebugInterface(__uuidof(IDXGIDebug), (void**)&pDXGIDebug);
-        //_CrtSetBreakAlloc(239);
-	#endif
-		
-
-
-	///////////////////////////////////////////////////////
-	//if (GAME_ENGINE == nullptr) return FALSE; // create the game engine and exit if it fails
-
-	int returnValue = 0;
-
-	GAME_ENGINE->SetGame(new ElectronicJonaJoy());	
-	//GAME_ENGINE->SetGame(new TestGame());	
-	returnValue =  GAME_ENGINE->Run(hInstance, iCmdShow); // run the game engine and return the result
-
-	delete GameEngine::Instance();
-	///////////////////////////////////////////////////////
-
-
-#if defined(DEBUG) | defined(_DEBUG)
-	// unresolved external  
-	if(pDXGIDebug) pDXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL,DXGI_DEBUG_RLO_ALL); 
-    pDXGIDebug->Release();
-#endif
-
-	return returnValue;
-
+	return RunGame(hInstance,iCmdShow, new ElectronicJonaJoy());
 }

@@ -1,18 +1,6 @@
 #pragma once
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 
-//-----------------------------------------------------
-// Include Files
-//-----------------------------------------------------
 
-//#include "ContactListener.h"
-//-----------------------------------------------------
-// FileManager Class									
-//-----------------------------------------------------
 class Avatar;
 class Entity;
 class HUD;
@@ -65,11 +53,11 @@ public:
     };
 
     //! Reads the level file
-    void ReadGameInit(const String& filePath);
+    void ReadGameInit(const std::string& filePath);
     //! Reads the level file only for certain objects
-    void ReadGameInitForObject(const String& filePath, const String& objectName);
+    void ReadGameInitForObject(const std::string& filePath, const std::string& objectName);
     //! Loads the background music
-    void LoadGameMusic(const String& filePath);
+    void LoadGameMusic(const std::string& filePath);
     //! Loads all the avatar keybindings from the filePath
     //! Make sure the config file layout is correct.
     std::vector<std::pair<String, TCHAR>> LoadAvatarKeybinds(const String& filePath);
@@ -82,7 +70,7 @@ public:
     //! Removes all lists and clears them
     void ClearLists();
     //! Loads a list of levels from the filePath
-    LevelList* LoadLevels(const String& filePath);
+    LevelList* LoadLevels(const std::string& filePath);
 
     //! Returns the avatar
     Avatar* GetAvatar();
@@ -117,15 +105,14 @@ public:
 
 private: 
     //! Creates all the objects.
-    void CreateObjects(const std::wstring& expressionStringRef);
+    void CreateObject(tinyxml2::XMLElement* element);
     //! creates a specific object
     void CreateSpecificObject(const std::wstring& expressionStringRef, const String& objectName);
     //! Gets the value of a property
     std::wstring GetValue(const std::wstring& nameRef, const std::wstring& objectRef);
-    //! Converts a string to double2
+    std::string GetValue(const std::string& nameRef, tinyxml2::XMLElement* el);
     DOUBLE2 StringToDouble2(const std::wstring& valueRef);
-    //! Converts a string to bool
-    bool StringToBool(const std::wstring& valueRef);
+    DOUBLE2 StringToDouble2(const std::string& valueRef);
     //! Reads a start block
     void ReadGameResultsStart(std::wstring &expressionStringRef, sessionStats* tmpSessionStat);
     //! Read an end block
@@ -134,27 +121,27 @@ private:
     std::wstring GetValueOfBlock(const std::wstring& nameRef, const std::wstring& objectRef);
 
     //Read File Methods
-    void ExtractBgMusic(const std::wstring& expressionStringRef);
-    void ExtractAvatar(const std::wstring& expressionStringRef);
-    void ExtractLevel(const std::wstring& expressionStringRef);
-    void ExtractLevelEnd(const std::wstring& expressionStringRef);
-    void ExtractCamera(const std::wstring& expressionStringRef);
-    void ExtractBlockSlide(const std::wstring& expressionStringRef);
-    void ExtractGate(const std::wstring& expressionStringRef);
-    void ExtractLaser(const std::wstring& expressionStringRef);
-    void ExtractArrowShooter(const std::wstring& expressionStringRef);
-    void ExtractArrow(const std::wstring& expressionStringRef);
-    void ExtractEnemyShooter(const std::wstring& expressionStringRef);
-    void ExtractCheckPoint(const std::wstring& expressionStringRef);
-    void ExtractEnemyRotater(const std::wstring& expressionStringRef);
-    void ExtractEnemyHorizontal(const std::wstring& expressionStringRef);
-    void ExtractCoin(const std::wstring& expressionStringRef);
-    void ExtractTeleport(const std::wstring& expressionStringRef);
-    void ExtractEnemyRocketLauncher(const std::wstring& expressionStringRef);
-    void ExtractMetalFan(const std::wstring& expressionStringRef);
-    void ExtractStickyWall(const std::wstring& expressionStringRef);
-    void ExtractSlicer(const std::wstring& expressionStringRef);
-    void ExtractNpcHinter(const std::wstring& expressionStringRef);
+    void ExtractBgMusic(tinyxml2::XMLElement* element);
+    void ExtractAvatar(tinyxml2::XMLElement* element);
+    void ExtractLevel(tinyxml2::XMLElement* element);
+    void ExtractLevelEnd(tinyxml2::XMLElement* element);
+    void ExtractCamera(tinyxml2::XMLElement* element);
+    void ExtractBlockSlide(tinyxml2::XMLElement* element);
+    void ExtractGate(tinyxml2::XMLElement* element);
+    void ExtractLaser(tinyxml2::XMLElement* element);
+    void ExtractArrowShooter(tinyxml2::XMLElement* element);
+    void ExtractArrow(tinyxml2::XMLElement* element);
+    void ExtractEnemyShooter(tinyxml2::XMLElement* element);
+    void ExtractCheckPoint(tinyxml2::XMLElement* element);
+    void ExtractEnemyRotater(tinyxml2::XMLElement* element);
+    void ExtractEnemyHorizontal(tinyxml2::XMLElement* element);
+    void ExtractCoin(tinyxml2::XMLElement* element);
+    void ExtractTeleport(tinyxml2::XMLElement* element);
+    void ExtractEnemyRocketLauncher(tinyxml2::XMLElement* element);
+    void ExtractMetalFan(tinyxml2::XMLElement* element);
+    void ExtractStickyWall(tinyxml2::XMLElement* element);
+    void ExtractSlicer(tinyxml2::XMLElement* element);
+    void ExtractNpcHinter(tinyxml2::XMLElement* element);
 
 	//-------------------------------------------------
 	// Datamembers								

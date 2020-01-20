@@ -65,7 +65,7 @@ public:
 	// -------------------------
 
 private:
-    static const String CONFIGPATH;
+    static const std::string CONFIGPATH;
     Bitmap* m_BmpLoadingPtr = nullptr;
     tm m_BeginTime;
     tm m_EndTime;

@@ -195,7 +195,7 @@ void StartMenu::Paint()
     case StartMenu::menuState::HIGHSCORES:
         for (size_t i = 0, n = m_SessionStatsArr.size(); i < m_SessionStatsArr.size(); i++)
         {
-            int index = i + m_HighScoreOffsetCounter;
+            int index = int(i) + m_HighScoreOffsetCounter;
             if (i < MAXELEMENTSONSCREEN && index < m_SessionStatsArr.size())
             {
                 if (m_HighScoreOffsetCounter < m_SessionStatsArr.size() - MAXELEMENTSONSCREEN)
@@ -218,7 +218,7 @@ void StartMenu::Paint()
 
                 
                 int halfScreenWidth = GAME_ENGINE->GetWidth() / 2;
-                int gap = 50;
+                double gap = 50;
                 
                 tm beginTime = m_SessionStatsArr[index]->beginTime;
                 tm endTime = m_SessionStatsArr[index]->endTime;
@@ -229,21 +229,21 @@ void StartMenu::Paint()
 
                 std::wstringstream compoundString;
                 compoundString << index << L".";
-                GAME_ENGINE->DrawString(String(compoundString.str().c_str()),DOUBLE2(INDEXSTARTXPOS,INDEXSTARTYPOS + i*gap));
+                GAME_ENGINE->DrawString(String(compoundString.str().c_str()),DOUBLE2(INDEXSTARTXPOS,INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
                 
                 compoundString << L"\t" << beginTime.tm_mday << L"/" << beginTime.tm_mon << L"\t" << beginTime.tm_hour << ":" << beginTime.tm_min << ":" << beginTime.tm_sec;
-                GAME_ENGINE->DrawString(String(compoundString.str().c_str()), DOUBLE2(DATESTARTPOS, INDEXSTARTYPOS + i*gap));
+                GAME_ENGINE->DrawString(String(compoundString.str().c_str()), DOUBLE2(DATESTARTPOS, INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
 
                 compoundString << L"\t" << endTime.tm_mday << L"/" << endTime.tm_mon << L"\t" << endTime.tm_hour << ":" << endTime.tm_min << ":" << endTime.tm_sec;
-                GAME_ENGINE->DrawString(String(compoundString.str().c_str()), DOUBLE2(DATEENDPOS, INDEXSTARTYPOS + i*gap));
+                GAME_ENGINE->DrawString(String(compoundString.str().c_str()), DOUBLE2(DATEENDPOS, INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
 
-                GAME_ENGINE->DrawString(String(deaths),DOUBLE2(DEATHPOS,INDEXSTARTYPOS + i*gap));
-                GAME_ENGINE->DrawString(String(amountOfMoney), DOUBLE2(MONEYPOS, INDEXSTARTYPOS + i*gap));
-                GAME_ENGINE->DrawString(String(lifeTime), DOUBLE2(LIFETIMEPOS, INDEXSTARTYPOS + i*gap));
-                GAME_ENGINE->DrawString(String(lastLevel), DOUBLE2(LASTLEVELPOS, INDEXSTARTYPOS + i*gap));
+                GAME_ENGINE->DrawString(String(deaths),DOUBLE2(DEATHPOS,INDEXSTARTYPOS + double(i)*gap));
+                GAME_ENGINE->DrawString(String(amountOfMoney), DOUBLE2(MONEYPOS, INDEXSTARTYPOS + double(i)*gap));
+                GAME_ENGINE->DrawString(String(lifeTime), DOUBLE2(LIFETIMEPOS, INDEXSTARTYPOS + double(i)*gap));
+                GAME_ENGINE->DrawString(String(lastLevel), DOUBLE2(LASTLEVELPOS, INDEXSTARTYPOS + double(i)*gap));
                 GAME_ENGINE->SetDefaultFont();
                 delete tmpFntPtr;
             }
@@ -293,7 +293,7 @@ void StartMenu::Paint()
         int widthScreen = GAME_ENGINE->GetWidth();
         int height = GAME_ENGINE->GetHeight();
 
-        int amountOfBoxesNeeded = m_KeybindsArr.size();
+        int amountOfBoxesNeeded = int(m_KeybindsArr.size());
         int boundingHeight = 250;
         double positionsOfEachBox = (double)boundingHeight / amountOfBoxesNeeded;
         Font* tmpFntPtr = new Font(String("KenVector Future"), KEYLISTFNTSIZE);
@@ -408,7 +408,7 @@ void StartMenu::CreateKeyBindTextBoxes()
     int width = GAME_ENGINE->GetWidth();
     int height = GAME_ENGINE->GetHeight();
 
-    int amountOfBoxesNeeded = m_KeybindsArr.size();
+    int amountOfBoxesNeeded = int(m_KeybindsArr.size());
     int boundingHeight = 250;
     double positionsOfEachBox = (double)boundingHeight / amountOfBoxesNeeded;
     for (size_t i = 0; i < m_KeybindsArr.size(); i++)
@@ -430,7 +430,7 @@ void StartMenu::SetFileManager(FileManager* tmpFileManagerPtr)
 }
 void StartMenu::ReadGameResults()
 {
-    for (int i = 0, n = m_SessionStatsArr.size(); i < n; i++)
+    for (int i = 0, n = int(m_SessionStatsArr.size()); i < n; i++)
     {
         delete m_SessionStatsArr[i];
     }

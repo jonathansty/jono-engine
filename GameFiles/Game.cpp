@@ -381,7 +381,7 @@ void Game::Paint()
 * LoadLevel() : Takes care of the not list objects
 * RemoveAll() : Removes every thing including the lists
 */
-void Game::Initializeall(const String& fileName)
+void Game::Initializeall(const std::string& fileName)
 {
     m_CheckPointBgPtr->SetPosition(DOUBLE2(-650, -300));
     m_CheckPointRotLightPtr->SetPosition(DOUBLE2(-650, -300));
@@ -425,7 +425,7 @@ void Game::Initializeall(const String& fileName)
     
 }
 
-void Game::LoadLevel(const String& filePath)
+void Game::LoadLevel(const std::string& filePath)
 {
     
     m_GameState = GameState::RUNNING;
@@ -452,7 +452,7 @@ void Game::LoadLevel(const String& filePath)
         
     }
     UnPause();
-    GAME_ENGINE->ConsolePrintString(String("Loaded level ") + filePath);
+    GAME_ENGINE->ConsolePrintString(String("Loaded level ") + String(filePath.c_str()));
     m_SndBgMusicPtr->SetVolume(0);
     m_SndBgMusicPtr->Play();
 }
@@ -521,7 +521,7 @@ void Game::UnPause()
 /*
 * Methods for Restarting the Game and reloading
 */
-void Game::Reset(const String& fileName)
+void Game::Reset(const std::string& fileName)
 {
     m_GameState = GameState::RUNNING;
     m_GameOver = false;
@@ -539,8 +539,9 @@ void Game::Restart()
     m_EntityListPtr->Reset();
     m_EnemyListPtr->Reset();
     m_TriggerListPtr->Reset();
-    m_FileManagerPtr->ReadGameInitForObject(m_Level, String("EnemyRocketLauncher"));
-    m_FileManagerPtr->ReadGameInitForObject(m_Level, String("Arrow"));
+    //TODO: Fix resetting the level state for checkpoints to the state of when we reached the checkpoint
+    m_FileManagerPtr->ReadGameInitForObject(m_Level, "EnemyRocketLauncher");
+    m_FileManagerPtr->ReadGameInitForObject(m_Level, "Arrow");
     GAME_ENGINE->ConsolePrintString(String("Respawned the avatar!"));
     if (m_EntityLastHitCheckpointPtr != nullptr)
     {

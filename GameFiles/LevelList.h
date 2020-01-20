@@ -23,21 +23,15 @@ public:
 	LevelList( const LevelList& ) = delete;
 	LevelList& operator=( const LevelList& ) = delete;
 
-	//--------------------------------------------------------
-	// ContactListener overloaded member function declarations
-	//--------------------------------------------------------
-	//virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr); 
-	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
-	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
-    void Add(String levelPath);
-    String GetLevel(int levelNumber);
+    void Add(std::string levelPath);
+    std::string GetLevel(int levelNumber);
 
     int GetAmountOfLevels();
 private: 
 	//-------------------------------------------------
 	// Datamembers								
 	//-------------------------------------------------
-    std::vector<String>m_LevelPathsPtr;
+    std::vector<std::string>m_LevelPathsPtr;
     int m_NumberOfLevels = 0;
 };
 

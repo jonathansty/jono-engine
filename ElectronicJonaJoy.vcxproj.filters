@@ -29,6 +29,9 @@
     <Filter Include="Engine Files\DebugOverlays">
       <UniqueIdentifier>{17139086-557d-45ab-a4b3-e92512a6c3c6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\tinyxml2">
+      <UniqueIdentifier>{e05288dd-285c-47f2-b14c-3ba5d8bca02f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineFiles\GameEngine.cpp">
@@ -121,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="EngineFiles\AbstractGame.cpp">
       <Filter>Engine Files</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\tinyxml2\tinyxml2.cpp">
+      <Filter>Engine Files\tinyxml2</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -367,6 +373,9 @@
     </ClInclude>
     <ClInclude Include="EngineFiles\AbstractGame.h">
       <Filter>Engine Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\tinyxml2\tinyxml2.h">
+      <Filter>Engine Files\tinyxml2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

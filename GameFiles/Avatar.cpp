@@ -308,7 +308,7 @@ void Avatar::PaintTrail()
         m_deqTrail.pop_back();
     }
     GAME_ENGINE->SetColor(COLOR(255, 255, 255, 10));
-    for (int i = 0, n = m_deqTrail.size(); i < n - 1; i++)
+    for (int i = 0, n = int(m_deqTrail.size()); i < n - 1; i++)
     {
         DOUBLE2 pos = m_deqTrail[i];
         DOUBLE2 pos2 = m_deqTrail[i + 1];

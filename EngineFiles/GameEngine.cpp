@@ -531,11 +531,12 @@ void GameEngine::ConsoleSetCursorPosition(int column, int row)
 void GameEngine::ConsolePrintString(const String& textRef)
 {
 #ifdef _UNICODE
-	std::wcout << textRef.C_str() << std::endl;
+	std::wcout << textRef.C_str() << "\n";
 #else
-	std::cout << textRef.C_str() << std::endl;
+	std::cout << textRef.C_str() << "\n";
 #endif
-	::OutputDebugString(textRef);
+	String copy = textRef + String("\n");
+	::OutputDebugString(copy);
 }
 
 //void GameEngine::ConsolePrintString(string text)

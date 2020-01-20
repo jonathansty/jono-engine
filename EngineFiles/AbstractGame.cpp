@@ -12,12 +12,40 @@
 #include "../Resource.h"	// include file to use resources
 #include "AbstractGame.h"
 
-//-----------------------------------------------------------------
-// Defines
-//-----------------------------------------------------------------
+int RunGame(HINSTANCE hInstance,int iCmdShow, AbstractGame* game)
+{
+	//notify user if heap is corrupt
+	HeapSetInformation(NULL, HeapEnableTerminationOnCorruption, NULL, 0);
 
-#define GAME_ENGINE (GameEngine::GetSingleton())
+	// Enable run-time memory leak check for debug builds.
+#if defined(DEBUG) | defined(_DEBUG)
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 
-//-----------------------------------------------------------------
-// AbstractGame methods
-//-----------------------------------------------------------------
+	typedef HRESULT(__stdcall* fPtr)(const IID&, void**);
+	HMODULE hDll = LoadLibrary(L"dxgidebug.dll");
+	fPtr DXGIGetDebugInterface = (fPtr)GetProcAddress(hDll, "DXGIGetDebugInterface");
+
+	IDXGIDebug* pDXGIDebug;
+	DXGIGetDebugInterface(__uuidof(IDXGIDebug), (void**)&pDXGIDebug);
+	//_CrtSetBreakAlloc(239);
+#endif
+
+
+
+	int returnValue = 0;
+	GameEngine::Instance()->SetGame(game);
+	//GAME_ENGINE->SetGame(new TestGame());	
+	returnValue = GameEngine::Instance()->Run(hInstance, iCmdShow); // run the game engine and return the result
+
+	delete GameEngine::Instance();
+	///////////////////////////////////////////////////////
+
+
+#if defined(DEBUG) | defined(_DEBUG)
+	// unresolved external  
+	//if (pDXGIDebug) pDXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+	pDXGIDebug->Release();
+#endif
+
+	return returnValue;
+}

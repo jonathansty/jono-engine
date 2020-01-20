@@ -73,7 +73,7 @@ void Sound::Create(const String& filenameRef)
 	tstring tFilename(filenameRef.C_str());
 
 	// load mp3 using media foundation architecture: sourcereader
-	AudioDecoder(tFilename, m_Buffer, &m_Wfx);
+	AudioDecoder decoder = AudioDecoder(tFilename, m_Buffer, &m_Wfx);
 
 	// 3. Create a source voice by calling the IXAudio2::CreateSourceVoice method on an instance of the XAudio2 engine.
 	// Bart: We are friends with AudioSystem class, could use game engine singleton instead

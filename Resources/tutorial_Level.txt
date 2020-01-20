@@ -22,7 +22,7 @@
 	scale="1"
 	mode="followAvatar"
 />
-<levelSound
+<LevelSound
 	soundPath="Resources/Sound/BgMusic/main.mp3"
 />
 
