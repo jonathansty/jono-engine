@@ -1,26 +1,15 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 
-//---------------------------
-// Includes
-//---------------------------
 #include "Avatar.h"
 #include "Level.h"
 #include "SoundManager.h"
 #include "EntityList.h"
 #include "EnemyList.h"
-//---------------------------
-// Defines
-//---------------------------
+
+#include "FileManager.h"
+
 #define GAME_ENGINE (GameEngine::GetSingleton())
 #define SND_MANAGER (SoundManager::GetSingleton())
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 
 Avatar::Avatar(DOUBLE2 position, Bitmap* BmpPtr, Bitmap* bmpEpicModePtr) :
 Entity(position), 
@@ -73,8 +62,6 @@ Avatar::~Avatar()
     m_ActPtr->RemoveContactListener(this);
     delete m_ActPtr;
     m_ActPtr = nullptr;
-
-
 }
 
 //-------------------------------------------------------
@@ -661,30 +648,12 @@ void Avatar::SetNrJumps(int nr)
     m_JumpCounter = nr;
 }
 //! Sets the keybinds the player specified
-void Avatar::SetKeyBinds(std::vector<std::pair<String, TCHAR>>tmpKeyBindsArr)
+void Avatar::SetKeyBinds(FileManager::KeyMap tmpKeyBindsArr)
 {
-    for (size_t i = 0; i < tmpKeyBindsArr.size(); i++)
-    {
-        std::pair<String, TCHAR>tmpPair = tmpKeyBindsArr[i];
-        if (tmpPair.first == String("jump"))
-        {
-            m_Jump = tmpPair.second;
-        }
-        if (tmpPair.first == String("attack"))
-        {
-            m_Attack = tmpPair.second;
-        }
-        if (tmpPair.first == String("left"))
-        {
-            m_Left = tmpPair.second;
-        }
-        if (tmpPair.first == String("right"))
-        {
-            m_Right = tmpPair.second;
-        }
-        if (tmpPair.first == String("god"))
-        {
-            m_God = tmpPair.second;
-        }
-    }
+    // Player actions
+	m_Jump = tmpKeyBindsArr["jump"];
+	m_Attack = tmpKeyBindsArr["attack"];
+	m_Left = tmpKeyBindsArr["left"];
+	m_Right = tmpKeyBindsArr["right"];
+	m_God = tmpKeyBindsArr["god"];
 }

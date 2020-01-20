@@ -1,19 +1,7 @@
 #pragma once
-//-----------------------------------------------------
-// Name:
-// First name:
-// Group: 1DAE.
-//-----------------------------------------------------
 
-//-----------------------------------------------------
-// Include Files
-//-----------------------------------------------------
-
-//#include "ContactListener.h"
 #include "FileManager.h"
-//-----------------------------------------------------
-// StartMenu Class									
-//-----------------------------------------------------
+
 class FileManager;
 
 class StartMenu //: public ContactListener
@@ -26,22 +14,14 @@ public:
 	StartMenu( const StartMenu& ) = delete;
 	StartMenu& operator=( const StartMenu& ) = delete;
 
-	//--------------------------------------------------------
-	// ContactListener overloaded member function declarations
-	//--------------------------------------------------------
-	//virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr); 
-	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
-	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
     void Paint();
     void Tick(double deltaTime);
     void EnableButtons();
-
     bool startPressed();
     bool quitPressed();
     void Remove();
     void ReadGameResults();
-    void ReadKeyBindsForMenu(std::vector<std::pair<String, TCHAR>> tmpKeybindsArr);
-    std::vector<std::pair<String,TCHAR>> GetKeyBinds();
+    void ReadKeyBindsForMenu(FileManager::KeyMap tmpKeybindsArr);
     void SetFileManager(FileManager* fileManagerPtr);
 private: 
     
@@ -76,11 +56,15 @@ private:
     Button* m_BtnHighScoresPtr = nullptr;
     Button* m_BtnOptionsPtr = nullptr;
     Button* m_BtnApplyChangesPtr = nullptr;
-    std::vector<TextBox*>m_TxtInputKeyPtrArr;
+
+    std::map<std::string, class TextBox*> m_ActionToTxtBoxMappings;
+    std::vector<class TextBox*>m_TxtInputKeyPtrArr;
+    std::vector<class TextLabel*>m_TxtLabels;
+
     bool m_IsOptionAdjusted = false;
     Sound* m_BgMusicPtr = nullptr;
     FileManager* m_FileManagerPtr = nullptr;
-    std::vector<std::pair<String, TCHAR>>m_KeybindsArr;
+    FileManager::KeyMap m_KeybindsArr;
 };
 
  

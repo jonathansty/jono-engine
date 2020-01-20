@@ -11,7 +11,7 @@
 
 //#include "ContactListener.h"
 #include "Entity.h"
-#include <deque>
+#include "FileManager.h"
 //-----------------------------------------------------
 // Avatar Class									
 //-----------------------------------------------------
@@ -93,7 +93,7 @@ public:
     //! Sets how many times to avatar has jumped
     void SetNrJumps(int nr);
     //! Sets the keybinds the player specified
-    void SetKeyBinds(std::vector<std::pair<String, TCHAR>>tmpKeyBindsPtrArr);
+    void SetKeyBinds(FileManager::KeyMap tmpKeyBindsPtrArr);
 private: 
     //-------------------------------------------------
     // private functions							

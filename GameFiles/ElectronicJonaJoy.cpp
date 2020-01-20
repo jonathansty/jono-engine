@@ -16,7 +16,7 @@
 #define BITMAP_MANAGER (BitmapManager::GetSingleton())
 #define SND_MANAGER (SoundManager::GetSingleton())
 
-const std::string ElectronicJonaJoy::CONFIGPATH = std::string("Resources/cfg/config.txt");
+const std::string ElectronicJonaJoy::CONFIGPATH = std::string("Resources/cfg/config.xml");
 ElectronicJonaJoy::ElectronicJonaJoy()
 	: m_BeginTime()
 	, m_EndTime()
@@ -59,7 +59,7 @@ void ElectronicJonaJoy::GameStart()
 
 	m_FileManagerPtr = new FileManager();
 	m_LevelListPtr = m_FileManagerPtr->LoadLevels(CONFIGPATH);
-	m_FileManagerPtr->LoadAvatarKeybinds(String(CONFIGPATH.c_str()));
+	m_FileManagerPtr->LoadAvatarKeybinds(CONFIGPATH);
 	m_Game->SetFileManager(m_FileManagerPtr);
 }
 
@@ -125,7 +125,7 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 			m_FileManagerPtr->LoadGameMusic(CONFIGPATH);
 			m_Menu = new StartMenu();
 			m_Menu->SetFileManager(m_FileManagerPtr);
-			m_Menu->ReadKeyBindsForMenu(m_FileManagerPtr->LoadAvatarKeybinds(String(CONFIGPATH.c_str())));
+			m_Menu->ReadKeyBindsForMenu(m_FileManagerPtr->LoadAvatarKeybinds(CONFIGPATH.c_str()));
 			m_GameState = GameState::MENU;
 		}
 	default:

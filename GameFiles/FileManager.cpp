@@ -703,16 +703,16 @@ std::string FileManager::GetValue(const std::string& nameRef, XMLElement* el)
 
 std::wstring FileManager::GetValue(const std::wstring& nameRef, const std::wstring& objectRef)
 {
-	int idStart = objectRef.find(nameRef) + nameRef.size() + 2;
-	int idEnd = objectRef.find('\"', idStart + 1);
+	int idStart = int(objectRef.find(nameRef) + int(nameRef.size()) + 2);
+	int idEnd = int(objectRef.find('\"', idStart + 1));
 	return objectRef.substr(idStart, idEnd - idStart);
 }
 
 //! Converts a string to double2
 DOUBLE2 FileManager::StringToDouble2(const std::wstring& valueRef)
 {
-    int idSeperator = valueRef.find(L",");
-    int length = valueRef.size();
+    int idSeperator = int(valueRef.find(L","));
+    int length = int(valueRef.size());
     String firstNumber = String(valueRef.substr(0, idSeperator).c_str());
     String secondNumber = String(valueRef.substr(idSeperator + 1, 1 + length - idSeperator).c_str());
     return DOUBLE2(firstNumber.ToInteger(), secondNumber.ToInteger());
@@ -720,8 +720,8 @@ DOUBLE2 FileManager::StringToDouble2(const std::wstring& valueRef)
 
 DOUBLE2 FileManager::StringToDouble2(const std::string& valueRef)
 {
-	int idSeperator = valueRef.find(",");
-	int length = valueRef.size();
+	int idSeperator = int(valueRef.find(","));
+	int length = int(valueRef.size());
 	String firstNumber = String(valueRef.substr(0, idSeperator).c_str());
 	String secondNumber = String(valueRef.substr(idSeperator + 1, 1 + length - idSeperator).c_str());
 	return DOUBLE2(firstNumber.ToInteger(), secondNumber.ToInteger());
@@ -846,153 +846,59 @@ AnimationList* FileManager::GetAnimationList()
 
 //! Loads all the avatar keybindings from the filePath
 //! Make sure the config file layout is correct.
-std::vector<std::pair<String, TCHAR>> FileManager::LoadAvatarKeybinds(const String& filePath)
+FileManager::KeyMap FileManager::LoadAvatarKeybinds(const std::string& filePath)
 {
-    std::vector<std::pair<String, TCHAR>> tmpKeyBindsArr;
-    std::wifstream inputFile;
-    inputFile.open(filePath.C_str());
-    if (inputFile.fail())
-    {
-        GAME_ENGINE->MessageBox(String("Failed to open ") + filePath);
-    }
-    else
-    {
-        GAME_ENGINE->ConsolePrintString(String("Succesfully opened ") + filePath);
-    }
-    std::wstringstream expressionStream;
-    std::wstring extractedLine;
-    while (!(inputFile.eof()))
-    {
-        std::getline(inputFile, extractedLine);
-        expressionStream << extractedLine;
-        if (extractedLine.find(L"//") != std::string::npos)
-        {
-            expressionStream.str(L"");
-        }
-        else if (extractedLine.find(L"</") != std::string::npos)
-        {
-            
-            std::wstring expressionStringRef = expressionStream.str();
-            if (expressionStringRef.find(L"<AvatarControls") != std::string::npos)
-            {
-                int i = 0;
-                if (expressionStringRef.find(L"jump") != std::string::npos)
-                {
-                    std::pair<String, TCHAR> tmpPair;
-                    tmpPair.first = String("jump");
-                    tmpPair.second = String(GetValue(L"jump", expressionStringRef).c_str()).ToInteger();
-                    tmpKeyBindsArr.push_back(tmpPair);
-                }
-                if (expressionStringRef.find(L"attack") != std::string::npos)
-                {
-                    std::pair<String, TCHAR> tmpPair;
-                    tmpPair.first = String("attack");
-                    tmpPair.second = String(GetValue(L"attack", expressionStringRef).c_str()).ToInteger();
-                    tmpKeyBindsArr.push_back(tmpPair);
-                }
-                if (expressionStringRef.find(L"left") != std::string::npos)
-                {
-                    std::pair<String, TCHAR> tmpPair;
-                    tmpPair.first = String("left");
-                    tmpPair.second = String(GetValue(L"left", expressionStringRef).c_str()).ToInteger();
-                    tmpKeyBindsArr.push_back(tmpPair);
-                }
-                if (expressionStringRef.find(L"right") != std::string::npos)
-                {
-                    std::pair<String, TCHAR> tmpPair;
-                    tmpPair.first = String("right");
-                    tmpPair.second = String(GetValue(L"right", expressionStringRef).c_str()).ToInteger();
-                    tmpKeyBindsArr.push_back(tmpPair);
-                }
-                if (expressionStringRef.find(L"god") != std::string::npos)
-                {
-                    std::pair<String, TCHAR> tmpPair;
-                    tmpPair.first = String("god");
-                    tmpPair.second = String(GetValue(L"god", expressionStringRef).c_str()).ToInteger();
-                    tmpKeyBindsArr.push_back(tmpPair);
-                }
+	KeyMap tmpKeyBindsArr{};
+	tinyxml2::XMLDocument document{};
+	if (document.LoadFile(filePath.c_str()) != XML_SUCCESS)
+	{
+		GAME_ENGINE->MessageBox(String("Failed to open ") + String(filePath.c_str()));
+	}
 
-            }
-            expressionStream.str(L"");
-
+	if (auto avatar_controls = document.FirstChildElement("AvatarControls"); avatar_controls != nullptr)
+	{
+        for (auto action = avatar_controls->FirstChildElement("action"); action; action = action->NextSiblingElement("action"))
+        {
+            std::string action_name = action->FindAttribute("name")->Value();
+            UINT32 scan_code = action->FindAttribute("scan_code")->IntValue();
+            tmpKeyBindsArr[action_name] = scan_code;
         }
-    }
-    inputFile.close();
-    m_KeyBindsArr = tmpKeyBindsArr;
-    return tmpKeyBindsArr;
+	}
+	m_KeyBindsArr = tmpKeyBindsArr;
+	return tmpKeyBindsArr;
 }
 //! Sets the keysbinds for the avatar
-void FileManager::SetKeyBinds(std::vector < std::pair<String, TCHAR>> tmpKeyBinds, String filePath)
+void FileManager::SetKeyBinds(KeyMap& keyBinds, std::string filePath)
 {
-
     std::wifstream inputConfigFile;
     std::wstringstream filebuffer;
 
-    // Opening input file
-    inputConfigFile.open(filePath.C_str());
-    if (inputConfigFile.fail())
+    tinyxml2::XMLDocument document;
+    if (document.LoadFile(filePath.c_str()) != XML_SUCCESS)
     {
-        GAME_ENGINE->MessageBox(String("Failed to open ") + filePath);
+        GameEngine::Instance()->ConsolePrintString(String("Failed to set keybinds!"));
         return;
     }
-    else
+
+    XMLElement* root = document.RootElement();
+    if (XMLElement* avatar_controls = root->FirstChildElement("AvatarControls"); avatar_controls)
     {
-        GAME_ENGINE->ConsolePrintString(String("Succesfully opened ") + filePath);
-    }
+        for(XMLElement* action = avatar_controls->FirstChildElement("action"); action; action = action->NextSiblingElement("action"))
+		{
+            action->SetAttribute("scan_code", keyBinds[action->FindAttribute("name")->Value()]);
+		}
+	}
 
-
-    std::wstringstream expressionStream;
-    std::wstring extractedLine;
-    while (!(inputConfigFile.eof()))
-    {
-
-        std::getline(inputConfigFile, extractedLine);
-        expressionStream << extractedLine << std::endl;
-        
-        if (extractedLine.find(L"</") != std::string::npos)
-        {
-            
-            std::wstring expressionStringRef = expressionStream.str();
-            if (expressionStringRef.find(L"<AvatarControls>") != std::string::npos)
-            {
-                expressionStream.str(L"");
-                //Write the new keybinds
-                filebuffer << L"<AvatarControls>" << std::endl;
-                
-                for (size_t i = 0; i < tmpKeyBinds.size(); i++)
-                {
-                    std::stringstream tmpExpression;
-                    filebuffer << "\t";
-                    filebuffer << tmpKeyBinds[i].first.C_str() << "=" << "\"" << (int)(tmpKeyBinds[i].second) << "\"" << std::endl;
-                }
-                filebuffer << L"</AvatarControls>" << std::endl;
-            }
-            else
-            {
-                filebuffer << expressionStringRef;
-            }
-            expressionStream.str(L"");
-        }
-    }
-    inputConfigFile.close();
-
-    std::wofstream outputConfigFile;
-    outputConfigFile.open("Resources/cfg/config.txt");
-    if (outputConfigFile.fail())
+    if(document.SaveFile(filePath.c_str()) != XML_SUCCESS)
     {
         GAME_ENGINE->MessageBox(String("Failed to open the config file and update keybinds"));
         return;
     }
-    outputConfigFile << filebuffer.str();
-    outputConfigFile.close();
-    
 
-    //Open config file and write changes
-
-    m_KeyBindsArr = tmpKeyBinds;
+    m_KeyBindsArr = keyBinds;
 }
 //! Returns the keybinds as a vector
-std::vector<std::pair<String, TCHAR>> FileManager::GetKeyBinds()
+FileManager::KeyMap const& FileManager::GetKeyBinds()
 {
     return m_KeyBindsArr;
 }

@@ -128,6 +128,9 @@
     <ClCompile Include="EngineFiles\tinyxml2\tinyxml2.cpp">
       <Filter>Engine Files\tinyxml2</Filter>
     </ClCompile>
+    <ClCompile Include="EngineFiles\TextLabel.cpp">
+      <Filter>Engine Files\Core\GUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -376,6 +379,9 @@
     </ClInclude>
     <ClInclude Include="EngineFiles\tinyxml2\tinyxml2.h">
       <Filter>Engine Files\tinyxml2</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\TextLabel.h">
+      <Filter>Engine Files\Core\GUI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

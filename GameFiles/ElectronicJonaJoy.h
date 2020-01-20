@@ -60,12 +60,9 @@ public:
     void ReloadCurrentLevel();
 
     void SaveGameResults();
-	// -------------------------
-	// Public Member functions
-	// -------------------------
 
-private:
     static const std::string CONFIGPATH;
+private:
     Bitmap* m_BmpLoadingPtr = nullptr;
     tm m_BeginTime;
     tm m_EndTime;

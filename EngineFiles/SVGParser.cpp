@@ -164,7 +164,7 @@ bool SVGParser::GetGeometryOrGroup(ID2D1Factory* factoryPtr, std::vector<ID2D1Ge
 		else
 		{
 			ID2D1GeometryGroup* geometryGroupPtr;
-			HRESULT hr = factoryPtr->CreateGeometryGroup(D2D1_FILL_MODE_WINDING, &childrenRef[0], childrenRef.size(), &geometryGroupPtr);
+			HRESULT hr = factoryPtr->CreateGeometryGroup(D2D1_FILL_MODE_WINDING, &childrenRef[0], UINT32(childrenRef.size()), &geometryGroupPtr);
 			if (FAILED(hr))
 			{
 				GameEngine::GetSingleton()->MessageBox(String("CreateTransformedGeometry failed"));

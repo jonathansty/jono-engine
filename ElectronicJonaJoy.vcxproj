@@ -105,6 +105,7 @@
     <ClInclude Include="EngineFiles\imgui\imstb_textedit.h" />
     <ClInclude Include="EngineFiles\imgui\imstb_truetype.h" />
     <ClInclude Include="EngineFiles\singleton.h" />
+    <ClInclude Include="EngineFiles\TextLabel.h" />
     <ClInclude Include="EngineFiles\tinyxml2\tinyxml2.h" />
     <ClInclude Include="resource.h" />
     <ClCompile Include="EngineFiles\AbstractGame.cpp" />
@@ -138,6 +139,7 @@
     <ClCompile Include="EngineFiles\SVGParser.cpp" />
     <ClCompile Include="EngineFiles\TextBox.cpp" />
     <ClInclude Include="stdafx.h" />
+    <ClCompile Include="EngineFiles\TextLabel.cpp" />
     <ClCompile Include="EngineFiles\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>

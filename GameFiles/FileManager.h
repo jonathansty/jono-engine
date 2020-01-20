@@ -51,6 +51,7 @@ public:
         tm      endTime;
         int     lastLevel = 0;
     };
+    using KeyMap = std::map<std::string, UINT32>;
 
     //! Reads the level file
     void ReadGameInit(const std::string& filePath);
@@ -60,7 +61,7 @@ public:
     void LoadGameMusic(const std::string& filePath);
     //! Loads all the avatar keybindings from the filePath
     //! Make sure the config file layout is correct.
-    std::vector<std::pair<String, TCHAR>> LoadAvatarKeybinds(const String& filePath);
+    KeyMap LoadAvatarKeybinds(const std::string& filePath);
     //! Saves the game result in the file GameResults.txt
     void SaveGameResults(tm beginTime, tm endTime, Game* gamePtr);
     //! Reads the file GameResults.txt
@@ -96,9 +97,9 @@ public:
     Sound* GetBgMusic();
 
     //! Returns the keybinds as a vector
-    std::vector<std::pair<String, TCHAR>> GetKeyBinds();
+    KeyMap const& GetKeyBinds();
     //! Sets the keysbinds for the avatar
-    void SetKeyBinds(std::vector < std::pair<String, TCHAR>> tmpKeyBindsArr, String filePath);
+    void SetKeyBinds(KeyMap& tmpKeyBindsArr, std::string filePath);
 
     //! Updates the m_LastLevel variable for use when saving and reading results
     void UpdateLastLevel(int lastLevel);
@@ -147,7 +148,7 @@ private:
 	// Datamembers								
 	//-------------------------------------------------
     Avatar* m_AvatarPtr = nullptr;
-    std::vector<std::pair<String, TCHAR>> m_KeyBindsArr;
+    KeyMap m_KeyBindsArr;
     Level* m_LevelPtr = nullptr;
     Camera* m_CameraPtr = nullptr;
     

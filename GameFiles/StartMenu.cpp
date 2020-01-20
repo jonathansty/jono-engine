@@ -1,25 +1,14 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE5
-//-----------------------------------------------------
 #include "stdafx.h"		
+#include "EngineFiles/TextLabel.h"
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "StartMenu.h"
 #include "FileManager.h"
-#include "conio.h"
+#include "ElectronicJonaJoy.h"
+#include "SoundManager.h"
+#include <winuser.h>
 
-//---------------------------
-// Defines
-//---------------------------
 #define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 StartMenu::StartMenu()
 {
     m_BgMusicPtr = SoundManager::GetSingleton()->LoadMusic(String("Resources/Sound/BgMusic/main.mp3"));
@@ -40,7 +29,6 @@ StartMenu::~StartMenu()
 
 void StartMenu::Tick(double deltaTime)
 {
-
     // This switch statement handles the changing of menu's
     switch (m_MenuState)
     {
@@ -92,8 +80,11 @@ void StartMenu::Tick(double deltaTime)
             for (int i = 0; i < m_TxtInputKeyPtrArr.size(); i++)
             {
                 delete m_TxtInputKeyPtrArr[i];
+                delete m_TxtLabels[i];
             }
             m_TxtInputKeyPtrArr.clear();
+            m_TxtLabels.clear();
+            m_ActionToTxtBoxMappings.clear();
             m_BtnOptionsPtr->SetText(String("Options"));
 
             delete m_BtnApplyChangesPtr;
@@ -103,24 +94,22 @@ void StartMenu::Tick(double deltaTime)
         }
         if (m_BtnApplyChangesPtr != nullptr && m_BtnApplyChangesPtr->IsPressed())
         {
-            for (int i = 0; i < m_TxtInputKeyPtrArr.size(); i++)
-            {
-            String tmpInput = m_TxtInputKeyPtrArr[i]->GetText();
-            TCHAR keyBind = String(tmpInput).At(0);
-            if (tmpInput.ToInteger() != 0)
-            {
-                keyBind = String(tmpInput).ToInteger();
-            }
-
-            m_KeybindsArr[i].second = keyBind;
-            }
-            m_FileManagerPtr->SetKeyBinds(m_KeybindsArr,String("Resources/cfg/config.txt"));
+			for (auto it = m_ActionToTxtBoxMappings.begin(); it != m_ActionToTxtBoxMappings.end(); ++it)
+			{
+                std::string action = it->first;
+                String k = it->second->GetText();
+                UINT32 key_code = k.ToInteger();
+				{
+                    m_KeybindsArr[action] = key_code;
+				}
+			}
+            m_FileManagerPtr->SetKeyBinds(m_KeybindsArr,ElectronicJonaJoy::CONFIGPATH);
             m_BtnApplyChangesPtr->SetEnabled(false);
         }
 
-        for (int i = 0; i < m_TxtInputKeyPtrArr.size(); i++)
+		for (auto it = m_ActionToTxtBoxMappings.begin(); it != m_ActionToTxtBoxMappings.end(); ++it)
         {
-            if (m_TxtInputKeyPtrArr[i]->GetText() != String(m_KeybindsArr[i].second))
+            if (it->second->GetText() != String(m_KeybindsArr[it->first]))
             {
                 if (m_IsOptionAdjusted == false)
                 {
@@ -133,7 +122,7 @@ void StartMenu::Tick(double deltaTime)
                 }
                 
             }
-            if (m_TxtInputKeyPtrArr[i]->IsFocus())
+            if (it->second->IsFocus())
             {
                 for (int j = 0; j < 250 + 1; j++)
                 {
@@ -142,15 +131,15 @@ void StartMenu::Tick(double deltaTime)
                     {
                         if (j >= VK_F1 && j <= VK_F12)
                         {
-                            m_TxtInputKeyPtrArr[i]->SetText(String(j));
+                            it->second->SetText(String(j));
                         }
                         else if (j > 32 && j < 127)
                         {
-                            m_TxtInputKeyPtrArr[i]->SetText(String(TCHAR(j)));
+                            it->second->SetText(String(UINT32(j)));
                         }
                         else
                         {
-                            m_TxtInputKeyPtrArr[i]->SetText(String(j));
+                            it->second->SetText(String(j));
                         }
                     }
                 }
@@ -260,13 +249,14 @@ void StartMenu::Paint()
             GAME_ENGINE->SetWorldMatrix(matTranslateControl);
             GAME_ENGINE->DrawString(String("Controls: "), DOUBLE2());
             GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
-            for (size_t i = 0; i < m_KeybindsArr.size(); i++)
+            int i = 0;
+            for(auto& keybind : m_KeybindsArr)
             {
                 MATRIX3X2 matTranslate;
                 matTranslate.SetAsTranslate(DOUBLE2(150, CONTROLLISTYPOS + KEYLISTFNTSIZE + i*(float)KEYLISTFNTSIZE));
                 GAME_ENGINE->SetWorldMatrix(matTranslate);
-                String KeyBind = String(m_KeybindsArr[i].second);
-                switch (m_KeybindsArr[i].second)
+                String KeyBind = String(keybind.second);
+                switch (keybind.second)
                 {
                 case 37:
                     KeyBind = String("Left Arrow");
@@ -275,39 +265,17 @@ void StartMenu::Paint()
                     KeyBind = String("Right Arrow");
                     break;
                 default:
-                    String(m_KeybindsArr[i].second);
+                    String(keybind.second);
                     break;
                 }
-                GAME_ENGINE->DrawString(m_KeybindsArr[i].first + String(": ") + KeyBind, DOUBLE2());
+                GAME_ENGINE->DrawString(String(keybind.first.c_str()) + String(": ") + KeyBind, DOUBLE2());
                 GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 
-
+                ++i;
             }
             GAME_ENGINE->SetDefaultFont();
             delete tmpFntPtr;
         }
-        break;
-    case StartMenu::menuState::OPTIONS:
-        int buttonHeight = 40;
-        int buttonWidth = 200;
-        int widthScreen = GAME_ENGINE->GetWidth();
-        int height = GAME_ENGINE->GetHeight();
-
-        int amountOfBoxesNeeded = int(m_KeybindsArr.size());
-        int boundingHeight = 250;
-        double positionsOfEachBox = (double)boundingHeight / amountOfBoxesNeeded;
-        Font* tmpFntPtr = new Font(String("KenVector Future"), KEYLISTFNTSIZE);
-        GAME_ENGINE->SetFont(tmpFntPtr);
-        for (int i = 0; i < amountOfBoxesNeeded; i++)
-        {
-            MATRIX3X2 matTranslate;
-            matTranslate.SetAsTranslate(DOUBLE2(widthScreen / 2 - buttonWidth - buttonWidth / 8, 100 + buttonHeight*1.5 + i*positionsOfEachBox));
-            GAME_ENGINE->SetWorldMatrix(matTranslate);
-            GAME_ENGINE->DrawString(m_KeybindsArr[i].first,DOUBLE2());
-            GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
-        }
-        GAME_ENGINE->SetDefaultFont();
-        delete tmpFntPtr;
         break;
     }
     
@@ -353,8 +321,11 @@ void StartMenu::Remove()
     for (size_t i = 0; i < m_TxtInputKeyPtrArr.size(); i++)
     {
         delete m_TxtInputKeyPtrArr[i];
+        delete m_TxtLabels[i];
     }
     m_TxtInputKeyPtrArr.clear();
+    m_TxtLabels.clear();
+    m_ActionToTxtBoxMappings.clear();
 
     delete m_BtnApplyChangesPtr;
     m_BtnApplyChangesPtr = nullptr;
@@ -397,7 +368,7 @@ void StartMenu::EnableButtons()
 
 }
 
-void StartMenu::ReadKeyBindsForMenu(std::vector<std::pair<String, TCHAR>> tmpKeybindsArr)
+void StartMenu::ReadKeyBindsForMenu(FileManager::KeyMap tmpKeybindsArr)
 {
     m_KeybindsArr = tmpKeybindsArr;
 }
@@ -411,23 +382,29 @@ void StartMenu::CreateKeyBindTextBoxes()
     int amountOfBoxesNeeded = int(m_KeybindsArr.size());
     int boundingHeight = 250;
     double positionsOfEachBox = (double)boundingHeight / amountOfBoxesNeeded;
-    for (size_t i = 0; i < m_KeybindsArr.size(); i++)
+    int i = 0;
+    for (auto it = m_KeybindsArr.begin(); it != m_KeybindsArr.end(); ++it)
     {
-        TextBox* tmpTextBox = new TextBox(String(m_KeybindsArr[i].second));
+        TextLabel* tmpLabel = new TextLabel(it->first.c_str());
+        tmpLabel->SetBounds((int)( (width/2) - (buttonWidth + 100)), (int)(150 + positionsOfEachBox*i), (int)buttonWidth+ 100, (int)buttonHeight);
+        m_TxtLabels.push_back(tmpLabel);
+
+        TextBox* tmpTextBox = new TextBox(String(it->second));
         tmpTextBox->SetBackColor(COLOR(255, 255, 255, 0));
 
         tmpTextBox->SetBounds((int)(width / 2 - buttonWidth/2), (int)(150 + positionsOfEachBox*i), (int)buttonWidth, (int)buttonHeight);
         m_TxtInputKeyPtrArr.push_back(tmpTextBox);
+        m_ActionToTxtBoxMappings[it->first] = tmpTextBox;
+
+        ++i;
     }
 }
-std::vector<std::pair<String, TCHAR>> StartMenu::GetKeyBinds()
-{
-    return m_KeybindsArr;
-}
+
 void StartMenu::SetFileManager(FileManager* tmpFileManagerPtr)
 {
     m_FileManagerPtr = tmpFileManagerPtr;
 }
+
 void StartMenu::ReadGameResults()
 {
     for (int i = 0, n = int(m_SessionStatsArr.size()); i < n; i++)

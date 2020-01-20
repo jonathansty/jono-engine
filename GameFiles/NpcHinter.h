@@ -49,7 +49,7 @@ private:
 
     double m_Accutime = 0;
     double m_TipDisplayTime = 0;
-    double m_Opacity = 0;
+    unsigned char m_Opacity = 0;
 
     int m_FrameNr = 0;
     Bitmap* m_BmpBodyPtr = nullptr;
