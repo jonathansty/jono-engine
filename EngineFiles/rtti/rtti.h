@@ -1,5 +1,6 @@
 #pragma once
 #include <functional>
+#include <typeindex>
 
 #define REFLECT(classname) \
 	static rtti::TypeInfo_Register<classname> _sType; \
@@ -179,12 +180,12 @@ namespace rtti
 			assert(!_init);
 			_init = true;
 
-			register_type("int", TypeResolver::get<int>());
-			register_type("unsigned int", TypeResolver::get<unsigned int>());
-			register_type("float", TypeResolver::get<float>());
-			register_type("double", TypeResolver::get<double>());
-			register_type("short", TypeResolver::get<short>());
-			register_type("std::string", TypeResolver::get<std::string>());
+			register_type<int>();
+			register_type<unsigned int>();
+			register_type<float>();
+			register_type<double>();
+			register_type<short>();
+			register_type<std::string>();
 		}
 
 		template<typename T>
@@ -197,12 +198,13 @@ namespace rtti
 			return TypeResolver::get<T>();
 		}
 
-		static void register_type(const char* name, TypeInfo* info)
+		template<typename T>
+		static void register_type()
 		{
-			_types[name] = info;
+			_types[std::type_index(typeid(T))] = TypeResolver::get<T>();
 		}
 
-		static void for_each_type(std::function<void(std::pair<std::string, TypeInfo*> const& pair)> func)
+		static void for_each_type(std::function<void(std::pair<std::type_index, TypeInfo*> const& pair)> func)
 		{
 			for (auto it = _types.begin(); it != _types.end(); ++it)
 			{
@@ -216,7 +218,7 @@ namespace rtti
 			for_each_type([](auto it)
 			{
 					printf("------------------\n");
-					printf("Key: %s\n", it.first.c_str());
+					printf("Key: %d\n", int(it.first.hash_code()));
 					printf("  Type Name: %s\n", it.second->get_name());
 					printf("  Size: %zd\n", it.second->get_size());
 					printf("------------------\n");
@@ -225,12 +227,12 @@ namespace rtti
 #endif
 	private:
 		static bool _init;
-		static std::map<std::string, TypeInfo*> _types;
+		static std::map<std::type_index, TypeInfo*> _types;
 
 	};
 
 	__declspec(selectany) bool Registry::_init = false;
-	__declspec(selectany) std::map<std::string, TypeInfo*> Registry::_types;
+	__declspec(selectany) std::map<std::type_index, TypeInfo*> Registry::_types;
 
 	// Helper class for our reflection structs to automatically register a class to the registry
 	template<typename T>
