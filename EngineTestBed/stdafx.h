@@ -1,5 +1,7 @@
 #pragma once
 
+#define NOMINMAX
+
 // std lib includes
 #include <vector>			// std lib vector
 #include <array>

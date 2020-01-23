@@ -39,14 +39,6 @@ m_bImageMode(false)
 
 Button::~Button()
 {
-
-    if (!m_InitializedWithSndManager)
-    {
-        delete m_BmpPressedPtr;
-        delete m_BmpReleasedPtr;
-    }
-	
-	
 }
 
 //---------------------------
@@ -199,7 +191,6 @@ void Button::SetPressedBitmap(const String& filenameRef)
 //OWN METHOD
 void Button::SetPressedBitmap(Bitmap* bmpPtr)
 {
-    m_InitializedWithSndManager = true;
     m_BmpPressedPtr = bmpPtr;
 }
 void Button::SetPressedBitmap(int resourceID)
@@ -218,10 +209,23 @@ void Button::SetReleasedBitmap(int resourceID)
 }
 void Button::SetReleasedBitmap(Bitmap* bmpPtr)
 {
-    m_InitializedWithSndManager = true;
     m_BmpReleasedPtr = bmpPtr;
 }
 void Button::SetImageMode(bool bImageMode)
 {
 	m_bImageMode = bImageMode;
+}
+
+TextureButton::TextureButton(std::string const& pressed, std::string const& released)
+	: Button(String(""))
+{
+	m_BmpPressedPtr = new Bitmap(String(pressed.c_str()));
+	m_BmpReleasedPtr = new Bitmap(String(released.c_str()));
+}
+
+TextureButton::~TextureButton()
+{
+	delete m_BmpReleasedPtr;
+	delete m_BmpPressedPtr;
+
 }

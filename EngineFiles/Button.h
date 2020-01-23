@@ -63,5 +63,20 @@ private:
 	// Datamembers								
 	//-------------------------------------------------
 	bool m_bArmed, m_bImageMode, m_InitializedWithSndManager = false;
+
+protected:
 	Bitmap* m_BmpReleasedPtr, *m_BmpPressedPtr;
+};
+
+class TextureButton : public Button
+{
+public:
+	TextureButton(std::string const& pressed, std::string const& released);
+	virtual ~TextureButton();
+
+	float GetWidth() const { return m_BmpPressedPtr->GetWidth(); }
+	float GetHeight() const { return m_BmpPressedPtr->GetHeight(); }
+private:
+
+
 };

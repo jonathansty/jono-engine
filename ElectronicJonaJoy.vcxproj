@@ -45,12 +45,13 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <LibraryPath>$(ProjectDir)Box2DInclude;$(LibraryPath)</LibraryPath>
     <IncludePath>$(ProjectDir);$(ProjectDir)/EngineFiles;$(ProjectDir)/GameFiles;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)Box2DInclude;$(VCPKGDIR)\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(ProjectDir)/EngineFiles/;$(ProjectDir)/Box2DInclude;$(ProjectDir)/GameFiles;$(ProjectDir);$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)/EngineFiles;$(ProjectDir)/Box2DInclude;$(ProjectDir)/GameFiles;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)Box2DInclude;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -66,7 +67,7 @@
     <Link>
       <SubSystem>NotSet</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Box2DDebug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Box2DDebug.lib;rttr_core.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PreBuildEvent>
       <Command>xcopy "$(ProjectDir)\Box2DInclude\box2d.pdb" "$(OutDir)" /y /D</Command>
@@ -94,6 +95,7 @@
   <ItemGroup>
     <ClInclude Include="EngineFiles\AbstractGame.h" />
     <ClInclude Include="EngineFiles\ContactListener.h" />
+    <ClInclude Include="EngineFiles\core\identifier.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\MetricsOverlay.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\OverlayManager.h" />
     <ClInclude Include="EngineFiles\imgui\imconfig.h" />
@@ -104,6 +106,7 @@
     <ClInclude Include="EngineFiles\imgui\imstb_rectpack.h" />
     <ClInclude Include="EngineFiles\imgui\imstb_textedit.h" />
     <ClInclude Include="EngineFiles\imgui\imstb_truetype.h" />
+    <ClInclude Include="EngineFiles\rtti\rtti.h" />
     <ClInclude Include="EngineFiles\singleton.h" />
     <ClInclude Include="EngineFiles\TextLabel.h" />
     <ClInclude Include="EngineFiles\tinyxml2\tinyxml2.h" />
@@ -138,13 +141,13 @@
     <ClCompile Include="EngineFiles\Structs.cpp" />
     <ClCompile Include="EngineFiles\SVGParser.cpp" />
     <ClCompile Include="EngineFiles\TextBox.cpp" />
-    <ClInclude Include="stdafx.h" />
     <ClCompile Include="EngineFiles\TextLabel.cpp" />
     <ClCompile Include="EngineFiles\tinyxml2\tinyxml2.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClInclude Include="stdafx.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineFiles\AudioDecoder.h" />

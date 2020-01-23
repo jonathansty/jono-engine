@@ -25,6 +25,7 @@
 #include <io.h>				// console
 #include <deque>
 
+#define NOMINMAX
 // WindowsSDK
 #include <dwrite.h>			// Draw Text
 #include <wincodec.h>		// WIC: image loading

@@ -32,6 +32,9 @@
     <Filter Include="Engine Files\tinyxml2">
       <UniqueIdentifier>{e05288dd-285c-47f2-b14c-3ba5d8bca02f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\rtti">
+      <UniqueIdentifier>{847f41bd-ed0a-4872-91f7-68ee3dd5a058}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineFiles\GameEngine.cpp">
@@ -334,7 +337,6 @@
     <ClInclude Include="EngineFiles\PhysicsRevoluteJoint.h">
       <Filter>Engine Files\Core\Box2D</Filter>
     </ClInclude>
-    <ClInclude Include="stdafx.h" />
     <ClInclude Include="EngineFiles\EString.h">
       <Filter>Engine Files\Core</Filter>
     </ClInclude>
@@ -382,6 +384,13 @@
     </ClInclude>
     <ClInclude Include="EngineFiles\TextLabel.h">
       <Filter>Engine Files\Core\GUI</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\core\identifier.h">
+      <Filter>Engine Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="EngineFiles\rtti\rtti.h">
+      <Filter>Engine Files\rtti</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

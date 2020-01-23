@@ -11,6 +11,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ElectronicJonaJoyGame", "El
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EngineTestBed", "EngineTestBed\EngineTestBed.vcxproj", "{A5729F0D-3D47-4BC3-8C1B-845679805BB9}"
+	ProjectSection(ProjectDependencies) = postProject
+		{65FE775A-8525-4C8D-97DC-AD30A84B2A2E} = {65FE775A-8525-4C8D-97DC-AD30A84B2A2E}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

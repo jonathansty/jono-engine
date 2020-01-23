@@ -9,9 +9,8 @@ public:
 
 	}
 
-	~TSingleton()
+	virtual ~TSingleton()
 	{
-
 	}
 
 	static T* Instance();
