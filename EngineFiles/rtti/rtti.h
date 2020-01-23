@@ -4,12 +4,12 @@
 #define REFLECT(classname) \
 	static rtti::TypeInfo_Register<classname> _sType; \
 	static rtti::TypeInfo* get_type() { return &_sType._info;} \
-	static void reflect();
+	static void reflect(rtti::TypeInfo& type);
 
 
 #define IMPL_REFLECT(classname) \
 	rtti::TypeInfo_Register<classname> classname##::_sType = rtti::TypeInfo_Register<classname>(#classname);  \
-	void classname##::reflect()
+	void classname##::reflect(rtti::TypeInfo& type)
 
 namespace rtti
 {
@@ -22,6 +22,18 @@ namespace rtti
 			None = 0,
 			PrimitiveBit = 0x1,
 		};
+	};
+
+	// A property contains a type and a offset
+	class Property
+	{
+	public:
+
+		class TypeInfo* type;
+		size_t offset;
+		std::string name;
+
+
 	};
 
 	// Type info
@@ -38,7 +50,7 @@ namespace rtti
 		TypeInfo(const char* name, size_t size)
 			: _name(name)
 			, _size(size)
-			, _members()
+			, _properties()
 			, _parent(nullptr)
 			, _children()
 			, _flags()
@@ -74,12 +86,22 @@ namespace rtti
 			return false;
 
 		}
-	
-		struct PropertyInfo
+
+		Property* find_property(std::string const& field)
 		{
-			TypeInfo* type;
-			size_t offset;
-		};
+			if (auto it = _properties.find(field); it != _properties.end())
+			{
+				return &it->second;
+			}
+
+			// Recurse into parent
+			if (_parent)
+			{
+				return _parent->find_property(field);
+			}
+
+			return nullptr;
+		}
 
 		TypeInfo* _parent;
 		std::vector<TypeInfo*> _children;
@@ -87,8 +109,8 @@ namespace rtti
 		std::size_t _size;
 		TypeFlags::Flags _flags;
 
-		std::unordered_map<std::string, PropertyInfo> _members;
-
+		using PropertyCollection = std::unordered_map<std::string, Property>;
+		PropertyCollection _properties;
 	};
 
 
@@ -113,10 +135,14 @@ namespace rtti
 		DECLARE_PRIMITIVE_TYPE(short);
 		DECLARE_PRIMITIVE_TYPE(std::string);
 
+#undef DECLARE_PRIMITIVE_TYPE
+
 	};
 
 	struct TypeResolver
 	{
+		// TODO: Implement some SFINAE logic to deduce whether a type is built-in or not
+
 		template<typename T>
 		static TypeInfo* get()
 		{
@@ -159,7 +185,6 @@ namespace rtti
 			register_type("double", TypeResolver::get<double>());
 			register_type("short", TypeResolver::get<short>());
 			register_type("std::string", TypeResolver::get<std::string>());
-
 		}
 
 		template<typename T>
@@ -189,7 +214,7 @@ namespace rtti
 		static void dump_types()
 		{
 			for_each_type([](auto it)
-				{
+			{
 					printf("------------------\n");
 					printf("Key: %s\n", it.first.c_str());
 					printf("  Type Name: %s\n", it.second->get_name());
@@ -205,16 +230,16 @@ namespace rtti
 	};
 
 	__declspec(selectany) bool Registry::_init = false;
-
 	__declspec(selectany) std::map<std::string, TypeInfo*> Registry::_types;
 
+	// Helper class for our reflection structs to automatically register a class to the registry
 	template<typename T>
 	struct TypeInfo_Register
 	{
 		TypeInfo_Register(const char* name)
 			: _info(rtti::TypeInfo::create<T>(name))
 		{
-			T::reflect();
+			T::reflect(_info);
 		}
 
 		TypeInfo _info;
@@ -225,6 +250,16 @@ namespace rtti
 	class Object
 	{
 		public:
+			~Object()
+			{
+				delete _data;
+				_data = nullptr;
+			}
+
+			// TODO: Implement copy operators  
+			Object(Object const&) = delete;
+			Object& operator=(Object const&) = delete;
+
 
 			template<typename T>
 			static Object create_with_copy(T obj)
@@ -234,8 +269,10 @@ namespace rtti
 				return Object(d, Registry::get<T>());
 			}
 
+			// Gets a pointer to the object it's value if the types match. If no match it will return nullptr
 			template<typename T>
-			T* get() {
+			T* get() 
+			{
 				if (Registry::get<T>() == _type)
 				{
 					return reinterpret_cast<T*>(_data);
@@ -246,15 +283,16 @@ namespace rtti
 			template<typename T>
 			bool set_property(std::string const& field, T const& value)
 			{
-				assert(_type->_members.find(field) != _type->_members.end());
+				rtti::Property* property_info = _type->find_property(field);
+				if (!property_info)
+					return false;
 
-				TypeInfo::PropertyInfo property_info = _type->_members[field];
-				TypeInfo* property_type = property_info.type;
+				TypeInfo* property_type = property_info->type;
 
 				if (property_type != Registry::get<T>())
 					return false;
 
-				size_t offset = property_info.offset;
+				size_t offset = property_info->offset;
 				size_t size = property_type->get_size();
 
 				uint8_t* dst = (uint8_t*)_data;
@@ -263,10 +301,16 @@ namespace rtti
 				return true;
 			}
 
-			~Object()
+			template<typename T>
+			T* get_property(std::string const& name)
 			{
-				delete _data;
+				rtti::Property* property_info = _type->find_property(name);
+				if (!property_info)
+					return nullptr;
+
+				return reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(_data) + property_info->offset);
 			}
+
 
 			TypeInfo* get_type() const 
 			{
@@ -280,6 +324,7 @@ namespace rtti
 			{
 
 			}
+
 
 			TypeInfo* _type;
 			void* _data;

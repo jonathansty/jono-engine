@@ -12,9 +12,9 @@ struct Foo {
 
 IMPL_REFLECT(Foo)
 {
-	get_type()->_members["a"] = { rtti::Registry::get<int>(), offsetof(Foo, a) };
-	get_type()->_members["b"] = { rtti::Registry::get<int>(), offsetof(Foo, b) };
-	get_type()->_members["c"] = { rtti::Registry::get<int>(), offsetof(Foo, c) };
+	type._properties["a"] = { rtti::Registry::get<int>(), offsetof(Foo, a), "a" };
+	type._properties["b"] = { rtti::Registry::get<int>(), offsetof(Foo, b), "b" };
+	type._properties["c"] = { rtti::Registry::get<int>(), offsetof(Foo, c), "c" };
 }
 
 struct Bar : public Foo
@@ -26,8 +26,8 @@ struct Bar : public Foo
 
 IMPL_REFLECT(Bar)
 {
-	get_type()->_parent = Foo::get_type();
-	get_type()->_members["x"] = { rtti::Registry::get<int>(), offsetof(Bar, x) };
+	type._parent = Foo::get_type();
+	type._properties["x"] = { rtti::Registry::get<int>(), offsetof(Bar, x), "x" };
 
 }
 
@@ -56,6 +56,17 @@ void HelloWorldGame::GameStart()
 	assert(dynamicFloat.get_type()->is_primitive());
 
 	rtti::Object podType = rtti::Object::create_with_copy(Foo{});
+	rtti::Object barType = rtti::Object::create_with_copy(Bar{});
+	barType.set_property("x", -123);
+	barType.set_property("a", 250);
+	Bar* b = barType.get<Bar>();
+	assert(b->x == -123 && b->a == 250);
+
+
+	int* xValue = barType.get_property<int>("x");
+	int* aValue = barType.get_property<int>("a");
+	int* bValue = barType.get_property<int>("b");
+	assert(*xValue == -123 && *aValue == 250 && *bValue == 0);
 
 	printf("DynamicInt: %d\n", *dynamicInt.get<int>());
 	printf("DynamicFloat: %.2f\n", *dynamicFloat.get<float>());
