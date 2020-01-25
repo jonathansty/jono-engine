@@ -106,7 +106,17 @@
     <ClInclude Include="EngineFiles\imgui\imstb_rectpack.h" />
     <ClInclude Include="EngineFiles\imgui\imstb_textedit.h" />
     <ClInclude Include="EngineFiles\imgui\imstb_truetype.h" />
+    <ClInclude Include="EngineFiles\rtti\constructor.h" />
+    <ClInclude Include="EngineFiles\rtti\destructor.h" />
+    <ClInclude Include="EngineFiles\rtti\object.h" />
+    <ClInclude Include="EngineFiles\rtti\private\constructor.h" />
+    <ClInclude Include="EngineFiles\rtti\private\destructor.h" />
+    <ClInclude Include="EngineFiles\rtti\private\resolvers.h" />
+    <ClInclude Include="EngineFiles\rtti\private\type.h" />
+    <ClInclude Include="EngineFiles\rtti\property.h" />
+    <ClInclude Include="EngineFiles\rtti\registry.h" />
     <ClInclude Include="EngineFiles\rtti\rtti.h" />
+    <ClInclude Include="EngineFiles\rtti\typeinfo.h" />
     <ClInclude Include="EngineFiles\singleton.h" />
     <ClInclude Include="EngineFiles\TextLabel.h" />
     <ClInclude Include="EngineFiles\tinyxml2\tinyxml2.h" />
@@ -136,6 +146,9 @@
     <ClCompile Include="EngineFiles\PhysicsPrismaticJoint.cpp" />
     <ClCompile Include="EngineFiles\PhysicsRevoluteJoint.cpp" />
     <ClCompile Include="EngineFiles\PrecisionTimer.cpp" />
+    <ClCompile Include="EngineFiles\rtti\constructor.cpp" />
+    <ClCompile Include="EngineFiles\rtti\object.cpp" />
+    <ClCompile Include="EngineFiles\rtti\typeinfo.cpp" />
     <ClCompile Include="EngineFiles\Sound.cpp" />
     <ClCompile Include="EngineFiles\EString.cpp" />
     <ClCompile Include="EngineFiles\Structs.cpp" />

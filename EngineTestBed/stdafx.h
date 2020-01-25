@@ -13,6 +13,7 @@
 #include <iostream>
 #include <iomanip>			// precision
 #include <io.h>				// console
+#include <functional>
 
 // WindowsSDK
 #include <dwrite.h>			// Draw Text

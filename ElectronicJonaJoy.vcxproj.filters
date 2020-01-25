@@ -35,6 +35,9 @@
     <Filter Include="Engine Files\rtti">
       <UniqueIdentifier>{847f41bd-ed0a-4872-91f7-68ee3dd5a058}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\rtti\private">
+      <UniqueIdentifier>{5b143250-5b70-4b92-b59c-8590cf79ccec}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineFiles\GameEngine.cpp">
@@ -133,6 +136,15 @@
     </ClCompile>
     <ClCompile Include="EngineFiles\TextLabel.cpp">
       <Filter>Engine Files\Core\GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\rtti\constructor.cpp">
+      <Filter>Engine Files\rtti</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\rtti\object.cpp">
+      <Filter>Engine Files\rtti</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\rtti\typeinfo.cpp">
+      <Filter>Engine Files\rtti</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -391,6 +403,36 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="EngineFiles\rtti\rtti.h">
       <Filter>Engine Files\rtti</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\object.h">
+      <Filter>Engine Files\rtti</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\registry.h">
+      <Filter>Engine Files\rtti</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\typeinfo.h">
+      <Filter>Engine Files\rtti</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\property.h">
+      <Filter>Engine Files\rtti</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\private\resolvers.h">
+      <Filter>Engine Files\rtti\private</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\constructor.h">
+      <Filter>Engine Files\rtti</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\destructor.h">
+      <Filter>Engine Files\rtti</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\private\constructor.h">
+      <Filter>Engine Files\rtti\private</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\private\destructor.h">
+      <Filter>Engine Files\rtti\private</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\private\type.h">
+      <Filter>Engine Files\rtti\private</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "AbstractGame.h"
-#include "rtti/rtti.h"
 
 class HelloWorldGame : public AbstractGame
 {
