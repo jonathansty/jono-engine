@@ -137,9 +137,6 @@
     <ClCompile Include="EngineFiles\TextLabel.cpp">
       <Filter>Engine Files\Core\GUI</Filter>
     </ClCompile>
-    <ClCompile Include="EngineFiles\rtti\constructor.cpp">
-      <Filter>Engine Files\rtti</Filter>
-    </ClCompile>
     <ClCompile Include="EngineFiles\rtti\object.cpp">
       <Filter>Engine Files\rtti</Filter>
     </ClCompile>
@@ -417,21 +414,6 @@
       <Filter>Engine Files\rtti</Filter>
     </ClInclude>
     <ClInclude Include="EngineFiles\rtti\private\resolvers.h">
-      <Filter>Engine Files\rtti\private</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\rtti\constructor.h">
-      <Filter>Engine Files\rtti</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\rtti\destructor.h">
-      <Filter>Engine Files\rtti</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\rtti\private\constructor.h">
-      <Filter>Engine Files\rtti\private</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\rtti\private\destructor.h">
-      <Filter>Engine Files\rtti\private</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\rtti\private\type.h">
       <Filter>Engine Files\rtti\private</Filter>
     </ClInclude>
   </ItemGroup>

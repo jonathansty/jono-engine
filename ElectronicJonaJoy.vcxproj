@@ -45,8 +45,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)/EngineFiles;$(ProjectDir)/GameFiles;$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)Box2DInclude;$(VCPKGDIR)\lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)/EngineFiles;$(ProjectDir)/GameFiles;$(VCPKGDIR)/include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)Box2DInclude;$(VCPKGDIR)/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -106,13 +106,8 @@
     <ClInclude Include="EngineFiles\imgui\imstb_rectpack.h" />
     <ClInclude Include="EngineFiles\imgui\imstb_textedit.h" />
     <ClInclude Include="EngineFiles\imgui\imstb_truetype.h" />
-    <ClInclude Include="EngineFiles\rtti\constructor.h" />
-    <ClInclude Include="EngineFiles\rtti\destructor.h" />
     <ClInclude Include="EngineFiles\rtti\object.h" />
-    <ClInclude Include="EngineFiles\rtti\private\constructor.h" />
-    <ClInclude Include="EngineFiles\rtti\private\destructor.h" />
     <ClInclude Include="EngineFiles\rtti\private\resolvers.h" />
-    <ClInclude Include="EngineFiles\rtti\private\type.h" />
     <ClInclude Include="EngineFiles\rtti\property.h" />
     <ClInclude Include="EngineFiles\rtti\registry.h" />
     <ClInclude Include="EngineFiles\rtti\rtti.h" />
@@ -146,7 +141,6 @@
     <ClCompile Include="EngineFiles\PhysicsPrismaticJoint.cpp" />
     <ClCompile Include="EngineFiles\PhysicsRevoluteJoint.cpp" />
     <ClCompile Include="EngineFiles\PrecisionTimer.cpp" />
-    <ClCompile Include="EngineFiles\rtti\constructor.cpp" />
     <ClCompile Include="EngineFiles\rtti\object.cpp" />
     <ClCompile Include="EngineFiles\rtti\typeinfo.cpp" />
     <ClCompile Include="EngineFiles\Sound.cpp" />

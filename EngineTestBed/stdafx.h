@@ -13,7 +13,7 @@
 #include <iostream>
 #include <iomanip>			// precision
 #include <io.h>				// console
-#include <functional>
+#include <deque>
 
 // WindowsSDK
 #include <dwrite.h>			// Draw Text
@@ -52,6 +52,7 @@ using namespace D2D1;
 
 #include "imgui/imgui.h"
 
+#include "tinyxml2/tinyxml2.h"
 
 #include "EngineFiles/EString.h"
 #include "EngineFiles/Structs.h"
@@ -73,7 +74,9 @@ using namespace D2D1;
 #include "EngineFiles/PhysicsRevoluteJoint.h"
 #include "EngineFiles/PhysicsPrismaticJoint.h"
 #include "EngineFiles/PhysicsDistanceJoint.h"
+#include "EngineFiles/rtti/rtti.h"
 #include "GameEngine.h"
 
 #include "GameFiles/BitmapManager.h"
 #include "GameFiles/SoundManager.h"
+

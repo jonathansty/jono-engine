@@ -3,13 +3,8 @@
 #include "core/identifier.h"
 #include "rtti/rtti.h"
 
-
-#include "rtti/destructor.h"
-#include "rtti/private/destructor.h"
-#include "rtti/constructor.h"
-#include "rtti/private/constructor.h"
-
-struct Foo {
+struct Foo 
+{
 	REFLECT(Foo);
 
 	Foo() : a(0), b(0), c(0) {};
@@ -17,6 +12,13 @@ struct Foo {
 	int a;
 	int b;
 	int c;
+
+	void add(int x) {
+		a += x;
+		b += x;
+		c += x;
+	}
+
 };
 
 IMPL_REFLECT(Foo)
@@ -24,6 +26,8 @@ IMPL_REFLECT(Foo)
 	type.register_property("a", &Foo::a);
 	type.register_property("b", &Foo::b);
 	type.register_property("c", &Foo::c);
+
+	//type.register_function("add", &Foo::add);
 }
 
 struct Bar : public Foo
@@ -45,8 +49,6 @@ struct Bar : public Foo
 IMPL_REFLECT(Bar)
 {
 	type._parent = Foo::get_type();
-	type._constructor = new rtti::TConstructor<Bar>();
-	type._destructor = new rtti::TDestructor<Bar>();
 	type.register_property("x", &Bar::x);
 
 }
@@ -106,9 +108,27 @@ IMPL_REFLECT(TestClass)
 
 }
 
+template<typename ReturnType, typename ...Args>
+struct FunctionInvoke
+{
+	ReturnType operator()(ReturnType(*func)(Args...), Args... args)
+	{
+		return func(args...);
+	}
+
+};
+
+int TestFunc(int a )
+{
+	return a + 15;
+}
+
 void HelloWorldGame::GameStart()
 {
 	_test = std::make_shared<Bitmap>(String("Resources/Pickups/coinBronze.png"));
+
+	FunctionInvoke<int, int> invoker{};
+	int result = invoker(TestFunc, 15);
 
 
 	using namespace rtti;
@@ -126,47 +146,49 @@ void HelloWorldGame::GameStart()
 	Registry::dump_types();
 
 	auto obj = rtti::Object::create<MyOtherCrazyData>("TEST", 2.0);
-	TDestructor<MyOtherCrazyData> dest{};
-	dest.destruct(obj);
 
 	TypeInfo* barType = rtti::Registry::get<Bar>();
-	rtti::Object barObject = barType->_constructor->invoke();
+	rtti::Object barObject = barType->create_object();
 	//rtti::Object b = rtti::Object::create<Bar>();
 	Bar* testB = barObject.get<Bar>();
-	TDestructor<Bar> d{};
-	d.destruct(barObject);
 
-	// Test out creating rtti objects
-	//rtti::Object dynamicInt = rtti::Object::create_with_copy<int>(5);
-	//assert(dynamicInt.get_type()->is_primitive());
+	 //Test out creating rtti objects
+	{
+		rtti::Object dynamicInt = rtti::Object::create_with_copy<int>(5);
+		assert(dynamicInt.get_type()->is_primitive());
 
-	//rtti::Object dynamicFloat = rtti::Object::create_with_copy(5.0f);
-	//assert(dynamicFloat.get_type()->is_primitive());
+		rtti::Object dynamicFloat = rtti::Object::create_with_copy(5.0f);
+		assert(dynamicFloat.get_type()->is_primitive());
+		printf("DynamicInt: %d\n", *dynamicInt.get<int>());
+		printf("DynamicFloat: %.2f\n", *dynamicFloat.get<float>());
+	}
 
-	//rtti::Object podType = rtti::Object::create_with_copy(Foo{});
-	//rtti::Object barType = rtti::Object::create_with_copy(Bar{});
-	//barType.set_property("x", -123);
-	//barType.set_property("a", 250);
-	//Bar* bbar = barType.get<Bar>();
-	//assert(bbar->x == -123 && bbar->a == 250);
+	rtti::Object podType = rtti::Object::create_with_copy(Foo{});
+	//{
+	//	rtti::Method v = podType.find_function("add");
+	//	v.invoke(15);
+	//}
+
+	rtti::Object barType2 = rtti::Object::create_with_copy(Bar{});
+	barType2.set_property("x", -123);
+	barType2.set_property("a", 250);
+	Bar* bbar = barType2.get<Bar>();
+	assert(bbar->x == -123 && bbar->a == 250);
 
 
-	//int* xValue = barType.get_property<int>("x");
-	//int* aValue = barType.get_property<int>("a");
-	//int* bValue = barType.get_property<int>("b");
-	//assert(*xValue == -123 && *aValue == 250 && *bValue == 0);
+	int* xValue = barType2.get_property<int>("x");
+	int* aValue = barType2.get_property<int>("a");
+	int* bValue = barType2.get_property<int>("b");
+	assert(*xValue == -123 && *aValue == 250 && *bValue == 0);
 
-	//printf("DynamicInt: %d\n", *dynamicInt.get<int>());
-	//printf("DynamicFloat: %.2f\n", *dynamicFloat.get<float>());
-
-	//// Example of setting properties by name
-	//Foo* foo = podType.get<Foo>();
-	//podType.set_property("a", 10);
-	//assert(foo->a == 10);
-	//podType.set_property("b", 250);
-	//assert(foo->b == 250);
-	//podType.set_property("c", 18);
-	//assert(foo->c == 18);
+	// Example of setting properties by name
+	Foo* foo = podType.get<Foo>();
+	podType.set_property("a", 10);
+	assert(foo->a == 10);
+	podType.set_property("b", 250);
+	assert(foo->b == 250);
+	podType.set_property("c", 18);
+	assert(foo->c == 18);
 
 }
 

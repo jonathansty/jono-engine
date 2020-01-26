@@ -12,7 +12,7 @@ struct PrimitiveTypeResolver
 	template<> \
 	static TypeInfo* get_primitive_type<type>() \
 	{ \
-		static TypeInfo _staticInt = TypeInfo(#type, sizeof(type)); \
+		static TypeInfo _staticInt = TypeInfo(#type, sizeof(type), ConstructObject<type>, DestructObject<type>); \
 		_staticInt._flags = TypeFlags::Flags(int(TypeFlags::PrimitiveBit) | int(_staticInt._flags)); \
 		return &_staticInt; \
 	}

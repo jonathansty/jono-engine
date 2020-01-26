@@ -33,8 +33,10 @@ namespace rtti
 			: _info(rtti::TypeInfo::create<T>(name))
 		{
 			T::reflect(_info);
-			_info._constructor = new TConstructor<T>();
-			_info._destructor = new TDestructor<T>();
+		}
+
+		~TypeInfo_Register()
+		{
 		}
 
 		TypeInfo _info;

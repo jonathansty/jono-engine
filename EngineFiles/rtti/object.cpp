@@ -5,6 +5,10 @@
 
 rtti::Object::~Object()
 {
+	if (_type->_destructor)
+	{
+		_type->_destructor(_data);
+	}
 
 }
 

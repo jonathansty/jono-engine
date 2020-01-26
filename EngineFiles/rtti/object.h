@@ -50,6 +50,8 @@ private:
 public:
 	TypeInfo* _type;
 	void* _data;
+
+	friend class TypeInfo;
 };
 
 template<typename T>

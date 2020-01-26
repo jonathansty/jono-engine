@@ -1,5 +1,7 @@
 #pragma once
 
+#define NOMINMAX
+
 // std lib includes
 #include <vector>			// std lib vector
 #include <array>
@@ -72,8 +74,8 @@ using namespace D2D1;
 #include "EngineFiles/PhysicsRevoluteJoint.h"
 #include "EngineFiles/PhysicsPrismaticJoint.h"
 #include "EngineFiles/PhysicsDistanceJoint.h"
+#include "EngineFiles/rtti/rtti.h"
 #include "GameEngine.h"
-
 
 #include "GameFiles/BitmapManager.h"
 #include "GameFiles/SoundManager.h"

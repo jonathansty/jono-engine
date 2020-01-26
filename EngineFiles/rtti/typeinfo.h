@@ -2,9 +2,22 @@
 
 namespace rtti
 {
+	class Object;
 
-	class Constructor;
-	class Destructor;
+	template<typename T>
+	void ConstructObject(void* object)
+	{
+		new (object) T;
+	}
+
+	template<typename T>
+	void DestructObject(void* object)
+	{
+		if (std::is_array<T>::value)
+			delete[]((T*)(object));
+		else
+			delete ((T*)(object));
+	}
 
 	// Calculates the offset of a member variable in a type.
 	// https://stackoverflow.com/questions/13180842/how-to-calculate-offset-of-a-class-member-at-compile-time
@@ -32,10 +45,12 @@ namespace rtti
 		template<typename T>
 		static TypeInfo create(const char* name)
 		{
-			return TypeInfo(name, sizeof(T));
+			auto des = DestructObject<T>;
+			auto cons = ConstructObject<T>;
+			return TypeInfo(name, sizeof(T), cons, des);
 		}
 
-		TypeInfo(const char* name, size_t size);
+		TypeInfo(const char* name, size_t size, void(*constructor)(void*), void(*destructor)(void*));
 
 		~TypeInfo();
 
@@ -46,18 +61,18 @@ namespace rtti
 
 		bool inherits(TypeInfo* type);
 
-		inline class Property* find_property(std::string const& field);
+		class Property* find_property(std::string const& field);
+
+		rtti::Object create_object();
 
 		template<typename Class, typename MemberType>
 		void register_property(std::string const& name, MemberType Class::* offset);
 
-		Constructor* get_constructor() const;
-
 		TypeInfo* _parent;
 		std::vector<TypeInfo*> _children;
 
-		Constructor* _constructor;
-		Destructor* _destructor;
+		void  (*_constructor)(void*);
+		void  (*_destructor)(void*);
 
 		std::string _name;
 		std::size_t _size;
