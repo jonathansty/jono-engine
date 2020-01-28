@@ -27,7 +27,7 @@ int RunGame(HINSTANCE hInstance,int iCmdShow, AbstractGame* game)
 
 	IDXGIDebug* pDXGIDebug;
 	DXGIGetDebugInterface(__uuidof(IDXGIDebug), (void**)&pDXGIDebug);
-	_CrtSetBreakAlloc(375);
+	//_CrtSetBreakAlloc(375);
 #endif
 
 

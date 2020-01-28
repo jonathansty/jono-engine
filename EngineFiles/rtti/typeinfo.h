@@ -27,6 +27,9 @@ namespace rtti
 	}
 
 
+
+
+
 	struct TypeFlags
 	{
 		enum Flags : uint32_t
@@ -61,6 +64,8 @@ namespace rtti
 
 		bool inherits(TypeInfo* type);
 
+		bool is(TypeInfo* type);
+
 		class Property* find_property(std::string const& field);
 
 		rtti::Object create_object();
@@ -88,7 +93,7 @@ namespace rtti
 template<typename Class, typename MemberType>
 void rtti::TypeInfo::register_property(std::string const& name, MemberType Class::* offset)
 {
-	assert(this == Class::get_type());
+	assert(this == Class::get_static_type());
 	auto type = TypeResolver::template get<MemberType>();
 	_properties[name] = { type, offsetOf(offset), name };
 }

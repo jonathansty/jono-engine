@@ -1,17 +1,21 @@
 #pragma once
 #include <functional>
 #include <typeindex>
+#include <type_traits>
 #include <optional>
 
 #include "property.h"
 #include "typeinfo.h"
 #include "object.h"
 #include "registry.h"
+#include "method.h"
 
 #define REFLECT(classname) \
 	static rtti::TypeInfo_Register<classname> _sType; \
-	static rtti::TypeInfo* get_type() { return &_sType._info;} \
-	static void reflect(rtti::TypeInfo& type);
+public:\
+	static void reflect(rtti::TypeInfo& type); \
+	static rtti::TypeInfo* get_static_type() { return &_sType._info;}  \
+	virtual rtti::TypeInfo* get_type() { return &_sType._info;}  
 
 #define IMPL_REFLECT(classname) \
 	rtti::TypeInfo_Register<classname> classname##::_sType = rtti::TypeInfo_Register<classname>(#classname);  \

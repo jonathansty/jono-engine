@@ -27,7 +27,7 @@ public:
 
 	// Gets a pointer to the object it's value if the types match. If no match it will return nullptr
 	template<typename T>
-	T* get();
+	T* get() const;
 
 	template<typename T>
 	bool set_property(std::string const& field, T const& value);
@@ -37,6 +37,19 @@ public:
 
 
 	TypeInfo* get_type() const;
+
+
+	template<typename T>
+	bool is_type() const
+	{
+		return _type == TypeResolver::template get<T>();
+	}
+
+	template<typename T>
+	T& get_value() const
+	{
+		return *get<T>();
+	}
 
 private:
 	Object(void* data, TypeInfo* type)
@@ -89,7 +102,7 @@ bool rtti::Object::set_property(std::string const& field, T const& value)
 }
 
 template<typename T>
-T* rtti::Object::get()
+T* rtti::Object::get() const
 {
 	if (TypeResolver::template get<T>() == _type)
 	{
@@ -107,7 +120,7 @@ Object rtti::Object::create_with_copy(T obj)
 }
 
 template<typename T, typename ...Args>
-Object rtti::Object::create(Args ... args)
+Object rtti::Object::create(Args... args)
 {
 	T* obj = new T(args...);
 	return Object(obj, TypeResolver::template get<T>());

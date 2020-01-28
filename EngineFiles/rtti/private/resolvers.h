@@ -24,6 +24,15 @@ struct PrimitiveTypeResolver
 	DECLARE_PRIMITIVE_TYPE(short);
 	DECLARE_PRIMITIVE_TYPE(std::string);
 
+	template<>
+	static TypeInfo* get_primitive_type<void>() 
+	{ 
+		static TypeInfo _staticInt = TypeInfo("void", 0, nullptr, nullptr); 
+		_staticInt._flags = TypeFlags::Flags(int(TypeFlags::PrimitiveBit) | int(_staticInt._flags)); 
+		return &_staticInt; 
+	}
+
+
 #undef DECLARE_PRIMITIVE_TYPE
 
 };
@@ -35,7 +44,7 @@ struct TypeResolver
 	template<typename T>
 	static TypeInfo* get()
 	{
-		return T::get_type();
+		return T::get_static_type();
 	}
 
 	template<>

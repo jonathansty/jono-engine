@@ -83,3 +83,9 @@ rtti::Object rtti::TypeInfo::create_object()
 	return rtti::Object(data, this);
 }
 
+bool rtti::TypeInfo::is(TypeInfo* type)
+{
+	return this == type;
+
+}
+
