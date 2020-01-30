@@ -38,10 +38,6 @@ public:
     void Reset(){};
     void SetPushPower(double pushPower);
 private:
-	//-------------------------------------------------
-	// Datamembers								
-	//-------------------------------------------------
-    
     Bitmap* m_BmpPtr = nullptr;
     PhysicsActor* m_ActBottomTriggerPtr = nullptr;
     double m_PushPower = 1200;
@@ -49,7 +45,7 @@ private:
 
     //Sounds
     Sound* m_SndJumpPtr = nullptr;
-    
+
 };
 
  

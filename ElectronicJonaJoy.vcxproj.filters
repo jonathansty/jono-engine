@@ -38,6 +38,9 @@
     <Filter Include="Engine Files\rtti\private">
       <UniqueIdentifier>{5b143250-5b70-4b92-b59c-8590cf79ccec}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\Framework">
+      <UniqueIdentifier>{eb4701e6-9f28-453f-8aad-9c5a530d0873}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineFiles\GameEngine.cpp">
@@ -142,6 +145,18 @@
     </ClCompile>
     <ClCompile Include="EngineFiles\rtti\typeinfo.cpp">
       <Filter>Engine Files\rtti</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\rtti\method.cpp">
+      <Filter>Engine Files\rtti</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\Framework\World.cpp">
+      <Filter>Engine Files\Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\Framework\Component.cpp">
+      <Filter>Engine Files\Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\Framework\Entity.cpp">
+      <Filter>Engine Files\Framework</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -415,6 +430,21 @@
     </ClInclude>
     <ClInclude Include="EngineFiles\rtti\private\resolvers.h">
       <Filter>Engine Files\rtti\private</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\rtti\method.h">
+      <Filter>Engine Files\rtti</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Framework\World.h">
+      <Filter>Engine Files\Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Framework\Component.h">
+      <Filter>Engine Files\Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Framework\Entity.h">
+      <Filter>Engine Files\Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Framework\framework.h">
+      <Filter>Engine Files\Framework</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

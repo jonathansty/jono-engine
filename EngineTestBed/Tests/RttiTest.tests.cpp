@@ -1,9 +1,7 @@
 #include "stdafx.h"
-#include "HelloWorld.h"
-#include "core/identifier.h"
-#include "rtti/rtti.h"
+#include "EngineFiles/rtti/rtti.h"
 
-struct Foo 
+struct Foo
 {
 	REFLECT(Foo);
 
@@ -34,11 +32,11 @@ struct Bar : public Foo
 {
 	REFLECT(Bar);
 
-	Bar() : x(0) 
+	Bar() : x(0)
 	{
 		printf("%s\n", __FUNCTION__);
 	}
-	virtual ~Bar() 
+	virtual ~Bar()
 	{
 		printf("%s\n", __FUNCTION__);
 	};
@@ -48,7 +46,7 @@ struct Bar : public Foo
 
 IMPL_REFLECT(Bar)
 {
-	type._parent = Foo::get_type();
+	type._parent = Foo::get_static_type();
 	type.register_property("x", &Bar::x);
 
 }
@@ -62,7 +60,7 @@ struct MyOtherCrazyData : public Bar
 {
 	REFLECT(MyOtherCrazyData)
 
-	MyOtherCrazyData()
+		MyOtherCrazyData()
 	{
 	}
 
@@ -71,7 +69,7 @@ struct MyOtherCrazyData : public Bar
 	{
 	}
 
-	virtual ~MyOtherCrazyData() 
+	virtual ~MyOtherCrazyData()
 	{
 	}
 
@@ -82,7 +80,7 @@ struct MyOtherCrazyData : public Bar
 
 IMPL_REFLECT(MyOtherCrazyData)
 {
-	type._parent = Bar::get_type();
+	type._parent = Bar::get_static_type();
 
 	type.register_property("x0", &MyOtherCrazyData::x0);
 }
@@ -108,30 +106,48 @@ IMPL_REFLECT(TestClass)
 
 }
 
-template<typename ReturnType, typename ...Args>
-struct FunctionInvoke
+
+
+
+struct Adder
 {
-	ReturnType operator()(ReturnType(*func)(Args...), Args... args)
+	REFLECT(Adder);
+
+	int a = 0;
+
+	int add(int x)
 	{
-		return func(args...);
+		a += x;
+		return a;
 	}
 
+	void add_to_a(int b)
+	{
+		a += b;
+	}
 };
-
-int TestFunc(int a )
+IMPL_REFLECT(Adder)
 {
-	return a + 15;
+
 }
 
-void HelloWorldGame::GameStart()
+
+void ExecuteRttiTest_BasicTypes()
 {
-	_test = std::make_shared<Bitmap>(String("Resources/Pickups/coinBronze.png"));
-
-	FunctionInvoke<int, int> invoker{};
-	int result = invoker(TestFunc, 15);
-
-
 	using namespace rtti;
+	{
+		rtti::Object obj = rtti::Object::create<Adder>();
+		std::unique_ptr<rtti::MethodBase> method = std::make_unique<rtti::Method<decltype(&Adder::add)>>(&Adder::add);
+		method->invoke(obj);
+		rtti::Object v = rtti::Object::create_with_copy(15);
+		method->invoke(obj, v);
+
+		std::unique_ptr<rtti::MethodBase> add_to_a_method = std::make_unique<rtti::Method<decltype(&Adder::add_to_a)>>(&Adder::add_to_a);
+		auto i = rtti::Object::create<int>(15);
+		add_to_a_method->invoke(obj, i);
+	}
+
+
 
 	// For now register our types manually
 	Registry::init();
@@ -139,8 +155,8 @@ void HelloWorldGame::GameStart()
 	Registry::register_type<Bar>();
 	Registry::register_type<MyOtherCrazyData>();
 
-	printf("Does Bar inherit from Foo? ... %s!\n", Bar::get_type()->inherits(Foo::get_type()) ? "true" : "false");
-	printf("Does Foo inherit from Bar? ... %s!\n", Foo::get_type()->inherits(Bar::get_type()) ? "true" : "false");
+	printf("Does Bar inherit from Foo? ... %s!\n", Bar::get_static_type()->inherits(Foo::get_static_type()) ? "true" : "false");
+	printf("Does Foo inherit from Bar? ... %s!\n", Foo::get_static_type()->inherits(Bar::get_static_type()) ? "true" : "false");
 
 	// Dumps out all registered types to the console
 	Registry::dump_types();
@@ -152,7 +168,7 @@ void HelloWorldGame::GameStart()
 	//rtti::Object b = rtti::Object::create<Bar>();
 	Bar* testB = barObject.get<Bar>();
 
-	 //Test out creating rtti objects
+	//Test out creating rtti objects
 	{
 		rtti::Object dynamicInt = rtti::Object::create_with_copy<int>(5);
 		assert(dynamicInt.get_type()->is_primitive());
@@ -189,60 +205,4 @@ void HelloWorldGame::GameStart()
 	assert(foo->b == 250);
 	podType.set_property("c", 18);
 	assert(foo->c == 18);
-
-}
-
-void HelloWorldGame::GameEnd()
-{
-
-}
-
-void HelloWorldGame::GamePaint(RECT rect)
-{
-	auto engine = GameEngine::Instance();
-	engine->DrawSolidBackground(COLOR(0, 0, 0));
-	engine->SetColor(COLOR(255, 0, 0));
-	engine->DrawRect(0, 0, 100, 100);
-
-	engine->DrawBitmap(_test.get());
-}
-
-void HelloWorldGame::DebugUI()
-{
-	static bool s_open = true;
-	ImGui::Begin("Types", &s_open);
-
-	using namespace rtti;
-	ImGui::Columns(4);
-	ImGui::Text("Key");
-	ImGui::NextColumn();
-
-	ImGui::Text("Name");
-	ImGui::NextColumn();
-
-	ImGui::Text("Size");
-	ImGui::NextColumn();
-
-	ImGui::Text("Primitive");
-	ImGui::NextColumn();
-	ImGui::Separator();
-
-	// Loop over each type
-	Registry::for_each_type([](std::pair<std::type_index, TypeInfo*> info) {
-		ImGui::Text("%u", info.first.hash_code());
-		ImGui::NextColumn();
-
-		ImGui::Text("%s", info.second->get_name());
-		ImGui::NextColumn();
-
-		ImGui::Text("%d", info.second->get_size());
-		ImGui::NextColumn();
-
-		bool is_primive = info.second->is_primitive();
-		ImGui::Checkbox("", &is_primive);
-		ImGui::NextColumn();
-
-	});
-
-	ImGui::End();
 }

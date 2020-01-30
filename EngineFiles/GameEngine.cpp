@@ -1515,12 +1515,6 @@ LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lP
 		//	m_GamePtr->KeyPressed((TCHAR)wParam);
 		//	return 0;
 
-	case WM_CHAR: //also avaliable: WM_UNICHAR //keydown is a not translated keycode, no shift functionality
-		for (GUIBase* guiPtr : m_GUIPtrArr)
-		{
-			guiPtr->HandleKeyInput((TCHAR)wParam);
-		}
-		return 0;
 
 	// Posted to the window with the keyboard focus when a nonsystem key is pressed. A nonsystem key is a key that is pressed when the ALT key is not pressed.
 	case WM_KEYDOWN: 
@@ -1541,6 +1535,15 @@ LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lP
 	{
 		return v;
 	}
+
+	if (msg == WM_CHAR)
+	{
+		for (GUIBase* guiPtr : m_GUIPtrArr)
+		{
+			guiPtr->HandleKeyInput((TCHAR)wParam);
+		}
+	}
+
 
 	return DefWindowProc(hWindow, msg, wParam, lParam);
 }

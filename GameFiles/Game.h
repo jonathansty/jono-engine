@@ -42,22 +42,16 @@ class CombRotLightCpBg;
 class LevelEnd;
 class TriggerList;
 class FileManager;
-class Game //: public ContactListener
+
+class Game 
 {
 public:
 	Game();
 	virtual ~Game( );
 
-	// C++11 make the class non-copGameable
 	Game( const Game& ) = delete;
 	Game& operator=( const Game& ) = delete;
 
-	//--------------------------------------------------------
-	// ContactListener overloaded member function declarations
-	//--------------------------------------------------------
-	//virtual void BeginContact(PhGamesicsActor *actThisPtr, PhGamesicsActor *actOtherPtr); 
-	//virtual void EndContact(PhGamesicsActor *actThisPtr, PhGamesicsActor *actOtherPtr);   
-	//virtual void ContactImpulse(PhGamesicsActor *actThisPtr, double impulse);
     void Paint();
     void Tick(double deltaTime);
     void Pause();
@@ -85,9 +79,6 @@ public:
     int GetTotalDeaths();
     double GetTotalTime();
 private: 
-    // -------------------------
-    // Private Member functions
-    // -------------------------
 
     /*
     * Objects: Ticks every Object
@@ -102,9 +93,6 @@ private:
 
     void drawBackgroundGradient(int levels);
 
-    // -------------------------
-    // Private Datamembers
-    // -------------------------
     double m_TimeMultiplier = 1;
     std::string m_Level;
     int m_TotalDeaths = 0;
@@ -125,7 +113,6 @@ private:
     RotLight* m_CheckPointRotLightPtr = nullptr;
     Sound* m_SndBgMusicPtr = nullptr;
     Sound* m_SndEpicModePtr = nullptr;
-
 
     double m_AccuTime = 0;
     double m_TotalTime = 0; 

@@ -65,6 +65,8 @@ private:
     Sound* m_BgMusicPtr = nullptr;
     FileManager* m_FileManagerPtr = nullptr;
     FileManager::KeyMap m_KeybindsArr;
+
+    std::shared_ptr<Font> m_ComicSansPtr = nullptr;
 };
 
  

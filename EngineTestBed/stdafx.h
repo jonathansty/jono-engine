@@ -23,6 +23,9 @@
 #include <d3d11.h>
 #include <d3d11_1.h>
 #include <dxgi.h>
+#include <DirectXMath.h>
+using namespace DirectX;
+
 
 // libs used for Direct2D
 #pragma comment(lib, "dxgi.lib")
@@ -74,7 +77,6 @@ using namespace D2D1;
 #include "EngineFiles/PhysicsRevoluteJoint.h"
 #include "EngineFiles/PhysicsPrismaticJoint.h"
 #include "EngineFiles/PhysicsDistanceJoint.h"
-#include "EngineFiles/rtti/rtti.h"
 #include "GameEngine.h"
 
 #include "GameFiles/BitmapManager.h"

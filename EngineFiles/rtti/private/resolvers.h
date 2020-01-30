@@ -32,6 +32,19 @@ struct PrimitiveTypeResolver
 		return &_staticInt; 
 	}
 
+	template<>
+	static TypeInfo* get_primitive_type<XMVECTOR>()
+	{
+		static TypeInfo _staticInt = TypeInfo("XMVECTOR", 0, nullptr, nullptr);
+		return &_staticInt;
+	}
+
+	template<>
+	static TypeInfo* get_primitive_type<XMFLOAT3>()
+	{
+		static TypeInfo _staticInt = TypeInfo("XMFLOAT3", 0, nullptr, nullptr);
+		return &_staticInt;
+	}
 
 #undef DECLARE_PRIMITIVE_TYPE
 
@@ -64,6 +77,12 @@ struct TypeResolver
 
 	template<>
 	static TypeInfo* get<std::string>() { return PrimitiveTypeResolver::get_primitive_type<std::string>(); }
+
+	template<>
+	static TypeInfo* get<XMVECTOR>() { return PrimitiveTypeResolver::get_primitive_type<XMVECTOR>(); }
+
+	template<>
+	static TypeInfo* get<XMFLOAT3>() { return PrimitiveTypeResolver::get_primitive_type<XMFLOAT3>(); }
 
 };
 }

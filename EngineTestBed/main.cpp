@@ -1,6 +1,6 @@
 #include "stdafx.h"
 
-#include "Tests/HelloWorld.h"
+#include "HelloWorld.h"
 
 int main()
 {

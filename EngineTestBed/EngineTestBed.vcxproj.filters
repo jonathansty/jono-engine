@@ -3,15 +3,14 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="Tests\HelloWorld.cpp">
+    <ClCompile Include="HelloWorld.cpp" />
+    <ClCompile Include="Tests\RttiTest.tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="Tests\HelloWorld.h">
-      <Filter>Tests</Filter>
-    </ClInclude>
+    <ClInclude Include="HelloWorld.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tests">

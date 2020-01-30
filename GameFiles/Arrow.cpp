@@ -17,9 +17,6 @@
 //---------------------------
 #define GAME_ENGINE (GameEngine::GetSingleton())
 #define SND_MANAGER (SoundManager::GetSingleton())
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 
 int Arrow::m_InstanceCounter = 0;
 Arrow::Arrow(DOUBLE2 position, Bitmap* bmpPtr):

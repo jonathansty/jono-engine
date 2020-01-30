@@ -5,26 +5,15 @@
 //-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "Sprite.h"
 
-//---------------------------
-// Defines
-//---------------------------
 #define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 Sprite::Sprite(String spritesheetPath, int amountRows, int amountCols, int maxFrame) :
 m_Rows(amountRows),
 m_Cols(amountCols),
 m_MaxFrame(maxFrame)
 {
-	// nothing to create
-	// m_ActCirclePtr->AddContactListener(this);
     m_BmpSpriteSheetPtr = new Bitmap(spritesheetPath);
     m_ClipWidth = m_BmpSpriteSheetPtr->GetWidth() / amountCols;
     m_ClipHeight = m_BmpSpriteSheetPtr->GetHeight() / amountRows;
@@ -32,26 +21,12 @@ m_MaxFrame(maxFrame)
 
 Sprite::~Sprite()
 {
-	// nothing to destroy
+    if (m_BmpSpriteSheetPtr)
+    {
+        delete m_BmpSpriteSheetPtr;
+    }
 }
 
-//-------------------------------------------------------
-// ContactListener overloaded member function definitions
-//-------------------------------------------------------
-//void Sprite::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
-//{
-//
-//}
-//
-//void Sprite::EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
-//{
-//
-//}
-//
-//void Sprite::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
-//{
-//
-//}
 void Sprite::Paint(int rowNumber)
 {
     int clipWidth = m_BmpSpriteSheetPtr->GetWidth() / m_Cols;

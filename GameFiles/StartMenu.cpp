@@ -11,10 +11,12 @@
 
 StartMenu::StartMenu()
 {
+	m_ComicSansPtr = std::make_shared<Font>(String("Comic Sans MS"), (float)KEYLISTFNTSIZE);
     m_BgMusicPtr = SoundManager::GetSingleton()->LoadMusic(String("Resources/Sound/BgMusic/main.mp3"));
     m_BgMusicPtr->Play();
     EnableButtons();
     m_FileManagerPtr->ReadGameResults(m_SessionStatsArr);
+
 }
 
 StartMenu::~StartMenu()
@@ -126,7 +128,6 @@ void StartMenu::Tick(double deltaTime)
             {
                 for (int j = 0; j < 250 + 1; j++)
                 {
-                    
                     if (GAME_ENGINE->IsKeyboardKeyPressed(j))
                     {
                         if (j >= VK_F1 && j <= VK_F12)
@@ -178,7 +179,7 @@ void StartMenu::Tick(double deltaTime)
 }
 void StartMenu::Paint()
 {
-    GAME_ENGINE->DrawBitmap(m_BmpPtr);
+    GameEngine::Instance()->DrawSolidBackground(COLOR(116, 202, 141));
     switch (m_MenuState)
     {
     case StartMenu::menuState::HIGHSCORES:
@@ -242,8 +243,7 @@ void StartMenu::Paint()
     case StartMenu::menuState::MAIN:
         if (m_BmpPtr != nullptr)
         {
-            Font* tmpFntPtr = new Font(String("KenVector Future"), (float)KEYLISTFNTSIZE);
-            GAME_ENGINE->SetFont(tmpFntPtr);
+            GAME_ENGINE->SetFont(m_ComicSansPtr.get());
             MATRIX3X2 matTranslateControl;
             matTranslateControl.SetAsTranslate(100, CONTROLLISTYPOS - (float)KEYLISTFNTSIZE);
             GAME_ENGINE->SetWorldMatrix(matTranslateControl);
@@ -265,7 +265,7 @@ void StartMenu::Paint()
                     KeyBind = String("Right Arrow");
                     break;
                 default:
-                    String(keybind.second);
+                    String(TCHAR(keybind.second));
                     break;
                 }
                 GAME_ENGINE->DrawString(String(keybind.first.c_str()) + String(": ") + KeyBind, DOUBLE2());
@@ -274,7 +274,6 @@ void StartMenu::Paint()
                 ++i;
             }
             GAME_ENGINE->SetDefaultFont();
-            delete tmpFntPtr;
         }
         break;
     }
@@ -335,35 +334,39 @@ void StartMenu::Remove()
 }
 void StartMenu::EnableButtons()
 {
-    int buttonHeight = 40;
-    int buttonWidth = 200;
     int width = GAME_ENGINE->GetWidth();
     int height = GAME_ENGINE->GetHeight();
+    float spacing = 1.25;
+    int buttonHeight = 100;
+    int buttonWidth = 100;
+
     if (m_BmpPtr == nullptr)
     {
         m_BmpPtr = new Bitmap(String("Resources/Menu/StartMenu.png"));
     }
     if (m_BtnQuitPtr == nullptr)
     {
-        m_BtnQuitPtr = new Button(String("Quit Game"));
+        TextureButton* btn = new TextureButton("Resources/UI/Button_QuitGame_Pressed.png", "Resources/UI/Button_QuitGame_Released.png");
+        m_BtnQuitPtr = btn;
+        buttonWidth = btn->GetWidth() ;
+        buttonHeight = btn->GetHeight() ;
         m_BtnQuitPtr->SetBounds(-buttonWidth / 2 + width / 2, (height / 2), buttonWidth, buttonHeight);
-        
     }
     if (m_BtnStartPtr == nullptr)
     {
-        m_BtnStartPtr = new Button(String("Start Game"));
-        m_BtnStartPtr->SetBounds(-buttonWidth / 2 + width / 2, (height / 2) - 2 * buttonHeight, buttonWidth, buttonHeight);
+        m_BtnStartPtr = new TextureButton("Resources/UI/Button_StartGame_Pressed.png", "Resources/UI/Button_StartGame_Released.png");
+        m_BtnStartPtr->SetBounds(-buttonWidth / 2 + width / 2, (height / 2) - spacing * buttonHeight, buttonWidth, buttonHeight);
     }
     
     if (m_BtnOptionsPtr == nullptr)
     {
-        m_BtnOptionsPtr = new Button(String("Options"));
-        m_BtnOptionsPtr->SetBounds(-buttonWidth / 2 + width / 2, (height / 2) + 2 * buttonHeight, buttonWidth, buttonHeight);
+        m_BtnOptionsPtr = new TextureButton("Resources/UI/Button_Options_Pressed.png", "Resources/UI/Button_Options_Released.png");
+        m_BtnOptionsPtr->SetBounds(-buttonWidth / 2 + width / 2, (height / 2) + spacing * buttonHeight, buttonWidth, buttonHeight);
     }
     if (m_BtnHighScoresPtr == nullptr)
     {
-        m_BtnHighScoresPtr = new Button(String("Stats"));
-        m_BtnHighScoresPtr->SetBounds(-buttonWidth / 2 + width / 2, (height / 2) + 4 * buttonHeight, buttonWidth, buttonHeight);
+        m_BtnHighScoresPtr = new TextureButton("Resources/UI/Button_HighScores_Pressed.png", "Resources/UI/Button_HighScores_Released.png");
+        m_BtnHighScoresPtr->SetBounds(-buttonWidth / 2 + width / 2, (height / 2) + 2 *spacing * buttonHeight, buttonWidth, buttonHeight);
     }
 
 }

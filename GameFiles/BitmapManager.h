@@ -1,18 +1,19 @@
 #pragma once
+#include "singleton.h"
 
 //-----------------------------------------------------
 // BitmapManager Class									
 //-----------------------------------------------------
-class BitmapManager
+class BitmapManager : public TSingleton<BitmapManager>
 {
 private:
     BitmapManager();				// Constructor
-    static BitmapManager* m_BitmapManagerPtr;
+    template<typename T>
+    friend class TSingleton;
 public:
 	
 	virtual ~BitmapManager();		// Destructor
 
-	// C++11 make the class non-copyable
 	BitmapManager(const BitmapManager&) = delete;
 	BitmapManager& operator=(const BitmapManager&) = delete;
 

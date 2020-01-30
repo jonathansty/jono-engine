@@ -5,20 +5,15 @@
 // Group: 1DAE01
 //-----------------------------------------------------
 
-//-----------------------------------------------------
-// Include Files
-//-----------------------------------------------------
-
 #include "ContactListener.h"
-//-----------------------------------------------------
-// Entity Class									
-//-----------------------------------------------------
+
 class Level;
 class Avatar;
 class SoundManager;
 class Entity : public ContactListener
 {
 public:
+
 	Entity(DOUBLE2 position);
     Entity(DOUBLE2 position, Level* levelPtr);
 	virtual ~Entity( );
@@ -35,8 +30,8 @@ public:
 	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse) = 0;
     virtual void SetLevel(Level* levelptr);
     virtual void SetAvatar(Avatar* avatar);
-    virtual void Paint() = 0;
-    virtual void Tick(double deltaTime) = 0;
+    virtual void Paint() {}
+    virtual void Tick(double deltaTime) {}
     virtual PhysicsActor* GetActor();
     virtual DOUBLE2 GetPosition();
     virtual void SetSpawnPosition(DOUBLE2 respawnPosition);
@@ -61,12 +56,6 @@ protected:
     PhysicsActor* m_ActPtr = nullptr;
     bool m_IsDead = false;
     bool m_IsHit = false;
-
-private: 
-	//-------------------------------------------------
-	// Datamembers								
-	//-------------------------------------------------
-    
 };
 
  

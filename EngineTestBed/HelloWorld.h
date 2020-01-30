@@ -1,6 +1,8 @@
 #pragma once
 
 #include "AbstractGame.h"
+#include "Framework/World.h"
+
 
 class HelloWorldGame : public AbstractGame
 {
@@ -15,23 +17,14 @@ public:
 
 	void GamePaint(RECT rect) override;
 
+	void GameTick(double deltaTime) override;
+
 	void DebugUI() override;
 
 private:
-	std::shared_ptr<Bitmap> _test;
-};
-
-struct SimpleData
-{
-	int a;
-	int b;
-	float c;
-	std::string name;
-};
-
-struct OtherData : public SimpleData
-{
-	int b = 0;
+	std::unique_ptr<framework::World> _world;
+	framework::World::EntityId _rotatorEntity;
+	framework::World::EntityId _parentEntity;
 };
 
 

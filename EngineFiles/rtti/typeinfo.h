@@ -60,6 +60,12 @@ namespace rtti
 		const char* get_name() const;
 		std::size_t get_size() const;
 
+		template<typename T>
+		void bind_parent()
+		{
+			_parent = T::get_static_type();
+		}
+
 		bool is_primitive();
 
 		bool inherits(TypeInfo* type);

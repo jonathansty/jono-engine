@@ -5,9 +5,6 @@
 //-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "Game.h"
 #include "ElectronicJonaJoy.h"																				
 #include "Entity.h"
@@ -50,30 +47,23 @@
 #include "FileManager.h"
 #include "Slicer.h"
 #include "NpcHinter.h"
+#include "SoundManager.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-#define BITMAP_MANAGER (BitmapManager::GetSingleton())
-#define SND_MANAGER (SoundManager::GetSingleton())
-//---------------------------
-// Constructor & Destructor
-//---------------------------
+#define GAME_ENGINE (GameEngine::Instance())
+#define BITMAP_MANAGER (BitmapManager::Instance())
+#define SND_MANAGER (SoundManager::Instance())
+
 Game::Game()
 {
-
     m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-6000, 0),BITMAP_MANAGER->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")));
     m_CheckPointRotLightPtr = new RotLight(DOUBLE2(-6000, 0));
     m_CheckPointRotLightPtr->SetColor(COLOR(255, 255, 255));
     m_CheckPointRotLightPtr->SetRadius(150);
     m_AttackBeamListPtr = new AttackBeamList(); 
-
 }
 
 Game::~Game()
 {
-
     delete m_AttackBeamListPtr;
     m_AttackBeamListPtr = nullptr;
 
@@ -85,8 +75,6 @@ Game::~Game()
 
 
     m_FileManagerPtr->RemoveAll();
-
-
 }
 void Game::Tick(double deltaTime)
 {

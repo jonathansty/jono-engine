@@ -23,6 +23,9 @@ public:
 	static Object create(Args ... args);
 
 	template<typename T>
+	static Object create_as_ref(T* obj);
+
+	template<typename T>
 	static Object create_with_copy(T obj);
 
 	// Gets a pointer to the object it's value if the types match. If no match it will return nullptr
@@ -52,9 +55,10 @@ public:
 	}
 
 private:
-	Object(void* data, TypeInfo* type)
+	Object(void* data, TypeInfo* type, bool is_ref = false)
 		: _data(data)
 		, _type(type)
+		, _is_ref(is_ref)
 	{
 
 	}
@@ -63,6 +67,7 @@ private:
 public:
 	TypeInfo* _type;
 	void* _data;
+	bool _is_ref;
 
 	friend class TypeInfo;
 };
@@ -109,6 +114,12 @@ T* rtti::Object::get() const
 		return reinterpret_cast<T*>(_data);
 	}
 	return nullptr;
+}
+
+template<typename T>
+Object rtti::Object::create_as_ref(T* obj)
+{
+	return Object(obj, TypeResolver::template get<T>(), true);
 }
 
 template<typename T>

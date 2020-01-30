@@ -2,20 +2,11 @@
 // Name, first name: Steyfkens, Jonathan
 // Group: 1DAE01
 //-----------------------------------------------------
-//---------------------------
-// Includes
-//---------------------------
 #include "stdafx.h"	
 #include "BitmapManager.h"
 
-//---------------------------
-// Defines
-//---------------------------
 #define GAME_ENGINE (GameEngine::GetSingleton())
-BitmapManager* BitmapManager::m_BitmapManagerPtr = nullptr;
-//---------------------------
-// Constructor & Destructor
-//---------------------------
+
 BitmapManager::BitmapManager() : m_BitmapPtrArr{}
 {
     for (int i = 0; i < SIZE; i++)
@@ -33,15 +24,9 @@ BitmapManager::~BitmapManager()
     }
 }
 
-//---------------------------
-// Methods - Member functions
-//---------------------------
 BitmapManager* BitmapManager::GetSingleton()
 {
-    if (m_BitmapManagerPtr == nullptr)m_BitmapManagerPtr = new BitmapManager();
-
-    return m_BitmapManagerPtr;
-
+    return Instance();
 }
 Bitmap* BitmapManager::LoadBitmapFile(const String& fileName)
 {

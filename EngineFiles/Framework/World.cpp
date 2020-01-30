@@ -2,38 +2,9 @@
 #include "rtti/rtti.h"
 #include "World.h"
 
+#include "Entity.h"
+
 using namespace framework;
-
-IMPL_REFLECT(Component)
-{
-
-}
-
-Component::Component(std::string const& name) : _name(name)
-{
-
-}
-
-Component::~Component()
-{
-
-}
-
-Entity::Entity(XMFLOAT2 pos)
-	: _pos(pos)
-{
-
-}
-
-Entity::~Entity()
-{
-	for (auto comp : m_Components)
-	{
-		delete comp;
-	}
-	m_Components.clear();
-
-}
 
 World::World()
 	: _entities()
@@ -43,7 +14,7 @@ World::World()
 
 World::~World()
 {
-	for (auto it : _entities)
+	for (Entity* it : _entities)
 	{
 		delete it;
 	}

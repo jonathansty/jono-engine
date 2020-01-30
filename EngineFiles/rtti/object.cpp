@@ -5,7 +5,7 @@
 
 rtti::Object::~Object()
 {
-	if (_type && _type->_destructor)
+	if (!_is_ref && _type && _type->_destructor)
 	{
 		_type->_destructor(_data);
 	}
@@ -15,6 +15,7 @@ rtti::Object::~Object()
 rtti::Object::Object() 
 	: _data(nullptr)
 	, _type(nullptr)
+	, _is_ref(false)
 {
 
 }

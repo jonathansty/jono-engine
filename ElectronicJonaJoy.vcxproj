@@ -98,6 +98,10 @@
     <ClInclude Include="EngineFiles\core\identifier.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\MetricsOverlay.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\OverlayManager.h" />
+    <ClInclude Include="EngineFiles\Framework\Component.h" />
+    <ClInclude Include="EngineFiles\Framework\Entity.h" />
+    <ClInclude Include="EngineFiles\Framework\framework.h" />
+    <ClInclude Include="EngineFiles\Framework\World.h" />
     <ClInclude Include="EngineFiles\imgui\imconfig.h" />
     <ClInclude Include="EngineFiles\imgui\imgui.h" />
     <ClInclude Include="EngineFiles\imgui\imgui_impl_dx11.h" />
@@ -106,6 +110,7 @@
     <ClInclude Include="EngineFiles\imgui\imstb_rectpack.h" />
     <ClInclude Include="EngineFiles\imgui\imstb_textedit.h" />
     <ClInclude Include="EngineFiles\imgui\imstb_truetype.h" />
+    <ClInclude Include="EngineFiles\rtti\method.h" />
     <ClInclude Include="EngineFiles\rtti\object.h" />
     <ClInclude Include="EngineFiles\rtti\private\resolvers.h" />
     <ClInclude Include="EngineFiles\rtti\property.h" />
@@ -126,6 +131,9 @@
     <ClCompile Include="EngineFiles\DebugOverlays\MetricsOverlay.cpp" />
     <ClCompile Include="EngineFiles\DebugOverlays\OverlayMananager.cpp" />
     <ClCompile Include="EngineFiles\Font.cpp" />
+    <ClCompile Include="EngineFiles\Framework\Component.cpp" />
+    <ClCompile Include="EngineFiles\Framework\Entity.cpp" />
+    <ClCompile Include="EngineFiles\Framework\World.cpp" />
     <ClCompile Include="EngineFiles\GameEngine.cpp" />
     <ClCompile Include="EngineFiles\GameSettings.cpp" />
     <ClCompile Include="EngineFiles\imgui\imgui.cpp" />
@@ -141,6 +149,7 @@
     <ClCompile Include="EngineFiles\PhysicsPrismaticJoint.cpp" />
     <ClCompile Include="EngineFiles\PhysicsRevoluteJoint.cpp" />
     <ClCompile Include="EngineFiles\PrecisionTimer.cpp" />
+    <ClCompile Include="EngineFiles\rtti\method.cpp" />
     <ClCompile Include="EngineFiles\rtti\object.cpp" />
     <ClCompile Include="EngineFiles\rtti\typeinfo.cpp" />
     <ClCompile Include="EngineFiles\Sound.cpp" />
