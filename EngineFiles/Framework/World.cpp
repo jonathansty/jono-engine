@@ -8,8 +8,10 @@ using namespace framework;
 
 World::World()
 	: _entities()
+	, _root(new Entity())
 {
 	_entities.reserve(1000);
+	_root->set_name("Root");
 }
 
 World::~World()
@@ -20,6 +22,8 @@ World::~World()
 	}
 
 	_entities.clear();
+
+	delete _root;
 
 }
 

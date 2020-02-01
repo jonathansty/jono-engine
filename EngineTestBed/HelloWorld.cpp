@@ -80,18 +80,223 @@ public:
 	static constexpr const char* bmp_coin_gold = "Resources/Pickups/coinGold.png";
 };
 
+class RTTIDebugOverlay : public DebugOverlay
+{
+
+public:
+	RTTIDebugOverlay() : DebugOverlay(false, "RTTIOverlay") {}
+	~RTTIDebugOverlay() {}
+
+	virtual void render_overlay() override
+	{
+		if (_isOpen)
+		{
+			ImGui::Begin("Types", &_isOpen);
+
+			using namespace rtti;
+			ImGui::Columns(4);
+			ImGui::Text("Key");
+			ImGui::NextColumn();
+
+			ImGui::Text("Name");
+			ImGui::NextColumn();
+
+			ImGui::Text("Size");
+			ImGui::NextColumn();
+
+			ImGui::Text("Primitive");
+			ImGui::NextColumn();
+			ImGui::Separator();
+
+			// Loop over each type
+			Registry::for_each_type([](std::pair<std::type_index, TypeInfo*> info) {
+				ImGui::Text("%u", info.first.hash_code());
+				ImGui::NextColumn();
+
+				ImGui::Text("%s", info.second->get_name());
+				ImGui::NextColumn();
+
+				ImGui::Text("%d", info.second->get_size());
+				ImGui::NextColumn();
+
+				bool is_primive = info.second->is_primitive();
+				ImGui::Checkbox("", &is_primive);
+				ImGui::NextColumn();
+
+				});
+
+			ImGui::End();
+		}
+	}
+
+};
+
+class EntityDebugOverlay : public DebugOverlay
+{
+public:
+	EntityDebugOverlay(framework::World* world)
+		: DebugOverlay(false, "EntityDebugOverlay")
+		, _world(world)
+	{
+	}
+
+
+	void RenderTree(framework::Entity* ent)
+	{
+		ImGuiTreeNodeFlags flags = (_selected == ent ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
+
+		if (ent->_children.size() == 0)
+			flags |= ImGuiTreeNodeFlags_Leaf;
+
+		if (ImGui::TreeNodeEx(ent, flags, ent->get_name()))
+		{
+			if (ImGui::IsItemToggledOpen())
+			{
+
+			}
+			else if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+			{
+				_selected = ent;
+			}
+
+
+			for (framework::Entity* child : ent->_children)
+			{
+				RenderTree(child);
+			}
+
+			ImGui::TreePop();
+		}
+	}
+
+	virtual void render_overlay() override
+	{
+		if (_isOpen)
+		{
+			static int s_current = 0;
+			ImGui::Begin(_name.c_str(), &_isOpen);
+			ImGui::Text("Number Of Entities: %d", _world->_entities.size());
+
+			std::vector<const char*> names{};
+			std::vector<framework::Entity*> entities{};
+			for (framework::Entity* ent : _world->_entities)
+			{
+				names.push_back(ent->get_name());
+				entities.push_back(ent);
+			}
+
+			RenderTree(_world->_root);
+
+			if (_selected)
+			{
+				// Display type
+				{
+					ImGui::Separator();
+					framework::Entity* rot = _selected;
+					rtti::TypeInfo* i = rot->get_type();
+					rtti::Object obj = rtti::Object::create_as_ref(rot);
+
+					ImGui::LabelText("Entity:", rot->get_name());
+					for (auto const& prop : i->_properties)
+					{
+						rtti::Property const& p = prop.second;
+
+						if (p.type == rtti::Registry::get<XMFLOAT3>())
+						{
+							XMFLOAT3* pos = obj.get_property<XMFLOAT3>(p.name);
+							ImGui::InputFloat3(p.name.c_str(), (float*)pos, 2);
+
+						}
+						else if (p.type == rtti::Registry::get<XMVECTOR>())
+						{
+							XMVECTOR* rot = obj.get_property<XMVECTOR>(p.name);
+							ImGui::InputFloat4(p.name.c_str(), (float*)rot, 2);
+						}
+					}
+				}
+			}
+
+			ImGui::End();
+		}
+	}
+
+private:
+	framework::Entity* _selected;
+	framework::World* _world;
+};
+
+
+class ImGuiDemoOverlay : public DebugOverlay
+{
+public:
+	ImGuiDemoOverlay() : DebugOverlay(false, "ImGuiDemoOverlay")
+	{
+
+	}
+
+	virtual void render_overlay() override
+	{
+		ImGui::ShowDemoWindow(&_isOpen);
+	}
+};
+
+class ImGuiAboutOverlay : public DebugOverlay
+{
+public:
+	ImGuiAboutOverlay() : DebugOverlay(false, "ImGuiAboutOverlay")
+	{
+
+	}
+
+	virtual void render_overlay() override
+	{
+		ImGui::ShowAboutWindow(&_isOpen);
+	}
+};
+
+class GameOverlay : public DebugOverlay
+{
+public:
+	GameOverlay() : DebugOverlay(false, "GameOverlay") {}
+	virtual ~GameOverlay() {}
+
+
+	virtual void render_overlay() override
+	{
+		ImGuiIO& io = ImGui::GetIO();
+
+		ImVec2 window_pos = ImVec2(5.0f, io.DisplaySize.y - 200.0f);
+		ImVec2 window_pos_pivot = ImVec2(0.0, 0.0);
+
+		ImGui::SetNextWindowPos(window_pos, ImGuiCond_Always, window_pos_pivot);
+		ImGui::SetNextWindowSize({ io.DisplaySize.x - 10.0f, 190.0f }, ImGuiCond_Always);
+		ImGui::SetNextWindowBgAlpha(0.0f);
+		if (ImGui::Begin(_name.c_str(), &_isOpen, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoFocusOnAppearing | ImGuiWindowFlags_NoNav | ImGuiWindowFlags_NoBackground))
+		{
+			ImGui::Text("Demo");
+			ImGui::End();
+		}
+
+	}
+
+};
+
+
 void HelloWorldGame::GameStart()
 {
 #ifdef _DEBUG
 	ExecuteRttiTest_BasicTypes();
 #endif
 
+	GameEngine::Instance()->get_overlay_manager()->register_overlay(new RTTIDebugOverlay());
+	GameEngine::Instance()->get_overlay_manager()->register_overlay(new ImGuiDemoOverlay());
+	GameEngine::Instance()->get_overlay_manager()->register_overlay(new ImGuiAboutOverlay());
+	GameEngine::Instance()->get_overlay_manager()->register_overlay(new GameOverlay());
+
+
 	using namespace framework;
 	_world = std::make_unique<framework::World>();
-
-	//_rotatorEntity = _world->create_entity(XMFLOAT2(50, 50));
-	//_world->get_entity(_rotatorEntity)->create_component<SimpleMovement>("Movement", XMFLOAT2{ 100,100 }, 10.f);
-	//_world->get_entity(_rotatorEntity)->create_component<BitmapComponent>("Sprite", ResourcePaths::bmp_coin_bronze);
+	GameEngine::Instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
 
 	_parentEntity = _world->create_entity(XMFLOAT2(100, 0));
 	_world->get_entity(_parentEntity)->create_component<BitmapComponent>("",ResourcePaths::bmp_coin_silver);
@@ -164,67 +369,7 @@ void HelloWorldGame::DebugUI()
 		}
 	}
 
-	// Display type
-	{
-		ImGui::Separator();
-		Entity* rot = _world->get_entity(_parentEntity);
-		rtti::TypeInfo* i = rot->get_type();
-		rtti::Object obj = rtti::Object::create_as_ref(rot);
-
-		ImGui::LabelText("Entity:", rot->get_name());
-		for (auto const& prop : i->_properties)
-		{
-			rtti::Property const& p = prop.second;
-			
-			if (p.type == rtti::Registry::get<XMFLOAT3>())
-			{
-				XMFLOAT3* pos = obj.get_property<XMFLOAT3>(p.name);
-				ImGui::InputFloat3(p.name.c_str(), (float*)pos, 2);
-
-			}
-			else if (p.type == rtti::Registry::get<XMVECTOR>())
-			{
-				XMVECTOR* rot = obj.get_property<XMVECTOR>(p.name);
-				ImGui::InputFloat4(p.name.c_str(), (float*)rot, 2);
-			}
-		}
-	}
-
-	ImGui::End();
-	static bool s_open = false;
-	ImGui::Begin("Types", &s_open);
-
-	using namespace rtti;
-	ImGui::Columns(4);
-	ImGui::Text("Key");
-	ImGui::NextColumn();
-
-	ImGui::Text("Name");
-	ImGui::NextColumn();
-
-	ImGui::Text("Size");
-	ImGui::NextColumn();
-
-	ImGui::Text("Primitive");
-	ImGui::NextColumn();
-	ImGui::Separator();
-
-	// Loop over each type
-	Registry::for_each_type([](std::pair<std::type_index, TypeInfo*> info) {
-		ImGui::Text("%u", info.first.hash_code());
-		ImGui::NextColumn();
-
-		ImGui::Text("%s", info.second->get_name());
-		ImGui::NextColumn();
-
-		ImGui::Text("%d", info.second->get_size());
-		ImGui::NextColumn();
-
-		bool is_primive = info.second->is_primitive();
-		ImGui::Checkbox("", &is_primive);
-		ImGui::NextColumn();
-
-	});
 
 	ImGui::End();
 }
+

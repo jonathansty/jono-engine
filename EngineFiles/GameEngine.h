@@ -367,6 +367,12 @@ public:
 
 	void SetVSync(bool vsync);
 	bool GetVSync();
+
+	std::shared_ptr<OverlayManager>const& get_overlay_manager() const
+	{
+		return m_OverlayManager;
+	}
+
 private:
 	// Set when the game loses focus
 	void SetSleep(bool bSleep);
@@ -410,6 +416,7 @@ private:
 	// Iterates the vector and calls the ContactListeners
 	// This for begin and endcontacts
 	void CallListeners();
+
 
 	// Member Variables
 	HINSTANCE           m_hInstance;
@@ -468,7 +475,7 @@ private:
 
 	AudioSystem *m_XaudioPtr = nullptr;
 
-	std::shared_ptr<MetricsOverlay> m_MetricsOverlay;
+	MetricsOverlay* m_MetricsOverlay;
 	std::shared_ptr<OverlayManager> m_OverlayManager;
 };
 

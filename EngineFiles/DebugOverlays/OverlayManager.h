@@ -35,7 +35,7 @@ class OverlayManager : public DebugOverlay
 {
 public:
 	OverlayManager(bool isOpen = false) : DebugOverlay(isOpen, "Overlays") {}
-	~OverlayManager() {}
+	~OverlayManager();
 
 
 	void render_overlay() override;

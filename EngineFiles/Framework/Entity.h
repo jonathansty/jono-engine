@@ -1,5 +1,6 @@
 #pragma once
 
+class EntityDebugOverlay;
 namespace framework
 {
 	class Component;
@@ -39,7 +40,12 @@ namespace framework
 
 		void attach_to(Entity* parent) 
 		{ 
+			if (_parent)
+			{
+				_parent->_children.erase(std::find(_parent->_children.begin(), _parent->_children.end(), this));
+			}
 			_parent = parent; 
+			_parent->_children.push_back(this);
 		}
 
 		XMFLOAT3 get_local_position() const;
@@ -60,12 +66,13 @@ namespace framework
 	protected:
 		std::string _name;
 		Entity* _parent;
+		std::vector<Entity*> _children;
 
 		XMFLOAT3 _pos;
 		XMVECTOR _rot;
 
 		std::vector<Component*> m_Components;
-
+		friend EntityDebugOverlay;
 	};
 
 	template<typename T, typename...Args>

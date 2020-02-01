@@ -72,9 +72,9 @@ GameEngine::GameEngine() :
 	CreateDeviceIndependentResources();
 
 	m_OverlayManager = std::make_shared<OverlayManager>();
-	m_MetricsOverlay = std::make_shared<MetricsOverlay>();
+	m_MetricsOverlay = new MetricsOverlay();
 
-	m_OverlayManager->register_overlay(m_MetricsOverlay.get());
+	m_OverlayManager->register_overlay(m_MetricsOverlay);
 
 
 	// Start up the keyboard thread
@@ -289,7 +289,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 				ImGui::NewFrame();
 				{
 					m_GamePtr->DebugUI();
-					m_MetricsOverlay->render_overlay();
 					m_OverlayManager->render_overlay();
 				}
 				ImGui::EndFrame();

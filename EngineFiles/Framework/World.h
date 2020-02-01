@@ -1,5 +1,8 @@
 #pragma once
 #include "rtti/rtti.h"
+
+class EntityDebugOverlay;
+
 namespace framework
 {
 	class Entity;
@@ -27,6 +30,7 @@ namespace framework
 			
 			std::size_t id = _entities.size();
 			_entities.push_back(obj);
+			obj->attach_to(_root);
 
 			return id;
 		}
@@ -48,7 +52,8 @@ namespace framework
 		std::vector<size_t> _free_list;
 		std::vector<size_t> _deletion_list;
 
+		Entity* _root;
 		std::vector<Entity*> _entities;
-
+		friend EntityDebugOverlay;
 	};
 }
