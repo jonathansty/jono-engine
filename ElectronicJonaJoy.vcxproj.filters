@@ -125,9 +125,6 @@
     <ClCompile Include="EngineFiles\DebugOverlays\MetricsOverlay.cpp">
       <Filter>Engine Files\DebugOverlays</Filter>
     </ClCompile>
-    <ClCompile Include="EngineFiles\DebugOverlays\OverlayMananager.cpp">
-      <Filter>Engine Files\DebugOverlays</Filter>
-    </ClCompile>
     <ClCompile Include="EngineFiles\ContactListener.cpp">
       <Filter>Engine Files</Filter>
     </ClCompile>
@@ -157,6 +154,9 @@
     </ClCompile>
     <ClCompile Include="EngineFiles\Framework\Entity.cpp">
       <Filter>Engine Files\Framework</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\DebugOverlays\OverlayManager.cpp">
+      <Filter>Engine Files\DebugOverlays</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -445,6 +445,12 @@
     </ClInclude>
     <ClInclude Include="EngineFiles\Framework\framework.h">
       <Filter>Engine Files\Framework</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\DebugOverlays\RTTIDebugOverlay.h">
+      <Filter>Engine Files\DebugOverlays</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\DebugOverlays\ImGuiOverlays.h">
+      <Filter>Engine Files\DebugOverlays</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

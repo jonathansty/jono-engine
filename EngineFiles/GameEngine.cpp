@@ -9,6 +9,8 @@
 #include "imgui/imgui_impl_win32.h"
 
 #include "DebugOverlays/MetricsOverlay.h"
+#include "DebugOverlays/RTTIDebugOverlay.h"
+#include "DebugOverlays/ImGuiOverlays.h"
 
 //-----------------------------------------------------------------
 // Windows Functions
@@ -75,7 +77,9 @@ GameEngine::GameEngine() :
 	m_MetricsOverlay = new MetricsOverlay();
 
 	m_OverlayManager->register_overlay(m_MetricsOverlay);
-
+	m_OverlayManager->register_overlay(new RTTIDebugOverlay());
+	m_OverlayManager->register_overlay(new ImGuiDemoOverlay());
+	m_OverlayManager->register_overlay(new ImGuiAboutOverlay());
 
 	// Start up the keyboard thread
 	//m_hKeybThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE) ::KeybThreadProc, this, NULL, &m_dKeybThreadID);

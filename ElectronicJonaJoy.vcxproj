@@ -96,8 +96,10 @@
     <ClInclude Include="EngineFiles\AbstractGame.h" />
     <ClInclude Include="EngineFiles\ContactListener.h" />
     <ClInclude Include="EngineFiles\core\identifier.h" />
+    <ClInclude Include="EngineFiles\DebugOverlays\ImGuiOverlays.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\MetricsOverlay.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\OverlayManager.h" />
+    <ClInclude Include="EngineFiles\DebugOverlays\RTTIDebugOverlay.h" />
     <ClInclude Include="EngineFiles\Framework\Component.h" />
     <ClInclude Include="EngineFiles\Framework\Entity.h" />
     <ClInclude Include="EngineFiles\Framework\framework.h" />
@@ -129,7 +131,7 @@
     <ClCompile Include="EngineFiles\Button.cpp" />
     <ClCompile Include="EngineFiles\ContactListener.cpp" />
     <ClCompile Include="EngineFiles\DebugOverlays\MetricsOverlay.cpp" />
-    <ClCompile Include="EngineFiles\DebugOverlays\OverlayMananager.cpp" />
+    <ClCompile Include="EngineFiles\DebugOverlays\OverlayManager.cpp" />
     <ClCompile Include="EngineFiles\Font.cpp" />
     <ClCompile Include="EngineFiles\Framework\Component.cpp" />
     <ClCompile Include="EngineFiles\Framework\Entity.cpp" />

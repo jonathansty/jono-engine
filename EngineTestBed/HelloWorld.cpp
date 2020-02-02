@@ -80,57 +80,6 @@ public:
 	static constexpr const char* bmp_coin_gold = "Resources/Pickups/coinGold.png";
 };
 
-class RTTIDebugOverlay : public DebugOverlay
-{
-
-public:
-	RTTIDebugOverlay() : DebugOverlay(false, "RTTIOverlay") {}
-	~RTTIDebugOverlay() {}
-
-	virtual void render_overlay() override
-	{
-		if (_isOpen)
-		{
-			ImGui::Begin("Types", &_isOpen);
-
-			using namespace rtti;
-			ImGui::Columns(4);
-			ImGui::Text("Key");
-			ImGui::NextColumn();
-
-			ImGui::Text("Name");
-			ImGui::NextColumn();
-
-			ImGui::Text("Size");
-			ImGui::NextColumn();
-
-			ImGui::Text("Primitive");
-			ImGui::NextColumn();
-			ImGui::Separator();
-
-			// Loop over each type
-			Registry::for_each_type([](std::pair<std::type_index, TypeInfo*> info) {
-				ImGui::Text("%u", info.first.hash_code());
-				ImGui::NextColumn();
-
-				ImGui::Text("%s", info.second->get_name());
-				ImGui::NextColumn();
-
-				ImGui::Text("%d", info.second->get_size());
-				ImGui::NextColumn();
-
-				bool is_primive = info.second->is_primitive();
-				ImGui::Checkbox("", &is_primive);
-				ImGui::NextColumn();
-
-				});
-
-			ImGui::End();
-		}
-	}
-
-};
-
 class EntityDebugOverlay : public DebugOverlay
 {
 public:
@@ -154,7 +103,8 @@ public:
 			{
 
 			}
-			else if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
 			{
 				_selected = ent;
 			}
@@ -166,6 +116,12 @@ public:
 			}
 
 			ImGui::TreePop();
+		}
+		else {
+			if (ImGui::IsItemClicked(ImGuiMouseButton_Left))
+			{
+				_selected = ent;
+			}
 		}
 	}
 
@@ -226,34 +182,6 @@ private:
 };
 
 
-class ImGuiDemoOverlay : public DebugOverlay
-{
-public:
-	ImGuiDemoOverlay() : DebugOverlay(false, "ImGuiDemoOverlay")
-	{
-
-	}
-
-	virtual void render_overlay() override
-	{
-		ImGui::ShowDemoWindow(&_isOpen);
-	}
-};
-
-class ImGuiAboutOverlay : public DebugOverlay
-{
-public:
-	ImGuiAboutOverlay() : DebugOverlay(false, "ImGuiAboutOverlay")
-	{
-
-	}
-
-	virtual void render_overlay() override
-	{
-		ImGui::ShowAboutWindow(&_isOpen);
-	}
-};
-
 class GameOverlay : public DebugOverlay
 {
 public:
@@ -288,11 +216,8 @@ void HelloWorldGame::GameStart()
 	ExecuteRttiTest_BasicTypes();
 #endif
 
-	GameEngine::Instance()->get_overlay_manager()->register_overlay(new RTTIDebugOverlay());
-	GameEngine::Instance()->get_overlay_manager()->register_overlay(new ImGuiDemoOverlay());
-	GameEngine::Instance()->get_overlay_manager()->register_overlay(new ImGuiAboutOverlay());
+	// Register default overlays to the overlay manager
 	GameEngine::Instance()->get_overlay_manager()->register_overlay(new GameOverlay());
-
 
 	using namespace framework;
 	_world = std::make_unique<framework::World>();
