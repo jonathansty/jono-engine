@@ -1,4 +1,5 @@
 #pragma once
+// Based on RTTR and https://preshing.com/20180124/a-flexible-reflection-system-in-cpp-part-2/
 #include <functional>
 #include <typeindex>
 #include <type_traits>
@@ -11,6 +12,7 @@
 #include "method.h"
 
 #define REFLECT(classname) \
+	friend struct rtti::DefaultResolver; \
 	static rtti::TypeInfo_Register<classname> _sType; \
 public:\
 	static void reflect(rtti::TypeInfo& type); \

@@ -3,6 +3,7 @@
 namespace rtti 
 {
 
+class Registry;
 class TypeInfo;
 
 // RTTI Object containing the actual object data and type info related to the object
@@ -45,7 +46,7 @@ public:
 	template<typename T>
 	bool is_type() const
 	{
-		return _type == TypeResolver::template get<T>();
+		return _type == Registry::template get<T>();
 	}
 
 	template<typename T>
@@ -79,7 +80,7 @@ T* rtti::Object::get_property(std::string const& name)
 	if (!property_info)
 		return nullptr;
 
-	if (property_info->type != TypeResolver::template get<T>())
+	if (property_info->type != Registry::template get<T>())
 		return nullptr;
 
 	return reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(_data) + property_info->offset);
@@ -94,7 +95,7 @@ bool rtti::Object::set_property(std::string const& field, T const& value)
 
 	TypeInfo* property_type = property_info->type;
 
-	if (property_type != TypeResolver::template get<T>())
+	if (property_type != Registry::template get<T>())
 		return false;
 
 	size_t offset = property_info->offset;
@@ -109,7 +110,7 @@ bool rtti::Object::set_property(std::string const& field, T const& value)
 template<typename T>
 T* rtti::Object::get() const
 {
-	if (TypeResolver::template get<T>() == _type)
+	if (Registry::template get<T>() == _type)
 	{
 		return reinterpret_cast<T*>(_data);
 	}
@@ -119,22 +120,22 @@ T* rtti::Object::get() const
 template<typename T>
 Object rtti::Object::create_as_ref(T* obj)
 {
-	return Object(obj, TypeResolver::template get<T>(), true);
+	return Object(obj, Registry::template get<T>(), true);
 }
 
 template<typename T>
 Object rtti::Object::create_with_copy(T obj)
 {
 	T* d = new T();
-	memcpy(d, (const void*)(&obj), sizeof(T));
-	return Object(d, TypeResolver::template get<T>());
+	*d = obj;
+	return Object(d, Registry::template get<T>());
 }
 
 template<typename T, typename ...Args>
 Object rtti::Object::create(Args... args)
 {
 	T* obj = new T(args...);
-	return Object(obj, TypeResolver::template get<T>());
+	return Object(obj, Registry::template get<T>());
 }
 
 }

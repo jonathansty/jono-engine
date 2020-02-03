@@ -5,8 +5,14 @@ struct Foo
 {
 	REFLECT(Foo);
 
-	Foo() : a(0), b(0), c(0) {};
-	virtual ~Foo() {  }
+	Foo() : a(0), b(0), c(0), my_collection() {
+		printf("%s\n", __FUNCTION__);
+	};
+	virtual ~Foo() 
+	{  
+		printf("%s\n", __FUNCTION__);
+		my_collection.clear();
+	}
 	int a;
 	int b;
 	int c;
@@ -17,6 +23,8 @@ struct Foo
 		c += x;
 	}
 
+	std::vector<int> my_collection;
+
 };
 
 IMPL_REFLECT(Foo)
@@ -25,6 +33,7 @@ IMPL_REFLECT(Foo)
 	type.register_property("b", &Foo::b);
 	type.register_property("c", &Foo::c);
 
+	type.register_property("my_collection", &Foo::my_collection);
 	//type.register_function("add", &Foo::add);
 }
 
@@ -32,7 +41,7 @@ struct Bar : public Foo
 {
 	REFLECT(Bar);
 
-	Bar() : x(0)
+	Bar() : Foo(), x(0)
 	{
 		printf("%s\n", __FUNCTION__);
 	}
@@ -150,7 +159,10 @@ void ExecuteRttiTest_BasicTypes()
 
 
 	// For now register our types manually
-	Registry::init();
+	if (!Registry::is_init())
+	{
+		Registry::init();
+	}
 	Registry::register_type<Foo>();
 	Registry::register_type<Bar>();
 	Registry::register_type<MyOtherCrazyData>();
@@ -163,6 +175,10 @@ void ExecuteRttiTest_BasicTypes()
 
 	auto obj = rtti::Object::create<MyOtherCrazyData>("TEST", 2.0);
 
+	TypeInfo* fooType = rtti::Registry::get<Bar>();
+	{
+		rtti::Object obj = fooType->create_object();
+	}
 	TypeInfo* barType = rtti::Registry::get<Bar>();
 	rtti::Object barObject = barType->create_object();
 	//rtti::Object b = rtti::Object::create<Bar>();

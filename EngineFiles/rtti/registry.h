@@ -15,6 +15,10 @@ class Registry final
 {
 public:
 
+	static bool is_init() 
+	{
+		return _init;
+	}
 	static void init()
 	{
 		assert(!_init);
@@ -36,13 +40,19 @@ public:
 		{
 			init();
 		}
-		return TypeResolver::get<T>();
+
+		if (_types.find(std::type_index(typeid(T))) == _types.end())
+		{
+			_types[std::type_index(typeid(T))] = TypeResolver<T>::get();
+
+		}
+		return _types[std::type_index(typeid(T))];
 	}
 
 	template<typename T>
 	static void register_type()
 	{
-		_types[std::type_index(typeid(T))] = TypeResolver::get<T>();
+		_types[std::type_index(typeid(T))] = TypeResolver<T>::get();
 	}
 
 	static void for_each_type(std::function<void(std::pair<std::type_index, TypeInfo*> const& pair)> func)

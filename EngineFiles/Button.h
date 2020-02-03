@@ -74,8 +74,8 @@ public:
 	TextureButton(std::string const& pressed, std::string const& released);
 	virtual ~TextureButton();
 
-	float GetWidth() const { return m_BmpPressedPtr->GetWidth(); }
-	float GetHeight() const { return m_BmpPressedPtr->GetHeight(); }
+	float GetWidth() const { return (float)m_BmpPressedPtr->GetWidth(); }
+	float GetHeight() const { return (float)m_BmpPressedPtr->GetHeight(); }
 private:
 
 

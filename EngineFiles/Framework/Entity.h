@@ -71,7 +71,7 @@ namespace framework
 		XMFLOAT3 _pos;
 		XMVECTOR _rot;
 
-		std::vector<Component*> m_Components;
+		std::vector<Component*> _components;
 		friend EntityDebugOverlay;
 	};
 
@@ -79,7 +79,7 @@ namespace framework
 	T* Entity::create_component(std::string const& name = "Unnamed", Args...args)
 	{
 		T* comp = new T(name, args...);
-		m_Components.push_back(comp);
+		_components.push_back(comp);
 
 		comp->on_attach(this);
 
@@ -89,11 +89,11 @@ namespace framework
 	template<typename T>
 	T* Entity::get_component(std::string const& name)
 	{
-		auto it = std::find(m_Components.begin(), m_Components.end(), [](auto const& comp) {
+		auto it = std::find(_components.begin(), _components.end(), [](auto const& comp) {
 			return comp->name.compare(name);
 		});
 
-		if (it != m_Components.end())
+		if (it != _components.end())
 			return *it;
 		return nullptr;
 	}

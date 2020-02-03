@@ -2,6 +2,7 @@
 
 namespace rtti
 {
+	class Registry;
 	class Object;
 
 	template<typename T>
@@ -27,9 +28,6 @@ namespace rtti
 	}
 
 
-
-
-
 	struct TypeFlags
 	{
 		enum Flags : uint32_t
@@ -41,7 +39,7 @@ namespace rtti
 
 
 	// Type info
-	class TypeInfo final
+	class TypeInfo 
 	{
 	public:
 
@@ -55,7 +53,7 @@ namespace rtti
 
 		TypeInfo(const char* name, size_t size, void(*constructor)(void*), void(*destructor)(void*));
 
-		~TypeInfo();
+		virtual ~TypeInfo();
 
 		const char* get_name() const;
 		std::size_t get_size() const;
@@ -100,7 +98,7 @@ template<typename Class, typename MemberType>
 void rtti::TypeInfo::register_property(std::string const& name, MemberType Class::* offset)
 {
 	assert(this == Class::get_static_type());
-	auto type = TypeResolver::template get<MemberType>();
+	auto type = rtti::Registry::template get<MemberType>();
 	_properties[name] = { type, offsetOf(offset), name };
 }
 

@@ -68,17 +68,17 @@ XMFLOAT3 Entity::get_world_position() const
 
 Entity::~Entity()
 {
-	for (auto comp : m_Components)
+	for (auto comp : _components)
 	{
 		delete comp;
 	}
-	m_Components.clear();
+	_components.clear();
 
 }
 
 void Entity::update(float dt)
 {
-	for (Component* el : m_Components)
+	for (Component* el : _components)
 	{
 		el->update(dt);
 	}
@@ -86,7 +86,7 @@ void Entity::update(float dt)
 
 void Entity::render()
 {
-	for (Component* el : m_Components)
+	for (Component* el : _components)
 	{
 		el->render();
 	}
@@ -109,7 +109,7 @@ XMFLOAT3 Entity::get_local_position() const
 
 Component* Entity::get_component(rtti::TypeInfo* t) const
 {
-	for (Component* c : m_Components)
+	for (Component* c : _components)
 	{
 		if (c->get_type()->is(t))
 			return c;

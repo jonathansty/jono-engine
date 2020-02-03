@@ -69,8 +69,14 @@ private:
 
 };
 
-IMPL_REFLECT(BitmapComponent) {}
-IMPL_REFLECT(SimpleMovement) {}
+IMPL_REFLECT(BitmapComponent) 
+{
+	type.bind_parent<Component>();
+}
+IMPL_REFLECT(SimpleMovement) 
+{
+	type.bind_parent<Component>();
+}
 
 class ResourcePaths
 {
@@ -125,6 +131,48 @@ public:
 		}
 	}
 
+	void RenderObject(rtti::Object& obj)
+	{
+		for (auto const& prop : obj.get_type()->_properties)
+		{
+			rtti::Property const& p = prop.second;
+			if (p.type == rtti::Registry::get<XMFLOAT3>())
+			{
+				XMFLOAT3* pos = obj.get_property<XMFLOAT3>(p.name);
+				ImGui::InputFloat3(p.name.c_str(), (float*)pos, 2);
+
+			}
+			else if (p.type == rtti::Registry::get<XMVECTOR>())
+			{
+				XMVECTOR* rot = obj.get_property<XMVECTOR>(p.name);
+				ImGui::InputFloat4(p.name.c_str(), (float*)rot, 2);
+			}
+			else if (p.type == rtti::Registry::get<float>())
+			{
+				float* v = obj.get_property<float>(p.name);
+				ImGui::InputFloat(p.name.c_str(), v, 0.01f, 0.1f, 2);
+			}
+			else if (p.type == rtti::Registry::get<int>())
+			{
+				int* v = obj.get_property<int>(p.name);
+				ImGui::InputInt(p.name.c_str(), v);
+			}
+			else if (p.type == rtti::Registry::get<std::string>())
+			{
+				std::string* v = obj.get_property<std::string>(p.name);
+
+				char buff[512]{};
+				assert(v->size() < 512);
+				memcpy(buff, v->data(), v->size());
+				if (ImGui::InputText(p.name.c_str(), buff, 512))
+				{
+					*v = buff;
+				}
+
+			}
+		}
+	}
+
 	virtual void render_overlay() override
 	{
 		if (_isOpen)
@@ -153,21 +201,12 @@ public:
 					rtti::Object obj = rtti::Object::create_as_ref(rot);
 
 					ImGui::LabelText("Entity:", rot->get_name());
-					for (auto const& prop : i->_properties)
+					RenderObject(obj);
+
+					for (framework::Component* comp : rot->_components)
 					{
-						rtti::Property const& p = prop.second;
-
-						if (p.type == rtti::Registry::get<XMFLOAT3>())
-						{
-							XMFLOAT3* pos = obj.get_property<XMFLOAT3>(p.name);
-							ImGui::InputFloat3(p.name.c_str(), (float*)pos, 2);
-
-						}
-						else if (p.type == rtti::Registry::get<XMVECTOR>())
-						{
-							XMVECTOR* rot = obj.get_property<XMVECTOR>(p.name);
-							ImGui::InputFloat4(p.name.c_str(), (float*)rot, 2);
-						}
+						rtti::Object compObj = rtti::Object::create_as_ref(comp);
+						RenderObject(compObj);
 					}
 				}
 			}
@@ -210,11 +249,22 @@ public:
 };
 
 
+template<typename T>
+struct MemberTraits : MemberTraits<decltype(T)> {};
+
+template<typename T>
+struct MemberTraits<std::vector<T>> {
+	using type = T;
+};
+
 void HelloWorldGame::GameStart()
 {
 #ifdef _DEBUG
 	ExecuteRttiTest_BasicTypes();
 #endif
+	std::vector<int> myVec;
+
+	rtti::TypeInfo* info  =rtti::Registry::get<MemberTraits<std::vector<int>>::type>();
 
 	// Register default overlays to the overlay manager
 	GameEngine::Instance()->get_overlay_manager()->register_overlay(new GameOverlay());
