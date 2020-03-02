@@ -48,6 +48,11 @@ namespace framework
 			_deletion_list.push_back(id);
 		}
 
+		std::vector<Entity*> get_entities() const
+		{
+			return _entities;
+		}
+
 	private:
 		std::vector<size_t> _free_list;
 		std::vector<size_t> _deletion_list;

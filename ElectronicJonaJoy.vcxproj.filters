@@ -41,6 +41,9 @@
     <Filter Include="Engine Files\Framework">
       <UniqueIdentifier>{eb4701e6-9f28-453f-8aad-9c5a530d0873}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Engine Files\shaders">
+      <UniqueIdentifier>{cff93d39-e871-46a9-bce8-388432c09a62}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineFiles\GameEngine.cpp">
@@ -478,5 +481,19 @@
     <None Include="Box2DInclude\box2d.pdb">
       <Filter>Engine Files\Core\Box2D</Filter>
     </None>
+    <None Include="EngineFiles\shaders\Lighting.hlsl">
+      <Filter>Engine Files\shaders</Filter>
+    </None>
+    <None Include="EngineFiles\shaders\Common.hlsl">
+      <Filter>Engine Files\shaders</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="EngineFiles\shaders\simple_px.hlsl">
+      <Filter>Engine Files\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="EngineFiles\shaders\simple_vx.hlsl">
+      <Filter>Engine Files\shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

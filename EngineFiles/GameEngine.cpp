@@ -324,12 +324,29 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 					m_D3DDeviceContextPtr->End(gpuTimings[idx][1]);
 
 
-					FLOAT color[4] = { 0.5f,0.5f,0.5f,0.0f };
+
+					D3D11_VIEWPORT vp{};
+					vp.Width = this->GetWidth();
+					vp.Height = this->GetHeight();
+					vp.TopLeftX = 0.0f;
+					vp.TopLeftY = 0.0f;
+					vp.MinDepth = 0.0f;
+					vp.MaxDepth = 1.0f;
+					m_D3DDeviceContextPtr->RSSetViewports(1, &vp);
+
+					FLOAT color[4] = { 0.0f,0.0f,0.0f,0.0f };
 					m_D3DDeviceContextPtr->ClearRenderTargetView(m_D3DBackBufferView, color);
 					m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, nullptr);
 
+					// First render the 3D scene
+					{
+						GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Render3D");
+						m_GamePtr->Render3D();
+					}
+
 					// Paint using vsynch
 					ExecuteDirect2DPaint();
+
 
 					{
 						GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"ImGui");
@@ -1741,9 +1758,6 @@ void GameEngine::D2DBeginPaint()
 	{
 		m_RenderTargetPtr->BeginDraw();
 		m_RenderTargetPtr->SetTransform(D2D1::Matrix3x2F::Identity());
-
-		// Paint the client area using a white color
-		m_RenderTargetPtr->Clear((D2D1::ColorF) D2D1::ColorF::White);
 
 		// set black as initial brush color 
 		m_ColorBrushPtr->SetColor(D2D1::ColorF((FLOAT)(0.0), (FLOAT)(0.0), (FLOAT)(0.0), (FLOAT)(1.0)));

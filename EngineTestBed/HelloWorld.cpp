@@ -10,13 +10,15 @@ class SimpleMovement : public framework::Component
 {
 	REFLECT(SimpleMovement)
 public:
-	SimpleMovement() : Component("") {}
+	SimpleMovement() : Component() 
+	{
+	}
 
-	SimpleMovement(std::string const& name, XMFLOAT2 pos, float speed)
-		: Component(name)
+	SimpleMovement(XMFLOAT2 pos, float speed)
+		: Component()
 		, _speed(speed)
 		, _elapsed(0.0)
-		, _offset(pos)
+		, _offset({ pos.x, pos.y, 0.0f })
 
 	{
 	}
@@ -25,14 +27,21 @@ public:
 	{
 	}
 
+	void on_attach(framework::Entity* ent) override
+	{
+		__super::on_attach(ent);
+
+		_offset = ent->get_local_position();
+	}
 	void update(float dt) override
 	{
 		_elapsed += dt*_speed;
 		framework::Entity* ent = get_entity();
-		ent->set_position(_offset.x + cos(_elapsed) * 100.0, _offset.y + sin(_elapsed) * 100.0);
+		ent->set_rotation(_elapsed);
+		//ent->set_local_position(_offset.x + cos(_elapsed) * 100.0, _offset.y + sin(_elapsed) * 100.0);
 	}
 
-	XMFLOAT2 _offset;
+	XMFLOAT3 _offset;
 	float _elapsed = 0.0;
 	float _speed;
 
@@ -42,13 +51,13 @@ class BitmapComponent : public framework::Component
 {
 	REFLECT(BitmapComponent)
 public:
-	BitmapComponent() : framework::Component("")
+	BitmapComponent() : Component()
 	{
 
 	}
 
-	BitmapComponent(std::string const& name, std::string const& path) 
-		: framework::Component(name)
+	BitmapComponent(std::string const& path) 
+		: framework::Component()
 	{
 		_bmp = new Bitmap(String(path.c_str()));
 	}
@@ -76,6 +85,7 @@ IMPL_REFLECT(BitmapComponent)
 IMPL_REFLECT(SimpleMovement) 
 {
 	type.bind_parent<Component>();
+	type.register_property("speed", &SimpleMovement::_speed);
 }
 
 class ResourcePaths
@@ -133,44 +143,61 @@ public:
 
 	void RenderObject(rtti::Object& obj)
 	{
-		for (auto const& prop : obj.get_type()->_properties)
+		ImGui::PushID(&obj);
+		std::vector<rtti::TypeInfo*> chain;
+		rtti::TypeInfo* parent = obj.get_type();
+		while (parent)
 		{
-			rtti::Property const& p = prop.second;
-			if (p.type == rtti::Registry::get<XMFLOAT3>())
-			{
-				XMFLOAT3* pos = obj.get_property<XMFLOAT3>(p.name);
-				ImGui::InputFloat3(p.name.c_str(), (float*)pos, 2);
+			chain.push_back(parent);
+			parent = parent->_parent;
+		}
 
-			}
-			else if (p.type == rtti::Registry::get<XMVECTOR>())
+		std::reverse(chain.begin(), chain.end());
+		for (rtti::TypeInfo* t : chain)
+		{
+			for (auto const& prop : t->_properties)
 			{
-				XMVECTOR* rot = obj.get_property<XMVECTOR>(p.name);
-				ImGui::InputFloat4(p.name.c_str(), (float*)rot, 2);
-			}
-			else if (p.type == rtti::Registry::get<float>())
-			{
-				float* v = obj.get_property<float>(p.name);
-				ImGui::InputFloat(p.name.c_str(), v, 0.01f, 0.1f, 2);
-			}
-			else if (p.type == rtti::Registry::get<int>())
-			{
-				int* v = obj.get_property<int>(p.name);
-				ImGui::InputInt(p.name.c_str(), v);
-			}
-			else if (p.type == rtti::Registry::get<std::string>())
-			{
-				std::string* v = obj.get_property<std::string>(p.name);
+				ImGui::PushID(&prop);
 
-				char buff[512]{};
-				assert(v->size() < 512);
-				memcpy(buff, v->data(), v->size());
-				if (ImGui::InputText(p.name.c_str(), buff, 512))
+				rtti::Property const& p = prop.second;
+				if (p.type == rtti::Registry::get<XMFLOAT3>())
 				{
-					*v = buff;
-				}
+					XMFLOAT3* pos = obj.get_property<XMFLOAT3>(p.name);
+					ImGui::InputFloat3(p.name.c_str(), (float*)pos, 2);
 
+				}
+				else if (p.type == rtti::Registry::get<XMVECTOR>())
+				{
+					XMVECTOR* rot = obj.get_property<XMVECTOR>(p.name);
+					ImGui::InputFloat4(p.name.c_str(), (float*)rot, 2);
+				}
+				else if (p.type == rtti::Registry::get<float>())
+				{
+					float* v = obj.get_property<float>(p.name);
+					ImGui::InputFloat(p.name.c_str(), v, 0.01f, 0.1f, 2);
+				}
+				else if (p.type == rtti::Registry::get<int>())
+				{
+					int* v = obj.get_property<int>(p.name);
+					ImGui::InputInt(p.name.c_str(), v);
+				}
+				else if (p.type == rtti::Registry::get<std::string>())
+				{
+					std::string* v = obj.get_property<std::string>(p.name);
+
+					char buff[512]{};
+					assert(v->size() < 512);
+					memcpy(buff, v->data(), v->size());
+					if (ImGui::InputText(p.name.c_str(), buff, 512))
+					{
+						*v = buff;
+					}
+
+				}
+				ImGui::PopID();
 			}
 		}
+		ImGui::PopID();
 	}
 
 	virtual void render_overlay() override
@@ -206,6 +233,7 @@ public:
 					for (framework::Component* comp : rot->_components)
 					{
 						rtti::Object compObj = rtti::Object::create_as_ref(comp);
+						ImGui::Text(compObj.get_type()->get_name());
 						RenderObject(compObj);
 					}
 				}
@@ -274,7 +302,8 @@ void HelloWorldGame::GameStart()
 	GameEngine::Instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
 
 	_parentEntity = _world->create_entity(XMFLOAT2(100, 0));
-	_world->get_entity(_parentEntity)->create_component<BitmapComponent>("",ResourcePaths::bmp_coin_silver);
+	_world->get_entity(_parentEntity)->create_component<BitmapComponent>(ResourcePaths::bmp_coin_silver);
+	_world->get_entity(_parentEntity)->create_component<SimpleMovement>();
 	_world->get_entity(_parentEntity)->set_name("Center");
 
 	for (int i =0; i < 10; ++i)
@@ -284,8 +313,8 @@ void HelloWorldGame::GameStart()
 		float y = sin(XMConvertToRadians(d)) * 100.0;
 
 		World::EntityId ent = _world->create_entity();
-		_world->get_entity(ent)->set_position(x, y);
-		_world->get_entity(ent)->create_component<BitmapComponent>("Unnamed", ResourcePaths::bmp_coin_gold);
+		_world->get_entity(ent)->set_local_position(x, y);
+		_world->get_entity(ent)->create_component<BitmapComponent>(ResourcePaths::bmp_coin_gold);
 		_world->get_entity(ent)->attach_to(_world->get_entity(_parentEntity));
 
 		std::string name = "Coin_" + std::to_string(i);

@@ -25,6 +25,16 @@
 #include <dxgi.h>
 #include <DirectXMath.h>
 using namespace DirectX;
+#include <wrl.h>
+using Microsoft::WRL::ComPtr;
+
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+#include <directxtk/DirectXHelpers.h>
+#include <directxtk/VertexTypes.h>
+#include <directxtk/Effects.h>
 
 
 // libs used for Direct2D
@@ -82,3 +92,5 @@ using namespace D2D1;
 #include "GameFiles/BitmapManager.h"
 #include "GameFiles/SoundManager.h"
 
+
+using namespace DirectX;

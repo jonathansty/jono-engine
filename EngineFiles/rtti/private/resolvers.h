@@ -91,6 +91,10 @@ public:
 	static TypeInfo_Vector create()
 	{
 		TypeInfo_Vector v{};
+		char buffer[256];
+		sprintf_s(buffer, "std::vector<%s>", Registry::template get<T>()->get_name());
+		v._name = std::string(buffer);
+
 		v._constructor = ConstructObject<std::vector<T>>;
 		v._destructor = DestructObject<std::vector<T>>;
 		v._size = sizeof(std::vector<T>);

@@ -6,6 +6,7 @@
 using namespace framework;
 IMPL_REFLECT(Entity)
 {
+	type.register_property("name", &Entity::_name);
 	type.register_property("position", &Entity::_pos);
 	type.register_property("rotation", &Entity::_rot);
 }
@@ -26,6 +27,11 @@ framework::Entity::Entity(XMFLOAT3 pos)
 	: _pos(pos)
 {
 
+}
+
+void framework::Entity::set_local_position(XMFLOAT3 pos)
+{
+	_pos = pos;
 }
 
 void Entity::set_rotation(float angle)
@@ -92,14 +98,14 @@ void Entity::render()
 	}
 }
 
-void Entity::set_position(XMFLOAT2 pos)
+void Entity::set_local_position(XMFLOAT2 pos)
 {
 	_pos = { pos.x, pos.y, 0.0 };
 }
 
-void Entity::set_position(float x, float y)
+void Entity::set_local_position(float x, float y)
 {
-	set_position({ x,y });
+	set_local_position({ x,y });
 }
 
 XMFLOAT3 Entity::get_local_position() const

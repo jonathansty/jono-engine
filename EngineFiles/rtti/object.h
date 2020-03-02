@@ -120,7 +120,15 @@ T* rtti::Object::get() const
 template<typename T>
 Object rtti::Object::create_as_ref(T* obj)
 {
-	return Object(obj, Registry::template get<T>(), true);
+	rtti::TypeInfo* type = nullptr;
+	if constexpr (DefaultResolver::IsReflected<T>::value)
+	{
+		return Object(obj, obj->get_type(), true);
+	}
+	else
+	{
+		return Object(obj, Registry::template get<T>(), true);
+	}
 }
 
 template<typename T>

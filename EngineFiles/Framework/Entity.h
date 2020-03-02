@@ -21,19 +21,16 @@ namespace framework
 		virtual void render();
 
 		template<typename T, typename...Args>
-		T* create_component(std::string const& name, Args...args);
+		T* create_component( Args...args);
 
 		Component* get_component(rtti::TypeInfo* t) const;
 
 		template<typename T>
 		T* get_component();
 
-		template<typename T>
-		T* get_component(std::string const& name);
-
-		void set_position(XMFLOAT2 pos);
-
-		void set_position(float x, float y);
+		void set_local_position(XMFLOAT3 pos);
+		void set_local_position(XMFLOAT2 pos);
+		void set_local_position(float x, float y);
 
 		void set_rotation(float angle);
 		void set_rotation(XMVECTOR quat);
@@ -76,26 +73,14 @@ namespace framework
 	};
 
 	template<typename T, typename...Args>
-	T* Entity::create_component(std::string const& name = "Unnamed", Args...args)
+	T* Entity::create_component(Args...args)
 	{
-		T* comp = new T(name, args...);
+		T* comp = new T(args...);
 		_components.push_back(comp);
 
 		comp->on_attach(this);
 
 		return comp;
-	}
-
-	template<typename T>
-	T* Entity::get_component(std::string const& name)
-	{
-		auto it = std::find(_components.begin(), _components.end(), [](auto const& comp) {
-			return comp->name.compare(name);
-		});
-
-		if (it != _components.end())
-			return *it;
-		return nullptr;
 	}
 
 	template<typename T>

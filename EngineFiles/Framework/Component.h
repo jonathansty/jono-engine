@@ -8,7 +8,6 @@ namespace framework
 		REFLECT(Component)
 	public:
 		Component() {};
-		Component(std::string const& name);
 
 		virtual ~Component();
 
@@ -26,7 +25,6 @@ namespace framework
 
 	private:
 		Entity* _parent;
-		std::string _name;
 	};
 
 }
