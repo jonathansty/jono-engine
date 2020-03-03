@@ -79,7 +79,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)EngineFiles;$(SolutionDir)\GameFiles;$(SolutionDir)\Box2DInclude;$(SolutionDir);$(VCPKGDIR)\Include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)EngineFiles;$(SolutionDir)\GameFiles;$(SolutionDir)\Box2DInclude;$(SolutionDir)\Thirdparty\EnkiTS\src;$(SolutionDir);$(VCPKGDIR)\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\Box2DInclude;$(ProjectDir)..\$(Platform)\$(Configuration);$(VCPKGDIR)\Lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)..\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>

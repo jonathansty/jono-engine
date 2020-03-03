@@ -44,6 +44,12 @@
     <Filter Include="Engine Files\shaders">
       <UniqueIdentifier>{cff93d39-e871-46a9-bce8-388432c09a62}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Thirdparty">
+      <UniqueIdentifier>{4c898b3a-4999-46d2-a82b-d42657ca02c8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Thirdparty\EnkiTS">
+      <UniqueIdentifier>{a44a2964-02c1-444a-898a-5025a7474dd9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineFiles\GameEngine.cpp">
@@ -160,6 +166,12 @@
     </ClCompile>
     <ClCompile Include="EngineFiles\DebugOverlays\OverlayManager.cpp">
       <Filter>Engine Files\DebugOverlays</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\enkiTS\src\TaskScheduler.cpp">
+      <Filter>Thirdparty\EnkiTS</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\enkiTS\src\TaskScheduler_c.cpp">
+      <Filter>Thirdparty\EnkiTS</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -454,6 +466,15 @@
     </ClInclude>
     <ClInclude Include="EngineFiles\DebugOverlays\ImGuiOverlays.h">
       <Filter>Engine Files\DebugOverlays</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\enkiTS\src\LockLessMultiReadPipe.h">
+      <Filter>Thirdparty\EnkiTS</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\enkiTS\src\TaskScheduler.h">
+      <Filter>Thirdparty\EnkiTS</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\enkiTS\src\TaskScheduler_c.h">
+      <Filter>Thirdparty\EnkiTS</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

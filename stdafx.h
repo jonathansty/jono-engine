@@ -24,6 +24,7 @@
 #include <iomanip>			// precision
 #include <io.h>				// console
 #include <deque>
+#include <thread>
 
 #define NOMINMAX
 // WindowsSDK
@@ -71,6 +72,7 @@ using namespace D2D1;
 #define tstringstream std::stringstream
 #endif
 
+#include "TaskScheduler.h"
 
 #include "EngineFiles/tinyxml2/tinyxml2.h"
 #include "imgui/imgui.h"

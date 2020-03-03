@@ -7,6 +7,9 @@
 
 #pragma once
 #include "singleton.h"
+
+#include "TaskScheduler.h"
+
 #include "DebugOverlays/OverlayManager.h"
 #include "DebugOverlays/MetricsOverlay.h"
 
@@ -373,6 +376,9 @@ public:
 		return m_OverlayManager;
 	}
 
+	static enki::TaskScheduler s_TaskScheduler;
+	static std::thread::id s_MainThread;
+
 private:
 	// Set when the game loses focus
 	void SetSleep(bool bSleep);
@@ -504,3 +510,21 @@ private:
 #define GPU_SCOPED_EVENT(ctx, name) 
 #define GPU_MARKER(ctx, name) 
 #endif
+
+// Implements a simple task set that can depend on others using the dependency features of enki
+struct DependencyTaskSet : public enki::ITaskSet {
+	enki::Dependency m_dependency;
+	DependencyTaskSet(std::function<void()> fn)
+		: enki::ITaskSet(1)
+		, _fn(fn)
+	{
+
+	}
+
+	void ExecuteRange( enki::TaskSetPartition range_, uint32_t threadnum_ ) override
+	{
+		_fn();
+	}
+
+	std::function<void()> _fn;
+};

@@ -45,7 +45,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)/EngineFiles;$(ProjectDir)/GameFiles;$(VCPKGDIR)/include;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)/EngineFiles;$(VCPKGDIR)/include;$(ProjectDir)/Thirdparty/EnkiTS/src;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)Box2DInclude;$(VCPKGDIR)/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -93,6 +93,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ThirdParty\enkiTS\src\TaskScheduler.cpp" />
+    <ClCompile Include="ThirdParty\enkiTS\src\TaskScheduler_c.cpp" />
     <ClInclude Include="EngineFiles\AbstractGame.h" />
     <ClInclude Include="EngineFiles\ContactListener.h" />
     <ClInclude Include="EngineFiles\core\identifier.h" />
@@ -166,6 +168,9 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="ThirdParty\enkiTS\src\LockLessMultiReadPipe.h" />
+    <ClInclude Include="ThirdParty\enkiTS\src\TaskScheduler.h" />
+    <ClInclude Include="ThirdParty\enkiTS\src\TaskScheduler_c.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineFiles\AudioDecoder.h" />

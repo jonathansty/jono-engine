@@ -71,7 +71,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)EngineFiles;$(SolutionDir)GameFiles;$(SolutionDir)Box2DInclude;$(SolutionDir);$(VCPKGDIR)\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)EngineFiles;$(SolutionDir)GameFiles;$(SolutionDir)Box2DInclude;$(SolutionDir)Thirdparty/EnkiTS/src;$(SolutionDir);$(VCPKGDIR)\include;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)..\Box2DInclude;$(ProjectDir)..\$(Platform)\$(Configuration);$(VCPKGDIR)/debug/lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

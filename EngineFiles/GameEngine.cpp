@@ -12,6 +12,9 @@
 #include "DebugOverlays/RTTIDebugOverlay.h"
 #include "DebugOverlays/ImGuiOverlays.h"
 
+enki::TaskScheduler GameEngine::s_TaskScheduler;
+std::thread::id GameEngine::s_MainThread;
+
 //-----------------------------------------------------------------
 // Windows Functions
 //-----------------------------------------------------------------
@@ -140,13 +143,19 @@ void GameEngine::SetTitle(const String& titleRef)
 	m_Title = titleRef;
 }
 
+
 int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 {
+	s_MainThread = std::this_thread::get_id();
+
 	// create the game engine object, exit if failure
-	if (GameEngine::GetSingleton() == nullptr) return false;
+	assert(GameEngine::GetSingleton());
 
 	// set the instance member variable of the game engine
 	GameEngine::GetSingleton()->SetInstance(hInstance);
+
+	s_TaskScheduler.Initialize();
+
 
 	//Initialize the high precision timers
 	m_GameTickTimerPtr = new PrecisionTimer();
@@ -236,137 +245,150 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	double previous = m_GameTickTimerPtr->GetGameTime() - m_PhysicsTimeStep;
 	double lag = 0; // keep left over time
 	//static double timesum = 0, count = 1;
-	MSG msg = {};
-	while (msg.message != WM_QUIT)
+	for(;;)
 	{
-		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		// Process all window messages
+		MSG msg{};
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
 			TranslateMessage(&msg);
 			DispatchMessage(&msg);
-			//std::cout << timesum / count << '\n';
-			//OutputDebugString(String("\nav sleeptime: ") + String(timesum/count,8) );
-			//timesum = 0;
-			//count = 0;
 		}
-		else
+
+		if (msg.message == WM_QUIT)
 		{
-			// Make sure the game engine isn't sleeping
-			if (m_bSleep == false)
-			{
-
-				++m_FrameCounter;
-				
-				double current = m_GameTickTimerPtr->GetGameTime();
-				double elapsed = current - previous; // calc timedifference
-				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::FrameTime, (float)(elapsed * 1000.0f));
-				if (elapsed > 0.25) elapsed = 0.25; //prevent jumps in time when break point or sleeping
-				previous = current;  // reset
-				lag += elapsed;
-
-				Timer t{};
-				t.Start();
-				while (lag >= m_PhysicsTimeStep)
-				{
-					// Check the state of keyboard and mouse
-					m_InputPtr->Update();
-
-					//tick GUI -> for blinking caret
-					GUITick(m_PhysicsTimeStep);
-
-					// Call the Game Tick method
-					m_GamePtr->GameTick(m_PhysicsTimeStep);
-
-					int32 velocityIterations = 6;
-					int32 positionIterations = 2;
-					m_Box2DWorldPtr->Step((float)m_PhysicsTimeStep, velocityIterations, positionIterations);
-
-					// Step generates contact lists, pass to Listeners and clear the vector
-					CallListeners();
-					lag -= m_PhysicsTimeStep;
-				}
-				t.Stop();
-				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
-
-
-				ImGui_ImplDX11_NewFrame();
-				ImGui_ImplWin32_NewFrame();
-				ImGui::NewFrame();
-				{
-					m_GamePtr->DebugUI();
-					m_OverlayManager->render_overlay();
-				}
-				ImGui::EndFrame();
-				ImGui::Render();
-
-				// Get pgu data 
-				size_t idx = m_FrameCounter % 2;
-				if (m_FrameCounter > 2)
-				{
-					size_t prev_idx = (m_FrameCounter - 1) % 2;
-					D3D11_QUERY_DATA_TIMESTAMP_DISJOINT timestampDisjoint;
-					UINT64 start;
-					UINT64 end;
-					while (S_OK != m_D3DDeviceContextPtr->GetData(gpuTimings[idx][0], &timestampDisjoint, sizeof(timestampDisjoint), 0)) {}
-					while (S_OK != m_D3DDeviceContextPtr->GetData(gpuTimings[idx][1], &start, sizeof(UINT64), 0)) {}
-					while (S_OK != m_D3DDeviceContextPtr->GetData(gpuTimings[idx][2], &end, sizeof(UINT64), 0)) {}
-
-					double diff = (double)(end - start) / (double)timestampDisjoint.Frequency;
-					m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::RenderGPU, (float)(diff * 1000.0));
-				}
-
-
-
-
-				{
-					GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Frame");
-
-					m_D3DDeviceContextPtr->Begin(gpuTimings[idx][0]);
-					m_D3DDeviceContextPtr->End(gpuTimings[idx][1]);
-
-
-
-					D3D11_VIEWPORT vp{};
-					vp.Width = this->GetWidth();
-					vp.Height = this->GetHeight();
-					vp.TopLeftX = 0.0f;
-					vp.TopLeftY = 0.0f;
-					vp.MinDepth = 0.0f;
-					vp.MaxDepth = 1.0f;
-					m_D3DDeviceContextPtr->RSSetViewports(1, &vp);
-
-					FLOAT color[4] = { 0.0f,0.0f,0.0f,0.0f };
-					m_D3DDeviceContextPtr->ClearRenderTargetView(m_D3DBackBufferView, color);
-					m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, nullptr);
-
-					// First render the 3D scene
-					{
-						GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Render3D");
-						m_GamePtr->Render3D();
-					}
-
-					// Paint using vsynch
-					ExecuteDirect2DPaint();
-
-
-					{
-						GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"ImGui");
-						ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-					}
-
-					// Present
-					GPU_MARKER(m_D3DUserDefinedAnnotation, L"DrawEnd");
-					m_DXGISwapchainPtr->Present(m_bVSync ? 1 : 0, 0);
-
-					m_D3DDeviceContextPtr->End(gpuTimings[idx][2]);
-					m_D3DDeviceContextPtr->End(gpuTimings[idx][0]);
-				}
-			}
-			else WaitMessage(); // if the engine is sleeping or the game loop isn't supposed to run, wait for the next windows message.
+			break;
 		}
+
+		enki::TaskSet simulation_task(1, [&](enki::TaskSetPartition range, uint32_t threadnum) {
+				// Make sure the game engine isn't sleeping
+				{
+					++m_FrameCounter;
+
+					double current = m_GameTickTimerPtr->GetGameTime();
+					double elapsed = current - previous; // calc timedifference
+					m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::FrameTime, (float)(elapsed * 1000.0f));
+					if (elapsed > 0.25) elapsed = 0.25; //prevent jumps in time when break point or sleeping
+					previous = current;  // reset
+					lag += elapsed;
+
+					Timer t{};
+					t.Start();
+					while (lag >= m_PhysicsTimeStep)
+					{
+						// Check the state of keyboard and mouse
+						m_InputPtr->Update();
+
+						//tick GUI -> for blinking caret
+						GUITick(m_PhysicsTimeStep);
+
+						// Call the Game Tick method
+						m_GamePtr->GameTick(m_PhysicsTimeStep);
+
+						int32 velocityIterations = 6;
+						int32 positionIterations = 2;
+						m_Box2DWorldPtr->Step((float)m_PhysicsTimeStep, velocityIterations, positionIterations);
+
+						// Step generates contact lists, pass to Listeners and clear the vector
+						CallListeners();
+						lag -= m_PhysicsTimeStep;
+					}
+					t.Stop();
+					m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
+
+
+					ImGui_ImplDX11_NewFrame();
+					ImGui_ImplWin32_NewFrame();
+					ImGui::NewFrame();
+					{
+						m_GamePtr->DebugUI();
+						m_OverlayManager->render_overlay();
+					}
+					ImGui::EndFrame();
+					ImGui::Render();
+
+					// Get pgu data 
+					size_t idx = m_FrameCounter % 2;
+					if (m_FrameCounter > 2)
+					{
+						size_t prev_idx = (m_FrameCounter - 1) % 2;
+						D3D11_QUERY_DATA_TIMESTAMP_DISJOINT timestampDisjoint;
+						UINT64 start;
+						UINT64 end;
+						while (S_OK != m_D3DDeviceContextPtr->GetData(gpuTimings[idx][0], &timestampDisjoint, sizeof(timestampDisjoint), 0)) {}
+						while (S_OK != m_D3DDeviceContextPtr->GetData(gpuTimings[idx][1], &start, sizeof(UINT64), 0)) {}
+						while (S_OK != m_D3DDeviceContextPtr->GetData(gpuTimings[idx][2], &end, sizeof(UINT64), 0)) {}
+
+						double diff = (double)(end - start) / (double)timestampDisjoint.Frequency;
+						m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::RenderGPU, (float)(diff * 1000.0));
+					}
+				}
+		});
+
+		DependencyTaskSet render_task{ 
+			[&]() {
+				GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Frame");
+
+				size_t idx = m_FrameCounter % 2;
+
+				m_D3DDeviceContextPtr->Begin(gpuTimings[idx][0]);
+				m_D3DDeviceContextPtr->End(gpuTimings[idx][1]);
+
+				D3D11_VIEWPORT vp{};
+				vp.Width = this->GetWidth();
+				vp.Height = this->GetHeight();
+				vp.TopLeftX = 0.0f;
+				vp.TopLeftY = 0.0f;
+				vp.MinDepth = 0.0f;
+				vp.MaxDepth = 1.0f;
+				m_D3DDeviceContextPtr->RSSetViewports(1, &vp);
+
+				FLOAT color[4] = { 0.0f,0.0f,0.0f,0.0f };
+				m_D3DDeviceContextPtr->ClearRenderTargetView(m_D3DBackBufferView, color);
+				m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, nullptr);
+
+
+				// Render 3D before 2D
+				{
+					GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Render3D");
+					m_GamePtr->Render3D();
+				}
+				// TODO: Render post effects
+
+				// Render Direct2D to the swapchain
+				ExecuteDirect2DPaint();
+
+				// At last render the Imgui debug UI
+				{
+					GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"ImGui");
+					ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+				}
+
+				// Present
+				GPU_MARKER(m_D3DUserDefinedAnnotation, L"DrawEnd");
+				m_DXGISwapchainPtr->Present(m_bVSync ? 1 : 0, 0);
+
+				m_D3DDeviceContextPtr->End(gpuTimings[idx][2]);
+				m_D3DDeviceContextPtr->End(gpuTimings[idx][0]);
+			}
+		};
+
+		// Currently we run the game lock stepped
+		// ---------------------------------------------
+		// Frame 0			    | Frame 1  
+		// Simulation -> Render | Simulation -> Render
+		// ---------------------------------------------
+		// In the future I want to run the render while the next frame is processing.
+		// This involves copying world state/ creating a render copy of the world/game
+		render_task.SetDependency(render_task.m_dependency, &simulation_task);
+		s_TaskScheduler.AddTaskSetToPipe(&simulation_task);
+		s_TaskScheduler.WaitforTask(&render_task);
 	}
 	// undo the timer setting
 	timeEndPeriod(tc.wPeriodMin);
 
+	// Make sure all tasks have finished before shutting down
+	s_TaskScheduler.WaitforAll();
 
 	// User defined code for exiting the game
 	m_GamePtr->GameEnd();
@@ -379,7 +401,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	// Box2D
 	delete m_Box2DWorldPtr;
 
-	return static_cast<int>(msg.wParam);
+	return 0;
 }
 
 void GameEngine::ExecuteDirect2DPaint()
@@ -1382,6 +1404,7 @@ bool GameEngine::GetVSync()
 	return m_bVSync;
 }
 
+
 // Input methods
 bool GameEngine::IsKeyboardKeyDown(int key) const
 {
@@ -1439,43 +1462,13 @@ LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lP
 		return 0;
 
 	case WM_ACTIVATE:
-		// Activate/deactivate the game and update the Sleep status
-		if (wParam != WA_INACTIVE)
-		{
-			//Lock hDC
-			hDC = GetDC(hWindow);
-
-			// Release HDC
-			ReleaseDC(hWindow, hDC);
-
-			SetSleep(false);
-		}
-		else
-		{
-			//Lock hDC
-			hDC = GetDC(hWindow);
-
-			// Release HDC
-			ReleaseDC(hWindow, hDC);
-
-			SetSleep(true);
-		}
 		return 0;
 
 		//when the window is dragged around, stop the timer
 	case WM_ENTERSIZEMOVE:
-		SetSleep(true);
 		return 0;
 
 	case WM_EXITSIZEMOVE:
-		SetSleep(false);
-		return 0;
-
-	case WM_PAINT:
-		//WM_PAINT needs BeginPaint and EndPaint
-		hDC = BeginPaint(hWindow, &ps);
-		if (m_bInitialized == true) ExecuteDirect2DPaint();
-		EndPaint(hWindow, &ps);
 		return 0;
 
 		//case WM_CTLCOLOREDIT:
@@ -1509,6 +1502,9 @@ LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lP
 		//	m_GamePtr->MouseMove((int) LOWORD(lParam), (int) HIWORD(lParam), wParam);
 		//	return 0;
 
+	case WM_CLOSE:
+		PostQuitMessage(0);
+		break;
 	case WM_SYSCOMMAND:	// trapping this message prevents a freeze after the ALT key is released
 		if (wParam == SC_KEYMENU) return 0;			// see win32 API : WM_KEYDOWN
 		else break;
