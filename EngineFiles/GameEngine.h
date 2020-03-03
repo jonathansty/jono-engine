@@ -483,6 +483,9 @@ private:
 
 	MetricsOverlay* m_MetricsOverlay;
 	std::shared_ptr<OverlayManager> m_OverlayManager;
+
+
+	bool m_bQuit;
 };
 
 class ScopedGPUEvent
@@ -510,21 +513,3 @@ private:
 #define GPU_SCOPED_EVENT(ctx, name) 
 #define GPU_MARKER(ctx, name) 
 #endif
-
-// Implements a simple task set that can depend on others using the dependency features of enki
-struct DependencyTaskSet : public enki::ITaskSet {
-	enki::Dependency m_dependency;
-	DependencyTaskSet(std::function<void()> fn)
-		: enki::ITaskSet(1)
-		, _fn(fn)
-	{
-
-	}
-
-	void ExecuteRange( enki::TaskSetPartition range_, uint32_t threadnum_ ) override
-	{
-		_fn();
-	}
-
-	std::function<void()> _fn;
-};
