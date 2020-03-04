@@ -23,4 +23,5 @@ struct VS_OUT
 	float3 viewNormal : NORMAL2;
 };
 
+
 #endif

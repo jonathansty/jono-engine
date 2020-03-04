@@ -63,7 +63,7 @@ using namespace D2D1;
 #define tstringstream std::stringstream
 #endif
 
-#include "imgui/imgui.h"
+#include <imgui.h>
 
 #include "tinyxml2/tinyxml2.h"
 

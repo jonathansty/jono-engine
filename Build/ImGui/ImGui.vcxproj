@@ -20,8 +20,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{A5729F0D-3D47-4BC3-8C1B-845679805BB9}</ProjectGuid>
-    <RootNamespace>EngineTestBed</RootNamespace>
+    <ProjectGuid>{AA338FBC-1496-4D65-B687-4C1B0464374B}</ProjectGuid>
+    <RootNamespace>ImGui</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -39,10 +39,10 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
-    <ConfigurationType>Application</ConfigurationType>
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
-    <UseDebugLibraries>true</UseDebugLibraries>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -71,15 +71,17 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)EngineFiles;$(SolutionDir)GameFiles;$(SolutionDir)Box2DInclude;$(SolutionDir)Thirdparty/EnkiTS/src;$(SolutionDir)Thirdparty/imgui;$(VCPKGDIR)\include;$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\Box2DInclude;$(SolutionDir)$(Platform)\$(Configuration)\;$(VCPKGDIR)/debug/lib;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
+    <IncludePath>$(SolutionDir)\ThirdParty\ImGui;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)EngineFiles;$(SolutionDir)\GameFiles;$(SolutionDir)\Box2DInclude;$(ProjectDir)$(Platform)\$(Configuration);$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\Box2DInclude;$(ProjectDir)$(Platform)\$(Configuration);$(VCPKGDIR)/lib;$(LibraryPath)</LibraryPath>
-    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -87,15 +89,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <LanguageStandard>stdcpp17</LanguageStandard>
-      <MultiProcessorCompilation>false</MultiProcessorCompilation>
-      <RuntimeTypeInfo>false</RuntimeTypeInfo>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Engine.lib;enkiTS.lib;imgui.lib;assimp-vc141-mtd.lib;directxtk.lib;rttr_core_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -134,31 +131,31 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Engine.lib;DXGI.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="Test3D.cpp" />
-    <ClCompile Include="Tests/RttiTest.tests.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
-    <ClCompile Include="HelloWorld.cpp" />
+    <ClInclude Include="..\..\ThirdParty\imgui\examples\imgui_impl_dx11.h" />
+    <ClInclude Include="..\..\ThirdParty\imgui\examples\imgui_impl_win32.h" />
+    <ClInclude Include="..\..\ThirdParty\imgui\imconfig.h" />
+    <ClInclude Include="..\..\ThirdParty\imgui\imgui.h" />
+    <ClInclude Include="..\..\ThirdParty\imgui\imgui_internal.h" />
+    <ClInclude Include="..\..\ThirdParty\imgui\imstb_rectpack.h" />
+    <ClInclude Include="..\..\ThirdParty\imgui\imstb_textedit.h" />
+    <ClInclude Include="..\..\ThirdParty\imgui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h" />
-    <ClInclude Include="HelloWorld.h" />
-    <ClInclude Include="Test3D.h" />
+    <ClCompile Include="..\..\ThirdParty\imgui\examples\imgui_impl_dx11.cpp" />
+    <ClCompile Include="..\..\ThirdParty\imgui\examples\imgui_impl_win32.cpp" />
+    <ClCompile Include="..\..\ThirdParty\imgui\imgui.cpp" />
+    <ClCompile Include="..\..\ThirdParty\imgui\imgui_demo.cpp" />
+    <ClCompile Include="..\..\ThirdParty\imgui\imgui_draw.cpp" />
+    <ClCompile Include="..\..\ThirdParty\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

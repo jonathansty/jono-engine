@@ -14,12 +14,24 @@ public:
 	}
 
 	static T* Instance();
+	static void Shutdown();
 
 private:
 
 	static void CreateIfNull();
 	static T* _obj;
 };
+
+template<typename T>
+void TSingleton<T>::Shutdown()
+{
+	if (_obj)
+	{
+		delete _obj;
+		_obj = nullptr;
+	}
+
+}
 
 template<typename T>
 T* TSingleton<T>::Instance()

@@ -45,13 +45,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(ProjectDir);$(ProjectDir)/EngineFiles;$(VCPKGDIR)/include;$(ProjectDir)/Thirdparty/EnkiTS/src;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir);$(ProjectDir)/EngineFiles;$(VCPKGDIR)/include;$(SolutionDir)/Thirdparty/EnkiTS/src;$(SolutionDir)/Thirdparty/ImGui;$(SolutionDir)/Thirdparty/ImGui/Examples;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)Box2DInclude;$(VCPKGDIR)/lib;$(LibraryPath)</LibraryPath>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(ProjectDir)/EngineFiles;$(ProjectDir)/Box2DInclude;$(ProjectDir)/GameFiles;$(IncludePath)</IncludePath>
     <LibraryPath>$(ProjectDir)Box2DInclude;$(LibraryPath)</LibraryPath>
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -93,11 +95,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ThirdParty\enkiTS\src\TaskScheduler.cpp" />
-    <ClCompile Include="ThirdParty\enkiTS\src\TaskScheduler_c.cpp" />
     <ClInclude Include="EngineFiles\AbstractGame.h" />
     <ClInclude Include="EngineFiles\ContactListener.h" />
     <ClInclude Include="EngineFiles\core\identifier.h" />
+    <ClInclude Include="EngineFiles\Core\ModelResource.h" />
+    <ClInclude Include="EngineFiles\Core\ResourceLoader.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\ImGuiOverlays.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\MetricsOverlay.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\OverlayManager.h" />
@@ -106,14 +108,6 @@
     <ClInclude Include="EngineFiles\Framework\Entity.h" />
     <ClInclude Include="EngineFiles\Framework\framework.h" />
     <ClInclude Include="EngineFiles\Framework\World.h" />
-    <ClInclude Include="EngineFiles\imgui\imconfig.h" />
-    <ClInclude Include="EngineFiles\imgui\imgui.h" />
-    <ClInclude Include="EngineFiles\imgui\imgui_impl_dx11.h" />
-    <ClInclude Include="EngineFiles\imgui\imgui_impl_win32.h" />
-    <ClInclude Include="EngineFiles\imgui\imgui_internal.h" />
-    <ClInclude Include="EngineFiles\imgui\imstb_rectpack.h" />
-    <ClInclude Include="EngineFiles\imgui\imstb_textedit.h" />
-    <ClInclude Include="EngineFiles\imgui\imstb_truetype.h" />
     <ClInclude Include="EngineFiles\rtti\method.h" />
     <ClInclude Include="EngineFiles\rtti\object.h" />
     <ClInclude Include="EngineFiles\rtti\private\resolvers.h" />
@@ -132,6 +126,7 @@
     <ClCompile Include="EngineFiles\Box2DDebugRenderer.cpp" />
     <ClCompile Include="EngineFiles\Button.cpp" />
     <ClCompile Include="EngineFiles\ContactListener.cpp" />
+    <ClCompile Include="EngineFiles\Core\ModelResource.cpp" />
     <ClCompile Include="EngineFiles\DebugOverlays\MetricsOverlay.cpp" />
     <ClCompile Include="EngineFiles\DebugOverlays\OverlayManager.cpp" />
     <ClCompile Include="EngineFiles\Font.cpp" />
@@ -140,12 +135,6 @@
     <ClCompile Include="EngineFiles\Framework\World.cpp" />
     <ClCompile Include="EngineFiles\GameEngine.cpp" />
     <ClCompile Include="EngineFiles\GameSettings.cpp" />
-    <ClCompile Include="EngineFiles\imgui\imgui.cpp" />
-    <ClCompile Include="EngineFiles\imgui\imgui_demo.cpp" />
-    <ClCompile Include="EngineFiles\imgui\imgui_draw.cpp" />
-    <ClCompile Include="EngineFiles\imgui\imgui_impl_dx11.cpp" />
-    <ClCompile Include="EngineFiles\imgui\imgui_impl_win32.cpp" />
-    <ClCompile Include="EngineFiles\imgui\imgui_widgets.cpp" />
     <ClCompile Include="EngineFiles\GUIBase.cpp" />
     <ClCompile Include="EngineFiles\InputManager.cpp" />
     <ClCompile Include="EngineFiles\PhysicsActor.cpp" />
@@ -168,9 +157,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClInclude Include="stdafx.h" />
-    <ClInclude Include="ThirdParty\enkiTS\src\LockLessMultiReadPipe.h" />
-    <ClInclude Include="ThirdParty\enkiTS\src\TaskScheduler.h" />
-    <ClInclude Include="ThirdParty\enkiTS\src\TaskScheduler_c.h" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineFiles\AudioDecoder.h" />

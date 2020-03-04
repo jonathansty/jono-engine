@@ -23,9 +23,6 @@
     <Filter Include="Engine Files\Core\Box2D">
       <UniqueIdentifier>{62b4ac1d-499b-4b58-a0be-524e8053d28e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Engine Files\imgui">
-      <UniqueIdentifier>{54e12575-ac2e-4a3d-a715-88beee2c2789}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Engine Files\DebugOverlays">
       <UniqueIdentifier>{17139086-557d-45ab-a4b3-e92512a6c3c6}</UniqueIdentifier>
     </Filter>
@@ -44,11 +41,8 @@
     <Filter Include="Engine Files\shaders">
       <UniqueIdentifier>{cff93d39-e871-46a9-bce8-388432c09a62}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Thirdparty">
-      <UniqueIdentifier>{4c898b3a-4999-46d2-a82b-d42657ca02c8}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Thirdparty\EnkiTS">
-      <UniqueIdentifier>{a44a2964-02c1-444a-898a-5025a7474dd9}</UniqueIdentifier>
+    <Filter Include="Engine Files\Core\Resources">
+      <UniqueIdentifier>{fec46c3d-7c61-4c0f-8a4b-7916857d3865}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -113,24 +107,6 @@
     <ClCompile Include="EngineFiles\EString.cpp">
       <Filter>Engine Files\Core</Filter>
     </ClCompile>
-    <ClCompile Include="EngineFiles\imgui\imgui_impl_dx11.cpp">
-      <Filter>Engine Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="EngineFiles\imgui\imgui_impl_win32.cpp">
-      <Filter>Engine Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="EngineFiles\imgui\imgui.cpp">
-      <Filter>Engine Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="EngineFiles\imgui\imgui_draw.cpp">
-      <Filter>Engine Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="EngineFiles\imgui\imgui_widgets.cpp">
-      <Filter>Engine Files\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="EngineFiles\imgui\imgui_demo.cpp">
-      <Filter>Engine Files\imgui</Filter>
-    </ClCompile>
     <ClCompile Include="EngineFiles\DebugOverlays\MetricsOverlay.cpp">
       <Filter>Engine Files\DebugOverlays</Filter>
     </ClCompile>
@@ -167,11 +143,8 @@
     <ClCompile Include="EngineFiles\DebugOverlays\OverlayManager.cpp">
       <Filter>Engine Files\DebugOverlays</Filter>
     </ClCompile>
-    <ClCompile Include="ThirdParty\enkiTS\src\TaskScheduler.cpp">
-      <Filter>Thirdparty\EnkiTS</Filter>
-    </ClCompile>
-    <ClCompile Include="ThirdParty\enkiTS\src\TaskScheduler_c.cpp">
-      <Filter>Thirdparty\EnkiTS</Filter>
+    <ClCompile Include="EngineFiles\Core\ModelResource.cpp">
+      <Filter>Engine Files\Core\Resources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -382,30 +355,6 @@
     <ClInclude Include="EngineFiles\singleton.h">
       <Filter>Engine Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="EngineFiles\imgui\imgui_impl_dx11.h">
-      <Filter>Engine Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\imgui\imgui_impl_win32.h">
-      <Filter>Engine Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\imgui\imconfig.h">
-      <Filter>Engine Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\imgui\imgui.h">
-      <Filter>Engine Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\imgui\imgui_internal.h">
-      <Filter>Engine Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\imgui\imstb_rectpack.h">
-      <Filter>Engine Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\imgui\imstb_textedit.h">
-      <Filter>Engine Files\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="EngineFiles\imgui\imstb_truetype.h">
-      <Filter>Engine Files\imgui</Filter>
-    </ClInclude>
     <ClInclude Include="EngineFiles\DebugOverlays\MetricsOverlay.h">
       <Filter>Engine Files\DebugOverlays</Filter>
     </ClInclude>
@@ -467,14 +416,11 @@
     <ClInclude Include="EngineFiles\DebugOverlays\ImGuiOverlays.h">
       <Filter>Engine Files\DebugOverlays</Filter>
     </ClInclude>
-    <ClInclude Include="ThirdParty\enkiTS\src\LockLessMultiReadPipe.h">
-      <Filter>Thirdparty\EnkiTS</Filter>
+    <ClInclude Include="EngineFiles\Core\ModelResource.h">
+      <Filter>Engine Files\Core\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="ThirdParty\enkiTS\src\TaskScheduler.h">
-      <Filter>Thirdparty\EnkiTS</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\enkiTS\src\TaskScheduler_c.h">
-      <Filter>Thirdparty\EnkiTS</Filter>
+    <ClInclude Include="EngineFiles\Core\ResourceLoader.h">
+      <Filter>Engine Files\Core\Resources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

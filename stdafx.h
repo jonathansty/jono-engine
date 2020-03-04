@@ -37,6 +37,7 @@
 #include <dxgi.h>
 #include <dxgidebug.h>
 #include <DirectXMath.h>
+#include <DirectXTK/VertexTypes.h>
 using namespace DirectX;
 
 
@@ -47,6 +48,11 @@ using namespace DirectX;
 #pragma comment(lib, "dwrite.lib")			// Draw Text
 #pragma comment(lib, "d3d11.lib")
 using namespace D2D1;
+
+#include <wrl.h>
+using Microsoft::WRL::ComPtr;
+
+
 
 // Box2D 
 // copy the headers box2d map in a folder with somename:  projectdir/somepath/box2d
@@ -72,10 +78,10 @@ using namespace D2D1;
 #define tstringstream std::stringstream
 #endif
 
-#include "TaskScheduler.h"
+#include <imgui.h>
+#include <TaskScheduler.h>
 
 #include "EngineFiles/tinyxml2/tinyxml2.h"
-#include "imgui/imgui.h"
 
 #include "EngineFiles/EString.h"
 #include "EngineFiles/Structs.h"
@@ -100,6 +106,7 @@ using namespace D2D1;
 
 using std::shared_ptr;
 using std::weak_ptr;
+
 
 #include "rtti/rtti.h"
 

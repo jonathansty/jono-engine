@@ -447,6 +447,9 @@ private:
 	ID3D11RenderTargetView* m_D3DBackBufferView;
 	ID3DUserDefinedAnnotation* m_D3DUserDefinedAnnotation;
 
+	ID3D11Texture2D* m_D3DDepthBuffer;
+	ID3D11DepthStencilView* m_D3DDepthBufferView;
+
 	ID2D1Factory*					m_D2DFactoryPtr;
 	IWICImagingFactory*				m_WICFactoryPtr;
 	ID2D1RenderTarget*			m_RenderTargetPtr;

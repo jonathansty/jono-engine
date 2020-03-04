@@ -34,6 +34,11 @@ using namespace DirectX;
 #pragma comment(lib, "d3d11.lib")
 using namespace D2D1;
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+
 // Box2D 
 // copy the headers box2d map in a folder with somename:  projectdir/somepath/box2d
 // additional include directories: do NOT add ./ to make this include <> work, use ./somepath instead -> bug in vs2013?
@@ -52,7 +57,7 @@ using namespace D2D1;
 #define tstringstream std::stringstream
 #endif
 
-#include "imgui/imgui.h"
+#include <imgui.h>
 
 #include "tinyxml2/tinyxml2.h"
 

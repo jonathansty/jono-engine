@@ -18,7 +18,11 @@ private:
 	std::unique_ptr<framework::World> _world;
 
 	ComPtr<ID3D11Buffer> _cb_MVP;
+	ComPtr<ID3D11DepthStencilState> _depth_state;
+	ComPtr<ID3D11BlendState> _blend_state;
+	ComPtr<ID3D11RasterizerState> _raster_state;
 
+	double _timer;
 };
 
 

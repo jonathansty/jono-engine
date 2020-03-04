@@ -5,12 +5,14 @@
 #include "ContactListener.h"
 #include "AbstractGame.h"
 
-#include "imgui/imgui_impl_dx11.h"
-#include "imgui/imgui_impl_win32.h"
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
 
 #include "DebugOverlays/MetricsOverlay.h"
 #include "DebugOverlays/RTTIDebugOverlay.h"
 #include "DebugOverlays/ImGuiOverlays.h"
+
+#include "Core/ResourceLoader.h"
 
 enki::TaskScheduler GameEngine::s_TaskScheduler;
 std::thread::id GameEngine::s_MainThread;
@@ -156,7 +158,8 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	GameEngine::GetSingleton()->SetInstance(hInstance);
 
 	// Initialize enkiTS
-	//s_TaskScheduler.Initialize();
+	// TODO: Hookup profiler callbacks
+	s_TaskScheduler.Initialize();
 
 	//Initialize the high precision timers
 	m_GameTickTimerPtr = new PrecisionTimer();
@@ -336,9 +339,10 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 		vp.MaxDepth = 1.0f;
 		m_D3DDeviceContextPtr->RSSetViewports(1, &vp);
 
-		FLOAT color[4] = { 0.0f,0.0f,0.0f,0.0f };
+		FLOAT color[4] = { 0.25f,0.25,0.25f,0.0f };
 		m_D3DDeviceContextPtr->ClearRenderTargetView(m_D3DBackBufferView, color);
-		m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, nullptr);
+		m_D3DDeviceContextPtr->ClearDepthStencilView(m_D3DDepthBufferView, D3D11_CLEAR_DEPTH, 0.0f, 0);
+		m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, m_D3DDepthBufferView);
 
 
 		// Render 3D before 2D
@@ -369,10 +373,13 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	timeEndPeriod(tc.wPeriodMin);
 
 	// Make sure all tasks have finished before shutting down
-	//s_TaskScheduler.WaitforAll();
+	s_TaskScheduler.WaitforAllAndShutdown();
 
 	// User defined code for exiting the game
 	m_GamePtr->GameEnd();
+
+	ResourceLoader::Instance()->UnloadAll();
+	ResourceLoader::Shutdown();
 
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
@@ -1609,24 +1616,13 @@ void GameEngine::CreateDeviceResources()
 		SetDebugName(backBuffer, "DXGIBackBuffer");
 		assert(backBuffer);
 		m_D3DDevicePtr->CreateRenderTargetView(backBuffer, NULL, &m_D3DBackBufferView);
-		m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, NULL);
 
-		// Create a Direct2D render target.
-		// EndPaint waits till VBLank !!! when OPTIONS_NONE
-		//use D2D1_PRESENT_OPTIONS::D2D1_PRESENT_OPTIONS_NONE for vblank sync
-		//and D2D1_PRESENT_OPTIONS::D2D1_PRESENT_OPTIONS_IMMEDIATELY for no waiting
-		//D2D1_PRESENT_OPTIONS_RETAIN_CONTENTS   
-		D2D1_PRESENT_OPTIONS pres_opt;
-		if(m_bVSync)
-		{
-			//wait for vertical blanking
-			pres_opt = D2D1_PRESENT_OPTIONS_NONE;
-		}
-		else
-		{
-			//do NOT wait for vertical blanking
-			pres_opt = D2D1_PRESENT_OPTIONS_IMMEDIATELY;
-		}
+
+		CD3D11_TEXTURE2D_DESC texture_desc{ DXGI_FORMAT_D24_UNORM_S8_UINT, (UINT)GetWidth(), (UINT)GetHeight() };
+		texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+		SUCCEEDED(m_D3DDevicePtr->CreateTexture2D(&texture_desc, nullptr, &m_D3DDepthBuffer));
+		SUCCEEDED(m_D3DDevicePtr->CreateDepthStencilView(m_D3DDepthBuffer, NULL, &m_D3DDepthBufferView));
 
 		UINT dpi = GetDpiForWindow(GetWindow());
 		D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)dpi, (FLOAT)dpi);

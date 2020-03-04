@@ -8,6 +8,10 @@ cbuffer MVPConstantBuffer : register(b0)
 	float4x4 WorldViewProjection;
 
 	float4x4 InvView;
+	float4x4 View;
+
+	float4 g_ViewDirection;
+	float4 g_LightDirection;
 };
 
 VS_OUT main(VS_IN vin)
@@ -20,9 +24,9 @@ VS_OUT main(VS_IN vin)
 	vout.colour = vin.colour;
 	vout.uv = vin.uv;
 
-	vout.viewNormal = mul(WorldView, float4(vin.normal, 1.0));
-	vout.worldNormal = mul(World, float4(vin.normal, 1.0));
-	vout.viewPosition = mul(WorldView, float4(vin.normal, 1.0));
+	vout.viewNormal = mul(WorldView, float4(vin.normal, 0.0));
+	vout.worldNormal = mul(World, float4(vin.normal, 0.0));
+	vout.viewPosition = mul(WorldView, float4(vin.position, 1.0));
 
 	return vout;
 }
