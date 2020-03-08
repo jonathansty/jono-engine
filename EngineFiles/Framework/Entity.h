@@ -23,7 +23,7 @@ namespace framework
 		template<typename T, typename...Args>
 		T* create_component( Args...args);
 
-		Component* get_component(rtti::TypeInfo* t) const;
+		Component* get_component(rtti::TypeInfo const* t) const;
 
 		template<typename T>
 		T* get_component();

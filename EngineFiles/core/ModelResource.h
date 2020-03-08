@@ -1,13 +1,18 @@
 #pragma once
 #include "ResourceLoader.h"
 
-class ModelResource final : public Resource
+class ModelResource final : public TCachedResource<FromFileResourceParameters>
 {
 public:
 
-	ModelResource() {}
+	ModelResource(FromFileResourceParameters params) 
+		: TCachedResource( params )
+		, _index_count(0)
+	{
+	}
+
 	~ModelResource() {}
-	void load(std::string const& path) override;
+	void load() override;
 
 	// Gpu resources
 	size_t _index_count;

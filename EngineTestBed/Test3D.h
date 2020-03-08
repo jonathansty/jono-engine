@@ -22,7 +22,22 @@ private:
 	ComPtr<ID3D11BlendState> _blend_state;
 	ComPtr<ID3D11RasterizerState> _raster_state;
 
-	double _timer;
+	struct {
+		std::shared_ptr<class TextureResource> albedo;
+		std::shared_ptr<class TextureResource> roughness;
+		std::shared_ptr<class TextureResource> metalness;
+		std::shared_ptr<class TextureResource> normal;
+	} g_Materials;
+
+	enum class Samplers
+	{
+		AllLinear,
+		AllPoint,
+		Count
+	};
+	std::array<ComPtr<ID3D11SamplerState>, uint32_t(Samplers::Count)> m_Samplers;
+
+	float _timer;
 };
 
 

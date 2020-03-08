@@ -4,89 +4,10 @@
 #include "EngineFiles/Framework/framework.h"
 #include "core/identifier.h"
 
+#include "Components.h"
+
 extern void ExecuteRttiTest_BasicTypes();
 
-class SimpleMovement : public framework::Component
-{
-	REFLECT(SimpleMovement)
-public:
-	SimpleMovement() : Component() 
-	{
-	}
-
-	SimpleMovement(XMFLOAT2 pos, float speed)
-		: Component()
-		, _speed(speed)
-		, _elapsed(0.0)
-		, _offset({ pos.x, pos.y, 0.0f })
-
-	{
-	}
-
-	~SimpleMovement()
-	{
-	}
-
-	void on_attach(framework::Entity* ent) override
-	{
-		__super::on_attach(ent);
-
-		_offset = ent->get_local_position();
-	}
-	void update(float dt) override
-	{
-		_elapsed += dt*_speed;
-		framework::Entity* ent = get_entity();
-		ent->set_rotation(_elapsed);
-		//ent->set_local_position(_offset.x + cos(_elapsed) * 100.0, _offset.y + sin(_elapsed) * 100.0);
-	}
-
-	XMFLOAT3 _offset;
-	float _elapsed = 0.0;
-	float _speed;
-
-};
-
-class BitmapComponent : public framework::Component
-{
-	REFLECT(BitmapComponent)
-public:
-	BitmapComponent() : Component()
-	{
-
-	}
-
-	BitmapComponent(std::string const& path) 
-		: framework::Component()
-	{
-		_bmp = new Bitmap(String(path.c_str()));
-	}
-	~BitmapComponent() 
-	{
-		delete _bmp;
-	}
-
-	void render() 
-	{
-		XMFLOAT3 pos = get_entity()->get_world_position();
-		GameEngine::Instance()->DrawBitmap(_bmp, pos.x, pos.y);
-	}
-
-
-private:
-	Bitmap* _bmp;
-
-};
-
-IMPL_REFLECT(BitmapComponent) 
-{
-	type.bind_parent<Component>();
-}
-IMPL_REFLECT(SimpleMovement) 
-{
-	type.bind_parent<Component>();
-	type.register_property("speed", &SimpleMovement::_speed);
-}
 
 class ResourcePaths
 {
@@ -308,9 +229,9 @@ void HelloWorldGame::GameStart()
 
 	for (int i =0; i < 10; ++i)
 	{
-		float d = 360.0 * i / 10.0;
-		float x = cos(XMConvertToRadians(d)) * 100.0;
-		float y = sin(XMConvertToRadians(d)) * 100.0;
+		float d = 360.0f * i / 10.0f;
+		float x = cos(XMConvertToRadians(d)) * 100.0f;
+		float y = sin(XMConvertToRadians(d)) * 100.0f;
 
 		World::EntityId ent = _world->create_entity();
 		_world->get_entity(ent)->set_local_position(x, y);
@@ -358,7 +279,7 @@ void HelloWorldGame::DebugUI()
 		if (ent)
 		{
 			if (auto comp = ent->get_component<SimpleMovement>(); comp) {
-				comp->_speed = s_rotation_speed / 10.0;
+				comp->_speed = s_rotation_speed / 10.0f;
 			}
 		}
 	}

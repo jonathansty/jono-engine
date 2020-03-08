@@ -6,11 +6,13 @@
     <ClCompile Include="HelloWorld.cpp" />
     <ClCompile Include="Tests/RttiTest.tests.cpp" />
     <ClCompile Include="Test3D.cpp" />
+    <ClCompile Include="Components.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="HelloWorld.h" />
     <ClInclude Include="Test3D.h" />
+    <ClInclude Include="Components.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tests">

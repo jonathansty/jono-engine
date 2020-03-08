@@ -5,6 +5,9 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+#include <DirectXTK/DirectXHelpers.h>
+
+
 // Inline shaders
 namespace Shaders
 {
@@ -14,14 +17,15 @@ namespace Shaders
 
 
 
-void ModelResource::load(std::string const& path)
+void ModelResource::load()
 {
+	std::string const& path = _init.path;
 	auto device = GameEngine::Instance()->GetD3DDevice();
 	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
 
 	using namespace Assimp;
 	Importer importer{};
-	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace);
+	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded);
 	if (!scene)
 	{
 		//TODO: Load error mesh
@@ -42,7 +46,7 @@ void ModelResource::load(std::string const& path)
 		vertices.reserve(mesh->mNumVertices);
 		indices.reserve(int(mesh->mNumFaces) * 3);
 
-		for (int i = 0; i < mesh->mNumVertices; ++i)
+		for (unsigned int i = 0; i < mesh->mNumVertices; ++i)
 		{
 			VertexPositionNormalColorTexture v{};
 			v.position.x = positions[i].x;
@@ -77,11 +81,10 @@ void ModelResource::load(std::string const& path)
 
 		}
 
-		int n = 0;
-		for (int i = 0; i < mesh->mNumFaces; ++i)
+		for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
 		{
 			aiFace const& f = faces[i];
-			for (int j = 0; j < f.mNumIndices; ++j)
+			for (unsigned int j = 0; j < f.mNumIndices; ++j)
 			{
 				indices.push_back(f.mIndices[j]);
 			}
@@ -91,21 +94,24 @@ void ModelResource::load(std::string const& path)
 		D3D11_BUFFER_DESC bufferDesc{};
 		D3D11_SUBRESOURCE_DATA data{};
 
-		bufferDesc.ByteWidth = vertices.size() * sizeof(vertices[0]);
-		bufferDesc.StructureByteStride = sizeof(vertices[0]);
+		bufferDesc.ByteWidth = UINT(vertices.size() * sizeof(vertices[0]));
+		bufferDesc.StructureByteStride = UINT(sizeof(vertices[0]));
 		bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
 		bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		bufferDesc.CPUAccessFlags = 0;
 
 		data.pSysMem = vertices.data();
-		device->CreateBuffer(&bufferDesc, &data, _vert_buffer.GetAddressOf());
 
-		bufferDesc.ByteWidth = indices.size() * sizeof(indices[0]);
+		SUCCEEDED(device->CreateBuffer(&bufferDesc, &data, _vert_buffer.GetAddressOf()));
+
+
+		bufferDesc.ByteWidth = UINT(indices.size() * sizeof(indices[0]));
 		bufferDesc.StructureByteStride = sizeof(indices[0]);
 		bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 		data.pSysMem = indices.data();
-		device->CreateBuffer(&bufferDesc, &data, _index_buffer.GetAddressOf());
+		SUCCEEDED(device->CreateBuffer(&bufferDesc, &data, _index_buffer.GetAddressOf()));
 		_index_count = indices.size();
+
 
 	}
 
@@ -113,5 +119,15 @@ void ModelResource::load(std::string const& path)
 	SUCCEEDED(device->CreateVertexShader(Shaders::cso_simple_vx, std::size(Shaders::cso_simple_vx), nullptr, _vert_shader.GetAddressOf()));
 	SUCCEEDED(device->CreatePixelShader(Shaders::cso_simple_px, std::size(Shaders::cso_simple_px), nullptr, _pixel_shader.GetAddressOf()));
 	SUCCEEDED(device->CreateInputLayout(DirectX::VertexPositionNormalColorTexture::InputElements, DirectX::VertexPositionNormalColorTexture::InputElementCount, Shaders::cso_simple_vx, std::size(Shaders::cso_simple_vx), _input_layout.GetAddressOf()));
+
+#ifdef _DEBUG
+	char name[512];
+	sprintf_s(name, "%s - Index Buffer", path.c_str());
+	DirectX::SetDebugObjectName(_index_buffer.Get(), name);
+
+	sprintf_s(name, "%s - Vertex Buffer", path.c_str());
+	DirectX::SetDebugObjectName(_vert_buffer.Get(), name);
+#endif
+
 }
 

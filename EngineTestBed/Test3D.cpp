@@ -2,11 +2,13 @@
 #include "Test3D.h"
 
 #include "Framework/framework.h"
+#include "Components.h"
 
 #include <rttr/registration>
 #include <rttr/type>
 
 #include "EngineFiles/Core/ModelResource.h"
+#include "EngineFiles/Core/TextureResource.h"
 
 
 using framework::Entity;
@@ -20,61 +22,13 @@ struct MVPConstantBuffer
 	XMFLOAT4X4 Projection;
 	XMFLOAT4X4 WorldViewProjection;
 
-	XMFLOAT4X4 InvView;
 	XMFLOAT4X4 View;
+	XMFLOAT4X4 InvView;
 
 	XMFLOAT4 ViewDirection;
 	XMFLOAT4 LightDirection;
 };
 
-class SimpleMeshComponent : public Component
-{
-public:
-	SimpleMeshComponent() {};
-	virtual ~SimpleMeshComponent() {};
-	virtual void on_attach(Entity* ent) override
-	{
-		__super::on_attach(ent);
-	}
-
-
-	virtual void on_detach(Entity* ent) override
-	{
-		__super::on_detach(ent);
-	}
-
-
-	virtual void update(float dt) override
-	{
-	}
-
-
-	virtual void render() override
-	{
-		auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
-
-		// Draw mesh
-		ctx->VSSetShader(_resource->_vert_shader.Get(), nullptr,0);
-		ctx->PSSetShader(_resource->_pixel_shader.Get(), nullptr, 0);
-
-		ctx->IASetInputLayout(_resource->_input_layout.Get());
-		ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ctx->IASetIndexBuffer(_resource->_index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-		UINT strides = { sizeof(DirectX::VertexPositionNormalColorTexture) };
-		UINT offsets = { 0 };
-		ctx->IASetVertexBuffers(0, 1, _resource->_vert_buffer.GetAddressOf(), &strides, &offsets);
-		ctx->DrawIndexed(_resource->_index_count, 0, 0);
-	}
-
-	void load(std::string const& mesh)
-	{
-		_resource = ResourceLoader::Instance()->load<ModelResource>(mesh);
-	}
-
-private:
-	std::shared_ptr<ModelResource> _resource;
-
-};
 
 void Hello3D::GameInitialize(GameSettings& gameSettings)
 {
@@ -89,31 +43,40 @@ void Hello3D::GameStart()
 	using namespace framework;
 	_world = std::make_unique<framework::World>();
 
-	//TODO: Implement ModelLoader with a resource cache 
+	// Create the world camera
 	{
-		World::EntityId model = _world->create_entity();
-		Entity* ent = _world->get_entity(model);
-		ent->set_local_position({ 4.0f,0.0f,0.0f });
-		auto comp = ent->create_component<SimpleMeshComponent>();
-		comp->load("Resources/Models/Suzanne.fbx");
+		World::EntityId cam_id = _world->create_entity();
+		Entity* ent = _world->get_entity(cam_id);
+		auto comp = ent->create_component<CameraComponent>();
+		ent->set_local_position(XMFLOAT3(0.0f, 0.0f, -2.0f));
+
 	}
+
+	//TODO: Implement ModelLoader with a resource cache 
+	//{
+	//	World::EntityId model = _world->create_entity();
+	//	Entity* ent = _world->get_entity(model);
+	//	ent->set_local_position({ 4.0f,0.0f,0.0f });
+	//	auto comp = ent->create_component<SimpleMeshComponent>();
+	//	comp->load("Resources/Models/Suzanne.fbx");
+	//}
 
 	{
 		World::EntityId model = _world->create_entity();
 		Entity* ent = _world->get_entity(model);
-		ent->set_local_position({ -4.0f,0.0f,0.0f });
 		auto comp = ent->create_component<SimpleMeshComponent>();
 		comp->load("Resources/Models/ball.fbx");
+		auto mov = ent->create_component<SimpleMovement>();
+		mov->set_speed(1.0f);
 	}
 
-	{
-		World::EntityId model = _world->create_entity();
-		Entity* ent = _world->get_entity(model);
-		ent->set_local_position({ 0.0f,0.0f,0.0f });
-		auto comp = ent->create_component<SimpleMeshComponent>();
-		comp->load("Resources/Models/axes.fbx");
-
-	}
+	//{
+	//	World::EntityId model = _world->create_entity();
+	//	Entity* ent = _world->get_entity(model);
+	//	ent->set_local_position({ 0.0f,0.0f,0.0f });
+	//	auto comp = ent->create_component<SimpleMeshComponent>();
+	//	comp->load("Resources/Models/axes.fbx");
+	//}
 
 
 	// Initialize our rendering buffer
@@ -135,15 +98,25 @@ void Hello3D::GameStart()
 	CD3D11_DEPTH_STENCIL_DESC ds_desc{ CD3D11_DEFAULT() };
 	ds_desc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL;
 	SUCCEEDED(device->CreateDepthStencilState(&ds_desc, _depth_state.GetAddressOf()));
+	DirectX::SetDebugObjectName(_depth_state.Get(), L"Default DepthStencilState");
 
 	CD3D11_BLEND_DESC bs_desc{ CD3D11_DEFAULT() };
 	SUCCEEDED(device->CreateBlendState(&bs_desc, _blend_state.GetAddressOf()));
+	DirectX::SetDebugObjectName(_blend_state.Get(), L"Default BlendState");
 
 	CD3D11_RASTERIZER_DESC rs_desc{ CD3D11_DEFAULT() };
 	rs_desc.FrontCounterClockwise = true;
 	SUCCEEDED(device->CreateRasterizerState(&rs_desc, _raster_state.GetAddressOf()));
+	DirectX::SetDebugObjectName(_raster_state.Get(), L"Default RasterizerState");
 
+	// Load our textures
+	g_Materials.albedo = ResourceLoader::Instance()->load<TextureResource>({ "Resources/Textures/pitted-metal-bl/pitted-metal_albedo.png" });
+	g_Materials.roughness = ResourceLoader::Instance()->load<TextureResource>({ "Resources/Textures/pitted-metal-bl/pitted-metal_roughness.png" });
+	g_Materials.metalness = ResourceLoader::Instance()->load<TextureResource>({ "Resources/Textures/pitted-metal-bl/pitted-metal_metallic.png" });
+	g_Materials.normal = ResourceLoader::Instance()->load<TextureResource>({ "Resources/Textures/pitted-metal-bl/pitted-metal_normal-ogl.png" });
 
+	CD3D11_SAMPLER_DESC sampler{ CD3D11_DEFAULT() };
+	SUCCEEDED(device->CreateSamplerState(&sampler, m_Samplers[uint32_t(Samplers::AllLinear)].GetAddressOf()));
 
 }
 
@@ -158,9 +131,9 @@ void Hello3D::GamePaint(RECT rect)
 
 void Hello3D::GameTick(double deltaTime)
 {
-	_world->update(deltaTime);
+	_world->update((float)deltaTime);
 
-	_timer += deltaTime;
+	_timer += (float)deltaTime;
 }
 
 void Hello3D::DebugUI()
@@ -185,26 +158,52 @@ void Hello3D::Render3D()
 	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
 
 	// Use RH system so that we can directly export from blender
-	XMVECTOR view_direction = XMVector3Create(10.0f * cos(_timer), 10.0f * sin(_timer), 10.0f);
-	XMVECTOR light_direction = XMVector3Create(0.0, 0.0, -1.0);
-	XMMATRIX View = XMMatrixLookAtRH(view_direction, XMVector3Create(0.0f, 0.0f, 0.0f), XMVector3Create(0.0f, 0.0f, 1.0f));
+	//_timer = 0.0f;
+	XMVECTOR view_direction = XMVector3Create(0.0f, 0.0f, -2.0f);
+	XMVECTOR light_direction = XMVector3Create(0.0, -1.0, -1.0f);
+	XMMATRIX View = XMMatrixIdentity();
 
 	float aspect = (float)GameEngine::Instance()->GetWidth() / (float)GameEngine::Instance()->GetHeight();
 	float near_plane = 0.01f;
 	float far_plane = 100.0f;
-	XMMATRIX Projection = XMMatrixPerspectiveFovRH( XMConvertToRadians(45.0f), aspect, far_plane, near_plane);
+	XMMATRIX Projection = XMMatrixPerspectiveFovLH( XMConvertToRadians(45.0f), aspect, far_plane, near_plane);
 
-	XMVECTOR det = XMMatrixDeterminant(View);
-	XMMATRIX invView = XMMatrixInverse(&det, View);
 
 	ctx->OMSetDepthStencilState(_depth_state.Get(), 0);
 	ctx->OMSetBlendState(_blend_state.Get(), NULL, 0xffffffff);
 	ctx->RSSetState(_raster_state.Get());
 
+	ID3D11ShaderResourceView const* views[4] = {
+		g_Materials.albedo->get_srv(),
+		g_Materials.normal->get_srv(),
+		g_Materials.metalness->get_srv(),
+		g_Materials.roughness->get_srv()
+	};
+	ctx->PSSetShaderResources(0, 4, (ID3D11ShaderResourceView**)views);
+
+	ID3D11SamplerState const* samplers[1] = {
+		m_Samplers[uint32_t(Samplers::AllLinear)].Get()
+	};
+	ctx->PSSetSamplers(0, 1, (ID3D11SamplerState**)samplers);
+
+	CameraComponent* camera = _world->find_first_component<CameraComponent>();
+	View = XMMatrixLookAtLH(view_direction, XMVector3Create(0.0f,0.0f,0.0f), XMVector3Create(0.0f,1.0f,0.0f));
+	if (camera)
+	{
+		View = XMMatrixInverse(nullptr,camera->get_entity()->get_local_transform());
+		Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(camera->get_fov()), aspect, camera->get_far_plane(), camera->get_near_plane());
+
+		// +Y is forward
+		XMFLOAT4 forward = { 0.0f,0.0f,-1.0f, 0.0f };
+		XMVECTOR world_fwd = XMLoadFloat4(&forward);
+		view_direction = XMVector3Transform(world_fwd, View);
+	}
+	XMMATRIX invView = XMMatrixInverse(nullptr, View);
+
 	for (auto& ent : _world->get_entities())
 	{
 		// If the entity has a mesh component
-		if (auto comp = ent->get_component<SimpleMeshComponent>(); comp)
+		if (SimpleMeshComponent* comp = ent->get_component<SimpleMeshComponent>(); comp && comp->is_loaded())
 		{
 			XMMATRIX world = ent->get_world_transform();
 			XMMATRIX MVP = XMMatrixMultiply(XMMatrixMultiply(world, View), Projection);
@@ -212,14 +211,14 @@ void Hello3D::Render3D()
 			D3D11_MAPPED_SUBRESOURCE resource{};
 			ctx->Map(_cb_MVP.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
 			MVPConstantBuffer* buffer = (MVPConstantBuffer*)resource.pData;
-			XMStoreFloat4x4(&buffer->World, world);
-			XMStoreFloat4x4(&buffer->WorldViewProjection, MVP);
-			XMStoreFloat4x4(&buffer->WorldView, XMMatrixMultiply(world, View));
-			XMStoreFloat4x4(&buffer->Projection, Projection);
-			XMStoreFloat4x4(&buffer->InvView, invView);
-			XMStoreFloat4x4(&buffer->View, View);
-			XMStoreFloat4(&buffer->ViewDirection, view_direction);
-			XMStoreFloat4(&buffer->LightDirection, light_direction);
+			XMStoreFloat4x4(&buffer->World, (world));
+			XMStoreFloat4x4(&buffer->WorldViewProjection, (MVP));
+			XMStoreFloat4x4(&buffer->WorldView, (XMMatrixMultiply(world, View)));
+			XMStoreFloat4x4(&buffer->Projection, (Projection));
+			XMStoreFloat4x4(&buffer->InvView, (invView));
+			XMStoreFloat4x4(&buffer->View, (View));
+			XMStoreFloat4(&buffer->ViewDirection, (-1 * view_direction));
+			XMStoreFloat4(&buffer->LightDirection, (light_direction));
 			ctx->Unmap(_cb_MVP.Get(), 0);
 
 			// TODO: Implement materials supplying buffers?

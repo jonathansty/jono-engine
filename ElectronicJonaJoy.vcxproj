@@ -100,6 +100,7 @@
     <ClInclude Include="EngineFiles\core\identifier.h" />
     <ClInclude Include="EngineFiles\Core\ModelResource.h" />
     <ClInclude Include="EngineFiles\Core\ResourceLoader.h" />
+    <ClInclude Include="EngineFiles\Core\TextureResource.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\ImGuiOverlays.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\MetricsOverlay.h" />
     <ClInclude Include="EngineFiles\DebugOverlays\OverlayManager.h" />
@@ -127,6 +128,7 @@
     <ClCompile Include="EngineFiles\Button.cpp" />
     <ClCompile Include="EngineFiles\ContactListener.cpp" />
     <ClCompile Include="EngineFiles\Core\ModelResource.cpp" />
+    <ClCompile Include="EngineFiles\Core\TextureResource.cpp" />
     <ClCompile Include="EngineFiles\DebugOverlays\MetricsOverlay.cpp" />
     <ClCompile Include="EngineFiles\DebugOverlays\OverlayManager.cpp" />
     <ClCompile Include="EngineFiles\Font.cpp" />

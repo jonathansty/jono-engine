@@ -46,7 +46,7 @@ bool rtti::TypeInfo::is_primitive()
 	return (_flags & TypeFlags::PrimitiveBit) == TypeFlags::PrimitiveBit;
 }
 
-bool rtti::TypeInfo::inherits(TypeInfo* type)
+bool rtti::TypeInfo::inherits(TypeInfo const* type)
 {
 	TypeInfo* parent = _parent;
 	while (parent != nullptr)
@@ -83,7 +83,7 @@ rtti::Object rtti::TypeInfo::create_object()
 	return rtti::Object(data, this);
 }
 
-bool rtti::TypeInfo::is(TypeInfo* type)
+bool rtti::TypeInfo::is(TypeInfo const* type)
 {
 	return this == type;
 

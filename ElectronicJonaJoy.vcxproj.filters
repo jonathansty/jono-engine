@@ -146,6 +146,9 @@
     <ClCompile Include="EngineFiles\Core\ModelResource.cpp">
       <Filter>Engine Files\Core\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="EngineFiles\Core\TextureResource.cpp">
+      <Filter>Engine Files\Core\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -420,6 +423,9 @@
       <Filter>Engine Files\Core\Resources</Filter>
     </ClInclude>
     <ClInclude Include="EngineFiles\Core\ResourceLoader.h">
+      <Filter>Engine Files\Core\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Core\TextureResource.h">
       <Filter>Engine Files\Core\Resources</Filter>
     </ClInclude>
   </ItemGroup>

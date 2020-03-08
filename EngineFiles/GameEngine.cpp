@@ -151,6 +151,10 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 {
 	s_MainThread = std::this_thread::get_id();
 
+	// Initialize some windows stuff
+	HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
+	if (FAILED(hr))
+
 	// create the game engine object, exit if failure
 	assert(GameEngine::GetSingleton());
 
@@ -323,6 +327,8 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 			}
 		}
 
+		ResourceLoader::Instance()->update();
+
 		GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Frame");
 
 		size_t idx = m_FrameCounter % 2;
@@ -331,8 +337,8 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 		m_D3DDeviceContextPtr->End(gpuTimings[idx][1]);
 
 		D3D11_VIEWPORT vp{};
-		vp.Width = this->GetWidth();
-		vp.Height = this->GetHeight();
+		vp.Width = static_cast<float>(this->GetWidth());
+		vp.Height = static_cast<float>(this->GetHeight());
 		vp.TopLeftX = 0.0f;
 		vp.TopLeftY = 0.0f;
 		vp.MinDepth = 0.0f;
@@ -378,7 +384,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	// User defined code for exiting the game
 	m_GamePtr->GameEnd();
 
-	ResourceLoader::Instance()->UnloadAll();
+	ResourceLoader::Instance()->unload_all();
 	ResourceLoader::Shutdown();
 
 	ImGui_ImplDX11_Shutdown();

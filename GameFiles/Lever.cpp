@@ -64,12 +64,13 @@ void Lever::Paint()
     RECT boundingBox;
     boundingBox.left = 0;
     boundingBox.top = 0;
+    assert(m_ClipWidth > std::numeric_limits<LONG>::min() && m_ClipWidth < std::numeric_limits<LONG>::max());
     if (m_IsHit)
     {
-        boundingBox.left = m_ClipWidth;
+        boundingBox.left = (LONG)m_ClipWidth;
         boundingBox.top = 0;
     }
-    boundingBox.right = boundingBox.left + m_ClipWidth;
+    boundingBox.right = boundingBox.left + (LONG)m_ClipWidth;
     boundingBox.bottom = m_BmpPtr->GetHeight();
     GAME_ENGINE->DrawBitmap(m_BmpPtr,boundingBox);
     GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());

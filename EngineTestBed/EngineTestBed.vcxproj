@@ -95,7 +95,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Engine.lib;enkiTS.lib;imgui.lib;assimp-vc141-mtd.lib;directxtk.lib;rttr_core_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Engine.lib;enkiTS.lib;imgui.lib;assimp-vc141-mtd.lib;directxtk.lib;rttr_core_d.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -146,6 +146,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Components.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Test3D.cpp" />
     <ClCompile Include="Tests/RttiTest.tests.cpp" />
@@ -156,6 +157,7 @@
     <ClCompile Include="HelloWorld.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Components.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="HelloWorld.h" />
     <ClInclude Include="Test3D.h" />

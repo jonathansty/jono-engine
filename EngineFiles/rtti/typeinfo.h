@@ -66,9 +66,9 @@ namespace rtti
 
 		bool is_primitive();
 
-		bool inherits(TypeInfo* type);
+		bool inherits(TypeInfo const* type);
 
-		bool is(TypeInfo* type);
+		bool is(TypeInfo const* type);
 
 		class Property* find_property(std::string const& field);
 

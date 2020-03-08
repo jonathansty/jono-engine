@@ -5,7 +5,7 @@ namespace framework
 
 	class Component
 	{
-		REFLECT(Component)
+		REFLECT(Component);
 	public:
 		Component() {};
 

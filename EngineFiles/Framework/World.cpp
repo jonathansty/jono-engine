@@ -55,3 +55,16 @@ void World::render()
 		}
 	}
 }
+
+framework::Component* framework::World::find_first_component(rtti::TypeInfo const* info) const
+{
+	for (std::size_t i = 0; i < _entities.size(); ++i)
+	{
+		if (auto comp = _entities[i]->get_component(info); comp)
+		{
+			return comp;
+		}
+	}
+
+	return nullptr;
+}

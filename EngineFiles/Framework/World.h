@@ -41,6 +41,14 @@ namespace framework
 			return _entities[id];
 		}
 
+		template<typename T>
+		T* find_first_component() const
+		{
+			return reinterpret_cast<T*>(find_first_component(rtti::Registry::get<T>()));
+		}
+
+		Component* find_first_component(rtti::TypeInfo const* info) const;
+
 		bool remove_entity(EntityId id)
 		{
 			auto it = std::find(_deletion_list.begin(), _deletion_list.end(), id);

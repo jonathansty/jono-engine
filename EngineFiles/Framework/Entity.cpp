@@ -34,9 +34,14 @@ void framework::Entity::set_local_position(XMFLOAT3 pos)
 	_pos = pos;
 }
 
+void framework::Entity::set_rotation(XMVECTOR quat)
+{
+	_rot = quat;
+}
+
 void Entity::set_rotation(float angle)
 {
-	_rot = XMQuaternionRotationRollPitchYaw(0.0, 0.0, angle);
+	set_rotation(XMQuaternionRotationRollPitchYaw(0.0, 0.0, angle));
 }
 
 XMMATRIX Entity::get_world_transform() const
@@ -113,7 +118,7 @@ XMFLOAT3 Entity::get_local_position() const
 	return _pos;
 }
 
-Component* Entity::get_component(rtti::TypeInfo* t) const
+Component* Entity::get_component(rtti::TypeInfo const* t) const
 {
 	for (Component* c : _components)
 	{

@@ -7,8 +7,8 @@ cbuffer MVPConstantBuffer : register(b0)
 	float4x4 Projection;
 	float4x4 WorldViewProjection;
 
-	float4x4 InvView;
 	float4x4 View;
+	float4x4 InvView;
 
 	float4 g_ViewDirection;
 	float4 g_LightDirection;
