@@ -33,6 +33,7 @@ struct MVPConstantBuffer
 void Hello3D::GameInitialize(GameSettings& gameSettings)
 {
 	gameSettings.EnableConsole(true);
+	gameSettings.EnableAntiAliasing(true);
 }
 
 void Hello3D::GameStart()
@@ -105,7 +106,6 @@ void Hello3D::GameStart()
 	DirectX::SetDebugObjectName(_blend_state.Get(), L"Default BlendState");
 
 	CD3D11_RASTERIZER_DESC rs_desc{ CD3D11_DEFAULT() };
-	rs_desc.FrontCounterClockwise = true;
 	SUCCEEDED(device->CreateRasterizerState(&rs_desc, _raster_state.GetAddressOf()));
 	DirectX::SetDebugObjectName(_raster_state.Get(), L"Default RasterizerState");
 
@@ -116,6 +116,7 @@ void Hello3D::GameStart()
 	g_Materials.normal = ResourceLoader::Instance()->load<TextureResource>({ "Resources/Textures/pitted-metal-bl/pitted-metal_normal-ogl.png" });
 
 	CD3D11_SAMPLER_DESC sampler{ CD3D11_DEFAULT() };
+	sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	SUCCEEDED(device->CreateSamplerState(&sampler, m_Samplers[uint32_t(Samplers::AllLinear)].GetAddressOf()));
 
 }
@@ -176,8 +177,8 @@ void Hello3D::Render3D()
 	ID3D11ShaderResourceView const* views[4] = {
 		g_Materials.albedo->get_srv(),
 		g_Materials.normal->get_srv(),
-		g_Materials.metalness->get_srv(),
-		g_Materials.roughness->get_srv()
+		g_Materials.roughness->get_srv(),
+		g_Materials.metalness->get_srv()
 	};
 	ctx->PSSetShaderResources(0, 4, (ID3D11ShaderResourceView**)views);
 
@@ -190,13 +191,13 @@ void Hello3D::Render3D()
 	View = XMMatrixLookAtLH(view_direction, XMVector3Create(0.0f,0.0f,0.0f), XMVector3Create(0.0f,1.0f,0.0f));
 	if (camera)
 	{
-		View = XMMatrixInverse(nullptr,camera->get_entity()->get_local_transform());
+		View = XMMatrixInverse(nullptr,camera->get_entity()->get_world_transform());
 		Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(camera->get_fov()), aspect, camera->get_far_plane(), camera->get_near_plane());
 
 		// +Y is forward
-		XMFLOAT4 forward = { 0.0f,0.0f,-1.0f, 0.0f };
+		XMFLOAT4 forward = { 0.0f,0.0f,1.0f, 0.0f };
 		XMVECTOR world_fwd = XMLoadFloat4(&forward);
-		view_direction = XMVector3Transform(world_fwd, View);
+		view_direction = XMVector3Transform(world_fwd, camera->get_entity()->get_world_transform());
 	}
 	XMMATRIX invView = XMMatrixInverse(nullptr, View);
 
@@ -217,7 +218,7 @@ void Hello3D::Render3D()
 			XMStoreFloat4x4(&buffer->Projection, (Projection));
 			XMStoreFloat4x4(&buffer->InvView, (invView));
 			XMStoreFloat4x4(&buffer->View, (View));
-			XMStoreFloat4(&buffer->ViewDirection, (-1 * view_direction));
+			XMStoreFloat4(&buffer->ViewDirection, ( view_direction));
 			XMStoreFloat4(&buffer->LightDirection, (light_direction));
 			ctx->Unmap(_cb_MVP.Get(), 0);
 

@@ -56,7 +56,7 @@ GameEngine::GameEngine() :
 	m_GameTickTimerPtr(nullptr),
 	m_bInitialized(false),
 	m_ColorBrushPtr(nullptr),
-	m_AntialiasMode(D2D1_ANTIALIAS_MODE_ALIASED),
+	m_AADesc({ 1,0 }),
 	m_BitmapInterpolationMode(D2D1_BITMAP_INTERPOLATION_MODE_LINEAR),
 	m_DefaultFontPtr(nullptr),
 	m_UserFontPtr(nullptr),
@@ -1166,9 +1166,14 @@ MATRIX3X2 GameEngine::GetViewMatrix()
 
 void GameEngine::EnableAntiAlias(bool isEnabled)
 {
-	if (isEnabled)	m_AntialiasMode = D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
-	else			m_AntialiasMode = D2D1_ANTIALIAS_MODE_ALIASED;
-	if (m_RenderTargetPtr)m_RenderTargetPtr->SetAntialiasMode(m_AntialiasMode);
+	m_AADesc.Count = isEnabled ? 4 : 1;
+	m_AADesc.Quality = isEnabled ? D3D11_CENTER_MULTISAMPLE_PATTERN : 0;
+
+	//TODO: Request swapchain recreation
+
+	m_D2DAAMode = isEnabled ? D2D1_ANTIALIAS_MODE_ALIASED : D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
+	if(m_RenderTargetPtr)
+	m_RenderTargetPtr->SetAntialiasMode(m_D2DAAMode);
 }
 
 void GameEngine::EnablePhysicsDebugRendering(bool isEnabled)
@@ -1647,7 +1652,7 @@ void GameEngine::CreateDeviceResources()
 		}
 
 		//set alias mode
-		m_RenderTargetPtr->SetAntialiasMode(m_AntialiasMode);
+		m_RenderTargetPtr->SetAntialiasMode(m_D2DAAMode);
 
 		// Create a brush.
 		m_RenderTargetPtr->CreateSolidColorBrush((D2D1::ColorF) D2D1::ColorF::Black, &m_ColorBrushPtr);

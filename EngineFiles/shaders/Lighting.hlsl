@@ -90,11 +90,13 @@ float3 SimpleBlinnPhong(float3 view, float3 light, float3 normal, Material mater
 
 	float3 nom = D * F * G;
 
+
+	//TODO: Fix the spec calculations
 	float3 NoH = saturate(dot(normal, h));
 	float LoN = saturate(dot(light, normal));
 	float3 denom = saturate(4 * LoN * NoH);
 	float3 spec = nom / denom;
-	//return spec;
+
 	return ((diffuse / PI) + spec) * NoL * float3(1.0, 1.0,0.95);
 
 }

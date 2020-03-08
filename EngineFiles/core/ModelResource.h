@@ -1,9 +1,22 @@
 #pragma once
 #include "ResourceLoader.h"
 
+struct ModelVertex
+{
+	XMFLOAT3 position;
+	XMFLOAT3 normal;
+	XMFLOAT4 tangent;
+	XMFLOAT4 bitangent;
+	XMFLOAT4 color;
+	XMFLOAT2 uv;
+
+	static const std::size_t InputElementCount = 6;
+	static const D3D11_INPUT_ELEMENT_DESC InputElements[InputElementCount];
+};
 class ModelResource final : public TCachedResource<FromFileResourceParameters>
 {
 public:
+	using VertexType = ModelVertex;
 
 	ModelResource(FromFileResourceParameters params) 
 		: TCachedResource( params )

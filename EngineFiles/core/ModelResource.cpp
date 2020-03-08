@@ -16,7 +16,14 @@ namespace Shaders
 }
 
 
-
+const D3D11_INPUT_ELEMENT_DESC ModelVertex::InputElements[InputElementCount] = {
+	{"SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{"TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{"TANGENT", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 }
+};
 void ModelResource::load()
 {
 	std::string const& path = _init.path;
@@ -25,7 +32,7 @@ void ModelResource::load()
 
 	using namespace Assimp;
 	Importer importer{};
-	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded);
+	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded | aiProcess_CalcTangentSpace);
 	if (!scene)
 	{
 		//TODO: Load error mesh
@@ -41,19 +48,18 @@ void ModelResource::load()
 		auto faces = mesh->mFaces;
 		auto uv = mesh->mTextureCoords;
 
-		std::vector<VertexPositionNormalColorTexture> vertices;
+		std::vector<VertexType> vertices;
 		std::vector<int> indices;
 		vertices.reserve(mesh->mNumVertices);
 		indices.reserve(int(mesh->mNumFaces) * 3);
 
 		for (unsigned int i = 0; i < mesh->mNumVertices; ++i)
 		{
-			VertexPositionNormalColorTexture v{};
+			VertexType v{};
 			v.position.x = positions[i].x;
 			v.position.y = positions[i].y;
 			v.position.z = positions[i].z;
 
-			v.color = XMFLOAT4{ 1.0f,1.0f,1.0f,1.0f };
 
 			if (mesh->HasVertexColors(0))
 			{
@@ -66,8 +72,8 @@ void ModelResource::load()
 			if (mesh->GetNumUVChannels() > 0)
 			{
 				aiVector3D p = uv[0][i];
-				v.textureCoordinate.x = p.x;
-				v.textureCoordinate.y = p.y;
+				v.uv.x = p.x;
+				v.uv.y = p.y;
 			}
 
 			if (mesh->HasNormals())
@@ -75,6 +81,19 @@ void ModelResource::load()
 				v.normal.x = mesh->mNormals[i].x;
 				v.normal.y = mesh->mNormals[i].y;
 				v.normal.z = mesh->mNormals[i].z;
+			}
+
+			if (mesh->HasTangentsAndBitangents())
+			{
+				v.tangent.x = mesh->mTangents[i].x;
+				v.tangent.y = mesh->mTangents[i].y;
+				v.tangent.z = mesh->mTangents[i].z;
+				v.tangent.w = 0.0f;
+
+				v.bitangent.x = mesh->mBitangents[i].x;
+				v.bitangent.y = mesh->mBitangents[i].y;
+				v.bitangent.z = mesh->mBitangents[i].z;
+				v.bitangent.w = 0.0f;
 			}
 
 			vertices.push_back(v);
@@ -118,7 +137,7 @@ void ModelResource::load()
 	// Create shaders
 	SUCCEEDED(device->CreateVertexShader(Shaders::cso_simple_vx, std::size(Shaders::cso_simple_vx), nullptr, _vert_shader.GetAddressOf()));
 	SUCCEEDED(device->CreatePixelShader(Shaders::cso_simple_px, std::size(Shaders::cso_simple_px), nullptr, _pixel_shader.GetAddressOf()));
-	SUCCEEDED(device->CreateInputLayout(DirectX::VertexPositionNormalColorTexture::InputElements, DirectX::VertexPositionNormalColorTexture::InputElementCount, Shaders::cso_simple_vx, std::size(Shaders::cso_simple_vx), _input_layout.GetAddressOf()));
+	SUCCEEDED(device->CreateInputLayout(VertexType::InputElements, VertexType::InputElementCount, Shaders::cso_simple_vx, std::size(Shaders::cso_simple_vx), _input_layout.GetAddressOf()));
 
 #ifdef _DEBUG
 	char name[512];

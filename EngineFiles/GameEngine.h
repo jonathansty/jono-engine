@@ -458,7 +458,8 @@ private:
 
 	// Direct2D Paint variables
 	ID2D1SolidColorBrush*			m_ColorBrushPtr;
-	D2D1_ANTIALIAS_MODE				m_AntialiasMode;
+	DXGI_SAMPLE_DESC				m_AADesc;
+	D2D1_ANTIALIAS_MODE			m_D2DAAMode;
 	MATRIX3X2						m_MatWorld, m_MatView;
 	D2D1_BITMAP_INTERPOLATION_MODE	m_BitmapInterpolationMode;	// used when painting scaled bitmaps:
 	Font*							m_DefaultFontPtr;			// Default Font --> deleted in destructor

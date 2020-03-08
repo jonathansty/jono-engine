@@ -33,15 +33,25 @@ float4 main(VS_OUT vout) : SV_Target
 
 	Material material = CreateMaterial();
 	material.albedo = g_Albedo.Sample(g_AllLinearSampler, uv);
-	material.tangentNormal = g_Normal.Sample(g_AllLinearSampler, uv);
+	material.tangentNormal = (g_Normal.Sample(g_AllLinearSampler, uv).rgb * 2.0 - 1.0);
 	material.roughness = g_Roughness.Sample(g_AllLinearSampler, uv).r;
 	material.metalness = g_Metalness.Sample(g_AllLinearSampler, uv).r;
 
 	// +Y is forward
 	float3 light = normalize(-g_LightDirection.xyz);
-	float3 view = normalize(-g_ViewDirection.xyz);
-	float3 normal = normalize(vout.worldNormal.xyz);
-	return float4(normal, 1.0);
-	float3 colour = SimpleBlinnPhong( view, light , normal,  material);
+	float3 view = normalize(g_ViewDirection.xyz);
+
+	// Transform our tangent normal into world space
+	float4 normal = normalize(vout.worldNormal);
+	float4 tangent = normalize(vout.worldTangent);
+	float3 bitangent = normalize(vout.worldBitangent.xyz);
+	float3x3 TBN = float3x3(
+		tangent.xyz,
+		bitangent.xyz,
+		normal.xyz
+	);
+
+	float3 final_normal = mul(material.tangentNormal, TBN);
+	float3 colour = SimpleBlinnPhong( view, light , final_normal.xyz,  material);
 	return float4(colour, 1.0);
 }

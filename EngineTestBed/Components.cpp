@@ -97,7 +97,7 @@ void SimpleMeshComponent::render()
 	ctx->IASetInputLayout(_resource->_input_layout.Get());
 	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	ctx->IASetIndexBuffer(_resource->_index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-	UINT strides = { sizeof(DirectX::VertexPositionNormalColorTexture) };
+	UINT strides = { sizeof(ModelResource::VertexType) };
 	UINT offsets = { 0 };
 	ctx->IASetVertexBuffers(0, 1, _resource->_vert_buffer.GetAddressOf(), &strides, &offsets);
 	ctx->DrawIndexed(UINT(_resource->_index_count), 0, 0);
@@ -203,8 +203,6 @@ void CameraComponent::update(float dt)
 		movement -= up * 4.0f * dt;
 	}
 
-
-
 	XMVECTOR pos = XMLoadFloat3(&ent->get_local_position());
 	pos += movement;
 	XMFLOAT3 result{};
@@ -233,8 +231,6 @@ void CameraComponent::update(float dt)
 		XMVECTOR y_quat = XMQuaternionRotationAxis(rght0, y_angle);
 		XMVECTOR result = XMQuaternionMultiply(x_quat, y_quat);
 		ent->set_rotation(result);
-		//ent->set_rotation(XMQuaternionMultiply(quat,y_quat));
-
 	}
 
 
