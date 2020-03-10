@@ -148,6 +148,7 @@
   <ItemGroup>
     <ClCompile Include="Components.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Overlays.cpp" />
     <ClCompile Include="Test3D.cpp" />
     <ClCompile Include="Tests/RttiTest.tests.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -158,6 +159,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Components.h" />
+    <ClInclude Include="Overlays.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="HelloWorld.h" />
     <ClInclude Include="Test3D.h" />

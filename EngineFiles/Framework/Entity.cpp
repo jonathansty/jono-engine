@@ -13,12 +13,14 @@ IMPL_REFLECT(Entity)
 
 Entity::Entity(XMFLOAT2 pos)
 	: _pos(pos.x, pos.y, 0.0)
+	, _scale({ 1.0f, 1.0f,1.0f })
 {
 
 }
 
 Entity::Entity()
 	: _pos(0.0,0.0,0.0)
+	, _scale({ 1.0f,1.0f,1.0f })
 {
 
 }
@@ -32,6 +34,11 @@ framework::Entity::Entity(XMFLOAT3 pos)
 void framework::Entity::set_local_position(XMFLOAT3 pos)
 {
 	_pos = pos;
+}
+
+void framework::Entity::set_local_scale(XMFLOAT3 scale)
+{
+	_scale = scale;
 }
 
 void framework::Entity::set_rotation(XMVECTOR quat)
@@ -63,8 +70,9 @@ XMMATRIX Entity::get_local_transform() const
 
 	XMMATRIX transMat = XMMatrixTranslationFromVector(pos);
 	XMMATRIX rotMat = XMMatrixRotationQuaternion(_rot);
+	XMMATRIX scaleMat = XMMatrixScaling(_scale.x, _scale.y, _scale.z);
 
-	return XMMatrixMultiply(rotMat, transMat);
+	return XMMatrixMultiply(rotMat, XMMatrixMultiply(transMat, scaleMat));
 }
 
 XMFLOAT3 Entity::get_world_position() const

@@ -4,8 +4,12 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assimp/pbrmaterial.h>
 
 #include <DirectXTK/DirectXHelpers.h>
+
+#include "TextureResource.h"
+#include "MaterialResource.h"
 
 
 // Inline shaders
@@ -26,7 +30,10 @@ const D3D11_INPUT_ELEMENT_DESC ModelVertex::InputElements[InputElementCount] = {
 };
 void ModelResource::load()
 {
-	std::string const& path = _init.path;
+	std::string const& path = get_init_parameters().path;
+
+	std::string dir_path = path;
+	dir_path = dir_path.substr(0, dir_path.rfind('/') + 1);
 	auto device = GameEngine::Instance()->GetD3DDevice();
 	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
 
@@ -41,71 +48,126 @@ void ModelResource::load()
 
 	if (scene->HasMeshes())
 	{
-		aiMesh const* mesh = scene->mMeshes[0];
-
-		auto positions = mesh->mVertices;
-		auto colors = mesh->mColors;
-		auto faces = mesh->mFaces;
-		auto uv = mesh->mTextureCoords;
-
 		std::vector<VertexType> vertices;
-		std::vector<int> indices;
-		vertices.reserve(mesh->mNumVertices);
-		indices.reserve(int(mesh->mNumFaces) * 3);
+		std::vector<uint32_t> indices;
+		_meshes.clear();
 
-		for (unsigned int i = 0; i < mesh->mNumVertices; ++i)
+		std::map<int, aiMatrix4x4> transforms;
+
+		struct Flattener {
+			void operator()(aiMatrix4x4 parent, aiNode* node, std::map<int, aiMatrix4x4>& result)
+			{
+				aiMatrix4x4 t = node->mTransformation* parent;
+				for (int i = 0; i < node->mNumMeshes; ++i)
+				{
+					result[node->mMeshes[i]] = t;
+				}
+
+				for (int i = 0; i < node->mNumChildren; ++i)
+				{
+					operator()(t, node->mChildren[i], result);
+				}
+
+			}
+		};
+		aiNode* root = scene->mRootNode;
+		Flattener fn{};
+		fn(aiMatrix4x4(), root, transforms);
+
+		//TODO: Implement transforms from assimp
+		for (std::size_t i = 0; i < scene->mNumMeshes; ++i)
 		{
-			VertexType v{};
-			v.position.x = positions[i].x;
-			v.position.y = positions[i].y;
-			v.position.z = positions[i].z;
+			aiMesh const* mesh = scene->mMeshes[i];
+			aiMatrix4x4 const& transform = transforms[i];
+
+			aiMatrix3x3 normalTransform = aiMatrix3x3{
+				transform.a1, transform.a2,transform.a3,
+				transform.b1, transform.b2,transform.b3,
+				transform.c1, transform.c2,transform.c3
+			};
 
 
-			if (mesh->HasVertexColors(0))
+			Meshlet meshlet{};
+			meshlet.firstIndex = indices.size();
+			meshlet.firstVertex = vertices.size();
+			meshlet.indexCount = uint32_t(mesh->mNumFaces) * 3;
+			meshlet.materialID = mesh->mMaterialIndex;
+			_meshes.push_back(meshlet);
+
+			auto positions = mesh->mVertices;
+			auto colors = mesh->mColors;
+			auto faces = mesh->mFaces;
+			auto uv = mesh->mTextureCoords;
+
+			vertices.reserve(mesh->mNumVertices);
+			indices.reserve(int(mesh->mNumFaces) * 3);
+
+			for (unsigned int i = 0; i < mesh->mNumVertices; ++i)
 			{
-				v.color.x = colors[0][i].r;
-				v.color.y = colors[0][i].g;
-				v.color.z = colors[0][i].b;
-				v.color.w = colors[0][i].a;
+				aiVector3D pos = positions[i];
+				pos *= transform;
+
+				VertexType v{};
+				v.position.x = pos.x;
+				v.position.y = pos.y;
+				v.position.z = pos.z;
+
+
+				if (mesh->HasVertexColors(0))
+				{
+					v.color.x = colors[0][i].r;
+					v.color.y = colors[0][i].g;
+					v.color.z = colors[0][i].b;
+					v.color.w = colors[0][i].a;
+				}
+
+				if (mesh->GetNumUVChannels() > 0)
+				{
+					aiVector3D p = uv[0][i];
+					v.uv.x = p.x;
+					v.uv.y = p.y;
+				}
+
+				if (mesh->HasNormals())
+				{
+					aiVector3D normal = mesh->mNormals[i];
+					normal *= normalTransform;
+
+					v.normal.x = normal.x;
+					v.normal.y = normal.y;
+					v.normal.z = normal.z;
+				}
+
+				if (mesh->HasTangentsAndBitangents())
+				{
+					aiVector3D tangent = mesh->mTangents[i];
+					tangent *= normalTransform;
+
+					aiVector3D bitangent = mesh->mBitangents[i];
+					bitangent *= normalTransform;
+
+					v.tangent.x = tangent.x;
+					v.tangent.y = tangent.y;
+					v.tangent.z = tangent.z;
+					v.tangent.w = 0.0f;
+
+					v.bitangent.x = bitangent.x;
+					v.bitangent.y = bitangent.y;
+					v.bitangent.z = bitangent.z;
+					v.bitangent.w = 0.0f;
+				}
+
+				vertices.push_back(v);
+
 			}
 
-			if (mesh->GetNumUVChannels() > 0)
+			for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
 			{
-				aiVector3D p = uv[0][i];
-				v.uv.x = p.x;
-				v.uv.y = p.y;
-			}
-
-			if (mesh->HasNormals())
-			{
-				v.normal.x = mesh->mNormals[i].x;
-				v.normal.y = mesh->mNormals[i].y;
-				v.normal.z = mesh->mNormals[i].z;
-			}
-
-			if (mesh->HasTangentsAndBitangents())
-			{
-				v.tangent.x = mesh->mTangents[i].x;
-				v.tangent.y = mesh->mTangents[i].y;
-				v.tangent.z = mesh->mTangents[i].z;
-				v.tangent.w = 0.0f;
-
-				v.bitangent.x = mesh->mBitangents[i].x;
-				v.bitangent.y = mesh->mBitangents[i].y;
-				v.bitangent.z = mesh->mBitangents[i].z;
-				v.bitangent.w = 0.0f;
-			}
-
-			vertices.push_back(v);
-
-		}
-
-		for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
-		{
-			aiFace const& f = faces[i];
-			for (unsigned int j = 0; j < f.mNumIndices; ++j)
-			{
-				indices.push_back(f.mIndices[j]);
+				aiFace const& f = faces[i];
+				for (unsigned int j = 0; j < f.mNumIndices; ++j)
+				{
+					indices.push_back(f.mIndices[j]);
+				}
 			}
 		}
 
@@ -131,13 +193,45 @@ void ModelResource::load()
 		SUCCEEDED(device->CreateBuffer(&bufferDesc, &data, _index_buffer.GetAddressOf()));
 		_index_count = indices.size();
 
+	}
+
+
+	if (scene->HasMaterials())
+	{
+		for (int i = 0; i < scene->mNumMaterials; ++i)
+		{
+			aiMaterial* material = scene->mMaterials[i];
+			aiString name = material->GetName();
+
+			aiString path;
+			MaterialInitParameters parameters{};
+			parameters.load_type = MaterialInitParameters::LoadType_FromMemory;
+
+			parameters.vs_shader_bytecode = (const char*)Shaders::cso_simple_vx;
+			parameters.vs_shader_bytecode_size = std::size(Shaders::cso_simple_vx);
+
+			parameters.ps_shader_bytecode = (const char*)Shaders::cso_simple_px;
+			parameters.ps_shader_bytecode_size = std::size(Shaders::cso_simple_px);
+
+			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &path) == aiReturn_SUCCESS)
+			{
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path + std::string(path.C_Str());
+			}
+			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &path) == aiReturn_SUCCESS)
+			{
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path + std::string(path.C_Str());
+			}
+			if (material->Get(AI_MATKEY_TEXTURE_NORMALS(0), path) == aiReturn_SUCCESS)
+			{
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path + std::string(path.C_Str());
+			}
+
+
+			_materials.push_back(ResourceLoader::Instance()->load<MaterialResource>(parameters, true));
+		}
 
 	}
 
-	// Create shaders
-	SUCCEEDED(device->CreateVertexShader(Shaders::cso_simple_vx, std::size(Shaders::cso_simple_vx), nullptr, _vert_shader.GetAddressOf()));
-	SUCCEEDED(device->CreatePixelShader(Shaders::cso_simple_px, std::size(Shaders::cso_simple_px), nullptr, _pixel_shader.GetAddressOf()));
-	SUCCEEDED(device->CreateInputLayout(VertexType::InputElements, VertexType::InputElementCount, Shaders::cso_simple_vx, std::size(Shaders::cso_simple_vx), _input_layout.GetAddressOf()));
 
 #ifdef _DEBUG
 	char name[512];
@@ -147,6 +241,12 @@ void ModelResource::load()
 	sprintf_s(name, "%s - Vertex Buffer", path.c_str());
 	DirectX::SetDebugObjectName(_vert_buffer.Get(), name);
 #endif
+
+}
+
+ModelResource::ModelResource(FromFileResourceParameters params) : TCachedResource(params)
+, _index_count(0)
+{
 
 }
 

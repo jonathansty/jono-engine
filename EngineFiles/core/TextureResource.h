@@ -4,7 +4,13 @@
 class TextureResource : public TCachedResource<FromFileResourceParameters>
 {
 public:
+	TextureResource() = default;
 	TextureResource(FromFileResourceParameters params);
+
+	static std::shared_ptr<TextureResource> invalid() {
+		static std::shared_ptr<TextureResource> s_invalid = std::make_shared<TextureResource>();
+		return s_invalid;
+	}
 
 	virtual void load() override;
 

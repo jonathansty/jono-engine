@@ -76,6 +76,8 @@ public:
 	bool is_loaded() const;
 	void load(std::string const& mesh);
 
+	std::shared_ptr<ModelResource> get_model_resource() const { return _resource; };
+
 private:
 	std::shared_ptr<ModelResource> _resource;
 
@@ -107,6 +109,7 @@ public:
 	static const float DEFAULT_FOV;
 private:
 
+	float _fly_speed;
 	float _fov;
 	float _near_plane;
 	float _far_plane;

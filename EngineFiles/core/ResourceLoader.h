@@ -4,6 +4,7 @@ struct FromFileResourceParameters
 {
 	std::string path;
 };
+
 // template resource class
 class Resource
 {
@@ -43,7 +44,11 @@ public:
 
 	}
 
+
 protected:
+	init_type const& get_init_parameters() const { return _init; }
+
+private:
 	init_type _init;
 };
 
@@ -88,6 +93,7 @@ private:
 	std::list<enki::ITaskSet*> _tasks;
 
 };
+
 namespace std
 {
 	template<>
@@ -99,6 +105,7 @@ namespace std
 		}
 	};
 }
+
 template<typename T>
 std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool blocking )
 {
@@ -107,24 +114,28 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 	{
 		return std::static_pointer_cast<T>(it->second);
 	}
-		
+
 	std::shared_ptr<T> res = std::make_shared<T>(params);
 	_cache[h] = res;
-	enki::TaskSet* set = new enki::TaskSet([=](enki::TaskSetPartition partition, uint32_t thread_num) {
-		res->_loaded = false;
-		res->load();
-		res->_loaded = true;
-	});
-
-	{
-		std::lock_guard<std::mutex> l{ _tasks_lock };
-		_tasks.push_back(set);
-	}
-	GameEngine::s_TaskScheduler.AddTaskSetToPipe(set);
 
 	if (blocking)
 	{
-		GameEngine::s_TaskScheduler.WaitforTask(set);
+		res->load();
+		res->_loaded = true;
+	}
+	else 
+	{
+		enki::TaskSet* set = new enki::TaskSet([=](enki::TaskSetPartition partition, uint32_t thread_num) {
+			res->_loaded = false;
+			res->load();
+			res->_loaded = true;
+		});
+
+		{
+			std::lock_guard<std::mutex> l{ _tasks_lock };
+			_tasks.push_back(set);
+		}
+		GameEngine::s_TaskScheduler.AddTaskSetToPipe(set);
 	}
 
 	return res;

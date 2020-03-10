@@ -77,6 +77,9 @@ namespace rtti
 		template<typename Class, typename MemberType>
 		void register_property(std::string const& name, MemberType Class::* offset);
 
+		template<typename Class, typename MemberType>
+		void register_property(std::string const& name, void(*setterFn)(Class* obj, MemberType const* v), void(*getterFn)(Class* obj, MemberType** v));
+
 		TypeInfo* _parent;
 		std::vector<TypeInfo*> _children;
 
@@ -94,12 +97,70 @@ namespace rtti
 
 #include "private/resolvers.h"
 
+namespace rtti
+{
+
+
 template<typename Class, typename MemberType>
-void rtti::TypeInfo::register_property(std::string const& name, MemberType Class::* offset)
+void TypeInfo::register_property(std::string const& name, void(*setterFn)(Class* obj, MemberType const* v), void(*getterFn)(Class * obj, MemberType** v))
+{
+	assert(_properties.find(name) == _properties.end());
+	assert(this == Class::get_static_type());
+	auto type = rtti::Registry::template get<MemberType>();
+
+	_properties[name] = { type, 0, name };
+	_properties[name].setter = [=](void* obj, rtti::Object const& data) {
+
+		MemberType const* d = data.get<MemberType>();
+		Class* class_obj = (Class*)obj;
+		assert(class_obj && d);
+		setterFn(class_obj, d);
+	};
+	_properties[name].getter = [=](void* obj, void** out) {
+		Class* c = (Class*)obj;
+
+		MemberType* ptr;
+		getterFn(c, &ptr);
+
+		*out = ptr;
+	};
+
+
+}
+
+template<typename Class, typename MemberType>
+void TypeInfo::register_property(std::string const& name, MemberType Class::* offset)
 {
 	assert(this == Class::get_static_type());
 	auto type = rtti::Registry::template get<MemberType>();
-	_properties[name] = { type, offsetOf(offset), name };
+
+	// Create getter and setter 
+	std::size_t offset_of = offsetOf(offset);
+
+	_properties[name] = { type, 0, name };
+	_properties[name].setter = [offset_of](void* obj, rtti::Object const& data) {
+
+		auto inner = [offset_of](Class* obj, MemberType const& v) {
+			MemberType* object_value = (MemberType*)(((unsigned char*)obj) + offset_of);
+			*object_value = v;
+			printf("SET\n");
+		};
+
+		MemberType const* d = data.get<MemberType>();
+		Class* class_obj = (Class*)obj;
+		assert(class_obj && d);
+		inner(class_obj, *d);
+	};
+	std::function<void(void*, void** out)> getter_fn = [offset_of](void* obj, void** out) {
+		unsigned char* offset = (((unsigned char*)obj) + offset_of);
+
+		*out = reinterpret_cast<void*>(offset);
+	};
+	 _properties[name].getter = getter_fn;
 }
+
+
+}
+
 
 

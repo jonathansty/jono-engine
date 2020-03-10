@@ -3,6 +3,7 @@
 
 #include "Core/TextureResource.h"
 #include "Core/ModelResource.h"
+#include "Core/MaterialResource.h"
 
 IMPL_REFLECT(SimpleMovement)
 {
@@ -18,6 +19,43 @@ IMPL_REFLECT(BitmapComponent)
 IMPL_REFLECT(CameraComponent)
 {
 	type.bind_parent<Component>();
+
+	type.register_property<CameraComponent,float>("FOV", 
+		[](CameraComponent* comp, float const* fov) 
+		{
+			comp->_fov = *fov;
+		}, 
+		[](CameraComponent* comp, float** out) 
+		{
+			*out = &comp->_fov;
+		}
+	);
+
+	type.register_property<CameraComponent, float>("NearPlane",
+		[](CameraComponent* comp, float const* v)
+		{
+			float n = std::max(*v, 0.01f);
+			comp->_near_plane = n;
+		},
+		[](CameraComponent* comp, float** out)
+		{
+			*out = &comp->_near_plane;
+		}
+		);
+
+	type.register_property<CameraComponent, float>("FarPlane",
+		[](CameraComponent* comp, float const* v)
+		{
+			float n = std::max(*v, 0.01f);
+			comp->_far_plane = n;
+		},
+		[](CameraComponent* comp, float** out)
+		{
+			*out = &comp->_far_plane;
+		}
+		);
+
+	type.register_property("FlySpeed", &CameraComponent::_fly_speed);
 }
 
 
@@ -52,7 +90,7 @@ void SimpleMovement::update(float dt)
 {
 	_elapsed += dt * _speed;
 	framework::Entity* ent = get_entity();
-	XMFLOAT3 up { 0.0f,0.0f,1.0f };
+	XMFLOAT3 up { 0.0f,1.0f,0.0f };
 	XMVECTOR rot = XMQuaternionRotationAxis(XMLoadFloat3(&up), XMConvertToRadians(_elapsed));
 	ent->set_rotation(rot);
 	//ent->set_local_position(_offset.x + cos(_elapsed) * 100.0, _offset.y + sin(_elapsed) * 100.0);
@@ -86,21 +124,28 @@ void SimpleMeshComponent::update(float dt)
 
 }
 
+
 void SimpleMeshComponent::render()
 {
 	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
 
 	// Draw mesh
-	ctx->VSSetShader(_resource->_vert_shader.Get(), nullptr, 0);
-	ctx->PSSetShader(_resource->_pixel_shader.Get(), nullptr, 0);
 
-	ctx->IASetInputLayout(_resource->_input_layout.Get());
 	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	ctx->IASetIndexBuffer(_resource->_index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
 	UINT strides = { sizeof(ModelResource::VertexType) };
 	UINT offsets = { 0 };
 	ctx->IASetVertexBuffers(0, 1, _resource->_vert_buffer.GetAddressOf(), &strides, &offsets);
-	ctx->DrawIndexed(UINT(_resource->_index_count), 0, 0);
+
+	for (Meshlet const& m : _resource->_meshes)
+	{
+		{
+			_resource->_materials[m.materialID]->apply(ctx);
+		}
+		ctx->DrawIndexed(m.indexCount, m.firstIndex, m.firstVertex);
+	}
+
 }
 
 bool SimpleMeshComponent::is_loaded() const
@@ -110,7 +155,7 @@ bool SimpleMeshComponent::is_loaded() const
 
 void SimpleMeshComponent::load(std::string const& mesh)
 {
-	_resource = ResourceLoader::Instance()->load<ModelResource>({ mesh });
+	_resource = ResourceLoader::Instance()->load<ModelResource>({ mesh }, true);
 }
 
 
@@ -119,11 +164,12 @@ const float CameraComponent::DEFAULT_FOV = 45.0f;
 CameraComponent::CameraComponent()
 	: framework::Component()
 	, _fov(DEFAULT_FOV)
-	, _near_plane(0.01f)
-	, _far_plane(100.0f)
+	, _near_plane(0.5f)
+	, _far_plane(1200.0f)
 	, _prev_position({ 0.0,0.0 })
 	, _x_angle(0.0f)
 	, _y_angle(0.0f)
+	, _fly_speed(100.0f)
 {
 
 }
@@ -156,6 +202,13 @@ void CameraComponent::look_at(XMFLOAT3 eye, XMFLOAT3 target, XMFLOAT3 up /*= { 0
 
 void CameraComponent::update(float dt)
 {
+	// Ignore any input if ImGui is focused
+	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
+	{
+		_prev_position = GameEngine::Instance()->GetMousePositionDOUBLE2();
+		return;
+	}
+
 	XMFLOAT4 fwd = { 0.0f,0.0f, 1.0f, 0.0f };
 	XMFLOAT4 right = { 1.0f,0.0f, 0.0f,0.0f };
 	XMFLOAT4 v_up{ 0.0f,1.0f,0.0, 0.0f };
@@ -173,35 +226,43 @@ void CameraComponent::update(float dt)
 
 	Entity* ent = get_entity();
 	XMVECTOR movement = XMVectorZero();
+	float fly_speed = _fly_speed;
+
+	if (GameEngine::Instance()->IsKeyboardKeyDown(VK_LSHIFT))
+	{
+		fly_speed *= 1.5f;
+	}
+
 	if (GameEngine::Instance()->IsKeyboardKeyDown('W'))
 	{
-		movement += movement + forward * 10.0f * dt;
+		movement += movement + forward * fly_speed * dt;
 	}
 
 	if (GameEngine::Instance()->IsKeyboardKeyDown('S'))
 	{
-		movement += movement + forward * -10.0f * dt;
+		movement += movement + forward * -fly_speed * dt;
 	}
 
 	if (GameEngine::Instance()->IsKeyboardKeyDown('A'))
 	{
-		movement += rght * -10.0f * dt;
+		movement += rght * -fly_speed * dt;
 	}
 
 	if (GameEngine::Instance()->IsKeyboardKeyDown('D'))
 	{
-		movement += rght * 10.0f * dt;
+		movement += rght * fly_speed * dt;
 	}
 
 	if (GameEngine::Instance()->IsKeyboardKeyDown(VK_SPACE))
 	{
-		movement += up * 4.0f * dt;
+		movement += up * (fly_speed * 0.5f) * dt;
 	}
 
 	if (GameEngine::Instance()->IsKeyboardKeyDown(VK_LCONTROL))
 	{
-		movement -= up * 4.0f * dt;
+		movement -= up * (fly_speed * 0.5f) * dt;
 	}
+
 
 	XMVECTOR pos = XMLoadFloat3(&ent->get_local_position());
 	pos += movement;

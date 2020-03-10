@@ -37,7 +37,7 @@ public:
 	bool set_property(std::string const& field, T const& value);
 
 	template<typename T>
-	T* get_property(std::string const& name);
+	T const& get_property(std::string const& name);
 
 
 	TypeInfo* get_type() const;
@@ -74,16 +74,24 @@ public:
 };
 
 template<typename T>
-T* rtti::Object::get_property(std::string const& name)
+T const& rtti::Object::get_property(std::string const& name)
 {
+	static T invalid{};
 	rtti::Property* property_info = _type->find_property(name);
 	if (!property_info)
-		return nullptr;
+		return invalid;
 
 	if (property_info->type != Registry::template get<T>())
-		return nullptr;
+		return invalid;
 
-	return reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(_data) + property_info->offset);
+	if (property_info->getter)
+	{
+		T* result;
+		property_info->getter(_data, (void**)&result);
+		return *result;
+	}
+
+	return *reinterpret_cast<T*>(reinterpret_cast<uint8_t*>(_data) + property_info->offset);
 }
 
 template<typename T>
@@ -97,6 +105,13 @@ bool rtti::Object::set_property(std::string const& field, T const& value)
 
 	if (property_type != Registry::template get<T>())
 		return false;
+
+	if (property_info->setter)
+	{
+		rtti::Object obj = rtti::Object::create_as_ref(const_cast<T*>(&value));
+		property_info->setter(_data, obj);
+		return true;
+	}
 
 	size_t offset = property_info->offset;
 	size_t size = property_type->get_size();

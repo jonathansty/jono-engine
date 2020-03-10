@@ -149,6 +149,9 @@
     <ClCompile Include="EngineFiles\Core\TextureResource.cpp">
       <Filter>Engine Files\Core\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="EngineFiles\Core\MaterialResource.cpp">
+      <Filter>Engine Files\Core\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -428,6 +431,9 @@
     <ClInclude Include="EngineFiles\Core\TextureResource.h">
       <Filter>Engine Files\Core\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="EngineFiles\Core\MaterialResource.h">
+      <Filter>Engine Files\Core\Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">
@@ -466,6 +472,9 @@
       <Filter>Engine Files\shaders</Filter>
     </FxCompile>
     <FxCompile Include="EngineFiles\shaders\simple_vx.hlsl">
+      <Filter>Engine Files\shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="EngineFiles\Shaders\debug_px.hlsl">
       <Filter>Engine Files\shaders</Filter>
     </FxCompile>
   </ItemGroup>

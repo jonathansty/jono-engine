@@ -208,10 +208,10 @@ void ExecuteRttiTest_BasicTypes()
 	assert(bbar->x == -123 && bbar->a == 250);
 
 
-	int* xValue = barType2.get_property<int>("x");
-	int* aValue = barType2.get_property<int>("a");
-	int* bValue = barType2.get_property<int>("b");
-	assert(*xValue == -123 && *aValue == 250 && *bValue == 0);
+	int xValue = barType2.get_property<int>("x");
+	int aValue = barType2.get_property<int>("a");
+	int bValue = barType2.get_property<int>("b");
+	assert(xValue == -123 && aValue == 250 && bValue == 0);
 
 	// Example of setting properties by name
 	Foo* foo = podType.get<Foo>();

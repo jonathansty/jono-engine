@@ -10,7 +10,7 @@ TextureResource::TextureResource(FromFileResourceParameters params) : TCachedRes
 
 void TextureResource::load()
 {
-	std::string const& path = _init.path;
+	std::string const& path = get_init_parameters().path;
 	auto device = GameEngine::Instance()->GetD3DDevice();
 	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
 

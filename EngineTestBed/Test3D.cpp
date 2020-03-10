@@ -1,18 +1,22 @@
 #include "stdafx.h"
 #include "Test3D.h"
 
-#include "Framework/framework.h"
-#include "Components.h"
-
-#include <rttr/registration>
-#include <rttr/type>
-
 #include "EngineFiles/Core/ModelResource.h"
 #include "EngineFiles/Core/TextureResource.h"
+#include "EngineFiles/Core/MaterialResource.h"
 
+#include "Framework/framework.h"
+#include "Components.h"
+#include "Overlays.h"
 
 using framework::Entity;
 using framework::Component;
+
+namespace Shaders {
+#include "Shaders/generated/simple_px.h"
+#include "Shaders/generated/simple_vx.h"
+#include "Shaders/generated/debug_px.h"
+}
 
 __declspec(align(16))
 struct MVPConstantBuffer
@@ -29,6 +33,25 @@ struct MVPConstantBuffer
 	XMFLOAT4 LightDirection;
 };
 
+struct DebugVisualizeMode
+{
+	enum Enum {
+		Default = 0,
+		Albedo = 1,
+		Roughness = 2,
+		Metalness = 3,
+		TangentNormals = 4,
+		AO = 5,
+		WorldNormals = 6
+	};
+};
+__declspec(align(16))
+struct DebugCB
+{
+	unsigned int m_VisualizeMode;
+};
+
+int g_DebugMode = 0;
 
 void Hello3D::GameInitialize(GameSettings& gameSettings)
 {
@@ -36,48 +59,71 @@ void Hello3D::GameInitialize(GameSettings& gameSettings)
 	gameSettings.EnableAntiAliasing(true);
 }
 
+
 void Hello3D::GameStart()
 {
 	auto device = GameEngine::Instance()->GetD3DDevice();
 	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
 
+
+
 	using namespace framework;
 	_world = std::make_unique<framework::World>();
+
+	GameEngine::Instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
 
 	// Create the world camera
 	{
 		World::EntityId cam_id = _world->create_entity();
 		Entity* ent = _world->get_entity(cam_id);
+		ent->set_name("MainCamera");
 		auto comp = ent->create_component<CameraComponent>();
 		ent->set_local_position(XMFLOAT3(0.0f, 0.0f, -2.0f));
-
 	}
 
-	//TODO: Implement ModelLoader with a resource cache 
 	//{
 	//	World::EntityId model = _world->create_entity();
 	//	Entity* ent = _world->get_entity(model);
+	//	ent->set_name("Suzanne");
 	//	ent->set_local_position({ 4.0f,0.0f,0.0f });
 	//	auto comp = ent->create_component<SimpleMeshComponent>();
 	//	comp->load("Resources/Models/Suzanne.fbx");
 	//}
 
-	{
-		World::EntityId model = _world->create_entity();
-		Entity* ent = _world->get_entity(model);
-		auto comp = ent->create_component<SimpleMeshComponent>();
-		comp->load("Resources/Models/ball.fbx");
-		auto mov = ent->create_component<SimpleMovement>();
-		mov->set_speed(1.0f);
-	}
+	//{
+	//	World::EntityId model = _world->create_entity();
+	//	Entity* ent = _world->get_entity(model);
+	//	ent->set_name("Ball");
+	//	ent->set_local_position({ -4.0f, 0.0f, 0.0f });
+	//	auto comp = ent->create_component<SimpleMeshComponent>();
+	//	comp->load("Resources/Models/ball.fbx");
+	//	auto mov = ent->create_component<SimpleMovement>();
+	//	mov->set_speed(1.0f);
+	//}
 
 	//{
 	//	World::EntityId model = _world->create_entity();
 	//	Entity* ent = _world->get_entity(model);
+	//	ent->set_name("Axes");
 	//	ent->set_local_position({ 0.0f,0.0f,0.0f });
 	//	auto comp = ent->create_component<SimpleMeshComponent>();
 	//	comp->load("Resources/Models/axes.fbx");
 	//}
+
+	{
+		World::EntityId model = _world->create_entity();
+		Entity* ent = _world->get_entity(model);
+		ent->set_name("boxes_3");
+		ent->set_local_position({ 0.0f,0.0f,0.0f });
+		ent->set_local_scale({ 10.0f, 10.0f,10.0f });
+		auto comp = ent->create_component<SimpleMeshComponent>();
+		comp->load("Resources/Models/m-96_mattock/scene.gltf");
+
+		auto c = ent->create_component<SimpleMovement>();
+		c->set_speed(10.0f);
+		//comp->load("Resources/Models/boxes_3.fbx");
+
+	}
 
 
 	// Initialize our rendering buffer
@@ -94,6 +140,12 @@ void Hello3D::GameStart()
 		D3D11_SUBRESOURCE_DATA data{};
 		data.pSysMem = &mvp_data;
 		SUCCEEDED(device->CreateBuffer(&buff, &data, _cb_MVP.GetAddressOf()));
+
+		DebugCB debugData{};
+		data.pSysMem = &debugData;
+		buff.ByteWidth = sizeof(DebugCB);
+		SUCCEEDED(device->CreateBuffer(&buff, &data, _cb_Debug.GetAddressOf()));
+
 	}
 
 	CD3D11_DEPTH_STENCIL_DESC ds_desc{ CD3D11_DEFAULT() };
@@ -109,11 +161,8 @@ void Hello3D::GameStart()
 	SUCCEEDED(device->CreateRasterizerState(&rs_desc, _raster_state.GetAddressOf()));
 	DirectX::SetDebugObjectName(_raster_state.Get(), L"Default RasterizerState");
 
-	// Load our textures
-	g_Materials.albedo = ResourceLoader::Instance()->load<TextureResource>({ "Resources/Textures/pitted-metal-bl/pitted-metal_albedo.png" });
-	g_Materials.roughness = ResourceLoader::Instance()->load<TextureResource>({ "Resources/Textures/pitted-metal-bl/pitted-metal_roughness.png" });
-	g_Materials.metalness = ResourceLoader::Instance()->load<TextureResource>({ "Resources/Textures/pitted-metal-bl/pitted-metal_metallic.png" });
-	g_Materials.normal = ResourceLoader::Instance()->load<TextureResource>({ "Resources/Textures/pitted-metal-bl/pitted-metal_normal-ogl.png" });
+
+
 
 	CD3D11_SAMPLER_DESC sampler{ CD3D11_DEFAULT() };
 	sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -139,6 +188,20 @@ void Hello3D::GameTick(double deltaTime)
 
 void Hello3D::DebugUI()
 {
+	static bool s_open = true;
+	ImGui::Begin("Game", &s_open);
+	const char* items[] = {
+		"Default",
+		"Base Color",
+		"Roughness",
+		"Metalness",
+		"Normals",
+		"AO",
+		"WorldNormals"
+	};
+
+	ImGui::Combo("Debug Mode", &g_DebugMode, items, 7);
+	ImGui::End();
 
 }
 
@@ -174,19 +237,12 @@ void Hello3D::Render3D()
 	ctx->OMSetBlendState(_blend_state.Get(), NULL, 0xffffffff);
 	ctx->RSSetState(_raster_state.Get());
 
-	ID3D11ShaderResourceView const* views[4] = {
-		g_Materials.albedo->get_srv(),
-		g_Materials.normal->get_srv(),
-		g_Materials.roughness->get_srv(),
-		g_Materials.metalness->get_srv()
-	};
-	ctx->PSSetShaderResources(0, 4, (ID3D11ShaderResourceView**)views);
-
 	ID3D11SamplerState const* samplers[1] = {
 		m_Samplers[uint32_t(Samplers::AllLinear)].Get()
 	};
 	ctx->PSSetSamplers(0, 1, (ID3D11SamplerState**)samplers);
 
+	// Find our camera and use the matrices
 	CameraComponent* camera = _world->find_first_component<CameraComponent>();
 	View = XMMatrixLookAtLH(view_direction, XMVector3Create(0.0f,0.0f,0.0f), XMVector3Create(0.0f,1.0f,0.0f));
 	if (camera)
@@ -201,9 +257,24 @@ void Hello3D::Render3D()
 	}
 	XMMATRIX invView = XMMatrixInverse(nullptr, View);
 
+
+	// Update debug mode
+	if (g_DebugMode != DebugVisualizeMode::Default)
+	{
+		D3D11_MAPPED_SUBRESOURCE resource{};
+		ctx->Map(_cb_Debug.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+
+		DebugCB* buffer = (DebugCB*)resource.pData;
+		buffer->m_VisualizeMode = g_DebugMode;
+		ctx->Unmap(_cb_Debug.Get(), 0);
+
+		ctx->PSSetConstantBuffers(1, 1, _cb_Debug.GetAddressOf());
+	}
+
+
 	for (auto& ent : _world->get_entities())
 	{
-		// If the entity has a mesh component
+		// If the entity has a mesh component and is done loading
 		if (SimpleMeshComponent* comp = ent->get_component<SimpleMeshComponent>(); comp && comp->is_loaded())
 		{
 			XMMATRIX world = ent->get_world_transform();

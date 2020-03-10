@@ -98,6 +98,7 @@
     <ClInclude Include="EngineFiles\AbstractGame.h" />
     <ClInclude Include="EngineFiles\ContactListener.h" />
     <ClInclude Include="EngineFiles\core\identifier.h" />
+    <ClInclude Include="EngineFiles\Core\MaterialResource.h" />
     <ClInclude Include="EngineFiles\Core\ModelResource.h" />
     <ClInclude Include="EngineFiles\Core\ResourceLoader.h" />
     <ClInclude Include="EngineFiles\Core\TextureResource.h" />
@@ -127,6 +128,7 @@
     <ClCompile Include="EngineFiles\Box2DDebugRenderer.cpp" />
     <ClCompile Include="EngineFiles\Button.cpp" />
     <ClCompile Include="EngineFiles\ContactListener.cpp" />
+    <ClCompile Include="EngineFiles\Core\MaterialResource.cpp" />
     <ClCompile Include="EngineFiles\Core\ModelResource.cpp" />
     <ClCompile Include="EngineFiles\Core\TextureResource.cpp" />
     <ClCompile Include="EngineFiles\DebugOverlays\MetricsOverlay.cpp" />
@@ -259,6 +261,12 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</DeploymentContent>
       <FileType>Document</FileType>
     </None>
+    <FxCompile Include="EngineFiles\Shaders\debug_px.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <VariableName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cso_%(Filename)</VariableName>
+      <HeaderFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)EngineFiles\shaders\generated\%(Filename).h</HeaderFileOutput>
+    </FxCompile>
     <FxCompile Include="EngineFiles\shaders\simple_px.hlsl">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>

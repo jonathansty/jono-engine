@@ -32,6 +32,8 @@ namespace framework
 		void set_local_position(XMFLOAT2 pos);
 		void set_local_position(float x, float y);
 
+		void set_local_scale(XMFLOAT3 scale);
+
 		void set_rotation(float angle);
 		void set_rotation(XMVECTOR quat);
 
@@ -66,6 +68,7 @@ namespace framework
 		std::vector<Entity*> _children;
 
 		XMFLOAT3 _pos;
+		XMFLOAT3 _scale;
 		XMVECTOR _rot;
 
 		std::vector<Component*> _components;

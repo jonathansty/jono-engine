@@ -21,7 +21,14 @@ public:
 	}
 
 	bool get_visible() const { return _isOpen; }
-	void set_visible(bool visible) { _isOpen = visible; }
+	void set_visible(bool visible) 
+	{ 
+		if (!_isOpen)
+		{
+			ImGui::SetWindowFocus("Overlays");
+		}
+		_isOpen = visible; 
+	}
 
 protected:
 	bool _isOpen;

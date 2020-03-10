@@ -10,6 +10,7 @@ struct Material
 	float3 F0;
 	float roughness;
 	float metalness;
+	float ao;
 };
 Material CreateMaterial()
 {
@@ -19,6 +20,7 @@ Material CreateMaterial()
 	material.metalness = 0.0;
 	material.F0 = float3(0.04, 0.04, 0.04);
 	material.tangentNormal = float3(0.0, 1.0, 0.0);
+	material.ao = 1.0f;
 	return material;
 }
 
@@ -97,7 +99,7 @@ float3 SimpleBlinnPhong(float3 view, float3 light, float3 normal, Material mater
 	float3 denom = saturate(4 * LoN * NoH);
 	float3 spec = nom / denom;
 
-	return ((diffuse / PI) + spec) * NoL * float3(1.0, 1.0,0.95);
+	return ((diffuse / PI) + spec) * NoL;
 
 }
 #endif

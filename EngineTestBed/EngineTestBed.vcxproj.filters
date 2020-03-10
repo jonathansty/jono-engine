@@ -7,12 +7,14 @@
     <ClCompile Include="Tests/RttiTest.tests.cpp" />
     <ClCompile Include="Test3D.cpp" />
     <ClCompile Include="Components.cpp" />
+    <ClCompile Include="Overlays.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="HelloWorld.h" />
     <ClInclude Include="Test3D.h" />
     <ClInclude Include="Components.h" />
+    <ClInclude Include="Overlays.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Tests">

@@ -1009,14 +1009,14 @@ void FileManager::ReadGameResults(std::vector<sessionStats*> &tmpSessionStatsPtr
             sessionStats* tmpSessionStat = new sessionStats();
             std::wstring tmpstring = expressionstream.str();
             //Extract the start block
-            int startId = tmpstring.find(L"<Start>");
-            int endId = tmpstring.find(L"</Start>");
-            std::wstring startBlock = tmpstring.substr(startId, (endId + String("</Start>").Length())- startId);
+            std::size_t startId = tmpstring.find(L"<Start>");
+            std::size_t endId = tmpstring.find(L"</Start>");
+            std::wstring startBlock = tmpstring.substr(startId, (endId + std::size_t(String("</Start>").Length()))- startId);
            
             // Extract the end block
             startId = tmpstring.find(L"<End>");
             endId = tmpstring.find(L"</End>");
-            std::wstring endBlock = tmpstring.substr(startId, (endId + String("</End>").Length()) - startId);
+            std::wstring endBlock = tmpstring.substr(startId, (endId + std::size_t(String("</End>").Length())) - startId);
             ReadGameResultsStart(startBlock, tmpSessionStat);
             ReadGameResultsEnd(endBlock, tmpSessionStat);
             
@@ -1039,8 +1039,8 @@ void FileManager::ReadGameResultsStart(std::wstring &expressionStringRef, sessio
     std::wstring date = GetValueOfBlock(L"Date", expressionStringRef);
     tm beginTime;
     
-    int idStart = 0;
-    int idEnd = date.find(L":");
+    std::size_t idStart = 0;
+    std::size_t idEnd = date.find(L":");
     beginTime.tm_year = String(date.substr(idStart, idEnd - idStart).c_str()).ToInteger();
     idStart = idEnd + 1;
     idEnd = date.find(L":", idStart);
@@ -1074,8 +1074,8 @@ void FileManager::ReadGameResultsEnd(std::wstring &expressionStringRef, sessionS
    
     std::wstring date = GetValueOfBlock(L"Date", expressionStringRef);
     
-    int idStart = 0;
-    int idEnd = date.find(L":");
+    std::size_t idStart = 0;
+    std::size_t idEnd = date.find(L":");
     endTime.tm_year = String(date.substr(idStart, idEnd - idStart).c_str()).ToInteger();
     idStart = idEnd + 1;
     idEnd = date.find(L":", idStart);
@@ -1108,8 +1108,8 @@ void FileManager::ReadGameResultsEnd(std::wstring &expressionStringRef, sessionS
 //! Gets the value of a block
 std::wstring FileManager::GetValueOfBlock(const std::wstring& nameRef, const std::wstring& objectRef)
 {
-    int idStart = objectRef.find(L"<" + nameRef + L">") + nameRef.length() + 2;
-    int idEnd = objectRef.find(L"</" + nameRef + L">");
+    std::size_t idStart = objectRef.find(L"<" + nameRef + L">") + nameRef.length() + 2;
+    std::size_t idEnd = objectRef.find(L"</" + nameRef + L">");
 
     std::wstring value = objectRef.substr(idStart, idEnd - idStart);
     return value;

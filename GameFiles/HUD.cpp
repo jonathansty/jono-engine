@@ -242,11 +242,11 @@ void HUD::PaintLeverInfo()
     {
         if (m_LeversPtrArr[i]->isHit())
         {
-            GAME_ENGINE->DrawString(String("Lever ") + String(i) + String(" is hit!"), 10, 150 + i * 15);
+            GAME_ENGINE->DrawString(String("Lever ") + String(i) + String(" is hit!"), 10, 150 + (int)i * 15);
         }
         else
         {
-            GAME_ENGINE->DrawString(String("Lever ") + String(i) + String(" is not hit!"), 10, 150 + i * 15);
+            GAME_ENGINE->DrawString(String("Lever ") + String(i) + String(" is not hit!"), 10, 150 + (int)i * 15);
         }
     }
 }

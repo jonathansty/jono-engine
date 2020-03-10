@@ -57,13 +57,13 @@ void Trail::Paint(DOUBLE2 position)
         m_deqTrailPtrArr.pop_back();
     }
     GAME_ENGINE->SetColor(COLOR(255, 255, 255, m_Opacity));
-    for (int i = 0, n = m_deqTrailPtrArr.size(); i < n - 1; i++)
+    for (std::size_t i = 0, n = m_deqTrailPtrArr.size(); i < n - 1; i++)
     {
         DOUBLE2 pos = m_deqTrailPtrArr[i];
         DOUBLE2 pos2 = m_deqTrailPtrArr[i + 1];
         DOUBLE2 midPos = (pos2 + pos) / 2;
         double size = m_Size;
-        if (size - (size / m_TrailLength)*i > 0)
+        if (size - (size / m_TrailLength)*(double)i > 0)
         {
 
             GAME_ENGINE->FillEllipse(pos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
