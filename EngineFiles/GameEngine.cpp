@@ -68,7 +68,8 @@ GameEngine::GameEngine() :
 	m_D3DDeviceContextPtr(nullptr),
 	m_DXGIFactoryPtr(nullptr),
 	m_DXGISwapchainPtr(nullptr),
-	m_bQuit(false)
+	m_bQuit(false),
+	m_GameSettings()
 {
 	m_Gravity = DOUBLE2(0, 9.81);
 
@@ -179,9 +180,8 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 #endif
 
 	// Game Initialization
-	GameSettings gameSettings;
-	m_GamePtr->GameInitialize(gameSettings);
-	ApplyGameSettings(gameSettings);
+	m_GamePtr->GameInitialize(m_GameSettings);
+	ApplyGameSettings(m_GameSettings);
 
 	// Open the window
 	if (!GameEngine::GetSingleton()->RegisterWindowClass())
@@ -200,6 +200,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	CreateDeviceResources();
 
 	ImGui::CreateContext();
+
 	ImGui_ImplWin32_Init(GetWindow());
 	ImGui_ImplDX11_Init(m_D3DDevicePtr, m_D3DDeviceContextPtr);
 #pragma region Box2D
@@ -463,7 +464,7 @@ bool GameEngine::RegisterWindowClass()
 bool GameEngine::OpenWindow(int iCmdShow)
 {
 	// Calculate the window size and position based upon the game size
-	DWORD windowStyle = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_CLIPCHILDREN;
+	DWORD windowStyle = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_MAXIMIZEBOX;
 	RECT R = { 0, 0, m_iWidth, m_iHeight };
 	AdjustWindowRect(&R, windowStyle, false);
 	int iWindowWidth = R.right - R.left;
@@ -479,8 +480,18 @@ bool GameEngine::OpenWindow(int iCmdShow)
 	if (!m_hWindow) return false;
 
 	// Show and update the window
+	if (m_GameSettings.m_WindowFlags & GameSettings::WindowFlags::StartMaximized)
+		iCmdShow = SW_SHOWMAXIMIZED;
+
 	ShowWindow(m_hWindow, iCmdShow);
 	UpdateWindow(m_hWindow);
+
+	// Update size
+
+	RECT r;
+	::GetClientRect(m_hWindow, &r);
+	m_iWidth = r.right - r.left;
+	m_iHeight = r.bottom - r.top;
 
 	return true;
 }
@@ -1381,13 +1392,13 @@ void GameEngine::GUIConsumeEvents()
 
 void GameEngine::ApplyGameSettings(GameSettings &gameSettings)
 {
-	SetWidth(gameSettings.GetWindowWidth());
-	SetHeight(gameSettings.GetWindowHeight());
-	SetTitle(gameSettings.GetWindowTitle());
-	EnableVSync(gameSettings.IsVSync());
-	EnableAntiAlias(gameSettings.IsAntiAliasingEnabled());
+	SetWidth(gameSettings.m_WindowWidth);
+	SetHeight(gameSettings.m_WindowHeight);
+	SetTitle(gameSettings.m_WindowTitle);
+	EnableVSync(gameSettings.m_WindowFlags & GameSettings::WindowFlags::EnableVSync);
+	EnableAntiAlias(gameSettings.m_WindowFlags & GameSettings::WindowFlags::EnableAA);
 
-	if (gameSettings.IsConsoleEnabled())
+	if (gameSettings.m_WindowFlags & GameSettings::WindowFlags::EnableConsole)
 	{
 		ConsoleCreate();
 	}
@@ -1469,13 +1480,21 @@ LRESULT GameEngine::HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lP
 	case WM_SIZE:
 		if (wParam == SIZE_MAXIMIZED)
 		{
-			// switch off the title bar
-			DWORD dwStyle = GetWindowLong(m_hWindow, GWL_STYLE);
-			dwStyle &= ~WS_CAPTION;
-			SetWindowLong(m_hWindow, GWL_STYLE, dwStyle);
 			//If you have changed certain window data using SetWindowLong, you must call SetWindowPos for the changes to take effect.
 			SetWindowPos(m_hWindow, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-			return 0;
+
+		}
+		RECT r;
+		::GetClientRect(m_hWindow, &r);
+		m_iWidth = r.right - r.left;
+		m_iHeight = r.bottom - r.top;
+
+		// TODO: Re-create this in the rendering code rather then on the event
+		if (m_DXGISwapchainPtr)
+		{
+			DXGI_SWAP_CHAIN_DESC desc;
+			m_DXGISwapchainPtr->GetDesc(&desc);
+			m_DXGISwapchainPtr->ResizeBuffers(desc.BufferCount, m_iWidth, m_iHeight, desc.BufferDesc.Format, desc.Flags);
 		}
 		return 0;
 
@@ -1613,7 +1632,14 @@ void GameEngine::CreateDeviceResources()
 		desc.SampleDesc.Quality = 0;
 		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 		desc.OutputWindow = GetWindow();
-		desc.Windowed = TRUE;
+		if (m_GameSettings.m_FullscreenMode == GameSettings::FullScreenMode::Windowed || m_GameSettings.m_FullscreenMode == GameSettings::FullScreenMode::BorderlessWindowed)
+		{
+			desc.Windowed = TRUE;
+		}
+		else
+		{
+			desc.Windowed = false;
+		}
 		desc.BufferCount = 2;
 		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		SUCCEEDED(m_DXGIFactoryPtr->CreateSwapChain(m_D3DDevicePtr, &desc, &m_DXGISwapchainPtr));

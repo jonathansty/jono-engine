@@ -36,6 +36,8 @@
 #include <d3d11_1.h>
 #include <dxgi.h>
 #include <dxgidebug.h>
+#include <d3d11shader.h>
+#include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <DirectXTK/VertexTypes.h>
 using namespace DirectX;

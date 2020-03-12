@@ -27,7 +27,10 @@ struct Meshlet
 
 
 
-class ModelResource final : public TCachedResource<FromFileResourceParameters>
+class Model
+{};
+
+class ModelResource final : public TCachedResource<Model, FromFileResourceParameters>
 {
 public:
 	using VertexType = ModelVertex;

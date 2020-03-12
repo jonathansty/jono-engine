@@ -70,6 +70,7 @@ namespace framework
 		XMFLOAT3 _pos;
 		XMFLOAT3 _scale;
 		XMVECTOR _rot;
+		XMFLOAT3 _rot_euler;
 
 		std::vector<Component*> _components;
 		friend EntityDebugOverlay;

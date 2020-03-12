@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "EngineFiles/rtti/rtti.h"
 
+#ifdef _DEBUG
+
 struct Foo
 {
 	REFLECT(Foo);
@@ -222,3 +224,5 @@ void ExecuteRttiTest_BasicTypes()
 	podType.set_property("c", 18);
 	assert(foo->c == 18);
 }
+
+#endif

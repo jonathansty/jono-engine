@@ -25,6 +25,7 @@
 #include "AttackBeamList.h"
 #include "EntityList.h"
 #include "EnemyList.h"
+#include "LevelList.h"
 #include "Teleport.h"
 #include "CheckPointBg.h"
 #include "HUD.h"
@@ -53,8 +54,13 @@
 #define BITMAP_MANAGER (BitmapManager::Instance())
 #define SND_MANAGER (SoundManager::Instance())
 
-Game::Game()
+Game::Game(ElectronicJonaJoy* owner)
+    :_owner(owner)
 {
+    // Reference all the lists from the file manager
+    m_FileManagerPtr = _owner->GetFileManager();
+
+
     m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-6000, 0),BITMAP_MANAGER->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")));
     m_CheckPointRotLightPtr = new RotLight(DOUBLE2(-6000, 0));
     m_CheckPointRotLightPtr->SetColor(COLOR(255, 255, 255));
@@ -64,18 +70,25 @@ Game::Game()
 
 Game::~Game()
 {
-    delete m_AttackBeamListPtr;
-    m_AttackBeamListPtr = nullptr;
-
-    delete m_CheckPointBgPtr;
-    m_CheckPointBgPtr = nullptr;
-
-    delete m_CheckPointRotLightPtr;
-    m_CheckPointRotLightPtr = nullptr;
-
-
-    m_FileManagerPtr->RemoveAll();
+	safe_delete(m_AttackBeamListPtr);
+	safe_delete(m_CheckPointBgPtr);
+	safe_delete(m_CheckPointRotLightPtr);
 }
+
+
+void Game::OnActivate()
+{
+    // Load the first level
+    std::string level_path = _owner->get_level_names()->GetLevel(_owner->get_curr_level());
+
+    LoadLevel(level_path);
+}
+
+void Game::OnDeactivate()
+{
+
+}
+
 void Game::Tick(double deltaTime)
 {
 
@@ -181,7 +194,7 @@ void Game::UpdateGameChecks(double deltaTime)
 {
     if (m_LevelEndPtr->isHit())
     {
-        m_LoadNextLevel = true;
+        _owner->LoadNextLevel(this);
     }
     if (m_AvatarPtr->GetLifes() <= 0)
     {
@@ -326,8 +339,10 @@ void Game::UpdateDrawMode()
 }
 void Game::Paint()
 {
+    assert(m_CameraPtr);
     MATRIX3X2 matView = m_CameraPtr->GetViewMatrix();
-    
+   
+    //TODO: Refactor these stupid lists using entities?
     if ((m_DrawMode == DrawMode::BITMAP || m_DrawMode == DrawMode::PHYSICS_BITMAP))
     {
         GAME_ENGINE->SetViewMatrix(MATRIX3X2::CreateIdentityMatrix());

@@ -7,7 +7,7 @@ namespace framework
 	{
 		REFLECT(Component);
 	public:
-		Component() {};
+		Component();;
 
 		virtual ~Component();
 
@@ -17,6 +17,7 @@ namespace framework
 		virtual void update(float dt) {}
 		virtual void render() {}
 
+		bool is_active() const { return _active; }
 		Entity* get_entity() const
 		{
 			return _parent;
@@ -24,6 +25,7 @@ namespace framework
 
 
 	private:
+		bool _active;
 		Entity* _parent;
 	};
 

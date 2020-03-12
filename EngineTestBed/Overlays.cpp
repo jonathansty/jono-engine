@@ -8,7 +8,7 @@ EntityDebugOverlay::EntityDebugOverlay(framework::World* world) : DebugOverlay(f
 
 }
 
-void EntityDebugOverlay::RenderTree(framework::Entity* ent)
+void EntityDebugOverlay::render_tree(framework::Entity* ent)
 {
 	ImGuiTreeNodeFlags flags = (_selected == ent ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
 
@@ -30,7 +30,7 @@ void EntityDebugOverlay::RenderTree(framework::Entity* ent)
 
 		for (framework::Entity* child : ent->_children)
 		{
-			RenderTree(child);
+			render_tree(child);
 		}
 
 		ImGui::TreePop();
@@ -43,7 +43,7 @@ void EntityDebugOverlay::RenderTree(framework::Entity* ent)
 	}
 }
 
-void EntityDebugOverlay::RenderObject(rtti::Object& obj)
+void EntityDebugOverlay::render_object(rtti::Object& obj)
 {
 	ImGui::PushID(&obj);
 	std::vector<rtti::TypeInfo*> chain;
@@ -118,22 +118,27 @@ void EntityDebugOverlay::render_overlay()
 	if (_isOpen)
 	{
 		static int s_current = 0;
-		ImGui::Begin(_name.c_str(), &_isOpen);
-		ImGui::Text("Number Of Entities: %d", _world->_entities.size());
-
-		std::vector<const char*> names{};
-		std::vector<framework::Entity*> entities{};
-		for (framework::Entity* ent : _world->_entities)
+		ImGui::Begin("Scene Outliner", &_isOpen);
 		{
-			names.push_back(ent->get_name());
-			entities.push_back(ent);
+			ImGui::Text("Number Of Entities: %d", _world->_entities.size());
+
+			std::vector<const char*> names{};
+			std::vector<framework::Entity*> entities{};
+			for (framework::Entity* ent : _world->_entities)
+			{
+				names.push_back(ent->get_name());
+				entities.push_back(ent);
+			}
+
+			render_tree(_world->_root); 
 		}
+		ImGui::End(); 
 
-		RenderTree(_world->_root);
-
-		if (_selected)
+		bool open = _selected;
+		if (ImGui::Begin("Entity Properties", &open))
 		{
 			// Display type
+			if(_selected)
 			{
 				ImGui::Separator();
 				framework::Entity* rot = _selected;
@@ -141,17 +146,16 @@ void EntityDebugOverlay::render_overlay()
 				rtti::Object obj = rtti::Object::create_as_ref(rot);
 
 				ImGui::LabelText("Entity:", rot->get_name());
-				RenderObject(obj);
+				render_object(obj);
 
 				for (framework::Component* comp : rot->_components)
 				{
 					rtti::Object compObj = rtti::Object::create_as_ref(comp);
 					ImGui::Text(compObj.get_type()->get_name());
-					RenderObject(compObj);
+					render_object(compObj);
 				}
 			}
 		}
-
 		ImGui::End();
 	}
 }

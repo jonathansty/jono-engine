@@ -9,7 +9,7 @@ class HelloWorldGame : public AbstractGame
 public:
 	void GameInitialize(GameSettings& gameSettings)
 	{
-		gameSettings.EnableConsole(true);
+		gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableConsole;
 	}
 	void GameStart() override;
 

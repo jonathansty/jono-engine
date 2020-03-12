@@ -152,6 +152,9 @@
     <ClCompile Include="EngineFiles\Core\MaterialResource.cpp">
       <Filter>Engine Files\Core\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="EngineFiles\Core\Material.cpp">
+      <Filter>Engine Files\Core\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -432,6 +435,9 @@
       <Filter>Engine Files\Core\Resources</Filter>
     </ClInclude>
     <ClInclude Include="EngineFiles\Core\MaterialResource.h">
+      <Filter>Engine Files\Core\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Core\Material.h">
       <Filter>Engine Files\Core\Resources</Filter>
     </ClInclude>
   </ItemGroup>

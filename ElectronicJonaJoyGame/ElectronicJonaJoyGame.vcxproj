@@ -73,15 +73,15 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)EngineFiles;$(SolutionDir)\GameFiles;$(SolutionDir)\Box2DInclude;$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)Box2DInclude;$(ProjectDir)$(Platform)\$(Configuration);$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)EngineFiles;$(SolutionDir)GameFiles;$(SolutionDir)Box2DInclude;$(SolutionDir)Thirdparty\EnkiTS\src;$(SolutionDir)Thirdparty/Imgui;$(VCPKGDIR)\Include;$(SolutionDir);$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\Box2DInclude;$(SolutionDir)$(Platform)\$(Configuration)\;$(VCPKGDIR)\Lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)EngineFiles;$(SolutionDir)\GameFiles;$(SolutionDir)\Box2DInclude;$(SolutionDir)\Thirdparty\EnkiTS\src;$(SolutionDir)Thirdparty/Imgui;$(VCPKGDIR)\Include;$(SolutionDir);$(IncludePath)</IncludePath>
-    <LibraryPath>$(ProjectDir)..\Box2DInclude;$(SolutionDir)$(Platform)\$(Configuration)\;$(VCPKGDIR)\Lib;$(LibraryPath)</LibraryPath>
+    <IncludePath>$(SolutionDir)EngineFiles;$(SolutionDir)GameFiles;$(SolutionDir)Box2DInclude;$(SolutionDir)Thirdparty\EnkiTS\src;$(SolutionDir)Thirdparty/Imgui;$(VCPKGDIR)\Include;$(SolutionDir);$(IncludePath)</IncludePath>
+    <LibraryPath>$(ProjectDir)..\Box2DInclude;$(SolutionDir)$(Platform)\$(Configuration)\;$(VCPKGDIR)\debug\Lib;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\$(ProjectName)\</IntDir>
   </PropertyGroup>
@@ -102,7 +102,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Engine.lib;enkiTS.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Engine.lib;enkiTS.lib;imgui.lib;assimp-vc141-mt.lib;directxtk.lib;rttr_core.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -133,7 +133,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>Engine.lib;enkiTS.lib;imgui.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Engine.lib;enkiTS.lib;imgui.lib;assimp-vc141-mtd.lib;directxtk.lib;rttr_core_d.lib;windowscodecs.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">

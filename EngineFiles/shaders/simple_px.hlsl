@@ -15,9 +15,6 @@ cbuffer MVPConstantBuffer : register(b0)
 	float4 g_LightDirection;
 };
 
-// Light pointing down
-float3 g_light = float3(0.0, -1.0, 0.0);
-
 // PBR inputs
 Texture2D<float4> g_Albedo    : register(t0);
 Texture2D<float4> g_Data      : register(t1); // .x: metalness, .y : roughness 

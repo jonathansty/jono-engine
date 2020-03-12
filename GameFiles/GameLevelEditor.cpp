@@ -110,6 +110,7 @@ void Game::Tick(double deltaTime)
         UpdateDrawMode();
         UpdateObjects(tmpdeltaTime);
         UpdateGameChecks(tmpdeltaTime);
+
     }
 
     UpdateKeyChecks(deltaTime);

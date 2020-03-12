@@ -10,6 +10,7 @@
 //---------------------------
 #include "AttackBeam.h"
 #include "Level.h"
+#include "BitmapManager.h"
 //---------------------------
 // Defines
 //---------------------------
@@ -33,11 +34,6 @@ AttackBeam::~AttackBeam()
 {
     delete m_ActPtr;
     m_ActPtr = nullptr;
-    if (m_BmpGroundPtr != nullptr)
-    {
-        delete m_BmpGroundPtr;
-        m_BmpGroundPtr = nullptr;
-    }
 }
 
 //-------------------------------------------------------
@@ -151,6 +147,5 @@ void AttackBeam::SetLevel(Level* levelPtr)
 }
 void AttackBeam::SetGroundBitmap(String bitmapPath)
 {
-    
-    m_BmpGroundPtr = new Bitmap(bitmapPath);
+    m_BmpGroundPtr = BitmapManager::Instance()->LoadBitmapFile(bitmapPath);
 }

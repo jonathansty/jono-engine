@@ -17,6 +17,7 @@ struct PrimitiveTypeResolver
 		return &_staticInt; \
 	}
 
+	DECLARE_PRIMITIVE_TYPE(bool);
 	DECLARE_PRIMITIVE_TYPE(int);
 	DECLARE_PRIMITIVE_TYPE(unsigned int);
 	DECLARE_PRIMITIVE_TYPE(float);
@@ -25,6 +26,7 @@ struct PrimitiveTypeResolver
 	DECLARE_PRIMITIVE_TYPE(std::string);
 #undef DECLARE_PRIMITIVE_TYPE
 
+	// Other non-built in types that need custom logic
 	template<>
 	static TypeInfo* get_primitive_type<void>() 
 	{ 

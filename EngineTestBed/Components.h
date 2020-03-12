@@ -60,6 +60,8 @@ private:
 
 class SimpleMeshComponent final : public framework::Component
 {
+	REFLECT(SimpleMeshComponent);
+
 public:
 	using Entity = framework::Entity;
 
@@ -74,12 +76,20 @@ public:
 	virtual void render() override;
 
 	bool is_loaded() const;
-	void load(std::string const& mesh);
+	void set_model(std::string const& mesh);
 
 	std::shared_ptr<ModelResource> get_model_resource() const { return _resource; };
 
 private:
 	std::shared_ptr<ModelResource> _resource;
+
+};
+
+class LightComponent final : public framework::Component
+{
+	REFLECT(LightComponent);
+public:
+	using Entity = framework::Entity;
 
 };
 

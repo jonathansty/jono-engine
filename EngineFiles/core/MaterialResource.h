@@ -1,6 +1,7 @@
 #pragma once
 #include "ResourceLoader.h"
 
+class Material;
 using MaterialRef = std::shared_ptr<class MaterialResource>;
 
 // Materialinitialization parameters
@@ -97,29 +98,10 @@ namespace std
 	};
 }
 
-class MaterialResource final : public TCachedResource<MaterialInitParameters>
+class MaterialResource final : public TCachedResource<Material, MaterialInitParameters>
 {
 public:
-	MaterialResource(MaterialInitParameters params)
-		: TCachedResource(params)
-	{
-
-	}
-
-	~MaterialResource() 
-	{
-
-	}
-
+	MaterialResource(MaterialInitParameters params) : TCachedResource(params) {}
 	virtual void load() override;
-
-	void apply(ID3D11DeviceContext* ctx);
-
-private:
-	std::vector<std::shared_ptr<class TextureResource>> _textures;
-
-	ComPtr<ID3D11InputLayout> _input_layout;
-	ComPtr<ID3D11VertexShader> _vert_shader;
-	ComPtr<ID3D11PixelShader> _pixel_shader;
-	ComPtr<ID3D11PixelShader> _debug_shader;
 };
+

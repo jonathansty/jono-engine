@@ -8,7 +8,16 @@ IMPL_REFLECT(Entity)
 {
 	type.register_property("name", &Entity::_name);
 	type.register_property("position", &Entity::_pos);
-	type.register_property("rotation", &Entity::_rot);
+	type.register_property<Entity, XMFLOAT3>("rotation", 
+		[](Entity* obj, XMFLOAT3 const* v) { 
+			obj->_rot_euler = *v; 
+			obj->_rot = XMQuaternionRotationRollPitchYaw(v->x, v->y, v->z);
+		}, 
+		[](Entity* obj, XMFLOAT3** out) 
+		{
+			*out = &obj->_rot_euler;
+		}
+	);
 }
 
 Entity::Entity(XMFLOAT2 pos)
@@ -43,6 +52,12 @@ void framework::Entity::set_local_scale(XMFLOAT3 scale)
 
 void framework::Entity::set_rotation(XMVECTOR quat)
 {
+	XMMATRIX m = XMMatrixRotationQuaternion(quat);
+	XMVECTOR scale, rot, trans;
+	XMMatrixDecompose(&scale, &rot, &trans, m);
+
+	XMStoreFloat3(&_rot_euler, rot);
+
 	_rot = quat;
 }
 
@@ -99,7 +114,8 @@ void Entity::update(float dt)
 {
 	for (Component* el : _components)
 	{
-		el->update(dt);
+		if(el->is_active())
+			el->update(dt);
 	}
 }
 
@@ -107,7 +123,8 @@ void Entity::render()
 {
 	for (Component* el : _components)
 	{
-		el->render();
+		if(el->is_active())
+			el->render();
 	}
 }
 

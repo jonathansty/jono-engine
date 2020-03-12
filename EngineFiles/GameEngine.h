@@ -487,6 +487,7 @@ private:
 
 	MetricsOverlay* m_MetricsOverlay;
 	std::shared_ptr<OverlayManager> m_OverlayManager;
+	GameSettings m_GameSettings;
 
 
 	bool m_bQuit;

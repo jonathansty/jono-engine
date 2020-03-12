@@ -32,7 +32,7 @@ private:
 
 struct NoInit {};
 
-template<typename init_type = NoInit>
+template<typename resource_type, typename init_type = NoInit>
 class TCachedResource : public Resource
 {
 public:
@@ -44,10 +44,14 @@ public:
 
 	}
 
+	resource_type* operator->() {
+		return _resource.get();
+	}
 
 protected:
 	init_type const& get_init_parameters() const { return _init; }
 
+	std::shared_ptr<resource_type> _resource;
 private:
 	init_type _init;
 };

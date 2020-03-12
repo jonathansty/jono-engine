@@ -4,6 +4,7 @@
 #include "Core/TextureResource.h"
 #include "Core/ModelResource.h"
 #include "Core/MaterialResource.h"
+#include "Core/Material.h"
 
 IMPL_REFLECT(SimpleMovement)
 {
@@ -58,7 +59,16 @@ IMPL_REFLECT(CameraComponent)
 	type.register_property("FlySpeed", &CameraComponent::_fly_speed);
 }
 
+IMPL_REFLECT(LightComponent)
+{
+	type.bind_parent<Component>();
+}
 
+IMPL_REFLECT(SimpleMeshComponent)
+{
+	type.bind_parent<Component>();
+
+}
 
 SimpleMovement::SimpleMovement(XMFLOAT2 pos, float speed) : Component()
 , _speed(speed)
@@ -140,9 +150,8 @@ void SimpleMeshComponent::render()
 
 	for (Meshlet const& m : _resource->_meshes)
 	{
-		{
-			_resource->_materials[m.materialID]->apply(ctx);
-		}
+		std::shared_ptr<MaterialResource> material = _resource->_materials[m.materialID]; 
+		(*material)->apply();
 		ctx->DrawIndexed(m.indexCount, m.firstIndex, m.firstVertex);
 	}
 
@@ -153,9 +162,9 @@ bool SimpleMeshComponent::is_loaded() const
 	return _resource->is_loaded();
 }
 
-void SimpleMeshComponent::load(std::string const& mesh)
+void SimpleMeshComponent::set_model(std::string const& mesh)
 {
-	_resource = ResourceLoader::Instance()->load<ModelResource>({ mesh }, true);
+	_resource = ResourceLoader::Instance()->load<ModelResource>({ mesh }, false);
 }
 
 
@@ -203,7 +212,7 @@ void CameraComponent::look_at(XMFLOAT3 eye, XMFLOAT3 target, XMFLOAT3 up /*= { 0
 void CameraComponent::update(float dt)
 {
 	// Ignore any input if ImGui is focused
-	if (ImGui::IsWindowFocused(ImGuiFocusedFlags_AnyWindow))
+	if (ImGui::IsAnyWindowFocused())
 	{
 		_prev_position = GameEngine::Instance()->GetMousePositionDOUBLE2();
 		return;

@@ -9,9 +9,9 @@ public:
 	EntityDebugOverlay(framework::World* world);
 	~EntityDebugOverlay() {}
 
-	void RenderTree(framework::Entity* ent);
+	void render_tree(framework::Entity* ent);
 
-	void RenderObject(rtti::Object& obj);
+	void render_object(rtti::Object& obj);
 
 	virtual void render_overlay() override;
 

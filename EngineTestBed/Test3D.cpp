@@ -55,8 +55,10 @@ int g_DebugMode = 0;
 
 void Hello3D::GameInitialize(GameSettings& gameSettings)
 {
-	gameSettings.EnableConsole(true);
-	gameSettings.EnableAntiAliasing(true);
+	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableAA;
+	gameSettings.m_FullscreenMode = GameSettings::FullScreenMode::Windowed;
+	gameSettings.m_WindowWidth = 1800;
+	gameSettings.m_WindowHeight = 900;
 }
 
 
@@ -66,6 +68,7 @@ void Hello3D::GameStart()
 	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
 
 
+	::SetCapture(GameEngine::Instance()->GetWindow());
 
 	using namespace framework;
 	_world = std::make_unique<framework::World>();
@@ -111,18 +114,29 @@ void Hello3D::GameStart()
 	//}
 
 	{
+		for (int i = 0; i < 1; ++i)
+		{
+			for (int j = 0; j < 1; ++j)
+			{
+				World::EntityId model = _world->create_entity();
+				Entity* ent = _world->get_entity(model);
+				ent->set_name("boxes_3");
+				ent->set_local_position({ 2.0f * (float)i, 0.0f, 2.0f * (float)j});
+				ent->set_local_scale({ 10.0f, 10.0f,10.0f });
+				auto comp = ent->create_component<SimpleMeshComponent>();
+				comp->set_model("Resources/Models/m-96_mattock/scene.gltf");
+
+				auto c = ent->create_component<SimpleMovement>();
+				c->set_speed(10.0f);
+			}
+		}
+
+
 		World::EntityId model = _world->create_entity();
 		Entity* ent = _world->get_entity(model);
-		ent->set_name("boxes_3");
-		ent->set_local_position({ 0.0f,0.0f,0.0f });
-		ent->set_local_scale({ 10.0f, 10.0f,10.0f });
-		auto comp = ent->create_component<SimpleMeshComponent>();
-		comp->load("Resources/Models/m-96_mattock/scene.gltf");
-
-		auto c = ent->create_component<SimpleMovement>();
-		c->set_speed(10.0f);
-		//comp->load("Resources/Models/boxes_3.fbx");
-
+		ent->set_name("Sun");
+		ent->set_rotation(XMQuaternionRotationRollPitchYaw(-0.33, -0.33, 0.0));
+		auto comp = ent->create_component<LightComponent>();
 	}
 
 
@@ -225,6 +239,14 @@ void Hello3D::Render3D()
 	//_timer = 0.0f;
 	XMVECTOR view_direction = XMVector3Create(0.0f, 0.0f, -2.0f);
 	XMVECTOR light_direction = XMVector3Create(0.0, -1.0, -1.0f);
+	LightComponent* comp = (LightComponent*)_world->find_first_component(LightComponent::get_static_type());
+	if (comp)
+	{
+		XMMATRIX worldTransform = comp->get_entity()->get_world_transform();
+		XMVECTOR fwd = XMVector3Create(0.0f, 0.0f, 1.0f);
+		light_direction = XMVector3Transform(fwd, worldTransform);
+	}
+
 	XMMATRIX View = XMMatrixIdentity();
 
 	float aspect = (float)GameEngine::Instance()->GetWidth() / (float)GameEngine::Instance()->GetHeight();

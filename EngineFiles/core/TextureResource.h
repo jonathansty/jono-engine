@@ -1,7 +1,8 @@
 #pragma once
 #include "ResourceLoader.h"
 
-class TextureResource : public TCachedResource<FromFileResourceParameters>
+class Texture {};
+class TextureResource : public TCachedResource<Texture, FromFileResourceParameters>
 {
 public:
 	TextureResource() = default;

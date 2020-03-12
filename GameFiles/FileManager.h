@@ -31,7 +31,7 @@ class TriggerList;
 class LevelList;
 class Game;
 
-class FileManager //: public ContactListener
+class FileManager 
 {
 public:
 	FileManager( );
@@ -144,9 +144,6 @@ private:
     void ExtractSlicer(tinyxml2::XMLElement* element);
     void ExtractNpcHinter(tinyxml2::XMLElement* element);
 
-	//-------------------------------------------------
-	// Datamembers								
-	//-------------------------------------------------
     Avatar* m_AvatarPtr = nullptr;
     KeyMap m_KeyBindsArr;
     Level* m_LevelPtr = nullptr;

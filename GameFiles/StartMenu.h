@@ -4,9 +4,20 @@
 
 class FileManager;
 
-class StartMenu //: public ContactListener
+class StartMenu 
 {
 public:
+	static const int MAXELEMENTSONSCREEN = 5;
+	static const int TABLELEGENDYPOS = 150;
+	static const int INDEXSTARTXPOS = 150;
+	static const int DATESTARTPOS = 180;
+	static const int DATEENDPOS = 370;
+	static const int DEATHPOS = 650;
+	static const int MONEYPOS = 780;
+	static const int LIFETIMEPOS = 900;
+	static const int LASTLEVELPOS = 1100;
+	static const int INDEXSTARTYPOS = 200;
+
 	StartMenu();
 	virtual ~StartMenu( );
 
@@ -17,28 +28,17 @@ public:
     void Paint();
     void Tick(double deltaTime);
     void EnableButtons();
-    bool startPressed();
-    bool quitPressed();
     void Remove();
     void ReadGameResults();
     void ReadKeyBindsForMenu(FileManager::KeyMap tmpKeybindsArr);
     void SetFileManager(FileManager* fileManagerPtr);
+
+    std::function<void()> _on_start_event;
 private: 
     
     void CreateKeyBindTextBoxes();
-	//-------------------------------------------------
-	// Datamembers								
-	//-------------------------------------------------
-    static const int MAXELEMENTSONSCREEN = 5;
-    static const int TABLELEGENDYPOS = 150;
-    static const int INDEXSTARTXPOS = 150;
-    static const int DATESTARTPOS = 180;
-    static const int DATEENDPOS = 370;
-    static const int DEATHPOS = 650;
-    static const int MONEYPOS = 780;
-    static const int LIFETIMEPOS = 900;
-    static const int LASTLEVELPOS = 1100;
-    static const int INDEXSTARTYPOS = 200;
+
+private:
     enum class menuState
     {
         MAIN,
@@ -67,6 +67,7 @@ private:
     FileManager::KeyMap m_KeybindsArr;
 
     std::shared_ptr<Font> m_ComicSansPtr = nullptr;
+
 };
 
  

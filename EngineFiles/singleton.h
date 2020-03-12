@@ -1,6 +1,16 @@
 #pragma once
 
 template<typename T>
+void safe_delete(T*& obj)
+{
+	if (obj)
+	{
+		delete obj;
+		obj = nullptr;
+	}
+}
+
+template<typename T>
 class TSingleton
 {
 public:

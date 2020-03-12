@@ -17,29 +17,33 @@
 #define SND_MANAGER (SoundManager::GetSingleton())
 
 const std::string ElectronicJonaJoy::CONFIGPATH = std::string("Resources/cfg/config.xml");
+
 ElectronicJonaJoy::ElectronicJonaJoy()
 	: m_BeginTime()
 	, m_EndTime()
 	, m_LevelListPtr()
 {
-	// nothing to create
 }
 
 ElectronicJonaJoy::~ElectronicJonaJoy()
 {
-	// nothing to destroy
+	if (_current_state)
+	{
+		delete _current_state;
+		_current_state = nullptr;
+	}
 }
 
 void ElectronicJonaJoy::GameInitialize(GameSettings &gameSettings)
 {
-	gameSettings.SetWindowTitle(String("ElectronicJonaJoy - Steyfkens, Jonathan - 1DAE01"));
-	gameSettings.SetWindowWidth(1280);
-	gameSettings.SetWindowHeight(720);
-	gameSettings.EnableConsole(false);
+	gameSettings.m_WindowTitle = String("ElectronicJonaJoy - Steyfkens, Jonathan - 1DAE01");
+	gameSettings.m_WindowWidth = 1280;
+	gameSettings.m_WindowHeight = 720;
+	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableVSync;
 #if DEBUG | _DEBUG
-	gameSettings.EnableConsole(true);
+	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableConsole;
 #endif
-	gameSettings.EnableAntiAliasing(true);
+	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableAA;
 
 }
 
@@ -52,37 +56,29 @@ void ElectronicJonaJoy::GameStart()
 	time_t beginTime;
 	time(&beginTime);
 	localtime_s(&m_BeginTime, &beginTime);
-	m_BmpLoadingPtr = BITMAP_MANAGER->LoadBitmapFile(String("Resources/Menu/LoadingScreen.png"));
 	m_CurrentLevel = 0;
 
-	m_Game = new Game();
 
 	m_FileManagerPtr = new FileManager();
 	m_LevelListPtr = m_FileManagerPtr->LoadLevels(CONFIGPATH);
 	m_FileManagerPtr->LoadAvatarKeybinds(CONFIGPATH);
-	m_Game->SetFileManager(m_FileManagerPtr);
+
+	// Start with the loading screen
+	TransitionToState(new LoadingScreenState(this));
 }
 
 void ElectronicJonaJoy::GameEnd()
 {
-	delete m_Game;
-	m_Game = nullptr;
+	_current_state->OnDeactivate();
+	safe_delete(_current_state);
 
-	delete m_LevelListPtr;
-	m_LevelListPtr = nullptr;
+	safe_delete(m_LevelListPtr);
+	safe_delete(m_HUDPtr);
+	safe_delete(m_Menu);
+	safe_delete(m_FileManagerPtr);
 
-	delete m_HUDPtr;
-	m_HUDPtr = nullptr;
-
-	delete m_Menu;
-	m_Menu = nullptr;
-
-	delete m_FileManagerPtr;
-	m_FileManagerPtr = nullptr;
-	// DELETING SINGLETONS
-	delete BitmapManager::GetSingleton();
-	delete SoundManager::GetSingleton();
-
+	BitmapManager::Shutdown();
+	SoundManager::Shutdown();
 }
 
 void ElectronicJonaJoy::GameTick(double deltaTime)
@@ -90,6 +86,12 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 	m_FramesPlayed++;
 	m_AccuTime += deltaTime;
 	HandleGameState();
+
+	if (_current_state)
+	{
+		_current_state->Update(deltaTime);
+	}
+	return;
 
 	//Checks what gamestate we are currently in and executes it.
 	switch (m_GameState)
@@ -100,7 +102,7 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 		m_HUDPtr->Tick(deltaTime);
 		if (GAME_ENGINE->IsKeyboardKeyPressed(VK_F3))
 		{
-			LoadNextLevel();
+			LoadNextLevel(m_Game.get());
 		}
 		if (GAME_ENGINE->IsKeyboardKeyPressed(VK_F4))
 		{
@@ -160,7 +162,7 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 		if (!(m_CurrentLevel + 2 > m_LevelListPtr->GetAmountOfLevels()))
 		{
 			m_FileManagerPtr->UpdateLastLevel(m_CurrentLevel + 1);
-			LoadNextLevel();
+			LoadNextLevel(m_Game.get());
 		}
 		else
 		{
@@ -172,7 +174,7 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 				time_t endTime;
 				time(&endTime);
 				localtime_s(&m_EndTime, &endTime);
-				m_FileManagerPtr->SaveGameResults(m_BeginTime, m_EndTime, m_Game);
+				m_FileManagerPtr->SaveGameResults(m_BeginTime, m_EndTime, m_Game.get());
 				m_Menu->ReadGameResults();
 				m_Game->Unload();
 				m_HUDPtr->RemoveSoundMuteBtn();
@@ -187,6 +189,12 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 
 void ElectronicJonaJoy::GamePaint(RECT rect)
 {
+	if (_current_state)
+	{
+		_current_state->Render2D();
+	}
+	return;
+
 	switch (m_GameState)
 	{
 	case ElectronicJonaJoy::GameState::RUNNING:
@@ -231,50 +239,60 @@ void ElectronicJonaJoy::ReloadCurrentLevel()
 	m_Game->LoadLevel(m_LevelListPtr->GetLevel(m_CurrentLevel));
 }
 
-void ElectronicJonaJoy::LoadNextLevel()
+void ElectronicJonaJoy::TransitionToState(IGameState* state)
+{
+	if (_current_state)
+	{
+		_current_state->OnDeactivate();
+
+		delete _current_state;
+		_current_state = nullptr;
+	}
+
+	_current_state = state;
+	_current_state->OnActivate();
+
+}
+
+void ElectronicJonaJoy::LoadNextLevel(Game* game)
 {
 	m_AccuTime = 0;
 	int amountOfLevels = m_LevelListPtr->GetAmountOfLevels();
-	m_Game->Restart();
+	game->Restart();
 	std::string toBeRemoved = m_LevelListPtr->GetLevel(m_CurrentLevel);
 	m_CurrentLevel++;
 	m_CurrentLevel = m_CurrentLevel%amountOfLevels;
-	m_Game->LoadLevel(m_LevelListPtr->GetLevel(m_CurrentLevel));
+	game->LoadLevel(m_LevelListPtr->GetLevel(m_CurrentLevel));
 }
 
 void ElectronicJonaJoy::HandleGameState()
 {
-	if (m_Menu != nullptr && m_Menu->startPressed())
-	{
-		time_t beginTime;
-		time(&beginTime);
-		localtime_s(&m_BeginTime, &beginTime);
-		m_Menu->Remove();
-		m_GameState = GameState::RUNNING;
-		m_Game->LoadLevel(m_LevelListPtr->GetLevel(m_CurrentLevel));
+	//if (m_Menu != nullptr && m_Menu->startPressed())
+	//{
+	//	time_t beginTime;
+	//	time(&beginTime);
+	//	localtime_s(&m_BeginTime, &beginTime);
+	//	m_Menu->Remove();
+	//	m_GameState = GameState::RUNNING;
+	//	m_Game->LoadLevel(m_LevelListPtr->GetLevel(m_CurrentLevel));
 
-		if (m_HUDPtr == nullptr)
-		{
-			m_HUDPtr = new HUD(m_Game);
-			m_Game->LinkHUD(m_HUDPtr);
-		}
-		m_HUDPtr->ResetIsInMenu();
-		m_HUDPtr->CreateSoundMuteBtn();
-		//m_Game->Reset(m_LevelListPtr->GetLevel(m_CurrentLevel));
-	}
-	if (m_Menu != nullptr && m_Menu->quitPressed())
-	{
-		m_GameState = GameState::QUIT;
+	//	if (m_HUDPtr == nullptr)
+	//	{
+	//		m_HUDPtr = new HUD(m_Game.get());
+	//		m_Game->LinkHUD(m_HUDPtr);
+	//	}
+	//	m_HUDPtr->ResetIsInMenu();
+	//	m_HUDPtr->CreateSoundMuteBtn();
+	//	//m_Game->Reset(m_LevelListPtr->GetLevel(m_CurrentLevel));
+	//}
 
-		GAME_ENGINE->QuitGame();
-	}
 	if (m_GameState == GameState::PAUSE && m_HUDPtr->IsGoToStartMenu())
 	{
 		time_t endTime;
 		time(&endTime);
 		localtime_s(&m_EndTime, &endTime);
 		m_GameState = GameState::MENU;
-		m_FileManagerPtr->SaveGameResults(m_BeginTime, m_EndTime, m_Game);
+		m_FileManagerPtr->SaveGameResults(m_BeginTime, m_EndTime, m_Game.get());
 		m_Game->Unload();
 		m_HUDPtr->RemoveSoundMuteBtn();
 		m_HUDPtr->RemovePauseMenu();
@@ -286,3 +304,68 @@ void ElectronicJonaJoy::HandleGameState()
 
 
 
+MainMenuState::MainMenuState(ElectronicJonaJoy* owner)
+	: _owner(owner)
+{
+
+}
+
+void MainMenuState::OnActivate()
+{
+	_owner->m_FileManagerPtr->LoadGameMusic(ElectronicJonaJoy::CONFIGPATH);
+	_menu = new StartMenu();
+	_menu->SetFileManager(_owner->m_FileManagerPtr);
+	_menu->ReadKeyBindsForMenu(_owner->m_FileManagerPtr->LoadAvatarKeybinds(ElectronicJonaJoy::CONFIGPATH.c_str()));
+
+	_menu->_on_start_event = [this]() {
+		Game* game = new Game(_owner);
+		_owner->TransitionToState(game);
+	};
+}
+
+void MainMenuState::OnDeactivate()
+{
+	delete _menu;
+	_menu = nullptr;
+}
+
+void MainMenuState::Update(double dt)
+{
+	_menu->Tick(dt);
+}
+
+void MainMenuState::Render2D()
+{
+	_menu->Paint();
+}
+
+MainMenuState::~MainMenuState()
+{
+
+}
+
+LoadingScreenState::LoadingScreenState(ElectronicJonaJoy* owner) : _owner(owner)
+, _load_timer(1.0f)
+{
+
+}
+
+void LoadingScreenState::OnActivate()
+{
+	_loading_bitmap = BITMAP_MANAGER->LoadBitmapFile(String("Resources/Menu/LoadingScreen.png"));
+}
+
+void LoadingScreenState::Update(double dt)
+{
+	_load_timer -= dt;
+	if (_load_timer <= 0.0f)
+	{
+		_owner->TransitionToState(new MainMenuState(_owner));
+	}
+
+}
+
+void LoadingScreenState::Render2D()
+{
+	GameEngine::Instance()->DrawBitmap(_loading_bitmap);
+}

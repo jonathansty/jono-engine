@@ -74,6 +74,16 @@ void StartMenu::Tick(double deltaTime)
             
 
         }
+
+        if (m_BtnQuitPtr && m_BtnQuitPtr->IsPressed())
+        {
+            GameEngine::Instance()->QuitGame();
+        }
+
+        if (m_BtnStartPtr && m_BtnStartPtr->IsPressed())
+        {
+            if(_on_start_event) _on_start_event();
+        }
         break;
     case StartMenu::menuState::OPTIONS:
         if (m_BtnOptionsPtr->IsPressed())
@@ -177,6 +187,7 @@ void StartMenu::Tick(double deltaTime)
         break;
     }
 }
+
 void StartMenu::Paint()
 {
     GameEngine::Instance()->DrawSolidBackground(COLOR(116, 202, 141));
@@ -281,30 +292,7 @@ void StartMenu::Paint()
         
     
 }
-bool StartMenu::startPressed()
-{
-    if (m_BtnStartPtr != nullptr)
-    {
-        if (m_BtnStartPtr->IsPressed())
-        {
-            Remove();
-            return true;
-        }
-    }
-    return false;
-}
-bool StartMenu::quitPressed()
-{
-    if (m_BtnQuitPtr != nullptr)
-    {
-        if (m_BtnQuitPtr->IsPressed())
-        {
-            Remove();
-            return true;
-        }
-    }
-    return false;
-}
+
 void StartMenu::Remove()
 {
     m_BgMusicPtr->Stop();
@@ -332,6 +320,7 @@ void StartMenu::Remove()
     m_BmpPtr = nullptr;
 
 }
+
 void StartMenu::EnableButtons()
 {
     int width = GAME_ENGINE->GetWidth();

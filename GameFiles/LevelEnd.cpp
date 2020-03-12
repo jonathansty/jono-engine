@@ -84,7 +84,6 @@ void LevelEnd::Tick(double deltaTime)
 }
 void LevelEnd::Paint()
 {
-    
     if (m_AreAllLeversHit == true)
     {
         MATRIX3X2 matTranslate, matPivot, matRotate;

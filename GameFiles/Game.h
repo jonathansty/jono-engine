@@ -11,9 +11,8 @@
 
 #include "ContactListener.h"
 
-//-----------------------------------------------------
-// Game Class									
-//-----------------------------------------------------
+#include "ElectronicJonaJoy.h"
+
 class Avatar;
 class Entity;
 class HUD;
@@ -43,14 +42,25 @@ class LevelEnd;
 class TriggerList;
 class FileManager;
 
-class Game 
+class Game final : public IGameState
 {
 public:
-	Game();
-	virtual ~Game( );
+	Game(ElectronicJonaJoy* owner);
+	virtual ~Game();
 
 	Game( const Game& ) = delete;
 	Game& operator=( const Game& ) = delete;
+
+    void OnActivate() override;
+    void OnDeactivate() override;
+
+    void Render2D() {
+        Paint();
+    }
+
+    void Update(double deltaTime) {
+        Tick(deltaTime);
+    }
 
     void Paint();
     void Tick(double deltaTime);
@@ -132,6 +142,8 @@ private:
         PAUSED,
     }m_GameState = GameState::RUNNING;
     HUD* m_HudPtr = nullptr;
+
+    ElectronicJonaJoy* _owner;
 };
 
  

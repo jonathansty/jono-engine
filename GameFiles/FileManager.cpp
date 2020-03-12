@@ -760,37 +760,17 @@ Sound* FileManager::GetBgMusic()
 //! Removes everything
 void FileManager::RemoveAll()
 {
-    delete m_TriggerListPtr;
-    m_TriggerListPtr = nullptr;
+    safe_delete(m_TriggerListPtr);
+    safe_delete(m_LevelEndPtr);
+    safe_delete(m_CoinListPtr);
+    safe_delete(m_AnimationListPtr);
+    safe_delete(m_EntityListPtr);
+    safe_delete(m_EnemyListPtr);
+    safe_delete(m_EnemyListPtr);
 
-    delete m_LevelEndPtr;
-    m_LevelEndPtr = nullptr;
-    delete m_CoinListPtr;
-    m_CoinListPtr = nullptr;
-
-    delete m_AnimationListPtr;
-    m_AnimationListPtr = nullptr;
-
-    delete m_EntityListPtr;
-    m_EntityListPtr = nullptr;
-
-    delete m_EnemyListPtr;
-    m_EnemyListPtr = nullptr;
-
-
-    delete m_LevelPtr;
-    m_LevelPtr = nullptr;
-
-    if (m_CameraPtr != nullptr)
-    {
-        delete m_CameraPtr;
-        m_CameraPtr = nullptr;
-    }
-
-
-    delete m_AvatarPtr;
-    m_AvatarPtr = nullptr;
-
+    safe_delete(m_LevelPtr);
+    safe_delete(m_CameraPtr);
+    safe_delete(m_AvatarPtr);
 }
 //! Returns the avatar
 Avatar* FileManager::GetAvatar()
