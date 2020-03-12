@@ -98,8 +98,6 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 	{
 	case ElectronicJonaJoy::GameState::RUNNING:
 		m_Game->Tick(deltaTime);
-		m_HUDPtr->SetTime(m_Game->GetAccuTime());
-		m_HUDPtr->Tick(deltaTime);
 		if (GAME_ENGINE->IsKeyboardKeyPressed(VK_F3))
 		{
 			LoadNextLevel(m_Game.get());

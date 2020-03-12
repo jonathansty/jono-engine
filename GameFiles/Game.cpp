@@ -73,6 +73,7 @@ Game::~Game()
 	safe_delete(m_AttackBeamListPtr);
 	safe_delete(m_CheckPointBgPtr);
 	safe_delete(m_CheckPointRotLightPtr);
+    safe_delete(m_HudPtr);
 }
 
 
@@ -82,6 +83,8 @@ void Game::OnActivate()
     std::string level_path = _owner->get_level_names()->GetLevel(_owner->get_curr_level());
 
     LoadLevel(level_path);
+
+    m_HudPtr = new HUD(this);
 }
 
 void Game::OnDeactivate()
@@ -91,6 +94,9 @@ void Game::OnDeactivate()
 
 void Game::Tick(double deltaTime)
 {
+	m_HudPtr->SetTime(GetAccuTime());
+	m_HudPtr->Tick(deltaTime);
+
 
     if (m_GameState == GameState::RUNNING)
     {
@@ -377,6 +383,7 @@ void Game::Paint()
         GAME_ENGINE->SetWorldMatrix(matView.Inverse());
     }
 
+    m_HudPtr->Paint();
 }
 
 /*
