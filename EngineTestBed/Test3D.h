@@ -15,7 +15,7 @@ public:
 	void Render3D() override;
 
 private:
-	std::unique_ptr<framework::World> _world;
+	std::shared_ptr<framework::World> _world;
 
 	ComPtr<ID3D11Buffer> _cb_MVP;
 	ComPtr<ID3D11Buffer> _cb_Debug;

@@ -189,7 +189,7 @@ void EnemyList::RemoveContactListeners()
         }
     }
 }
-int EnemyList::GetSize()
+int EnemyList::GetSize() const
 {
     return m_NumberOfEnemies;
 }
@@ -203,17 +203,7 @@ void EnemyList::PaintDebug()
         }
     }
 }
-void EnemyList::SetActActive(bool tmpBool)
-{
-    for (size_t i = 0; i < m_EnemiesPtrArr.size(); i++)
-    {
-        if (m_EnemiesPtrArr[i] != nullptr)
-        {
-            m_EnemiesPtrArr[i]->SetActActive(tmpBool);
-        }
-        
-    }
-}
+
 Enemy* EnemyList::IsHit()
 {
     for (size_t i = 0; i < m_EnemiesPtrArr.size(); i++)
@@ -228,6 +218,7 @@ Enemy* EnemyList::IsHit()
     }
     return nullptr;
 }
+
 void EnemyList::SafeRemoveAll()
 {
     m_IsRemoveReset = true;

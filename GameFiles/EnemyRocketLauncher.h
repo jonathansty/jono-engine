@@ -50,7 +50,6 @@ public:
     virtual PhysicsActor* GetActor();
 
     virtual void RemoveContactListener();
-    virtual void SetActActive(bool tmpBool);
     virtual void Reset();
     void SetAvatar(Avatar* avatarPtr);
 

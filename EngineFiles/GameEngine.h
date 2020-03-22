@@ -140,6 +140,7 @@ public:
 
 	//! ConsolePrintString: Display a String on the current cursor position. A new line is appended automatically
 	void ConsolePrintString(const String& textRef);
+	void ConsolePrintString(std::string const& msg);
 
 	// ConsolePrintString: Display a std::string on the current cursor position. A new line is appended automatically
 	//void ConsolePrintString(std::string text);
@@ -379,6 +380,7 @@ public:
 	static enki::TaskScheduler s_TaskScheduler;
 	static std::thread::id s_MainThread;
 
+	void SetPhysicsStep(bool bEnabled);
 private:
 	// Set when the game loses focus
 	void SetSleep(bool bSleep);
@@ -489,7 +491,7 @@ private:
 	std::shared_ptr<OverlayManager> m_OverlayManager;
 	GameSettings m_GameSettings;
 
-
+	bool m_PhysicsStepEnabled;
 	bool m_bQuit;
 };
 

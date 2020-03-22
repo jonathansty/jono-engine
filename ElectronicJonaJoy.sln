@@ -25,6 +25,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "enkiTS", "Build\enkiTS\enki
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImGui", "Build\ImGui\ImGui.vcxproj", "{AA338FBC-1496-4D65-B687-4C1B0464374B}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{A22471B2-E63D-4D77-B224-0F1D9043C6C6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Engine.Tests", "Build\Engine.Tests\Engine.Tests.vcxproj", "{F69DCF84-E5FC-4B1D-A9EA-06FEE1A2C5FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -71,6 +75,14 @@ Global
 		{AA338FBC-1496-4D65-B687-4C1B0464374B}.Release|x64.Build.0 = Release|x64
 		{AA338FBC-1496-4D65-B687-4C1B0464374B}.Release|x86.ActiveCfg = Release|Win32
 		{AA338FBC-1496-4D65-B687-4C1B0464374B}.Release|x86.Build.0 = Release|Win32
+		{F69DCF84-E5FC-4B1D-A9EA-06FEE1A2C5FF}.Debug|x64.ActiveCfg = Debug|x64
+		{F69DCF84-E5FC-4B1D-A9EA-06FEE1A2C5FF}.Debug|x64.Build.0 = Debug|x64
+		{F69DCF84-E5FC-4B1D-A9EA-06FEE1A2C5FF}.Debug|x86.ActiveCfg = Debug|Win32
+		{F69DCF84-E5FC-4B1D-A9EA-06FEE1A2C5FF}.Debug|x86.Build.0 = Debug|Win32
+		{F69DCF84-E5FC-4B1D-A9EA-06FEE1A2C5FF}.Release|x64.ActiveCfg = Release|x64
+		{F69DCF84-E5FC-4B1D-A9EA-06FEE1A2C5FF}.Release|x64.Build.0 = Release|x64
+		{F69DCF84-E5FC-4B1D-A9EA-06FEE1A2C5FF}.Release|x86.ActiveCfg = Release|Win32
+		{F69DCF84-E5FC-4B1D-A9EA-06FEE1A2C5FF}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -78,6 +90,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{49E865A5-F871-4CF5-821F-13AC9E258208} = {636BB975-D26B-40D3-99A2-463591CA6B36}
 		{AA338FBC-1496-4D65-B687-4C1B0464374B} = {636BB975-D26B-40D3-99A2-463591CA6B36}
+		{F69DCF84-E5FC-4B1D-A9EA-06FEE1A2C5FF} = {A22471B2-E63D-4D77-B224-0F1D9043C6C6}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6C5B64C0-F130-4885-ABA6-B9DEFA966DA1}

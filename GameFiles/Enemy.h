@@ -26,14 +26,6 @@ public:
 	Enemy( const Enemy& ) = delete;
 	Enemy& operator=( const Enemy& ) = delete;
 
-	//--------------------------------------------------------
-	// ContactListener overloaded member function declarations
-	//--------------------------------------------------------
-	virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr) = 0; 
-	virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr) = 0;   
-	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse) = 0;
-    
-    
     virtual void Paint() = 0;
     virtual void PaintDebug();
     virtual void Tick(double deltaTime) = 0;
@@ -44,7 +36,6 @@ public:
     virtual void SetSpawnPosition(DOUBLE2 respawnPosition);
     virtual void Reset();
     virtual void setGravityScale(double number);
-    virtual void SetActActive(bool tmpBool);
     virtual bool IsHit();
 
     virtual PhysicsActor* GetActor() = 0;

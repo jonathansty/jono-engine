@@ -218,16 +218,7 @@ void EnemyShooter::SetMirror(bool mirror)
 {
     m_Mirror = mirror;
 }
-void EnemyShooter::SetActActive(bool tmpBool)
-{
-    Enemy::SetActActive(tmpBool);
-    if (m_ActBulletPtr != nullptr)
-    {
-        m_ActBulletPtr->SetActive(tmpBool);
-    }
-    
-    
-}
+
 void EnemyShooter::RemoveContactListener()
 {
     if (m_ActBulletPtr != nullptr)

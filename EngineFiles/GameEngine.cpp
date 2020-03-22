@@ -44,32 +44,33 @@ void OutputDebugString(const String& text)
 GameEngine::GameEngine() : 
 	m_hInstance(0),
 	m_hWindow(NULL),
-	m_bSleep(true),
-	m_bPaintingAllowed(false), //changed in june 2014, reset to false in dec 2014
+	m_wIcon(0),
+	m_wSmallIcon(0), //changed in june 2014, reset to false in dec 2014
 	m_iWidth(0), m_iHeight(0),
-	m_wSmallIcon(0), m_wIcon(0), m_dKeybThreadID(0),
-	m_GamePtr(nullptr),
+	m_bSleep(true), m_dKeybThreadID(0), m_GamePtr(nullptr),
+	m_ConsoleHandle(NULL),
+	m_bPaintingAllowed(false),
+	m_bVSync(true),
+	m_bInitialized(false),
+	m_DXGIFactoryPtr(nullptr),
+	m_D3DDevicePtr(nullptr),
+	m_D3DDeviceContextPtr(nullptr),
+	m_DXGISwapchainPtr(nullptr),
 	m_D2DFactoryPtr(nullptr),
 	m_WICFactoryPtr(nullptr),
 	m_RenderTargetPtr(nullptr),
 	m_DWriteFactoryPtr(nullptr),
 	m_GameTickTimerPtr(nullptr),
-	m_bInitialized(false),
 	m_ColorBrushPtr(nullptr),
 	m_AADesc({ 1,0 }),
 	m_BitmapInterpolationMode(D2D1_BITMAP_INTERPOLATION_MODE_LINEAR),
 	m_DefaultFontPtr(nullptr),
 	m_UserFontPtr(nullptr),
-	m_ConsoleHandle(NULL),
-	m_bVSync(true),
 	m_InputPtr(nullptr),
 	m_XaudioPtr(nullptr),
-	m_D3DDevicePtr(nullptr),
-	m_D3DDeviceContextPtr(nullptr),
-	m_DXGIFactoryPtr(nullptr),
-	m_DXGISwapchainPtr(nullptr),
-	m_bQuit(false),
-	m_GameSettings()
+	m_GameSettings(),
+	m_PhysicsStepEnabled(true),
+	m_bQuit(false)
 {
 	m_Gravity = DOUBLE2(0, 9.81);
 
@@ -291,7 +292,10 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 				int32 velocityIterations = 6;
 				int32 positionIterations = 2;
-				m_Box2DWorldPtr->Step((float)m_PhysicsTimeStep, velocityIterations, positionIterations);
+				if(m_PhysicsStepEnabled)
+				{
+					m_Box2DWorldPtr->Step((float)m_PhysicsTimeStep, velocityIterations, positionIterations);
+				}
 
 				// Step generates contact lists, pass to Listeners and clear the vector
 				CallListeners();
@@ -584,6 +588,12 @@ void GameEngine::ConsolePrintString(const String& textRef)
 #endif
 	String copy = textRef + String("\n");
 	::OutputDebugString(copy);
+}
+
+void GameEngine::ConsolePrintString(std::string const& msg)
+{
+	std::cout << msg.c_str() << "\n";
+	::OutputDebugStringA(msg.c_str());
 }
 
 //void GameEngine::ConsolePrintString(string text)
@@ -1342,6 +1352,11 @@ void GameEngine::SetWidth(int iWidth)
 void GameEngine::SetHeight(int iHeight)
 {
 	m_iHeight = iHeight;
+}
+
+void GameEngine::SetPhysicsStep(bool bEnabled)
+{
+	m_PhysicsStepEnabled = bEnabled;
 }
 
 void GameEngine::SetSleep(bool bSleep)

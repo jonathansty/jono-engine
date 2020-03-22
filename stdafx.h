@@ -109,7 +109,6 @@ using Microsoft::WRL::ComPtr;
 using std::shared_ptr;
 using std::weak_ptr;
 
-
 #include "rtti/rtti.h"
 
 

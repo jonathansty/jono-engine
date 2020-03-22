@@ -11,6 +11,7 @@
 
 #include "ContactListener.h"
 
+#include "Framework/World.h"
 #include "ElectronicJonaJoy.h"
 
 class Avatar;
@@ -42,6 +43,7 @@ class LevelEnd;
 class TriggerList;
 class FileManager;
 
+
 class Game final : public IGameState
 {
 public:
@@ -51,19 +53,14 @@ public:
 	Game( const Game& ) = delete;
 	Game& operator=( const Game& ) = delete;
 
-    void OnActivate() override;
-    void OnDeactivate() override;
+    void on_activate() override;
+    void on_deactivate() override;
+	void render_2d() override;
+	void update(double deltaTime) override;
 
-    void Render2D() {
-        Paint();
-    }
-
-    void Update(double deltaTime) {
-        Tick(deltaTime);
-    }
-
-    void Paint();
-    void Tick(double deltaTime);
+    // Legacy code
+    void paint();
+    void tick(double deltaTime);
     void Pause();
     void UnPause();
     void Unload();
@@ -73,29 +70,22 @@ public:
     bool GetLevelEnd();
     void Restart();
 
-    /*
-    * InitializeAll() : Removes everything (lists)and initializes it again
-    * LoadLevel() : Takes care of the not list objects
-    */
+    // Removes everything (lists)and initializes it again
     void Initializeall(const std::string& fileName);
     
+    // Takes care of the not list objects
     void LoadLevel(const std::string& filePath);
 
-
+    // Links a file manager with the game. Yuk!
     void SetFileManager(FileManager* tmpFileManager);
+
     Avatar* GetAvatar();
     Level* GetLevel();
     double GetAccuTime();
     int GetTotalDeaths();
     double GetTotalTime();
-private: 
 
-    /*
-    * Objects: Ticks every Object
-    * GameChecks: Checks for game Logic
-    * keyChecks = Keeps checking what keys are being pressed
-    * drawMode: Everything related to gameState
-    */
+private: 
     void UpdateObjects(double deltaTime);
     void UpdateGameChecks(double deltaTime);
     void UpdateKeyChecks(double deltaTime);
@@ -129,20 +119,29 @@ private:
 
     bool m_GameOver = false;
     bool m_LoadNextLevel = false;
-    enum class DrawMode{
-        PHYSICS,
-        PHYSICS_BITMAP,
-        BITMAP
-    }m_DrawMode = DrawMode::BITMAP;
+
+    enum DrawMode : uint32_t
+    {
+        Physics = 0x1,
+        Bitmap = 0x2
+    };
+	uint32_t m_DrawMode = DrawMode::Bitmap;
 
     // HUD pause menu
     // PhysicsActor setActive false
-    enum class GameState{
-        RUNNING,
-        PAUSED,
-    }m_GameState = GameState::RUNNING;
+    enum class GameState
+	{
+        Running,
+        Paused,
+    };
+	GameState m_GameState = GameState::Running;
     HUD* m_HudPtr = nullptr;
 
+
+    // entity world
+    std::shared_ptr<framework::World> m_World;
+
+    // Point to the owner game, this is used by the game state system
     ElectronicJonaJoy* _owner;
 };
 

@@ -183,19 +183,7 @@ void EnemyRocketLauncher::SetAvatar(Avatar* avatarPtr)
     m_AvatarPtr = avatarPtr;
     m_EnemyListPtr->SetAvatar(avatarPtr);
 }
-void EnemyRocketLauncher::SetActActive(bool tmpBool)
-{
-    if (tmpBool)
-    {
-        m_ActionState = actionState::WAITING;
-    }
-    else
-    {
-        m_ActionState = actionState::PAUSE;
-    }
-    Enemy::SetActActive(tmpBool);
-    m_EnemyListPtr->SetActActive(tmpBool);
-}
+
 bool EnemyRocketLauncher::GetAttackByAvatar()
 {
     Enemy* tmpRocket = m_EnemyListPtr->IsAttackedByAvatar();
@@ -209,6 +197,7 @@ bool EnemyRocketLauncher::GetAttackByAvatar()
     }
     return false;
 }
+
 void EnemyRocketLauncher::RemoveContactListener()
 {
     if (m_ActPtr != nullptr)

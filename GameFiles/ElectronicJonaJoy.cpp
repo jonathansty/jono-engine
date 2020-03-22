@@ -21,7 +21,6 @@ const std::string ElectronicJonaJoy::CONFIGPATH = std::string("Resources/cfg/con
 ElectronicJonaJoy::ElectronicJonaJoy()
 	: m_BeginTime()
 	, m_EndTime()
-	, m_LevelListPtr()
 {
 }
 
@@ -40,7 +39,7 @@ void ElectronicJonaJoy::GameInitialize(GameSettings &gameSettings)
 	gameSettings.m_WindowWidth = 1280;
 	gameSettings.m_WindowHeight = 720;
 	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableVSync;
-#if DEBUG | _DEBUG
+#ifdef _DEBUG
 	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableConsole;
 #endif
 	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableAA;
@@ -69,7 +68,7 @@ void ElectronicJonaJoy::GameStart()
 
 void ElectronicJonaJoy::GameEnd()
 {
-	_current_state->OnDeactivate();
+	_current_state->on_deactivate();
 	safe_delete(_current_state);
 
 	safe_delete(m_LevelListPtr);
@@ -89,7 +88,7 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 
 	if (_current_state)
 	{
-		_current_state->Update(deltaTime);
+		_current_state->update(deltaTime);
 	}
 	return;
 
@@ -97,7 +96,7 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 	switch (m_GameState)
 	{
 	case ElectronicJonaJoy::GameState::RUNNING:
-		m_Game->Tick(deltaTime);
+		m_Game->tick(deltaTime);
 		if (GAME_ENGINE->IsKeyboardKeyPressed(VK_F3))
 		{
 			LoadNextLevel(m_Game.get());
@@ -115,7 +114,7 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 		break;
 	case ElectronicJonaJoy::GameState::PAUSE:
 		m_HUDPtr->Tick(deltaTime);
-		m_Game->Tick(deltaTime);
+		m_Game->tick(deltaTime);
 		break;
 	case ElectronicJonaJoy::GameState::QUIT:
 		break;
@@ -189,14 +188,14 @@ void ElectronicJonaJoy::GamePaint(RECT rect)
 {
 	if (_current_state)
 	{
-		_current_state->Render2D();
+		_current_state->render_2d();
 	}
 	return;
 
 	switch (m_GameState)
 	{
 	case ElectronicJonaJoy::GameState::RUNNING:
-		m_Game->Paint();
+		m_Game->paint();
 		if (m_AccuTime < 5)
 		{
 			GAME_ENGINE->SetDefaultFont();
@@ -213,7 +212,7 @@ void ElectronicJonaJoy::GamePaint(RECT rect)
 		m_Menu->Paint();
 		break;
 	case ElectronicJonaJoy::GameState::PAUSE:
-		m_Game->Paint();
+		m_Game->paint();
 		m_HUDPtr->Paint();
 		break;
 	case ElectronicJonaJoy::GameState::QUIT:
@@ -241,14 +240,14 @@ void ElectronicJonaJoy::TransitionToState(IGameState* state)
 {
 	if (_current_state)
 	{
-		_current_state->OnDeactivate();
+		_current_state->on_deactivate();
 
 		delete _current_state;
 		_current_state = nullptr;
 	}
 
 	_current_state = state;
-	_current_state->OnActivate();
+	_current_state->on_activate();
 
 }
 
@@ -308,7 +307,7 @@ MainMenuState::MainMenuState(ElectronicJonaJoy* owner)
 
 }
 
-void MainMenuState::OnActivate()
+void MainMenuState::on_activate()
 {
 	_owner->m_FileManagerPtr->LoadGameMusic(ElectronicJonaJoy::CONFIGPATH);
 	_menu = new StartMenu();
@@ -321,18 +320,18 @@ void MainMenuState::OnActivate()
 	};
 }
 
-void MainMenuState::OnDeactivate()
+void MainMenuState::on_deactivate()
 {
 	delete _menu;
 	_menu = nullptr;
 }
 
-void MainMenuState::Update(double dt)
+void MainMenuState::update(double dt)
 {
 	_menu->Tick(dt);
 }
 
-void MainMenuState::Render2D()
+void MainMenuState::render_2d()
 {
 	_menu->Paint();
 }
@@ -342,28 +341,28 @@ MainMenuState::~MainMenuState()
 
 }
 
-LoadingScreenState::LoadingScreenState(ElectronicJonaJoy* owner) : _owner(owner)
-, _load_timer(1.0f)
+LoadingScreenState::LoadingScreenState(ElectronicJonaJoy* owner)
+	: _load_timer(1.0f)
+	, _owner(owner)
 {
 
 }
 
-void LoadingScreenState::OnActivate()
+void LoadingScreenState::on_activate()
 {
 	_loading_bitmap = BITMAP_MANAGER->LoadBitmapFile(String("Resources/Menu/LoadingScreen.png"));
 }
 
-void LoadingScreenState::Update(double dt)
+void LoadingScreenState::update(double dt)
 {
-	_load_timer -= dt;
+	_load_timer -= static_cast<float>(dt);
 	if (_load_timer <= 0.0f)
 	{
 		_owner->TransitionToState(new MainMenuState(_owner));
 	}
-
 }
 
-void LoadingScreenState::Render2D()
+void LoadingScreenState::render_2d()
 {
 	GameEngine::Instance()->DrawBitmap(_loading_bitmap);
 }

@@ -50,9 +50,9 @@
 #include "NpcHinter.h"
 #include "SoundManager.h"
 
-#define GAME_ENGINE (GameEngine::Instance())
-#define BITMAP_MANAGER (BitmapManager::Instance())
-#define SND_MANAGER (SoundManager::Instance())
+#define GAME_ENGINE GameEngine::Instance()
+#define BITMAP_MANAGER BitmapManager::Instance()
+#define SND_MANAGER SoundManager::Instance()
 
 Game::Game(ElectronicJonaJoy* owner)
     :_owner(owner)
@@ -77,39 +77,58 @@ Game::~Game()
 }
 
 
-void Game::OnActivate()
+void Game::on_activate()
 {
     // Load the first level
     std::string level_path = _owner->get_level_names()->GetLevel(_owner->get_curr_level());
-
     LoadLevel(level_path);
+
+    m_World = framework::World::create();
+
+	// TODO: Populate world from file
 
     m_HudPtr = new HUD(this);
 }
 
-void Game::OnDeactivate()
+void Game::on_deactivate()
 {
 
 }
 
-void Game::Tick(double deltaTime)
+void Game::render_2d()
+{
+	paint();
+}
+
+void Game::update(double deltaTime)
+{
+    float dt = static_cast<float>(deltaTime);
+
+	if(m_GameState == GameState::Running)
+	{
+		m_World->update(dt);
+	}
+
+	tick(deltaTime);
+}
+
+void Game::tick(double deltaTime)
 {
 	m_HudPtr->SetTime(GetAccuTime());
 	m_HudPtr->Tick(deltaTime);
 
-
-    if (m_GameState == GameState::RUNNING)
+    if (m_GameState == GameState::Running)
     {
         m_TotalTime += deltaTime;
         m_AccuTime += deltaTime;
 
         //Fade in and fade out of the soundv
-        if (!(SND_MANAGER->isMusicMuted())&& !(SND_MANAGER->isSoundMuted()))
+        if (!(SoundManager::Instance()->isMusicMuted())&& !(SoundManager::Instance()->isSoundMuted()))
         {
-            SND_MANAGER->FadeIn(m_SndBgMusicPtr, deltaTime);
+            SoundManager::Instance()->FadeIn(m_SndBgMusicPtr, deltaTime);
             if (m_CameraPtr->GetCameraShakeMode() == Camera::Shakemode::EPICEFFECT)
             {
-                SND_MANAGER->FadeOut(m_SndBgMusicPtr, deltaTime);
+                SoundManager::Instance()->FadeOut(m_SndBgMusicPtr, deltaTime);
             }
         }
         UpdateDrawMode();
@@ -229,20 +248,22 @@ void Game::UpdateGameChecks(double deltaTime)
 }
 void Game::UpdateKeyChecks(double deltaTime)
 {
-    if (m_GameState == GameState::RUNNING)
+	auto engine = GameEngine::Instance();
+    // Process input for when the game is running
+    if (m_GameState == GameState::Running)
     {
-        if (GAME_ENGINE->IsKeyboardKeyPressed('R') && !(GAME_ENGINE->IsKeyboardKeyDown(VK_CONTROL)))
+        if (engine->IsKeyboardKeyPressed('R') && !(engine->IsKeyboardKeyDown(VK_CONTROL)))
         {
             Restart();
         }
-        if (GAME_ENGINE->IsKeyboardKeyPressed('X') && m_AvatarPtr->GetMoveState() == Avatar::moveState::ATTACK)
+        if (engine->IsKeyboardKeyPressed('X') && m_AvatarPtr->GetMoveState() == Avatar::moveState::ATTACK)
         {
             AttackBeam* tmpBeam = new AttackBeam(m_AvatarPtr->GetPosition());
             tmpBeam->SetLevel(m_LevelPtr);
             tmpBeam->SetGroundBitmap(String("Resources/Animations/AttackBeamGround.png"));
             m_AttackBeamListPtr->Add(tmpBeam);
         }
-        if (GAME_ENGINE->IsKeyboardKeyPressed('L') && GAME_ENGINE->IsKeyboardKeyPressed('K'))
+        if (engine->IsKeyboardKeyPressed('L') && engine->IsKeyboardKeyPressed('K'))
         {
             Camera::Shakemode tmpShakeMode = m_CameraPtr->GetCameraShakeMode();
             switch (tmpShakeMode)
@@ -261,7 +282,7 @@ void Game::UpdateKeyChecks(double deltaTime)
             }
 
         }
-        if (GAME_ENGINE->IsKeyboardKeyPressed(VK_F5))
+        if (engine->IsKeyboardKeyPressed(VK_F5))
         {
             DOUBLE2 avatarPosition = m_AvatarPtr->GetPosition();
             DOUBLE2 avatarRespawnPosition = m_AvatarPtr->GetRespawnPosition();
@@ -270,90 +291,92 @@ void Game::UpdateKeyChecks(double deltaTime)
             m_AvatarPtr->SetSpawnPosition(avatarRespawnPosition);
             if (m_CameraPtr->GetCameraMode() == Camera::controlState::FOLLOWAVATAR)
             {
-                m_CameraPtr->setCameraPosition(m_AvatarPtr->GetPosition());
+                m_CameraPtr->SetCameraPosition(m_AvatarPtr->GetPosition());
             }
             
         }
-        if (GAME_ENGINE->IsKeyboardKeyPressed(VK_F11))
+        if (engine->IsKeyboardKeyPressed(VK_F11))
         {
             m_TimeMultiplier += 1;
-            GAME_ENGINE->ConsolePrintString(String("the game runs ") + String(m_TimeMultiplier) + String(" times faster."));
+            engine->ConsolePrintString(String("the game runs ") + String(m_TimeMultiplier) + String(" times faster."));
         }
-        if (GAME_ENGINE->IsKeyboardKeyPressed(VK_F10))
+        if (engine->IsKeyboardKeyPressed(VK_F10))
         {
             m_TimeMultiplier -= 1;
-            GAME_ENGINE->ConsolePrintString(String("the game runs ") + String(m_TimeMultiplier) + String(" times slower."));
+            engine->ConsolePrintString(String("the game runs ") + String(m_TimeMultiplier) + String(" times slower."));
         }
     }
-    if (m_GameState == GameState::RUNNING || m_GameState == GameState::PAUSED)
-    {
-        if (GAME_ENGINE->IsKeyboardKeyPressed(VK_ESCAPE))
-        {
-            switch (m_GameState)
-            {
-            case Game::GameState::RUNNING:
-                Pause();
-                m_GameState = GameState::PAUSED;
-                break;
-            case Game::GameState::PAUSED:
-                UnPause();
-                m_GameState = GameState::RUNNING;
-                break;
-            default:
-                break;
-            }
-        }
-        if (GAME_ENGINE->IsKeyboardKeyPressed(VK_F6))
-        {
-            DOUBLE2 mousePosition = GAME_ENGINE->GetMousePositionDOUBLE2();
-            mousePosition = m_CameraPtr->GetViewMatrix().Inverse().TransformPoint(mousePosition);
-            GAME_ENGINE->ConsolePrintString(String("[") +
-                String(mousePosition.x) +
-                String(", ") +
-                String(mousePosition.y) + String("]"));
-            if (m_EntityLastHitCheckpointPtr != nullptr)
-            {
-                GAME_ENGINE->ConsolePrintString(String("The camera position is: "));
-                GAME_ENGINE->ConsolePrintString(m_CameraPtr->GetCameraPosition().ToString());
-            }
-            
-        }
-    }
+
+	if (engine->IsKeyboardKeyPressed(VK_ESCAPE))
+	{
+		switch (m_GameState)
+		{
+		case Game::GameState::Running:
+			Pause();
+			m_GameState = GameState::Paused;
+			break;
+		case Game::GameState::Paused:
+			UnPause();
+			m_GameState = GameState::Running;
+			break;
+		default:
+			break;
+		}
+	}
+	if (engine->IsKeyboardKeyPressed(VK_F6))
+	{
+		DOUBLE2 mousePosition = engine->GetMousePositionDOUBLE2();
+		mousePosition = m_CameraPtr->GetViewMatrix().Inverse().TransformPoint(mousePosition);
+        engine->ConsolePrintString(String("[") +
+			String(mousePosition.x) +
+			String(", ") +
+			String(mousePosition.y) + String("]"));
+		if (m_EntityLastHitCheckpointPtr != nullptr)
+		{
+            engine->ConsolePrintString(String("The camera position is: "));
+            engine->ConsolePrintString(m_CameraPtr->GetCameraPosition().ToString());
+		}
+
+	}
 }
 void Game::UpdateDrawMode()
 {
-    if (GAME_ENGINE->IsKeyboardKeyPressed('P'))
+    auto engine = GameEngine::Instance();
+    if (engine->IsKeyboardKeyPressed('P'))
     {
-        switch (m_DrawMode)
+        if(m_DrawMode == DrawMode::Physics)
         {
-        case Game::DrawMode::PHYSICS:
-            m_DrawMode = DrawMode::PHYSICS_BITMAP;
-            GAME_ENGINE->ConsolePrintString(String("Draw mode is now changed to phyiscsActors and bitmaps."));
-            break;
-        case Game::DrawMode::PHYSICS_BITMAP:
-            m_DrawMode = DrawMode::BITMAP;
-            GAME_ENGINE->EnablePhysicsDebugRendering(false);
-            GAME_ENGINE->ConsolePrintString(String("Draw mode is now changed to Bitmaps."));
-            break;
-        case Game::DrawMode::BITMAP:
-            m_DrawMode = DrawMode::PHYSICS;
-            GAME_ENGINE->EnablePhysicsDebugRendering(true);
-            GAME_ENGINE->ConsolePrintString(String("Draw mode is now changed to physicsActors only."));
-            break;
+            m_DrawMode = DrawMode::Bitmap;
+            engine->EnablePhysicsDebugRendering(false);
+            engine->ConsolePrintString(String("Draw mode is now changed to PhysicsActors and bitmaps."));
+        }
+        else if(m_DrawMode == (DrawMode::Physics | DrawMode::Bitmap))
+        {
+            m_DrawMode = DrawMode::Physics;
+            engine->EnablePhysicsDebugRendering(true);
+            engine->ConsolePrintString(String("Draw mode is now changed to Bitmaps."));
+        }
+        else if(m_DrawMode == DrawMode::Bitmap)
+        {
+            m_DrawMode = DrawMode::Physics | DrawMode::Bitmap;
+            engine->EnablePhysicsDebugRendering(true);
+            engine->ConsolePrintString(String("Draw mode is now changed to PhysicsActors only."));
         }
     }
 }
-void Game::Paint()
+void Game::paint()
 {
+	auto engine = GameEngine::Instance();
+
     assert(m_CameraPtr);
     MATRIX3X2 matView = m_CameraPtr->GetViewMatrix();
    
-    //TODO: Refactor these stupid lists using entities?
-    if ((m_DrawMode == DrawMode::BITMAP || m_DrawMode == DrawMode::PHYSICS_BITMAP))
+    //TODO: Refactor these lists into an actual systems (entity system or actors)
+    if (m_DrawMode & DrawMode::Bitmap)
     {
-        GAME_ENGINE->SetViewMatrix(MATRIX3X2::CreateIdentityMatrix());
+        engine->SetViewMatrix(MATRIX3X2::CreateIdentityMatrix());
         drawBackgroundGradient(15);
-        GAME_ENGINE->SetViewMatrix(matView);
+        engine->SetViewMatrix(matView);
 
         m_CheckPointRotLightPtr->Paint();
         m_CheckPointBgPtr->Paint();
@@ -368,29 +391,25 @@ void Game::Paint()
         m_CoinListPtr->Paint();
         m_LevelPtr->Paint();
         m_EnemyListPtr->PaintRockets();
-        GAME_ENGINE->SetWorldMatrix(matView.Inverse());
+        engine->SetWorldMatrix(matView.Inverse());
         m_CameraPtr->Paint();
-        GAME_ENGINE->SetColor(COLOR(0, 0, 0));
+        engine->SetColor(COLOR(0, 0, 0));
     }
-    else 
+
+    if(m_DrawMode & DrawMode::Physics)
     {
         m_EnemyListPtr->PaintDebug();
         m_CoinListPtr->PaintDebug();
         m_EntityListPtr->PaintDebug();
         m_AvatarPtr->PaintDebug();
-        GAME_ENGINE->SetViewMatrix(MATRIX3X2::CreateIdentityMatrix());
-        GAME_ENGINE->SetViewMatrix(matView);
-        GAME_ENGINE->SetWorldMatrix(matView.Inverse());
+        engine->SetViewMatrix(MATRIX3X2::CreateIdentityMatrix());
+        engine->SetViewMatrix(matView);
+        engine->SetWorldMatrix(matView.Inverse());
     }
 
     m_HudPtr->Paint();
 }
 
-/*
-* InitializeAll() : Removes everything (lists)and initializes it again
-* LoadLevel() : Takes care of the not list objects
-* RemoveAll() : Removes every thing including the lists
-*/
 void Game::Initializeall(const std::string& fileName)
 {
     m_CheckPointBgPtr->SetPosition(DOUBLE2(-650, -300));
@@ -424,21 +443,11 @@ void Game::Initializeall(const std::string& fileName)
     {
         m_HudPtr->LinkLevers(m_LevelEndPtr->GetLeversArray());
     }
-
-    // -----------------    TESTING     -------------------- //
-    // Spawn position in dev level: "1696,1762"
-
-    // -----------------    TESTING     -------------------- //
-    
-
-    
-    
 }
 
 void Game::LoadLevel(const std::string& filePath)
 {
-    
-    m_GameState = GameState::RUNNING;
+    m_GameState = GameState::Running;
     if (m_SndEpicModePtr != nullptr)
     {
         m_SndEpicModePtr->Stop();
@@ -497,31 +506,14 @@ void Game::drawBackgroundGradient(int levels)
         GAME_ENGINE->SetColor(COLOR(0, 0, 0));
     }
 }
-/**
-* Methods for Pausing and unpausing the game.
-*/
+
 void Game::Pause()
 {
-    if (m_AvatarPtr != nullptr)
-    {
-        m_AvatarPtr->GetActor()->SetActive(false);
-    }
-    if (m_EnemyListPtr != nullptr)
-    {
-        m_EnemyListPtr->SetActActive(false);
-    }
-    
+    GameEngine::Instance()->SetPhysicsStep(false);
 }
 void Game::UnPause()
 {
-    if (m_AvatarPtr != nullptr)
-    {
-        m_AvatarPtr->GetActor()->SetActive(true);
-    }
-    if (m_EnemyListPtr != nullptr)
-    {
-        m_EnemyListPtr->SetActActive(true);
-    }
+    GameEngine::Instance()->SetPhysicsStep(true);
     
 }
 /**
@@ -533,7 +525,7 @@ void Game::UnPause()
 */
 void Game::Reset(const std::string& fileName)
 {
-    m_GameState = GameState::RUNNING;
+    m_GameState = GameState::Running;
     m_GameOver = false;
     Initializeall(fileName);
     //m_CameraPtr->Reset(DOUBLE2(m_AvatarPtr->GetPosition().x, m_CameraPtr->GetCameraPosition().y));
@@ -542,7 +534,7 @@ void Game::Reset(const std::string& fileName)
 void Game::Restart()
 {
     m_TotalDeaths++;
-    m_GameState = GameState::RUNNING;
+    m_GameState = GameState::Running;
     m_GameOver = false;
     m_AvatarPtr->Reset();
    

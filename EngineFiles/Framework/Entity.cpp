@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include <stdafx.h>
 #include "Entity.h"
 
 #include "Component.h"
@@ -21,10 +21,12 @@ IMPL_REFLECT(Entity)
 }
 
 Entity::Entity(XMFLOAT2 pos)
-	: _pos(pos.x, pos.y, 0.0)
-	, _scale({ 1.0f, 1.0f,1.0f })
+	: _parent(nullptr)
+	, _pos(pos.x, pos.y, 0.0)
+	, _scale({ 1.0f, 1.0f, 1.0f })
+	, _rot(XMQuaternionIdentity())
+	, _rot_euler({0.0f,0.0f,0.0f})
 {
-
 }
 
 Entity::Entity()
@@ -50,7 +52,7 @@ void framework::Entity::set_local_scale(XMFLOAT3 scale)
 	_scale = scale;
 }
 
-void framework::Entity::set_rotation(XMVECTOR quat)
+void Entity::set_rotation(XMVECTOR quat)
 {
 	XMMATRIX m = XMMatrixRotationQuaternion(quat);
 	XMVECTOR scale, rot, trans;

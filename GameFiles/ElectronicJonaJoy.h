@@ -28,17 +28,17 @@ class FileManager;
 
 interface IGameState
 {
-    virtual ~IGameState() {}
+	virtual ~IGameState() = default;
 
-    virtual void OnActivate() { }
-    virtual void OnDeactivate() {}
+    virtual void on_activate() { }
+    virtual void on_deactivate() {}
 
-    virtual void Update(double dt) {}
-    virtual void Render2D() {}
+    virtual void update(double dt) {}
+    virtual void render_2d() {}
 
 };
 
-class ElectronicJonaJoy : public AbstractGame
+class ElectronicJonaJoy final : public AbstractGame
 {
 public:				
 	ElectronicJonaJoy();
@@ -107,13 +107,13 @@ public:
 	MainMenuState(ElectronicJonaJoy* owner);
     ~MainMenuState();
 
-	void OnActivate() override;
+	void on_activate() override;
 
-	void OnDeactivate() override;
+	void on_deactivate() override;
 
-    void Update(double dt) override;
+    void update(double dt) override;
 
-    void Render2D() override;
+    void render_2d() override;
 private:
     StartMenu* _menu;
 	ElectronicJonaJoy* _owner;
@@ -123,13 +123,13 @@ class LoadingScreenState final : public IGameState
 {
 public:
     LoadingScreenState(ElectronicJonaJoy* owner);
-    ~LoadingScreenState() { }
+    ~LoadingScreenState() = default;
 
-    virtual void OnActivate() override;
+    virtual void on_activate() override;
 
-    virtual void Update(double dt) override;
+    virtual void update(double dt) override;
 
-    virtual void Render2D() override;
+    virtual void render_2d() override;
 
 private:
     Bitmap* _loading_bitmap;

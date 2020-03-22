@@ -256,6 +256,7 @@ void Camera::ManualMode(double deltaTime, DOUBLE2 &oldPosition)
 
 void Camera::Paint()
 {
+    auto engine = GameEngine::Instance();
     if (m_ShakeMode == Shakemode::EPICEFFECT)
     {
         
@@ -274,20 +275,22 @@ void Camera::Paint()
     }
     if (m_EpicEffectBarsSize > 2)
     {
-        GAME_ENGINE->SetColor(COLOR(0, 0, 0));
-        GAME_ENGINE->FillRect(0, 0, GAME_ENGINE->GetWidth(), (int)m_EpicEffectBarsSize);
-        GAME_ENGINE->FillRect(0, (int)(GAME_ENGINE->GetHeight() - m_EpicEffectBarsSize), GAME_ENGINE->GetWidth(), GAME_ENGINE->GetHeight());
+        int width = engine->GetWidth();
+        int height = engine->GetHeight();
+        engine->SetColor(COLOR(0, 0, 0));
+        engine->FillRect(0, 0, width, static_cast<int>(m_EpicEffectBarsSize));
+        engine->FillRect(0, static_cast<int>(height - m_EpicEffectBarsSize), width, height);
     }
     
 }
 //! Gets the camera Dimensions
-DOUBLE2 Camera::GetCameraDimension()
+DOUBLE2 Camera::GetCameraDimension() const
 {
     return m_CameraDimension;
 }
 
 //! Sets the current cameraPosition
-void Camera::setCameraPosition(DOUBLE2 position)
+void Camera::SetCameraPosition(DOUBLE2 position)
 {
     m_ActPtr->SetPosition(position);
     m_ActBoundsPtr->SetPosition(position);
@@ -300,27 +303,27 @@ void Camera::SetCameraStartPosition(DOUBLE2 position)
     m_StartPosition = position;
 }
 //! Sets the camera MaxSpeed
-void Camera::setCameraSpeed(double speed)
+void Camera::SetCameraSpeed(double speed)
 {
     m_MaxSpeed = speed;
 }
 //! Returns the cameraPosition
-DOUBLE2 Camera::GetCameraPosition()
+DOUBLE2 Camera::GetCameraPosition() const
 {
     return m_ActPtr->GetPosition();
 }
 //! Returns the current speed of the camera.
-double Camera::getCameraSpeed()
+double Camera::GetCameraSpeed() const
 {
     return m_Speed;
 }
 //! Gets the startPosition of the camera in the level.
-DOUBLE2 Camera::GetCameraStartPosition()
+DOUBLE2 Camera::GetCameraStartPosition() const
 {
     return m_StartPosition;
 }
 //!Gets the current Camere Direction
-DOUBLE2 Camera::GetCameraDirection()
+DOUBLE2 Camera::GetCameraDirection() const
 {
     return m_Direction;
 }
@@ -335,11 +338,11 @@ void Camera::Reset(DOUBLE2 position)
     m_Speed = 0;
     m_AccuTime = 0;
     m_Angle = 0;
-    setCameraPosition(position);
+    SetCameraPosition(position);
     m_CameraControlState = m_DefaultCameraControlState;
 }
 //! Gets the current camera Angle
-double Camera::GetAngle()
+double Camera::GetAngle() const
 {
     return m_Angle;
 }
@@ -409,7 +412,7 @@ void Camera::ShakeScreen(int amount, double length, double deltaTime)
     
 }
 //! Returns the camera ShakeMode ( NOSHAKE, ATTACKSHAKE or EPICEFFECT)
-Camera::Shakemode Camera::GetCameraShakeMode()
+Camera::Shakemode Camera::GetCameraShakeMode() const
 {
     return m_ShakeMode;
 }
@@ -451,7 +454,7 @@ void Camera::HandleScreenShaking(double deltaTime)
         break;
     }
 }
-Camera::controlState Camera::GetCameraMode()
+Camera::controlState Camera::GetCameraMode() const
 {
 
     return m_CameraControlState;

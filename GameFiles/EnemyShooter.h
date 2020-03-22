@@ -41,7 +41,6 @@ public:
     DOUBLE2 GetPosition();
 
     virtual void RemoveContactListener();
-    virtual void SetActActive(bool tmpBool);
     void SetSpawnPosition(DOUBLE2 respawnPosition);
     void Reset();
     void SetMirror(bool mirror);

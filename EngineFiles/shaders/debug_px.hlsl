@@ -15,7 +15,7 @@ cbuffer DebugCB : register(b1)
 #define VisualizeMode_WorldNormal 6
 
 // PBR inputs
-Texture2D<float4> g_Albedo    : register(t0);
+Texture2D<float4> g_albedo    : register(t0);
 Texture2D<float4> g_Data : register(t1); // .x: metalness, .y : roughness 
 Texture2D<float4> g_Normal    : register(t2);
 
@@ -27,7 +27,7 @@ float4 main(VS_OUT vout) : SV_Target
 	float2 uv = vout.uv;
 
 	Material material = CreateMaterial();
-	material.albedo = g_Albedo.Sample(g_AllLinearSampler, uv);
+	material.albedo = g_albedo.Sample(g_AllLinearSampler, uv);
 	material.tangentNormal = (g_Normal.Sample(g_AllLinearSampler, uv).rgb * 2.0 - 1.0);
 
 	float4 data = g_Data.Sample(g_AllLinearSampler, uv);

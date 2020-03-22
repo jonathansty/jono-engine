@@ -18,7 +18,7 @@ class Level;
 class AttackBeam 
 {
 public:
-	AttackBeam(DOUBLE2 position );
+	explicit AttackBeam(DOUBLE2 position );
 	virtual ~AttackBeam( );
 
 	// C++11 make the class non-copyable

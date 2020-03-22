@@ -71,7 +71,7 @@ void Hello3D::GameStart()
 	::SetCapture(GameEngine::Instance()->GetWindow());
 
 	using namespace framework;
-	_world = std::make_unique<framework::World>();
+	_world = std::make_shared<framework::World>();
 
 	GameEngine::Instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
 

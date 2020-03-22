@@ -4,9 +4,13 @@
 #include "Framework/World.h"
 
 
+using framework::World;
+using framework::EntityHandle;
+
 class HelloWorldGame : public AbstractGame
 {
 public:
+
 	void GameInitialize(GameSettings& gameSettings)
 	{
 		gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableConsole;
@@ -22,9 +26,9 @@ public:
 	void DebugUI() override;
 
 private:
-	std::unique_ptr<framework::World> _world;
-	framework::World::EntityId _rotatorEntity;
-	framework::World::EntityId _parentEntity;
+	std::unique_ptr<World> _world;
+	EntityHandle _rotatorEntity;
+	EntityHandle _parentEntity;
 };
 
 

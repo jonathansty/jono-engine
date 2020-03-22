@@ -88,30 +88,28 @@ void Enemy::setName(String name)
 {
     m_Name = name;
 }
+
 void Enemy::PaintDebug()
 {
+    auto engine = GameEngine::Instance();
     if (m_ActPtr != nullptr)
     {
         DOUBLE2 position = m_ActPtr->GetPosition();
-        GAME_ENGINE->SetDefaultFont();
-        GAME_ENGINE->DrawString(String(m_Name), position);
+        engine->SetDefaultFont();
+        engine->DrawString(String(m_Name), position);
     }
 }
+
 String Enemy::GetName()
 {
     return m_Name;
 }
-void Enemy::SetActActive(bool tmpBool)
-{
-    if (m_ActPtr != nullptr)
-    {
-        m_ActPtr->SetActive(tmpBool);
-    }  
-}
+
 bool Enemy::IsHit()
 {
     return m_IsHit;
 }
+
 void Enemy::Reset()
 {
 

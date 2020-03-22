@@ -74,9 +74,9 @@ void HelloWorldGame::GameStart()
 	GameEngine::Instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
 
 	_parentEntity = _world->create_entity(XMFLOAT2(100, 0));
-	_world->get_entity(_parentEntity)->create_component<BitmapComponent>(ResourcePaths::bmp_coin_silver);
-	_world->get_entity(_parentEntity)->create_component<SimpleMovement>();
-	_world->get_entity(_parentEntity)->set_name("Center");
+	_parentEntity->create_component<BitmapComponent>(ResourcePaths::bmp_coin_silver);
+	_parentEntity->create_component<SimpleMovement>();
+	_parentEntity->set_name("Center");
 
 	for (int i =0; i < 10; ++i)
 	{
@@ -84,15 +84,15 @@ void HelloWorldGame::GameStart()
 		float x = cos(XMConvertToRadians(d)) * 100.0f;
 		float y = sin(XMConvertToRadians(d)) * 100.0f;
 
-		World::EntityId ent = _world->create_entity();
-		_world->get_entity(ent)->set_local_position(x, y);
-		_world->get_entity(ent)->create_component<BitmapComponent>(ResourcePaths::bmp_coin_gold);
-		_world->get_entity(ent)->attach_to(_world->get_entity(_parentEntity));
+		EntityHandle ent = _world->create_entity();
+		ent->set_local_position(x, y);
+		ent->create_component<BitmapComponent>(ResourcePaths::bmp_coin_gold);
+		ent->attach_to(_parentEntity);
 
 		std::string name = "Coin_" + std::to_string(i);
-		_world->get_entity(ent)->set_name(name);
+		ent->set_name(name);
 
-		XMFLOAT3 pos = _world->get_entity(ent)->get_world_position();
+		XMFLOAT3 pos = ent->get_world_position();
 		printf("%.2f - %.2f - %.2f\n", pos.x, pos.y, pos.z);
 	}
 

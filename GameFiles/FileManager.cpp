@@ -416,9 +416,9 @@ void FileManager::ExtractCamera(tinyxml2::XMLElement* element)
             tmpCamera->SetDefaultCameraMode(Camera::controlState::FOLLOWAVATAR);
         }
 
-        tmpCamera->setCameraPosition(position);
+        tmpCamera->SetCameraPosition(position);
         tmpCamera->SetCameraStartPosition(startPosition);
-        tmpCamera->setCameraSpeed(speed);
+        tmpCamera->SetCameraSpeed(speed);
         tmpCamera->SetScale(scale);
         m_CameraPtr = tmpCamera;
         GAME_ENGINE->ConsolePrintString(String("Camera succesfully created!"));

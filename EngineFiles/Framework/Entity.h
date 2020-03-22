@@ -11,8 +11,8 @@ namespace framework
 
 	public:
 		Entity();
-		Entity(XMFLOAT2 pos);
-		Entity(XMFLOAT3 pos);
+		explicit Entity(XMFLOAT2 pos);
+		explicit Entity(XMFLOAT3 pos);
 
 		virtual ~Entity();
 

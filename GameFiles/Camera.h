@@ -46,28 +46,28 @@ public:
     MATRIX3X2 GetViewMatrix();
 
     //! Gets the camera Dimensions
-    DOUBLE2 GetCameraDimension();
+    DOUBLE2 GetCameraDimension() const;
 
     //! Sets the current cameraPosition
-    void setCameraPosition(DOUBLE2 position);
+    void SetCameraPosition(DOUBLE2 position);
 
     //! Sets the cameraStartPosition
     void SetCameraStartPosition(DOUBLE2 position);
 
     //! Returns the current speed of the camera.
-    double getCameraSpeed();
+    double GetCameraSpeed() const;
 
     //! Sets the camera MaxSpeed
-    void setCameraSpeed(double speed);
+    void SetCameraSpeed(double speed);
 
     //! Returns the cameraPosition
-    DOUBLE2 GetCameraPosition();
+    DOUBLE2 GetCameraPosition() const;
 
     //! Gets the startPosition of the camera in the level.
-    DOUBLE2 GetCameraStartPosition();
+    DOUBLE2 GetCameraStartPosition() const;
 
     //! Gets the current Camere Direction
-    DOUBLE2 GetCameraDirection();
+    DOUBLE2 GetCameraDirection() const;
 
     //! Resets the camera
     //! Resets Speed
@@ -77,7 +77,7 @@ public:
     void Reset(DOUBLE2 position);
 
     //! Gets the current camera Angle
-    double GetAngle();
+    double GetAngle() const;
     
     //! Sets the angle of the camera
     void SetAngle(double angle);
@@ -92,13 +92,13 @@ public:
     void SetCameraMode(controlState controlstate);
 
     //!Gets the current camera Mode.
-    controlState GetCameraMode();
+    controlState GetCameraMode() const;
 
     //! Shakes the screen. Amount determines how strong it is and length determines the time period
     void ShakeScreen(int amount, double length, double deltaTime);
 
     //! Returns the camera ShakeMode ( NOSHAKE, ATTACKSHAKE or EPICEFFECT)
-    Shakemode GetCameraShakeMode();
+    Shakemode GetCameraShakeMode() const;
 
     //! Sets the current shake mode ( NOSHAKE, ATTACKSHAKE or EPICEFFECT)
     void SetCameraShakeMode(Shakemode tmpShakeMode);

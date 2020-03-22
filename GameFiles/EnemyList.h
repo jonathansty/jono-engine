@@ -25,12 +25,6 @@ public:
 	EnemyList( const EnemyList& ) = delete;
 	EnemyList& operator=( const EnemyList& ) = delete;
 
-	//--------------------------------------------------------
-	// ContactListener overloaded member function declarations
-	//--------------------------------------------------------
-	//virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr); 
-	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
-	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
     void Tick(double deltaTime);
     void Paint();
     void PaintRockets();
@@ -43,9 +37,8 @@ public:
     
     Enemy* IsHit();
     void SetAvatar(Avatar* avatarPtr);
-    void SetActActive(bool tmpBoolean);
     void Reset();
-    int GetSize();
+    int GetSize() const;
 
     Enemy* IsAttackedByAvatar();
 
