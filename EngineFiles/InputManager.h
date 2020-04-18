@@ -58,7 +58,7 @@ private:
 	// Not intended to be used by students
 	bool IsMouseButtonDown_unsafe(int button, bool previousFrame = false) const;
 
-	friend class GameEngine;
+	friend class game_engine;
 
 	// Game Engine captures windows messages and sends them to this manager
 	//void KeyboardKeyPressed(BYTE key);

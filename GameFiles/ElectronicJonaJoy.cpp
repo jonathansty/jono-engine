@@ -12,10 +12,6 @@
 #include "Avatar.h"
 #include "FileManager.h"
 
-#define GAME_ENGINE (GameEngine::GetSingleton())
-#define BITMAP_MANAGER (BitmapManager::GetSingleton())
-#define SND_MANAGER (SoundManager::GetSingleton())
-
 const std::string ElectronicJonaJoy::CONFIGPATH = std::string("Resources/cfg/config.xml");
 
 ElectronicJonaJoy::ElectronicJonaJoy()
@@ -50,7 +46,7 @@ void ElectronicJonaJoy::GameStart()
 {
 	char msg[256];
 	sprintf_s(msg, "Electronic Jona Joy Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
-	GameEngine::Instance()->ConsolePrintString(String(msg));
+	game_engine::instance()->ConsolePrintString(String(msg));
 
 	time_t beginTime;
 	time(&beginTime);
@@ -76,8 +72,8 @@ void ElectronicJonaJoy::GameEnd()
 	safe_delete(m_Menu);
 	safe_delete(m_FileManagerPtr);
 
-	BitmapManager::Shutdown();
-	SoundManager::Shutdown();
+	bitmap_manager::Shutdown();
+	sound_manager::Shutdown();
 }
 
 void ElectronicJonaJoy::GameTick(double deltaTime)
@@ -97,11 +93,11 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 	{
 	case ElectronicJonaJoy::GameState::RUNNING:
 		m_Game->tick(deltaTime);
-		if (GAME_ENGINE->IsKeyboardKeyPressed(VK_F3))
+		if (game_engine::instance()->IsKeyboardKeyPressed(VK_F3))
 		{
 			LoadNextLevel(m_Game.get());
 		}
-		if (GAME_ENGINE->IsKeyboardKeyPressed(VK_F4))
+		if (game_engine::instance()->IsKeyboardKeyPressed(VK_F4))
 		{
 			ReloadCurrentLevel();
 		}
@@ -132,7 +128,7 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 	}
 
 	//Create pause menu on escape press.
-	if (GAME_ENGINE->IsKeyboardKeyPressed(VK_ESCAPE))
+	if (game_engine::instance()->IsKeyboardKeyPressed(VK_ESCAPE))
 	{
 		switch (m_GameState)
 		{
@@ -198,17 +194,17 @@ void ElectronicJonaJoy::GamePaint(RECT rect)
 		m_Game->paint();
 		if (m_AccuTime < 5)
 		{
-			GAME_ENGINE->SetDefaultFont();
-			GAME_ENGINE->DrawString(String(m_LevelListPtr->GetLevel(m_CurrentLevel).c_str()), 10, GAME_ENGINE->GetHeight() - 20);
+			game_engine::instance()->SetDefaultFont();
+			game_engine::instance()->DrawString(String(m_LevelListPtr->GetLevel(m_CurrentLevel).c_str()), 10, game_engine::instance()->GetHeight() - 20);
 		}
 		m_HUDPtr->Paint();
 		if (m_Game->GetGameOver())
 		{
-			m_HUDPtr->PaintGameOverWindow(DOUBLE2(GAME_ENGINE->GetWidth() / 2, GAME_ENGINE->GetHeight() / 2));
+			m_HUDPtr->PaintGameOverWindow(DOUBLE2(game_engine::instance()->GetWidth() / 2, game_engine::instance()->GetHeight() / 2));
 		}
 		break;
 	case ElectronicJonaJoy::GameState::MENU:
-		GAME_ENGINE->SetViewMatrix(MATRIX3X2::CreateIdentityMatrix());
+		game_engine::instance()->SetViewMatrix(MATRIX3X2::CreateIdentityMatrix());
 		m_Menu->Paint();
 		break;
 	case ElectronicJonaJoy::GameState::PAUSE:
@@ -218,7 +214,7 @@ void ElectronicJonaJoy::GamePaint(RECT rect)
 	case ElectronicJonaJoy::GameState::QUIT:
 		break;
 	case ElectronicJonaJoy::GameState::LOADING:
-		GAME_ENGINE->DrawBitmap(m_BmpLoadingPtr);
+		game_engine::instance()->DrawBitmap(m_BmpLoadingPtr);
 		break;
 	default:
 		break;
@@ -350,7 +346,7 @@ LoadingScreenState::LoadingScreenState(ElectronicJonaJoy* owner)
 
 void LoadingScreenState::on_activate()
 {
-	_loading_bitmap = BITMAP_MANAGER->LoadBitmapFile(String("Resources/Menu/LoadingScreen.png"));
+	_loading_bitmap = bitmap_manager::instance()->LoadBitmapFile(String("Resources/Menu/LoadingScreen.png"));
 }
 
 void LoadingScreenState::update(double dt)
@@ -364,5 +360,5 @@ void LoadingScreenState::update(double dt)
 
 void LoadingScreenState::render_2d()
 {
-	GameEngine::Instance()->DrawBitmap(_loading_bitmap);
+	game_engine::instance()->DrawBitmap(_loading_bitmap);
 }

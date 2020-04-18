@@ -1,22 +1,9 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "Arrow.h"
 #include "SoundManager.h"
 #include "Avatar.h"
 #include "Level.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-#define SND_MANAGER (SoundManager::GetSingleton())
 
 int Arrow::m_InstanceCounter = 0;
 Arrow::Arrow(DOUBLE2 position, Bitmap* bmpPtr):
@@ -34,7 +21,7 @@ m_BmpPtr(bmpPtr)
     m_ActPtr->SetGravityScale(0);
     m_ActPtr->SetBullet(true);
     m_ActPtr->SetCollisionFilter(collisionFilter);
-    //GAME_ENGINE->ConsolePrintString(m_Position.ToString());
+    //game_engine::instance()->ConsolePrintString(m_Position.ToString());
 
     m_ActBottomTriggerPtr = new PhysicsActor(position + DOUBLE2(0, 40), 0, BodyType::DYNAMIC);
     //m_ActBottomTriggerPtr->AddBoxShape(m_BmpPtr->GetWidth() / 2, 20);
@@ -48,7 +35,7 @@ m_BmpPtr(bmpPtr)
     m_ActBottomTriggerPtr->AddContactListener(this);
     m_ActBottomTriggerPtr->SetCollisionFilter(collisionFilter);
 
-    m_SndJumpPtr = SND_MANAGER->LoadSound(String("Resources/Sound/Entity/Jump2.wav"));
+    m_SndJumpPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/Jump2.wav"));
     m_SndJumpPtr->SetVolume(0.2);
 }
 
@@ -102,9 +89,9 @@ void Arrow::Paint()
 {
     MATRIX3X2 matWorldTransform;
     matWorldTransform = { DOUBLE2(1, 0), DOUBLE2(0, 1), m_Position - DOUBLE2(m_BmpPtr->GetWidth()/2,m_BmpPtr->GetHeight()/2) };
-    GAME_ENGINE->SetWorldMatrix(matWorldTransform);
-    GAME_ENGINE->DrawBitmap(m_BmpPtr);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matWorldTransform);
+    game_engine::instance()->DrawBitmap(m_BmpPtr);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Arrow::Tick(double deltaTime)
 {

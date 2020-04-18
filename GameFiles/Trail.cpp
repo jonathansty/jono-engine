@@ -1,23 +1,7 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "Trail.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 Trail::Trail(DOUBLE2 position) :
 m_Position(position)
 {
@@ -56,7 +40,7 @@ void Trail::Paint(DOUBLE2 position)
     {
         m_deqTrailPtrArr.pop_back();
     }
-    GAME_ENGINE->SetColor(COLOR(255, 255, 255, m_Opacity));
+    game_engine::instance()->SetColor(COLOR(255, 255, 255, m_Opacity));
     for (std::size_t i = 0, n = m_deqTrailPtrArr.size(); i < n - 1; i++)
     {
         DOUBLE2 pos = m_deqTrailPtrArr[i];
@@ -66,7 +50,7 @@ void Trail::Paint(DOUBLE2 position)
         if (size - (size / m_TrailLength)*(double)i > 0)
         {
 
-            GAME_ENGINE->FillEllipse(pos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
+            game_engine::instance()->FillEllipse(pos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
             DOUBLE2 vector = pos2 - pos;
             if (vector.Length() > 5)
             {
@@ -75,13 +59,13 @@ void Trail::Paint(DOUBLE2 position)
                     double spaceBetween = vector.Length() / m_AmountOfInterpolation;
                     DOUBLE2 normVector = vector.Normalized();
                     midPos = normVector*j*spaceBetween;
-                    GAME_ENGINE->FillEllipse(pos + midPos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
+                    game_engine::instance()->FillEllipse(pos + midPos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
                 }
             }
         }
 
     }
-    GAME_ENGINE->SetColor(COLOR(0, 0, 0,255));
+    game_engine::instance()->SetColor(COLOR(0, 0, 0,255));
 }
 void Trail::SetSize(double size)
 {

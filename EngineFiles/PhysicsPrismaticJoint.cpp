@@ -14,12 +14,12 @@ PhysicsPrismaticJoint::PhysicsPrismaticJoint(PhysicsActor *actAPtr, DOUBLE2 anch
 	prismaticJointDef.collideConnected = collide;
 	prismaticJointDef.referenceAngle = (float)0;
 	prismaticJointDef.localAxisA.Set((float)jointAxis.x, (float)jointAxis.y);
-	m_PrismaticJointPtr = dynamic_cast <b2PrismaticJoint*>((GameEngine::GetSingleton())->GetBox2DWorld()->CreateJoint(&prismaticJointDef));
+	m_PrismaticJointPtr = dynamic_cast <b2PrismaticJoint*>((game_engine::instance())->GetBox2DWorld()->CreateJoint(&prismaticJointDef));
 }
 
 PhysicsPrismaticJoint::~PhysicsPrismaticJoint()
 {
-	(GameEngine::GetSingleton())->GetBox2DWorld()->DestroyJoint(m_PrismaticJointPtr);
+	(game_engine::instance())->GetBox2DWorld()->DestroyJoint(m_PrismaticJointPtr);
 }
 
 void PhysicsPrismaticJoint::EnableJointLimits(bool enableLimits, double lowerTranslation, double upperTranslation)

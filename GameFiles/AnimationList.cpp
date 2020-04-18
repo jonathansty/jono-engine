@@ -1,23 +1,7 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
-	
-//---------------------------
-// Includes
-//---------------------------
 #include "AnimationList.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 AnimationList::AnimationList()
 {
 	// nothing to create

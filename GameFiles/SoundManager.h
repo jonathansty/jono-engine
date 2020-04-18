@@ -14,28 +14,20 @@
 // SoundManager Class									
 //-----------------------------------------------------
 #include "singleton.h"
-class SoundManager : public TSingleton<SoundManager>
+class sound_manager : public TSingleton<sound_manager>
 {
 private:
-    SoundManager();
-    friend class TSingleton<SoundManager>;
+    sound_manager();
+    friend class TSingleton<sound_manager>;
 
 public:
 	
-	virtual ~SoundManager( );
+	virtual ~sound_manager( );
 
 	// C++11 make the class non-copyable
-	SoundManager( const SoundManager& ) = delete;
-	SoundManager& operator=( const SoundManager& ) = delete;
+	sound_manager( const sound_manager& ) = delete;
+	sound_manager& operator=( const sound_manager& ) = delete;
 
-    //STATIC METHODS
-    static SoundManager* GetSingleton();
-	//--------------------------------------------------------
-	// ContactListener overloaded member function declarations
-	//--------------------------------------------------------
-	//virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr); 
-	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
-	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
     Sound* LoadSound(const String& fileName);
     Sound* LoadMusic(const String& fileName);
     void UnLoadMusic(Sound* sndPtr);

@@ -77,7 +77,7 @@ void Sound::Create(const String& filenameRef)
 
 	// 3. Create a source voice by calling the IXAudio2::CreateSourceVoice method on an instance of the XAudio2 engine.
 	// Bart: We are friends with AudioSystem class, could use game engine singleton instead
-	if (FAILED(hr = GameEngine::GetSingleton()->GetXAudio()->GetIXAudio()->CreateSourceVoice(&m_pSourceVoice, (WAVEFORMATEX*)&m_Wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &m_VoiceCallback, NULL, NULL)))
+	if (FAILED(hr = game_engine::instance()->GetXAudio()->GetIXAudio()->CreateSourceVoice(&m_pSourceVoice, (WAVEFORMATEX*)&m_Wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &m_VoiceCallback, NULL, NULL)))
 		//if (FAILED(hr = AudioSystem::m_pXAudio2->CreateSourceVoice(&m_pSourceVoice, (WAVEFORMATEX*)&m_Wfx)))
 	{
 		MessageBoxA(NULL, "Error Creating the Sound", "GameEngine says NO", MB_OK);
@@ -130,7 +130,7 @@ bool Sound::PlayImmediately()
 	if (pSourceVoice == nullptr)
 	{
 
-		if (FAILED(hr = GameEngine::GetSingleton()->GetXAudio()->GetIXAudio()->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)&m_Wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &m_VoiceCallback, NULL, NULL)))
+		if (FAILED(hr = game_engine::instance()->GetXAudio()->GetIXAudio()->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)&m_Wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &m_VoiceCallback, NULL, NULL)))
 			//if (FAILED(hr = AudioSystem::m_pXAudio2->CreateSourceVoice(&m_pSourceVoice, (WAVEFORMATEX*)&m_Wfx)))
 		{
 			MessageBoxA(NULL, "Error Creating the Sound", "GameEngine says NO", MB_OK);

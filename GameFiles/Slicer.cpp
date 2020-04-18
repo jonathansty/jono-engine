@@ -1,23 +1,8 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "Slicer.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 Slicer::Slicer(DOUBLE2 position,DOUBLE2 barPoint,int radius): Enemy(position),
 m_BarPosition(barPoint), m_Radius(radius)
 {
@@ -83,20 +68,20 @@ void Slicer::Tick(double deltaTime)
 }
 void Slicer::Paint()
 {
-    GAME_ENGINE->DrawLine(m_ActBarPoint->GetPosition(), m_ActPtr->GetPosition());
+    game_engine::instance()->DrawLine(m_ActBarPoint->GetPosition(), m_ActPtr->GetPosition());
 
     MATRIX3X2 matTranlate, matRotate, matPivot;
     matTranlate.SetAsTranslate(m_Position);
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
     matPivot.SetAsTranslate(DOUBLE2(-BLADEWIDTH / 2, -BLADEHEIGHT / 2));
-    GAME_ENGINE->SetWorldMatrix(matPivot * matRotate * matTranlate);
-    GAME_ENGINE->SetColor(COLOR(0, 0, 0));
-    GAME_ENGINE->FillRect(0, 0, BLADEWIDTH, BLADEHEIGHT);
+    game_engine::instance()->SetWorldMatrix(matPivot * matRotate * matTranlate);
+    game_engine::instance()->SetColor(COLOR(0, 0, 0));
+    game_engine::instance()->FillRect(0, 0, BLADEWIDTH, BLADEHEIGHT);
 
     matRotate.SetAsRotate(m_ActPtr->GetAngle() + M_PI_2);
-    GAME_ENGINE->SetWorldMatrix(matPivot * matRotate * matTranlate);
-    GAME_ENGINE->FillRect(0, 0, BLADEWIDTH, BLADEHEIGHT);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matPivot * matRotate * matTranlate);
+    game_engine::instance()->FillRect(0, 0, BLADEWIDTH, BLADEHEIGHT);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 PhysicsActor* Slicer::GetActor()
 {

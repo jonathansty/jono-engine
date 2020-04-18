@@ -137,10 +137,9 @@ void SimpleMeshComponent::update(float dt)
 
 void SimpleMeshComponent::render()
 {
-	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
+	auto ctx = game_engine::instance()->GetD3DDeviceContext();
 
 	// Draw mesh
-
 	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	ctx->IASetIndexBuffer(_resource->_index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
@@ -164,7 +163,7 @@ bool SimpleMeshComponent::is_loaded() const
 
 void SimpleMeshComponent::set_model(std::string const& mesh)
 {
-	_resource = ResourceLoader::Instance()->load<ModelResource>({ mesh }, false);
+	_resource = ResourceLoader::instance()->load<ModelResource>({ mesh }, false);
 }
 
 
@@ -214,7 +213,7 @@ void CameraComponent::update(float dt)
 	// Ignore any input if ImGui is focused
 	if (ImGui::IsAnyWindowFocused())
 	{
-		_prev_position = GameEngine::Instance()->GetMousePositionDOUBLE2();
+		_prev_position = game_engine::instance()->GetMousePositionDOUBLE2();
 		return;
 	}
 
@@ -237,37 +236,37 @@ void CameraComponent::update(float dt)
 	XMVECTOR movement = XMVectorZero();
 	float fly_speed = _fly_speed;
 
-	if (GameEngine::Instance()->IsKeyboardKeyDown(VK_LSHIFT))
+	if (game_engine::instance()->IsKeyboardKeyDown(VK_LSHIFT))
 	{
 		fly_speed *= 1.5f;
 	}
 
-	if (GameEngine::Instance()->IsKeyboardKeyDown('W'))
+	if (game_engine::instance()->IsKeyboardKeyDown('W'))
 	{
 		movement += movement + forward * fly_speed * dt;
 	}
 
-	if (GameEngine::Instance()->IsKeyboardKeyDown('S'))
+	if (game_engine::instance()->IsKeyboardKeyDown('S'))
 	{
 		movement += movement + forward * -fly_speed * dt;
 	}
 
-	if (GameEngine::Instance()->IsKeyboardKeyDown('A'))
+	if (game_engine::instance()->IsKeyboardKeyDown('A'))
 	{
 		movement += rght * -fly_speed * dt;
 	}
 
-	if (GameEngine::Instance()->IsKeyboardKeyDown('D'))
+	if (game_engine::instance()->IsKeyboardKeyDown('D'))
 	{
 		movement += rght * fly_speed * dt;
 	}
 
-	if (GameEngine::Instance()->IsKeyboardKeyDown(VK_SPACE))
+	if (game_engine::instance()->IsKeyboardKeyDown(VK_SPACE))
 	{
 		movement += up * (fly_speed * 0.5f) * dt;
 	}
 
-	if (GameEngine::Instance()->IsKeyboardKeyDown(VK_LCONTROL))
+	if (game_engine::instance()->IsKeyboardKeyDown(VK_LCONTROL))
 	{
 		movement -= up * (fly_speed * 0.5f) * dt;
 	}
@@ -281,7 +280,7 @@ void CameraComponent::update(float dt)
 
 	// Handle rotation
 	{
-		DOUBLE2 current = GameEngine::Instance()->GetMousePositionDOUBLE2();
+		DOUBLE2 current = game_engine::instance()->GetMousePositionDOUBLE2();
 		double x = current.x - _prev_position.x;
 		double y = current.y - _prev_position.y;
 		_prev_position = current;

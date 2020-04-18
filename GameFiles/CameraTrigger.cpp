@@ -1,23 +1,6 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
-	
-//---------------------------
-// Includes
-//---------------------------
 #include "CameraTrigger.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 CameraTrigger::CameraTrigger(DOUBLE2 position, int width, int height):
 m_Position(position),
 m_Width(width),

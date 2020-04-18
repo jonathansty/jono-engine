@@ -5,20 +5,10 @@
 //-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "Enemy.h"
 #include "Level.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 const double Enemy::GRAVITYCOEFF = 1;
 Enemy::Enemy(DOUBLE2 position)
 {
@@ -91,7 +81,7 @@ void Enemy::setName(String name)
 
 void Enemy::PaintDebug()
 {
-    auto engine = GameEngine::Instance();
+    auto engine = game_engine::instance();
     if (m_ActPtr != nullptr)
     {
         DOUBLE2 position = m_ActPtr->GetPosition();

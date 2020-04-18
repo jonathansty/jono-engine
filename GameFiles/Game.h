@@ -21,7 +21,7 @@ class Enemy;
 class Level;
 class Camera;
 class Arrow;
-class BitmapManager;
+class bitmap_manager;
 class EnemyShooter;
 class CheckPoint;
 class RotLight;

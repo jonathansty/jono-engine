@@ -49,7 +49,7 @@ public:
 	void render()
 	{
 		XMFLOAT3 pos = get_entity()->get_world_position();
-		GameEngine::Instance()->DrawBitmap(_bmp, (int)pos.x, (int)pos.y);
+		game_engine::instance()->DrawBitmap(_bmp, (int)pos.x, (int)pos.y);
 	}
 
 

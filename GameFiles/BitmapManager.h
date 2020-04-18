@@ -1,30 +1,25 @@
 #pragma once
 #include "singleton.h"
 
-//-----------------------------------------------------
-// BitmapManager Class									
-//-----------------------------------------------------
-class BitmapManager : public TSingleton<BitmapManager>
+// Bitmap manager singleton that manages caching bitmap files and cleaning up after use.
+// This is a very primitive class and should be reworked using the resource loading instead
+class bitmap_manager : public TSingleton<bitmap_manager>
 {
 private:
-    BitmapManager();				// Constructor
+    bitmap_manager();				// Constructor
     template<typename T>
     friend class TSingleton;
 public:
 	
-	virtual ~BitmapManager();		// Destructor
+	virtual ~bitmap_manager();		// Destructor
 
-	BitmapManager(const BitmapManager&) = delete;
-	BitmapManager& operator=(const BitmapManager&) = delete;
+	bitmap_manager(const bitmap_manager&) = delete;
+	bitmap_manager& operator=(const bitmap_manager&) = delete;
 
-    //Static methods
-    static BitmapManager* GetSingleton();
-	//-------------------------------------------------
-	// Methods - Member functions							
-	//-------------------------------------------------
     Bitmap* LoadBitmapFile(const String& fileName);
 
     void RemoveBitmapFile(const String& fileName);
+
 private: 
 	//-------------------------------------------------
 	// Datamembers								

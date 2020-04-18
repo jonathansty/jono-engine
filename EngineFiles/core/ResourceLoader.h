@@ -139,7 +139,7 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 			std::lock_guard<std::mutex> l{ _tasks_lock };
 			_tasks.push_back(set);
 		}
-		GameEngine::s_TaskScheduler.AddTaskSetToPipe(set);
+		game_engine::s_TaskScheduler.AddTaskSetToPipe(set);
 	}
 
 	return res;

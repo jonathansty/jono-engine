@@ -1,24 +1,8 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "SoundManager.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-//---------------------------
-// Constructor & Destructor
-//---------------------------
-SoundManager::SoundManager()
+sound_manager::sound_manager()
 {
 	// nothing to create
 	// m_ActCirclePtr->AddContactListener(this);
@@ -26,7 +10,7 @@ SoundManager::SoundManager()
 
 }
 
-SoundManager::~SoundManager()
+sound_manager::~sound_manager()
 {
     for (int i = 0; i < m_NumbersOfStoredSounds; i++)
     {
@@ -58,7 +42,7 @@ SoundManager::~SoundManager()
 //{
 //
 //}
-Sound* SoundManager::LoadSound(const String& filename)
+Sound* sound_manager::LoadSound(const String& filename)
 {
     for (int i = 0; i < m_NumbersOfStoredSounds; i++)
     {
@@ -82,7 +66,7 @@ Sound* SoundManager::LoadSound(const String& filename)
     m_NumbersOfStoredSounds++;
     return soundPtr;
 }
-Sound* SoundManager::LoadMusic(const String& fileName)
+Sound* sound_manager::LoadMusic(const String& fileName)
 {
     for (int i = 0; i < m_NumberOfStoredMusicTracks; i++)
     {
@@ -106,11 +90,8 @@ Sound* SoundManager::LoadMusic(const String& fileName)
     m_NumberOfStoredMusicTracks++;
     return soundPtr;
 }
-SoundManager* SoundManager::GetSingleton()
-{
-    return SoundManager::Instance();
-}
-void SoundManager::MuteAll()
+
+void sound_manager::MuteAll()
 {
     for (size_t i = 0, n = m_SoundsPtrArr.size(); i < n; i++)
     {
@@ -131,7 +112,7 @@ void SoundManager::MuteAll()
         }
     }
 }
-void SoundManager::UnMuteAll()
+void sound_manager::UnMuteAll()
 {
     for (size_t i = 0, n = m_SoundsPtrArr.size(); i < n; i++)
     {
@@ -150,7 +131,7 @@ void SoundManager::UnMuteAll()
         }
     }
 }
-void SoundManager::SetMusicVolume(double volume)
+void sound_manager::SetMusicVolume(double volume)
 {
     for (size_t i = 0; i < m_MusicPtrArr.size(); i++)
     {
@@ -162,7 +143,7 @@ void SoundManager::SetMusicVolume(double volume)
 
 
 }
-void SoundManager::SetSoundVolume(double volume)
+void sound_manager::SetSoundVolume(double volume)
 {
     for (size_t i = 0; i < m_SoundsPtrArr.size(); i++)
     {
@@ -175,7 +156,7 @@ void SoundManager::SetSoundVolume(double volume)
     }
 
 }
-void SoundManager::UnLoadMusic(Sound* sndPtr)
+void sound_manager::UnLoadMusic(Sound* sndPtr)
 {
     for (int i = 0; i < m_NumberOfStoredMusicTracks; i++)
     {
@@ -188,7 +169,7 @@ void SoundManager::UnLoadMusic(Sound* sndPtr)
         }
     }
 }
-void SoundManager::UnLoadSound(Sound* sndPtr)
+void sound_manager::UnLoadSound(Sound* sndPtr)
 {
     for (int i = 0; i <m_NumbersOfStoredSounds; i++)
     {
@@ -199,7 +180,7 @@ void SoundManager::UnLoadSound(Sound* sndPtr)
         }
     }
 }
-bool SoundManager::FadeIn(Sound* tmpSoundPtr, double deltaTime)
+bool sound_manager::FadeIn(Sound* tmpSoundPtr, double deltaTime)
 {
     
     if (tmpSoundPtr->GetVolume() > 1 - 0.01)
@@ -219,7 +200,7 @@ bool SoundManager::FadeIn(Sound* tmpSoundPtr, double deltaTime)
     return false;
     
 }
-bool SoundManager::FadeOut(Sound* tmpSoundPtr, double deltaTime)
+bool sound_manager::FadeOut(Sound* tmpSoundPtr, double deltaTime)
 {
     m_FadeAccuTime += deltaTime;
     double fadeSpeed = 0.05;
@@ -237,11 +218,11 @@ bool SoundManager::FadeOut(Sound* tmpSoundPtr, double deltaTime)
     }
     return false;
 }
-bool SoundManager::isMusicMuted()
+bool sound_manager::isMusicMuted()
 {
     return m_IsMusicMuted;
 }
-bool SoundManager::isSoundMuted()
+bool sound_manager::isSoundMuted()
 {
     return m_IsSoundMuted;
 }

@@ -1,28 +1,12 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
-	
-//---------------------------
-// Includes
-//---------------------------
 #include "EnemyHorizontal.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
-EnemyHorizontal::EnemyHorizontal(DOUBLE2 position,Bitmap* bmpEnemyPtr, Avatar* avatarPtr) :
-Enemy(position),
-m_StartPosition(position),
-m_AvatarPtr(avatarPtr),
-m_BmpPtr(bmpEnemyPtr)
+EnemyHorizontal::EnemyHorizontal(DOUBLE2 position,Bitmap* bmpEnemyPtr, Avatar* avatarPtr) 
+    : Enemy(position)
+    , m_StartPosition(position)
+    , m_AvatarPtr(avatarPtr)
+    , m_BmpPtr(bmpEnemyPtr)
 {
     m_Velocity = DOUBLE2(50, 0);
     m_ActPtr = new PhysicsActor(position, 0, BodyType::KINEMATIC);
@@ -65,7 +49,7 @@ void EnemyHorizontal::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOt
         {
             m_ActPtr->SetTrigger(true);
         }
-        GAME_ENGINE->ConsolePrintString(m_Name + String(" has ") + String(m_Lifes) + String("left. "));
+        game_engine::instance()->ConsolePrintString(m_Name + String(" has ") + String(m_Lifes) + String("left. "));
     }
 }
 
@@ -75,7 +59,7 @@ void EnemyHorizontal::EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOthe
     {
         m_boolAttackContact = false;
         m_AvatarPtr->SetMoveState(Avatar::moveState::JUMPING);
-        //GAME_ENGINE->ConsolePrintString(String(m_boolAttackContact));
+        //game_engine::instance()->ConsolePrintString(String(m_boolAttackContact));
     }
 }
 
@@ -116,9 +100,9 @@ void EnemyHorizontal::Paint()
     MATRIX3X2 matTranslate, matCenter;
     matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
     matCenter.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
-    GAME_ENGINE->SetWorldMatrix(matCenter * matTranslate);
-    GAME_ENGINE->DrawBitmap(m_BmpPtr);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matCenter * matTranslate);
+    game_engine::instance()->DrawBitmap(m_BmpPtr);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 PhysicsActor* EnemyHorizontal::GetActor()
 {

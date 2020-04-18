@@ -1,30 +1,15 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "LevelEnd.h"
 #include "Avatar.h"
 #include "Lever.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-#define BITMAP_MANAGER (BitmapManager::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
+
 LevelEnd::LevelEnd(DOUBLE2 position, String nextLevel) :
 Entity(position),
 m_NextLevelPath(nextLevel)
 {
-    m_BmpPtr = BITMAP_MANAGER->LoadBitmapFile(String("Resources/Entity/LevelEnd.png"));
+    m_BmpPtr = bitmap_manager::instance()->LoadBitmapFile(String("Resources/Entity/LevelEnd.png"));
     m_ActPtr = new PhysicsActor(position, 0, BodyType::STATIC);
     m_ActPtr->SetTrigger(true);
     m_ActPtr->AddCircleShape(-20 + m_BmpPtr->GetWidth()/2);
@@ -90,9 +75,9 @@ void LevelEnd::Paint()
         matTranslate.SetAsTranslate(m_Position);
         matRotate.SetAsRotate(m_Angle);
         matPivot.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
-        GAME_ENGINE->SetWorldMatrix(matPivot*matRotate* matTranslate);
-        GAME_ENGINE->DrawBitmap(m_BmpPtr);
-        GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+        game_engine::instance()->SetWorldMatrix(matPivot*matRotate* matTranslate);
+        game_engine::instance()->DrawBitmap(m_BmpPtr);
+        game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
     }
     
     for (size_t i = 0; i < m_LeversPtrArr.size(); i++)

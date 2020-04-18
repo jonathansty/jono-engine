@@ -67,11 +67,11 @@ void HelloWorldGame::GameStart()
 	rtti::TypeInfo* info  =rtti::Registry::get<MemberTraits<std::vector<int>>::type>();
 
 	// Register default overlays to the overlay manager
-	GameEngine::Instance()->get_overlay_manager()->register_overlay(new GameOverlay());
+	game_engine::instance()->get_overlay_manager()->register_overlay(new GameOverlay());
 
 	using namespace framework;
 	_world = std::make_unique<framework::World>();
-	GameEngine::Instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
+	game_engine::instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
 
 	_parentEntity = _world->create_entity(XMFLOAT2(100, 0));
 	_parentEntity->create_component<BitmapComponent>(ResourcePaths::bmp_coin_silver);
@@ -107,7 +107,7 @@ void HelloWorldGame::GameEnd()
 
 void HelloWorldGame::GamePaint(RECT rect)
 {
-	auto engine = GameEngine::Instance();
+	auto engine = game_engine::instance();
 	engine->DrawSolidBackground(COLOR(0, 0, 0));
 
 	_world->render();

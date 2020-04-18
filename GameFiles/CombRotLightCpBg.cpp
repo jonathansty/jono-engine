@@ -5,22 +5,12 @@
 //-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "CombRotLightCpBg.h"
 #include "CheckPointBg.h"
 #include "RotLight.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
-CombRotLightCpBg::CombRotLightCpBg(DOUBLE2 position,int radius, Bitmap*  bmpPtr, COLOR color):
-Animation(position)
+CombRotLightCpBg::CombRotLightCpBg(DOUBLE2 position,int radius, Bitmap*  bmpPtr, COLOR color)
+    : Animation(position)
 {
 	// nothing to create
 	// m_ActCirclePtr->AddContactListener(this);

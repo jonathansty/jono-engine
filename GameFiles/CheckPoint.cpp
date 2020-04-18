@@ -12,17 +12,11 @@
 #include "Entity.h"
 #include "RotLight.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-#define SND_MANAGER (SoundManager::GetSingleton())
-//---------------------------
-// Constructor & Destructor
-//---------------------------
-CheckPoint::CheckPoint(DOUBLE2 position, Bitmap* bmpFlagPtr):
-Entity(position),
-m_BmpFlagPtr(bmpFlagPtr)
+#include "SoundManager.h"
+
+CheckPoint::CheckPoint(DOUBLE2 position, Bitmap* bmpFlagPtr)
+	: Entity(position)
+    , m_BmpFlagPtr(bmpFlagPtr)
 {
 	// nothing to create
 	// m_ActCirclePtr->AddContactListener(this);
@@ -32,7 +26,7 @@ m_BmpFlagPtr(bmpFlagPtr)
     m_ActPtr->SetName(String("CheckPoint"));
     m_ActPtr->AddContactListener(this);
 
-    m_SndPtr = SND_MANAGER->LoadSound(String("Resources/Sound/Entity/CheckPoint01.wav"));
+    m_SndPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/CheckPoint01.wav"));
 }
 
 CheckPoint::~CheckPoint()
@@ -70,10 +64,10 @@ void CheckPoint::Paint()
     MATRIX3X2 matTranslate,matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-20, -m_BmpFlagPtr->GetHeight() / 2));
-    GAME_ENGINE->SetWorldMatrix(matPivot * matTranslate);
-    GAME_ENGINE->DrawBitmap(m_BmpFlagPtr);
+    game_engine::instance()->SetWorldMatrix(matPivot * matTranslate);
+    game_engine::instance()->DrawBitmap(m_BmpFlagPtr);
 
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void CheckPoint::Tick(double deltaTime)
 {

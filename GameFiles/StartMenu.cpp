@@ -7,12 +7,10 @@
 #include "SoundManager.h"
 #include <winuser.h>
 
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
 StartMenu::StartMenu()
 {
 	m_ComicSansPtr = std::make_shared<Font>(String("Comic Sans MS"), (float)KEYLISTFNTSIZE);
-    m_BgMusicPtr = SoundManager::GetSingleton()->LoadMusic(String("Resources/Sound/BgMusic/main.mp3"));
+    m_BgMusicPtr = sound_manager::instance()->LoadMusic(String("Resources/Sound/BgMusic/main.mp3"));
     m_BgMusicPtr->Play();
     EnableButtons();
     m_FileManagerPtr->ReadGameResults(m_SessionStatsArr);
@@ -48,7 +46,7 @@ void StartMenu::Tick(double deltaTime)
 
             
             m_BtnApplyChangesPtr = new Button(String("Apply"));
-            m_BtnApplyChangesPtr->SetBounds(GAME_ENGINE->GetWidth()/2 - 50, GAME_ENGINE->GetHeight()/2 +40, 100, 30);
+            m_BtnApplyChangesPtr->SetBounds(game_engine::instance()->GetWidth()/2 - 50, game_engine::instance()->GetHeight()/2 +40, 100, 30);
             m_BtnApplyChangesPtr->SetEnabled(false);
             CreateKeyBindTextBoxes();
         }
@@ -77,7 +75,7 @@ void StartMenu::Tick(double deltaTime)
 
         if (m_BtnQuitPtr && m_BtnQuitPtr->IsPressed())
         {
-            GameEngine::Instance()->QuitGame();
+            game_engine::instance()->quit_game();
         }
 
         if (m_BtnStartPtr && m_BtnStartPtr->IsPressed())
@@ -138,7 +136,7 @@ void StartMenu::Tick(double deltaTime)
             {
                 for (int j = 0; j < 250 + 1; j++)
                 {
-                    if (GAME_ENGINE->IsKeyboardKeyPressed(j))
+                    if (game_engine::instance()->IsKeyboardKeyPressed(j))
                     {
                         if (j >= VK_F1 && j <= VK_F12)
                         {
@@ -166,7 +164,7 @@ void StartMenu::Tick(double deltaTime)
             EnableButtons();
             
         }
-        if (GAME_ENGINE->IsKeyboardKeyPressed(VK_DOWN))
+        if (game_engine::instance()->IsKeyboardKeyPressed(VK_DOWN))
         {
             if (m_HighScoreOffsetCounter < m_SessionStatsArr.size() - MAXELEMENTSONSCREEN && m_HighScoreOffsetCounter >= 0)
             {
@@ -174,7 +172,7 @@ void StartMenu::Tick(double deltaTime)
             }
             
         }
-        if (GAME_ENGINE->IsKeyboardKeyPressed(VK_UP))
+        if (game_engine::instance()->IsKeyboardKeyPressed(VK_UP))
         {
             if (m_HighScoreOffsetCounter > 0)
             {
@@ -190,7 +188,7 @@ void StartMenu::Tick(double deltaTime)
 
 void StartMenu::Paint()
 {
-    GameEngine::Instance()->DrawSolidBackground(COLOR(116, 202, 141));
+    game_engine::instance()->DrawSolidBackground(COLOR(116, 202, 141));
     switch (m_MenuState)
     {
     case StartMenu::menuState::HIGHSCORES:
@@ -201,24 +199,24 @@ void StartMenu::Paint()
             {
                 if (m_HighScoreOffsetCounter < m_SessionStatsArr.size() - MAXELEMENTSONSCREEN)
                 {
-                    GAME_ENGINE->DrawString(String("v"), DOUBLE2(100, 430));
+                    game_engine::instance()->DrawString(String("v"), DOUBLE2(100, 430));
                 }
                 if (m_HighScoreOffsetCounter >0)
                 {
-                    GAME_ENGINE->DrawString(String("^"), DOUBLE2(100, 120));
+                    game_engine::instance()->DrawString(String("^"), DOUBLE2(100, 120));
                 }
                 Font* tmpFntPtr = new Font(String("KenVector Future"), (float)KEYLISTFNTSIZE - 8);
-                GAME_ENGINE->SetFont(tmpFntPtr);
-                GAME_ENGINE->DrawString(String("id"), DOUBLE2(INDEXSTARTXPOS, TABLELEGENDYPOS));
-                GAME_ENGINE->DrawString(String("Start Session"), DOUBLE2(DATESTARTPOS + 75, TABLELEGENDYPOS));
-                GAME_ENGINE->DrawString(String("End Session"),DOUBLE2(DATEENDPOS+75, TABLELEGENDYPOS));
-                GAME_ENGINE->DrawString(String("Deaths"), DOUBLE2(DEATHPOS, TABLELEGENDYPOS));
-                GAME_ENGINE->DrawString(String("Money"), DOUBLE2(MONEYPOS, TABLELEGENDYPOS));
-                GAME_ENGINE->DrawString(String("Lifetime"), DOUBLE2(LIFETIMEPOS, TABLELEGENDYPOS));
-                GAME_ENGINE->DrawString(String("Last level"), DOUBLE2(LASTLEVELPOS, TABLELEGENDYPOS));
+                game_engine::instance()->SetFont(tmpFntPtr);
+                game_engine::instance()->DrawString(String("id"), DOUBLE2(INDEXSTARTXPOS, TABLELEGENDYPOS));
+                game_engine::instance()->DrawString(String("Start Session"), DOUBLE2(DATESTARTPOS + 75, TABLELEGENDYPOS));
+                game_engine::instance()->DrawString(String("End Session"),DOUBLE2(DATEENDPOS+75, TABLELEGENDYPOS));
+                game_engine::instance()->DrawString(String("Deaths"), DOUBLE2(DEATHPOS, TABLELEGENDYPOS));
+                game_engine::instance()->DrawString(String("Money"), DOUBLE2(MONEYPOS, TABLELEGENDYPOS));
+                game_engine::instance()->DrawString(String("Lifetime"), DOUBLE2(LIFETIMEPOS, TABLELEGENDYPOS));
+                game_engine::instance()->DrawString(String("Last level"), DOUBLE2(LASTLEVELPOS, TABLELEGENDYPOS));
 
                 
-                int halfScreenWidth = GAME_ENGINE->GetWidth() / 2;
+                int halfScreenWidth = game_engine::instance()->GetWidth() / 2;
                 double gap = 50;
                 
                 tm beginTime = m_SessionStatsArr[index]->beginTime;
@@ -230,22 +228,22 @@ void StartMenu::Paint()
 
                 std::wstringstream compoundString;
                 compoundString << index << L".";
-                GAME_ENGINE->DrawString(String(compoundString.str().c_str()),DOUBLE2(INDEXSTARTXPOS,INDEXSTARTYPOS + double(i*gap)));
+                game_engine::instance()->DrawString(String(compoundString.str().c_str()),DOUBLE2(INDEXSTARTXPOS,INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
                 
                 compoundString << L"\t" << beginTime.tm_mday << L"/" << beginTime.tm_mon << L"\t" << beginTime.tm_hour << ":" << beginTime.tm_min << ":" << beginTime.tm_sec;
-                GAME_ENGINE->DrawString(String(compoundString.str().c_str()), DOUBLE2(DATESTARTPOS, INDEXSTARTYPOS + double(i*gap)));
+                game_engine::instance()->DrawString(String(compoundString.str().c_str()), DOUBLE2(DATESTARTPOS, INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
 
                 compoundString << L"\t" << endTime.tm_mday << L"/" << endTime.tm_mon << L"\t" << endTime.tm_hour << ":" << endTime.tm_min << ":" << endTime.tm_sec;
-                GAME_ENGINE->DrawString(String(compoundString.str().c_str()), DOUBLE2(DATEENDPOS, INDEXSTARTYPOS + double(i*gap)));
+                game_engine::instance()->DrawString(String(compoundString.str().c_str()), DOUBLE2(DATEENDPOS, INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
 
-                GAME_ENGINE->DrawString(String(deaths),DOUBLE2(DEATHPOS,INDEXSTARTYPOS + double(i)*gap));
-                GAME_ENGINE->DrawString(String(amountOfMoney), DOUBLE2(MONEYPOS, INDEXSTARTYPOS + double(i)*gap));
-                GAME_ENGINE->DrawString(String(lifeTime), DOUBLE2(LIFETIMEPOS, INDEXSTARTYPOS + double(i)*gap));
-                GAME_ENGINE->DrawString(String(lastLevel), DOUBLE2(LASTLEVELPOS, INDEXSTARTYPOS + double(i)*gap));
-                GAME_ENGINE->SetDefaultFont();
+                game_engine::instance()->DrawString(String(deaths),DOUBLE2(DEATHPOS,INDEXSTARTYPOS + double(i)*gap));
+                game_engine::instance()->DrawString(String(amountOfMoney), DOUBLE2(MONEYPOS, INDEXSTARTYPOS + double(i)*gap));
+                game_engine::instance()->DrawString(String(lifeTime), DOUBLE2(LIFETIMEPOS, INDEXSTARTYPOS + double(i)*gap));
+                game_engine::instance()->DrawString(String(lastLevel), DOUBLE2(LASTLEVELPOS, INDEXSTARTYPOS + double(i)*gap));
+                game_engine::instance()->SetDefaultFont();
                 delete tmpFntPtr;
             }
             
@@ -254,18 +252,18 @@ void StartMenu::Paint()
     case StartMenu::menuState::MAIN:
         if (m_BmpPtr != nullptr)
         {
-            GAME_ENGINE->SetFont(m_ComicSansPtr.get());
+            game_engine::instance()->SetFont(m_ComicSansPtr.get());
             MATRIX3X2 matTranslateControl;
             matTranslateControl.SetAsTranslate(100, CONTROLLISTYPOS - (float)KEYLISTFNTSIZE);
-            GAME_ENGINE->SetWorldMatrix(matTranslateControl);
-            GAME_ENGINE->DrawString(String("Controls: "), DOUBLE2());
-            GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+            game_engine::instance()->SetWorldMatrix(matTranslateControl);
+            game_engine::instance()->DrawString(String("Controls: "), DOUBLE2());
+            game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
             int i = 0;
             for(auto& keybind : m_KeybindsArr)
             {
                 MATRIX3X2 matTranslate;
                 matTranslate.SetAsTranslate(DOUBLE2(150, CONTROLLISTYPOS + KEYLISTFNTSIZE + i*(float)KEYLISTFNTSIZE));
-                GAME_ENGINE->SetWorldMatrix(matTranslate);
+                game_engine::instance()->SetWorldMatrix(matTranslate);
                 String KeyBind = String(keybind.second);
                 switch (keybind.second)
                 {
@@ -279,12 +277,12 @@ void StartMenu::Paint()
                     String(TCHAR(keybind.second));
                     break;
                 }
-                GAME_ENGINE->DrawString(String(keybind.first.c_str()) + String(": ") + KeyBind, DOUBLE2());
-                GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+                game_engine::instance()->DrawString(String(keybind.first.c_str()) + String(": ") + KeyBind, DOUBLE2());
+                game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 
                 ++i;
             }
-            GAME_ENGINE->SetDefaultFont();
+            game_engine::instance()->SetDefaultFont();
         }
         break;
     }
@@ -323,8 +321,8 @@ void StartMenu::Remove()
 
 void StartMenu::EnableButtons()
 {
-    int width = GAME_ENGINE->GetWidth();
-    int height = GAME_ENGINE->GetHeight();
+    int width = game_engine::instance()->GetWidth();
+    int height = game_engine::instance()->GetHeight();
     float spacing = 1.25;
     int buttonHeight = 100;
     int buttonWidth = 100;
@@ -368,8 +366,8 @@ void StartMenu::CreateKeyBindTextBoxes()
 {
     int buttonHeight = 40;
     int buttonWidth = 40;
-    int width = GAME_ENGINE->GetWidth();
-    int height = GAME_ENGINE->GetHeight();
+    int width = game_engine::instance()->GetWidth();
+    int height = game_engine::instance()->GetHeight();
 
     int amountOfBoxesNeeded = int(m_KeybindsArr.size());
     int boundingHeight = 250;

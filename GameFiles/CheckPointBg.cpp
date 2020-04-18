@@ -1,27 +1,11 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
-	
-//---------------------------
-// Includes
-//---------------------------
 #include "CheckPointBg.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 const double CheckPointBg::SCALESPEED = 0.5;
-CheckPointBg::CheckPointBg(DOUBLE2 position, Bitmap* bmpPtr):
-Animation(position),
-m_BmpPtr(bmpPtr)
+
+CheckPointBg::CheckPointBg(DOUBLE2 position, Bitmap* bmpPtr)
+    : Animation(position)
+    , m_BmpPtr(bmpPtr)
 {
 	// nothing to create
 	// m_ActCirclePtr->AddContactListener(this);
@@ -60,9 +44,9 @@ void CheckPointBg::Paint()
     matScale.SetAsScale(m_Scale);
     matRotate.SetAsRotate(m_Angle);
     matWorldTransform = matPivot * matScale * matRotate * matTranslate;
-    GAME_ENGINE->SetWorldMatrix(matWorldTransform);
-    GAME_ENGINE->DrawBitmap(m_BmpPtr);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matWorldTransform);
+    game_engine::instance()->DrawBitmap(m_BmpPtr);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void CheckPointBg::Tick(double deltaTime)
 {

@@ -25,5 +25,5 @@
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
 {
-	return RunGame(hInstance,iCmdShow, new ElectronicJonaJoy());
+	return game_engine::run_game(hInstance,iCmdShow, new ElectronicJonaJoy());
 }

@@ -64,16 +64,16 @@ void Hello3D::GameInitialize(GameSettings& gameSettings)
 
 void Hello3D::GameStart()
 {
-	auto device = GameEngine::Instance()->GetD3DDevice();
-	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
+	auto device = game_engine::instance()->GetD3DDevice();
+	auto ctx = game_engine::instance()->GetD3DDeviceContext();
 
 
-	::SetCapture(GameEngine::Instance()->GetWindow());
+	::SetCapture(game_engine::instance()->GetWindow());
 
 	using namespace framework;
 	_world = std::make_shared<framework::World>();
 
-	GameEngine::Instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
+	game_engine::instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
 
 	// Create the world camera
 	{
@@ -232,8 +232,8 @@ XMVECTOR XMVector3Create(float x, float y, float z)
 
 void Hello3D::Render3D()
 {
-	auto device = GameEngine::Instance()->GetD3DDevice();
-	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
+	auto device = game_engine::instance()->GetD3DDevice();
+	auto ctx = game_engine::instance()->GetD3DDeviceContext();
 
 	// Use RH system so that we can directly export from blender
 	//_timer = 0.0f;
@@ -249,7 +249,7 @@ void Hello3D::Render3D()
 
 	XMMATRIX View = XMMatrixIdentity();
 
-	float aspect = (float)GameEngine::Instance()->GetWidth() / (float)GameEngine::Instance()->GetHeight();
+	float aspect = (float)game_engine::instance()->GetWidth() / (float)game_engine::instance()->GetHeight();
 	float near_plane = 0.01f;
 	float far_plane = 100.0f;
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH( XMConvertToRadians(45.0f), aspect, far_plane, near_plane);

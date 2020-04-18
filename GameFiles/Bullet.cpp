@@ -1,26 +1,9 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
-	
-//---------------------------
-// Includes
-//---------------------------
 #include "Bullet.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-//---------------------------
-// Constructor & Destructor
-//---------------------------
-Bullet::Bullet(DOUBLE2 startPosition, DOUBLE2 velocity):
-m_startPosition(startPosition),
-m_Direction(velocity)
+Bullet::Bullet(DOUBLE2 startPosition, DOUBLE2 velocity)
+	: m_startPosition(startPosition)
+	, m_Direction(velocity)
 {
 	// nothing to create
 	// m_ActCirclePtr->AddContactListener(this);

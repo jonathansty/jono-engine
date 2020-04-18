@@ -10,10 +10,6 @@
 //---------------------------
 #include "PickUp.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
 //---------------------------
 // Constructor & Destructor
@@ -23,7 +19,7 @@ m_Position(position)
 {
 	// nothing to create
 	// m_ActCirclePtr->AddContactListener(this);
-    m_SndHitPtr = SoundManager::GetSingleton()->LoadSound(String("Resources/Sound/Entity/CoinPickup.wav"));
+    m_SndHitPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/CoinPickup.wav"));
 }
 
 PickUp::~PickUp()

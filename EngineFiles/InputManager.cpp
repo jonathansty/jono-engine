@@ -82,7 +82,7 @@ void InputManager::Update()
 
 	if (GetCursorPos(&m_CurrMousePosition))
 	{
-		ScreenToClient(GameEngine::GetSingleton()->GetWindow(), &m_CurrMousePosition);
+		ScreenToClient(game_engine::instance()->GetWindow(), &m_CurrMousePosition);
 	}
 
 	m_MouseMovement.x = m_CurrMousePosition.x - m_OldMousePosition.x;

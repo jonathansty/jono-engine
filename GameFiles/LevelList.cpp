@@ -1,16 +1,5 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
-	
-//---------------------------
-// Includes
-//---------------------------
 #include "LevelList.h"
-
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
 LevelList::LevelList()
 {
@@ -37,7 +26,7 @@ std::string LevelList::GetLevel(int numberLevel)
     int level = numberLevel;
     if (level > m_NumberOfLevels)
     {
-        GAME_ENGINE->MessageBox(String("The level with number ") + String(numberLevel) + String(" does not exist"));
+        game_engine::instance()->MessageBox(String("The level with number ") + String(numberLevel) + String(" does not exist"));
     }
     level = numberLevel;
     return m_LevelPathsPtr[level];

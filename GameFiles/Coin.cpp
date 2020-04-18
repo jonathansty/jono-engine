@@ -1,26 +1,9 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
-	
-//---------------------------
-// Includes
-//---------------------------
 #include "Coin.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-//---------------------------
-// Constructor & Destructor
-//---------------------------
-Coin::Coin(DOUBLE2 position, Bitmap* bmpPtr):
-PickUp(position),
-m_BmpCoinPtr(bmpPtr)
+Coin::Coin(DOUBLE2 position, Bitmap* bmpPtr)
+    : PickUp(position)
+    , m_BmpCoinPtr(bmpPtr)
 {
 	// nothing to create
 	// m_ActCirclePtr->AddContactListener(this);
@@ -56,7 +39,7 @@ void Coin::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
         m_IsHit = true;
         if (m_SndHitPtr != nullptr)
         {
-            GAME_ENGINE->ConsolePrintString(String("Coin sound Played!"));
+            game_engine::instance()->ConsolePrintString(String("Coin sound Played!"));
             if (m_SndHitPtr->GetVolume() > 0)
             {
                 m_SndHitPtr->PlayImmediately();
@@ -88,9 +71,9 @@ void Coin::Paint()
     MATRIX3X2 matTranslate,matPivot;
     matPivot.SetAsTranslate(-m_BmpCoinPtr->GetWidth() / 2, -m_BmpCoinPtr->GetHeight() / 2);
     matTranslate.SetAsTranslate(m_Position);
-    GAME_ENGINE->SetWorldMatrix(matPivot* matTranslate);
-    GAME_ENGINE->DrawBitmap(m_BmpCoinPtr);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matPivot* matTranslate);
+    game_engine::instance()->DrawBitmap(m_BmpCoinPtr);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 bool Coin::IsHit()
 {

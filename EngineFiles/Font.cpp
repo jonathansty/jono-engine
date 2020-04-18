@@ -25,7 +25,7 @@ void Font::LoadTextFormat(const wchar_t* fontName, float size)
 {
 	HRESULT hr;
 	// Create a DirectWrite text format object.
-	hr = GameEngine::GetSingleton()->GetDWriteFactory()->CreateTextFormat(fontName, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, size, L"", &m_TextFormatPtr);
+	hr = game_engine::instance()->GetDWriteFactory()->CreateTextFormat(fontName, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, size, L"", &m_TextFormatPtr);
 
 	if (SUCCEEDED(hr))
 	{

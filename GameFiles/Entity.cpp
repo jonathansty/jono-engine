@@ -1,21 +1,14 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
 #include "Entity.h"
 #include "Level.h"
 #include "SoundManager.h"
 
-#define GAME_ENGINE (GameEngine::GetSingleton())
-#define SND_MANAGER (SoundManager::GetSingleton())
-
 const double Entity::GRAVITYCOEFF = 1;
+
 Entity::Entity(DOUBLE2 position)
+    : m_Position(position)
 {
-    m_Position = position;
 	// nothing to create
 	// m_ActCirclePtr->AddContactListener(this);
     OutputDebugString(String("Entity constructor called.\n"));
@@ -104,7 +97,7 @@ void Entity::PaintDebug()
 {
     MATRIX3X2 matTranslate;
     matTranslate.SetAsTranslate(m_Position);
-    GAME_ENGINE->SetWorldMatrix(matTranslate);
-    GAME_ENGINE->DrawString(m_Name,DOUBLE2());
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matTranslate);
+    game_engine::instance()->DrawString(m_Name,DOUBLE2());
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }

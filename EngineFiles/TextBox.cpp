@@ -63,11 +63,11 @@ void TextBox::Tick(double deltaTime)
 	}
 
 	//RMB in button rect armes the button and paint will draw the pressed button
-	if (GameEngine::GetSingleton()->IsMouseButtonDown(VK_LBUTTON))
+	if (game_engine::instance()->IsMouseButtonDown(VK_LBUTTON))
 	{
-		MATRIX3X2 matInverse = (GameEngine::GetSingleton()->GetWorldMatrix() * GameEngine::GetSingleton()->GetViewMatrix()).Inverse();
+		MATRIX3X2 matInverse = (game_engine::instance()->GetWorldMatrix() * game_engine::instance()->GetViewMatrix()).Inverse();
 
-		DOUBLE2 mouseScreenSpace(GameEngine::GetSingleton()->GetMousePosition().x, GameEngine::GetSingleton()->GetMousePosition().y);
+		DOUBLE2 mouseScreenSpace(game_engine::instance()->GetMousePosition().x, game_engine::instance()->GetMousePosition().y);
 		DOUBLE2 mouseViewSpace = matInverse.TransformPoint(mouseScreenSpace);
 		if (PointInRect(m_BoundingRect, mouseViewSpace))
 		{
@@ -95,7 +95,7 @@ void TextBox::Paint()
 	}
 
 	//Store font
-	Font *originalFont = GameEngine::GetSingleton()->GetFont();
+	Font *originalFont = game_engine::instance()->GetFont();
 	// make sure that the text is left aligned
 	m_FontPtr->SetAlignHLeft();
 	// working copy of the bounds
@@ -104,36 +104,36 @@ void TextBox::Paint()
 	//border color depends on armed state: filling is faster than line drawing
 	if (!m_bArmed)
 	{
-		GameEngine::GetSingleton()->SetColor(COLOR(201, 201, 201));
-		GameEngine::GetSingleton()->FillRect(r.left, r.top, r.right, r.bottom);
+		game_engine::instance()->SetColor(COLOR(201, 201, 201));
+		game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 	}
 	else
 	{
-		GameEngine::GetSingleton()->SetColor(COLOR(101, 101, 101));
-		GameEngine::GetSingleton()->FillRect(r.left, r.top, r.right, r.bottom);
+		game_engine::instance()->SetColor(COLOR(101, 101, 101));
+		game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 	}
 
 	// fill interior
 	++r.left; ++r.top; --r.right; --r.bottom;
-	GameEngine::GetSingleton()->SetColor(m_BackColor);
-	GameEngine::GetSingleton()->FillRect(r.left, r.top, r.right, r.bottom);
+	game_engine::instance()->SetColor(m_BackColor);
+	game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 
-	GameEngine::GetSingleton()->SetFont(m_FontPtr);
+	game_engine::instance()->SetFont(m_FontPtr);
 
 	// Draw forecolor when this is enabled
-	if (m_bEnabled)GameEngine::GetSingleton()->SetColor(m_ForeColor);
+	if (m_bEnabled)game_engine::instance()->SetColor(m_ForeColor);
 
 	// GRAY when disabled
-	else GameEngine::GetSingleton()->SetColor(COLOR(127, 127, 127));
+	else game_engine::instance()->SetColor(COLOR(127, 127, 127));
 
 	// Draw the text
-	GameEngine::GetSingleton()->DrawString(m_Text, m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
+	game_engine::instance()->DrawString(m_Text, m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
 
 	// draw caret
 	if (m_bArmed) DrawCaret();
 
 	//restore font
-	GameEngine::GetSingleton()->SetFont(originalFont);
+	game_engine::instance()->SetFont(originalFont);
 }
 
 void TextBox::DrawCaret()
@@ -143,7 +143,7 @@ void TextBox::DrawCaret()
 	{
 		// create a text layout object to retrieve info about the layout
 		IDWriteTextLayout *textLayoutPtr;
-		GameEngine::GetSingleton()->GetDWriteFactory()->CreateTextLayout(m_Text.C_str(), m_Text.Length(), m_FontPtr->GetTextFormat(),
+		game_engine::instance()->GetDWriteFactory()->CreateTextLayout(m_Text.C_str(), m_Text.Length(), m_FontPtr->GetTextFormat(),
 			(FLOAT)(m_BoundingRect.right - m_BoundingRect.left),
 			(FLOAT)(m_BoundingRect.bottom - m_BoundingRect.top),
 			&textLayoutPtr);
@@ -154,7 +154,7 @@ void TextBox::DrawCaret()
 		textLayoutPtr->HitTestTextPosition(m_Text.Length() - 1, true, &caretX, &caretY, &hitTestMetrics);
 
 		// draw the caret
-		GameEngine::GetSingleton()->DrawLine(
+		game_engine::instance()->DrawLine(
 			DOUBLE2(m_BoundingRect.left + 2 + caretX, m_BoundingRect.top + caretY),
 			DOUBLE2(m_BoundingRect.left + 2 + caretX, m_BoundingRect.top + caretY + hitTestMetrics.height)
 			);

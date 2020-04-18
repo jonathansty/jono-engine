@@ -7,7 +7,7 @@
 Shader::Shader(ShaderType type, const char* byte_code, uint32_t size)
 	: _type(type)
 {
-	ID3D11Device* device = GameEngine::Instance()->GetD3DDevice();
+	ID3D11Device* device = game_engine::instance()->GetD3DDevice();
 	switch (type)
 	{
 	case ShaderType::Vertex:
@@ -50,7 +50,7 @@ extern int g_DebugMode;
 
 void Material::apply()
 {
-	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
+	auto ctx = game_engine::instance()->GetD3DDeviceContext();
 	ctx->VSSetShader(_vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
 	ctx->IASetInputLayout(_vertex_shader->get_input_layout().Get());
 

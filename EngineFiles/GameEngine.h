@@ -40,37 +40,36 @@ class ContactListener;
 //-----------------------------------------------------------------
 void OutputDebugString(const String& textRef);
 
-//-----------------------------------------------------------------
-// Windows Procedure Declarations
-//-----------------------------------------------------------------
-LRESULT CALLBACK	WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-
 #include <Box2D/Dynamics/b2WorldCallbacks.h>
 
-class GameEngine : public TSingleton<GameEngine>, public b2ContactListener
+class game_engine : public TSingleton<game_engine>, public b2ContactListener
 {
 private:
 	//! singleton implementation : private constructor + static pointer to game engine
-	GameEngine();
-	friend class TSingleton<GameEngine>;
+	game_engine();
+	friend class TSingleton<game_engine>;
 public:
 	//! Destructor
-	virtual ~GameEngine();
+	virtual ~game_engine();
 
 	// C++11 make the class non-copyable
-	GameEngine(const GameEngine&) = delete;
-	GameEngine& operator=(const GameEngine&) = delete;
+	game_engine(const game_engine&) = delete;
+	game_engine& operator=(const game_engine&) = delete;
 
-	// Static methods
-	static GameEngine*  GetSingleton();
+	// entry point to run a specific game  
+	static int run_game(HINSTANCE hInstance, int iCmdShow, class AbstractGame* game);
 
-	// General Methods
-	void			SetGame(AbstractGame* gamePtr);
-	int 			Run(HINSTANCE hInstance, int iCmdShow);
-	bool			RegisterWindowClass();
-	bool			OpenWindow(int iCmdShow);
-	LRESULT			HandleEvent(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
-	void			QuitGame(void);
+private:
+	void			set_game(AbstractGame* gamePtr);
+	int 			run(HINSTANCE hInstance, int iCmdShow);
+	bool			register_wnd_class();
+	bool			open_window(int iCmdShow);
+
+	LRESULT			handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
+public:
+	void			quit_game(void);
+
 	//! Create a messagebox
 	//! @param text the text to display
 	void			MessageBox(const String &text) const;
@@ -325,11 +324,11 @@ public:
 	void			SetDefaultFont();
 
 	//! Sets the color of the brush that is used to draw and fill
-	//! Example: GAME_ENGINE->SetColor(COLOR(255,127,64));
+	//! Example: game_engine::instance()->SetColor(COLOR(255,127,64));
 	void			SetColor(COLOR colorVal);
 
 	//! Returns the color of the brush used to draw and fill
-	//! Example: COLOR c = GAME_ENGINE->GetColor();
+	//! Example: COLOR c = game_engine::instance()->GetColor();
 	COLOR			GetColor();
 
 	// Accessor Methods
@@ -352,7 +351,7 @@ public:
 	IDWriteFactory*			GetDWriteFactory() const;
 	// Returns a POINT containing the window coordinates of the mouse
 	// Usage example:
-	// POINT mousePos = GAME_ENGINE->GetMousePosition();
+	// POINT mousePos = game_engine::instance()->GetMousePosition();
 	POINT					GetMousePosition() const;
     DOUBLE2                 GetMousePositionDOUBLE2() const;
 	//! returns pointer to the Audio object

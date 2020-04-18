@@ -26,5 +26,4 @@ public :
 	virtual void Render3D() {};
 };
 
-int RunGame(HINSTANCE hInstance, int iCmdShow, AbstractGame* game);
 

@@ -5,5 +5,5 @@
 
 int main()
 {
-	return RunGame(NULL, 1, new Hello3D());
+	return game_engine::run_game(NULL, 1, new Hello3D());
 }

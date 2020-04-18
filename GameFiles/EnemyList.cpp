@@ -1,25 +1,10 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "EnemyList.h"
 #include "Enemy.h"
 #include "Avatar.h"
 #include "EnemyRocketLauncher.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 EnemyList::EnemyList()
 {
 	// nothing to create

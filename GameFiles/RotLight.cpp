@@ -5,19 +5,9 @@
 //-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "RotLight.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 RotLight::RotLight(DOUBLE2 position):
 Animation(position)
 {
@@ -51,18 +41,18 @@ void RotLight::Paint()
 {
 
     std::vector<DOUBLE2>tmpPointsArr;
-    //GAME_ENGINE->SetWorldMatrix(matWorldTransform);
+    //game_engine::instance()->SetWorldMatrix(matWorldTransform);
     MATRIX3X2 matOrbitRadius, matOrbitCenter;
     matOrbitRadius.SetAsTranslate(DOUBLE2(20, 0));
     matOrbitCenter.SetAsTranslate(DOUBLE2(m_Position));
-    GAME_ENGINE->SetColor(m_Color);
+    game_engine::instance()->SetColor(m_Color);
     for (double angle = 0; angle < 2 * M_PI; angle += (2*M_PI)/6)
     {
         MATRIX3X2 matRectOrbitRotate, matWorldTransform;
         matRectOrbitRotate.SetAsRotate(angle + m_Angle);
         matWorldTransform = matOrbitRadius * matRectOrbitRotate * matOrbitCenter;
-        GAME_ENGINE->SetWorldMatrix(matWorldTransform);
-        //GAME_ENGINE->DrawRect(0, -10, 100, 10);
+        game_engine::instance()->SetWorldMatrix(matWorldTransform);
+        //game_engine::instance()->DrawRect(0, -10, 100, 10);
         std::vector<DOUBLE2>tmpPointsArr;
         tmpPointsArr.push_back(DOUBLE2(0,-10));
         tmpPointsArr.push_back(DOUBLE2(m_Radius,-m_Radius/4));
@@ -71,12 +61,12 @@ void RotLight::Paint()
         tmpPointsArr.push_back(DOUBLE2(m_Radius + 10, m_Radius / 6));
         tmpPointsArr.push_back(DOUBLE2(m_Radius,m_Radius/4));
         tmpPointsArr.push_back(DOUBLE2(0,10));
-        GAME_ENGINE->FillPolygon(tmpPointsArr, 7);
+        game_engine::instance()->FillPolygon(tmpPointsArr, 7);
     }
 
    
-    GAME_ENGINE->SetColor(COLOR(0, 0, 0));
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetColor(COLOR(0, 0, 0));
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void RotLight::Tick(double deltaTime)
 {

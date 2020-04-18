@@ -15,14 +15,8 @@
 #include "EntityDestroy.h"
 #include "Animation.h"
 #include "AnimationList.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-#define BMP_MANAGER (BitmapManager::GetSingleton())
-//---------------------------
-// Constructor & Destructor
-//---------------------------
+
+
 EnemyRocketLauncher::EnemyRocketLauncher(DOUBLE2 position, double angle):
 Enemy(position)
 {
@@ -33,7 +27,7 @@ Enemy(position)
     m_Direction = DOUBLE2(cos(angle - M_PI_2), sin(angle - M_PI_2));
     m_ActPtr->AddBoxShape(WIDTH, HEIGHT,0,0);
     m_ActPtr->SetName(String("EnemyRocketLauncher"));
-    m_BmpPtr = BMP_MANAGER->LoadBitmapFile(String("Resources/Enemy/RocketLauncher.png"));
+    m_BmpPtr = bitmap_manager::instance()->LoadBitmapFile(String("Resources/Enemy/RocketLauncher.png"));
 }
 
 EnemyRocketLauncher::~EnemyRocketLauncher()
@@ -128,10 +122,10 @@ void EnemyRocketLauncher::Paint()
     matWorldTransform = matPivot * matRotate * matTranslate;
     m_AnimationListPtr->Paint();
 
-    GAME_ENGINE->SetWorldMatrix(matWorldTransform);
+    game_engine::instance()->SetWorldMatrix(matWorldTransform);
     RECT boundingBox = updateFrameDisplay(m_FrameNr);
-    GAME_ENGINE->DrawBitmap(m_BmpPtr, boundingBox);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->DrawBitmap(m_BmpPtr, boundingBox);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void EnemyRocketLauncher::PaintRockets()
 {
@@ -167,7 +161,7 @@ void EnemyRocketLauncher::PaintDebug()
     m_EnemyListPtr->PaintDebug();
 
     
-    GAME_ENGINE->DrawEllipse((int)m_Position.x, (int)m_Position.y, DETECTIONZONE, DETECTIONZONE);
+    game_engine::instance()->DrawEllipse((int)m_Position.x, (int)m_Position.y, DETECTIONZONE, DETECTIONZONE);
 
 }
 void EnemyRocketLauncher::Reset()

@@ -15,7 +15,7 @@ namespace Shaders
 
 void MaterialResource::load()
 {
-	auto device = GameEngine::Instance()->GetD3DDevice();
+	auto device = game_engine::instance()->GetD3DDevice();
 
 
 	using VertexType = ModelVertex;
@@ -32,7 +32,7 @@ void MaterialResource::load()
 		}
 		else
 		{
-			_resource->_textures.push_back(ResourceLoader::Instance()->load<TextureResource>({ path }, true));
+			_resource->_textures.push_back(ResourceLoader::instance()->load<TextureResource>({ path }, true));
 		}
 	}
 }

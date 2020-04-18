@@ -1,23 +1,8 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE.
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "Teleport.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 Teleport::Teleport(DOUBLE2 teleportEntrance, DOUBLE2 teleportExit, Bitmap* bmpPtr) :
 Entity((teleportExit - teleportEntrance)/2),
 m_TeleEntrance(teleportEntrance),
@@ -91,14 +76,14 @@ void Teleport::Paint()
     matRotate.SetAsRotate(m_Angle);
     matPivot.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
     matWorldTransform = matPivot * matRotate * matTranslate;
-    GAME_ENGINE->SetWorldMatrix(matWorldTransform);
-    GAME_ENGINE->DrawBitmap(m_BmpPtr);
+    game_engine::instance()->SetWorldMatrix(matWorldTransform);
+    game_engine::instance()->DrawBitmap(m_BmpPtr);
     matTranslate.SetAsTranslate(m_TeleExit);
     matRotate.SetAsRotate(m_Angle + 1.5);
     matWorldTransform = matPivot * matRotate * matTranslate;
-    GAME_ENGINE->SetWorldMatrix(matWorldTransform);
-    GAME_ENGINE->DrawBitmap(m_BmpPtr);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matWorldTransform);
+    game_engine::instance()->DrawBitmap(m_BmpPtr);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Teleport::Reset()
 {

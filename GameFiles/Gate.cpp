@@ -1,23 +1,8 @@
-//-----------------------------------------------------
-// Name:
-// First name:
-// Group: 1DAE.
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "Gate.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 Gate::Gate(DOUBLE2 position, DOUBLE2 triggerposition):
 Entity(position), m_TriggerPosition(triggerposition)
 {
@@ -29,16 +14,16 @@ Entity(position), m_TriggerPosition(triggerposition)
     m_ActBasePtr = new PhysicsActor(position, 0, BodyType::STATIC);
     m_ActBasePtr->AddBoxShape(10, 10);
     m_ActBasePtr->SetGhost(true);
-    m_ActGatePtr = new PhysicsActor(position - DOUBLE2(0,GAME_ENGINE->GetHeight()/2), 0, BodyType::DYNAMIC);
+    m_ActGatePtr = new PhysicsActor(position - DOUBLE2(0,game_engine::instance()->GetHeight()/2), 0, BodyType::DYNAMIC);
     m_ActGatePtr->SetGravityScale(1);
     b2Filter filter;
     filter.groupIndex = -5;
     m_ActGatePtr->SetCollisionFilter(filter);
     m_Width = 50;
-    m_Height = GAME_ENGINE->GetHeight() + 800;
+    m_Height = game_engine::instance()->GetHeight() + 800;
     m_ActGatePtr->AddBoxShape(m_Width,m_Height);
-    m_JntGatePtr = new PhysicsPrismaticJoint(m_ActBasePtr, DOUBLE2(), m_ActGatePtr, DOUBLE2(0,(GAME_ENGINE->GetHeight()+800)/2 ), DOUBLE2(0, 1), false);
-    m_JntGatePtr->EnableJointLimits(true, -GAME_ENGINE->GetHeight(),0 );
+    m_JntGatePtr = new PhysicsPrismaticJoint(m_ActBasePtr, DOUBLE2(), m_ActGatePtr, DOUBLE2(0,(game_engine::instance()->GetHeight()+800)/2 ), DOUBLE2(0, 1), false);
+    m_JntGatePtr->EnableJointLimits(true, -game_engine::instance()->GetHeight(),0 );
 }
 
 Gate::~Gate()
@@ -86,10 +71,10 @@ void Gate::Paint()
     DOUBLE2 position = m_ActGatePtr->GetPosition();
     matTranslate.SetAsTranslate(position);
     matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
-    GAME_ENGINE->SetWorldMatrix(matPivot * matTranslate);
-    GAME_ENGINE->SetColor(COLOR(0, 0, 0, 255));
-    GAME_ENGINE->FillRect(0, 0, m_Width, m_Height);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matPivot * matTranslate);
+    game_engine::instance()->SetColor(COLOR(0, 0, 0, 255));
+    game_engine::instance()->FillRect(0, 0, m_Width, m_Height);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Gate::Reset()
 {

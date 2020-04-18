@@ -50,10 +50,6 @@
 #include "NpcHinter.h"
 #include "SoundManager.h"
 
-#define GAME_ENGINE GameEngine::Instance()
-#define BITMAP_MANAGER BitmapManager::Instance()
-#define SND_MANAGER SoundManager::Instance()
-
 Game::Game(ElectronicJonaJoy* owner)
     :_owner(owner)
 {
@@ -61,7 +57,7 @@ Game::Game(ElectronicJonaJoy* owner)
     m_FileManagerPtr = _owner->GetFileManager();
 
 
-    m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-6000, 0),BITMAP_MANAGER->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")));
+    m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-6000, 0),bitmap_manager::instance()->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")));
     m_CheckPointRotLightPtr = new RotLight(DOUBLE2(-6000, 0));
     m_CheckPointRotLightPtr->SetColor(COLOR(255, 255, 255));
     m_CheckPointRotLightPtr->SetRadius(150);
@@ -123,12 +119,12 @@ void Game::tick(double deltaTime)
         m_AccuTime += deltaTime;
 
         //Fade in and fade out of the soundv
-        if (!(SoundManager::Instance()->isMusicMuted())&& !(SoundManager::Instance()->isSoundMuted()))
+        if (!(sound_manager::instance()->isMusicMuted())&& !(sound_manager::instance()->isSoundMuted()))
         {
-            SoundManager::Instance()->FadeIn(m_SndBgMusicPtr, deltaTime);
+            sound_manager::instance()->FadeIn(m_SndBgMusicPtr, deltaTime);
             if (m_CameraPtr->GetCameraShakeMode() == Camera::Shakemode::EPICEFFECT)
             {
-                SoundManager::Instance()->FadeOut(m_SndBgMusicPtr, deltaTime);
+                sound_manager::instance()->FadeOut(m_SndBgMusicPtr, deltaTime);
             }
         }
         UpdateDrawMode();
@@ -195,7 +191,7 @@ void Game::UpdateObjects(double deltaTime)
     {
         if (tmpHitEnemy->GetActor()->GetName() != String("EnemyRocketLauncher") && tmpHitEnemy->GetActor()->GetName() != String("EnemyLaser") && tmpHitEnemy->GetActor()->GetName() != String("EnemyHorizontal"))
         {
-            CombRotLightCpBg* tmpLightPtr = new CombRotLightCpBg(tmpHitEnemy->GetPosition(), 100, BITMAP_MANAGER->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")), COLOR(255, 255, 255));
+            CombRotLightCpBg* tmpLightPtr = new CombRotLightCpBg(tmpHitEnemy->GetPosition(), 100, bitmap_manager::instance()->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")), COLOR(255, 255, 255));
             m_AnimationListPtr->Add(tmpLightPtr);
             m_AnimationListPtr->Add(new EntityDestroy(tmpHitEnemy->GetPosition()));
             m_EnemyListPtr->Remove(tmpHitEnemy);
@@ -207,7 +203,7 @@ void Game::UpdateObjects(double deltaTime)
             m_AnimationListPtr->Add(new EntityDestroy(tmpHitEnemy->GetPosition()));
             if (tmpEnemyHorizontal->GetLifes() <= 0)
             {
-                CombRotLightCpBg* tmpLightPtr = new CombRotLightCpBg(tmpHitEnemy->GetPosition(), 100, BITMAP_MANAGER->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")), COLOR(255, 255, 255));
+                CombRotLightCpBg* tmpLightPtr = new CombRotLightCpBg(tmpHitEnemy->GetPosition(), 100, bitmap_manager::instance()->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")), COLOR(255, 255, 255));
                 m_AnimationListPtr->Add(tmpLightPtr);
                 m_EnemyListPtr->Remove(tmpEnemyHorizontal);
                 tmpHitEnemy = nullptr;
@@ -248,7 +244,7 @@ void Game::UpdateGameChecks(double deltaTime)
 }
 void Game::UpdateKeyChecks(double deltaTime)
 {
-	auto engine = GameEngine::Instance();
+	auto engine = game_engine::instance();
     // Process input for when the game is running
     if (m_GameState == GameState::Running)
     {
@@ -341,7 +337,7 @@ void Game::UpdateKeyChecks(double deltaTime)
 }
 void Game::UpdateDrawMode()
 {
-    auto engine = GameEngine::Instance();
+    auto engine = game_engine::instance();
     if (engine->IsKeyboardKeyPressed('P'))
     {
         if(m_DrawMode == DrawMode::Physics)
@@ -366,7 +362,7 @@ void Game::UpdateDrawMode()
 }
 void Game::paint()
 {
-	auto engine = GameEngine::Instance();
+	auto engine = game_engine::instance();
 
     assert(m_CameraPtr);
     MATRIX3X2 matView = m_CameraPtr->GetViewMatrix();
@@ -422,7 +418,7 @@ void Game::Initializeall(const std::string& fileName)
     m_EntityLastHitCheckpointPtr = nullptr;
     m_FileManagerPtr->ReadGameInit(fileName);
     
-    m_SndEpicModePtr = SND_MANAGER->LoadMusic(String("Resources/Sound/BgMusic/Exhilarate.mp3"));
+    m_SndEpicModePtr = sound_manager::instance()->LoadMusic(String("Resources/Sound/BgMusic/Exhilarate.mp3"));
     // ----- Set The Items ---- //
     m_AvatarPtr = m_FileManagerPtr->GetAvatar();
     m_LevelPtr = m_FileManagerPtr->GetLevel();
@@ -460,7 +456,7 @@ void Game::LoadLevel(const std::string& filePath)
 
     if (m_CheckPointBgPtr == nullptr)
     {
-        m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-300, 0),BITMAP_MANAGER->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")));
+        m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-300, 0),bitmap_manager::instance()->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")));
     }
     Initializeall(filePath);
     m_AvatarPtr->SetKeyBinds(m_FileManagerPtr->GetKeyBinds());
@@ -471,7 +467,7 @@ void Game::LoadLevel(const std::string& filePath)
         
     }
     UnPause();
-    GAME_ENGINE->ConsolePrintString(String("Loaded level ") + String(filePath.c_str()));
+    game_engine::instance()->ConsolePrintString(String("Loaded level ") + String(filePath.c_str()));
     m_SndBgMusicPtr->SetVolume(0);
     m_SndBgMusicPtr->Play();
 }
@@ -495,25 +491,25 @@ void Game::drawBackgroundGradient(int levels)
 {
     if (levels > 255)
     {
-        GAME_ENGINE->MessageBox(String("Please input a valid amount of levels(under 255)"));
-        GAME_ENGINE->QuitGame();
+        game_engine::instance()->MessageBox(String("Please input a valid amount of levels(under 255)"));
+        game_engine::instance()->quit_game();
     }
     for (int i = 0; i < 255; i++)
     {
         COLOR tmpColor = COLOR(255 - (255 / levels)*i, 0, 255 - (255 / levels)*i);
-        GAME_ENGINE->SetColor(tmpColor);
-        GAME_ENGINE->FillRect(0, - 1 + i*GAME_ENGINE->GetHeight() / levels, GAME_ENGINE->GetWidth(), 1 + GAME_ENGINE->GetHeight() / levels + i * GAME_ENGINE->GetHeight() / levels);
-        GAME_ENGINE->SetColor(COLOR(0, 0, 0));
+        game_engine::instance()->SetColor(tmpColor);
+        game_engine::instance()->FillRect(0, - 1 + i*game_engine::instance()->GetHeight() / levels, game_engine::instance()->GetWidth(), 1 + game_engine::instance()->GetHeight() / levels + i * game_engine::instance()->GetHeight() / levels);
+        game_engine::instance()->SetColor(COLOR(0, 0, 0));
     }
 }
 
 void Game::Pause()
 {
-    GameEngine::Instance()->SetPhysicsStep(false);
+    game_engine::instance()->SetPhysicsStep(false);
 }
 void Game::UnPause()
 {
-    GameEngine::Instance()->SetPhysicsStep(true);
+    game_engine::instance()->SetPhysicsStep(true);
     
 }
 /**
@@ -544,7 +540,7 @@ void Game::Restart()
     //TODO: Fix resetting the level state for checkpoints to the state of when we reached the checkpoint
     m_FileManagerPtr->ReadGameInitForObject(m_Level, "EnemyRocketLauncher");
     m_FileManagerPtr->ReadGameInitForObject(m_Level, "Arrow");
-    GAME_ENGINE->ConsolePrintString(String("Respawned the avatar!"));
+    game_engine::instance()->ConsolePrintString(String("Respawned the avatar!"));
     if (m_EntityLastHitCheckpointPtr != nullptr)
     {
         m_CameraPtr->Reset(m_EntityLastHitCheckpointPtr->GetCameraPosition());
@@ -556,7 +552,7 @@ void Game::Restart()
         }
         
         //m_CameraPtr->SetCameraStartPosition(m_EntityLastHitCheckpointPtr->GetCameraPosition());
-        GAME_ENGINE->ConsolePrintString(String("Camera angle set to: ") + String(m_EntityLastHitCheckpointPtr->GetCameraAngle()));
+        game_engine::instance()->ConsolePrintString(String("Camera angle set to: ") + String(m_EntityLastHitCheckpointPtr->GetCameraAngle()));
     }
     else
     {

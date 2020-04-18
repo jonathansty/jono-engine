@@ -23,7 +23,7 @@ public:
 	{
 	}
 
-	static T* Instance();
+	static T* instance();
 	static void Shutdown();
 
 private:
@@ -44,7 +44,7 @@ void TSingleton<T>::Shutdown()
 }
 
 template<typename T>
-T* TSingleton<T>::Instance()
+T* TSingleton<T>::instance()
 {
 	CreateIfNull();
 

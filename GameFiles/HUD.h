@@ -15,7 +15,7 @@
 //-----------------------------------------------------
 class Avatar;
 class Level;
-class BitmapManager;
+class bitmap_manager;
 class Slider;
 class Game;
 class Lever;
@@ -29,7 +29,7 @@ public:
 	HUD( const HUD& ) = delete;
 	HUD& operator=( const HUD& ) = delete;
 
-    enum class gameState
+    enum class game_state
     {
         RUNNING,
         PAUSE
@@ -64,10 +64,8 @@ public:
     void PaintLeverInfo();
 
     void ResetIsInMenu();
+
 private: 
-	//-------------------------------------------------
-	// Datamembers								
-	//-------------------------------------------------
     double m_AccuTime = 0;
 
     Sound* m_BgMusicPtr = nullptr;
@@ -86,7 +84,7 @@ private:
 
     Button *m_BtnQuitGamePtr = nullptr, *m_BtnQuitToMenuPtr = nullptr;
 
-    gameState m_GameState = gameState::RUNNING;
+    game_state m_GameState = game_state::RUNNING;
 
     std::vector<Lever*>m_LeversPtrArr;
     bool m_AreThereLevers = false;

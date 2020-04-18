@@ -14,8 +14,7 @@
 //---------------------------
 // Defines
 //---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-#define SND_MANAGER (GameEngine::GetSingleton());
+#define SND_MANAGER (sound_manager::instance())
 //---------------------------
 // Constructor & Destructor
 //---------------------------
@@ -79,12 +78,12 @@ void MetalFans::Paint()
     matTranslate.SetAsTranslate(m_Position);
     matRotate.SetAsRotate(m_Angle);
     matWorldTransform = matPivot * matRotate * matTranslate;
-    GAME_ENGINE->SetWorldMatrix(matWorldTransform);
+    game_engine::instance()->SetWorldMatrix(matWorldTransform);
     
-    GAME_ENGINE->FillRect(0, 0, WIDTH, HEIGHT);
-    GAME_ENGINE->SetColor(COLOR(0, 0, 120));
-    GAME_ENGINE->FillRect(0, 0, WIDTH, HEIGHT / 2);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->FillRect(0, 0, WIDTH, HEIGHT);
+    game_engine::instance()->SetColor(COLOR(0, 0, 120));
+    game_engine::instance()->FillRect(0, 0, WIDTH, HEIGHT / 2);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
     
 }
 void MetalFans::Tick(double deltaTime)

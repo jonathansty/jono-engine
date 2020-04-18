@@ -19,10 +19,10 @@ void MetricsOverlay::render_overlay()
 	{
 		ImGui::Begin(_name.c_str(), &_isOpen);
 
-		static bool s_EnableVsync = GameEngine::Instance()->GetVSync();
+		static bool s_EnableVsync = game_engine::instance()->GetVSync();
 		if (ImGui::Checkbox("Enable VSync", &s_EnableVsync))
 		{
-			GameEngine::Instance()->SetVSync(s_EnableVsync);
+			game_engine::instance()->SetVSync(s_EnableVsync);
 		}
 		double fps = 1.0 / (m_Times[Timer::FrameTime] * 0.001);
 		ImGui::Text("FPS: %d", int(fps));

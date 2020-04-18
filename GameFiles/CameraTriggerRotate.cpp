@@ -1,27 +1,11 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "CameraTriggerRotate.h"
 #include "Camera.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 CameraTriggerRotate::CameraTriggerRotate(DOUBLE2 position, int width, int height) :
 CameraTrigger(position,width,height)
 {
-
     m_ActPtr = new PhysicsActor(position, 0, BodyType::STATIC);
     m_ActPtr->SetTrigger(true);
     m_ActPtr->AddContactListener(this);

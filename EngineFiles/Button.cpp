@@ -53,7 +53,7 @@ void Button::Paint()
 		exit(-1);
 	}
 	// store original font
-	Font *originalFont = GameEngine::GetSingleton()->GetFont();
+	Font *originalFont = game_engine::instance()->GetFont();
 
 	//automatically enable bitmapmode when the pointers are not nullptr
 	if (m_BmpPressedPtr != nullptr && m_BmpReleasedPtr != nullptr) m_bImageMode = true;
@@ -63,65 +63,65 @@ void Button::Paint()
 	else DrawImageButton();
 
 	//restore font
-	GameEngine::GetSingleton()->SetFont(originalFont);
+	game_engine::instance()->SetFont(originalFont);
 }
 
 void Button::DrawClassicButton()
 {
 	// Draw the borders
 	RECT r = m_BoundingRect;
-	GameEngine::GetSingleton()->SetColor(COLOR(101, 101, 101));
-	GameEngine::GetSingleton()->FillRect(r.left, r.top, r.right, r.bottom);
+	game_engine::instance()->SetColor(COLOR(101, 101, 101));
+	game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 
 	++r.left; ++r.top; --r.right; --r.bottom;
-	if (!m_bArmed) GameEngine::GetSingleton()->SetColor(COLOR(254, 254, 254));
-	else GameEngine::GetSingleton()->SetColor(COLOR(101, 101, 101));
-	GameEngine::GetSingleton()->FillRect(r.left, r.top, r.right, r.bottom);
+	if (!m_bArmed) game_engine::instance()->SetColor(COLOR(254, 254, 254));
+	else game_engine::instance()->SetColor(COLOR(101, 101, 101));
+	game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 
 	// Fill interior
 	++r.left; ++r.top; --r.right; --r.bottom;
-	GameEngine::GetSingleton()->SetColor(m_BackColor);
-	GameEngine::GetSingleton()->FillRect(r.left, r.top, r.right, r.bottom);
+	game_engine::instance()->SetColor(m_BackColor);
+	game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 
 	// Set the Font
-	GameEngine::GetSingleton()->SetFont(m_FontPtr);
+	game_engine::instance()->SetFont(m_FontPtr);
 
 	if (!m_bArmed)
 	{
 
-		GameEngine::GetSingleton()->SetColor(COLOR(101, 101, 101));
-		GameEngine::GetSingleton()->DrawLine(m_BoundingRect.right - 1, m_BoundingRect.top + 1, m_BoundingRect.right - 1, m_BoundingRect.bottom - 1);
-		GameEngine::GetSingleton()->DrawLine(m_BoundingRect.left + 1, m_BoundingRect.bottom - 1, m_BoundingRect.right - 1, m_BoundingRect.bottom - 1);
+		game_engine::instance()->SetColor(COLOR(101, 101, 101));
+		game_engine::instance()->DrawLine(m_BoundingRect.right - 1, m_BoundingRect.top + 1, m_BoundingRect.right - 1, m_BoundingRect.bottom - 1);
+		game_engine::instance()->DrawLine(m_BoundingRect.left + 1, m_BoundingRect.bottom - 1, m_BoundingRect.right - 1, m_BoundingRect.bottom - 1);
 
-		GameEngine::GetSingleton()->SetColor(COLOR(160, 160, 160));
-		GameEngine::GetSingleton()->DrawLine(m_BoundingRect.right - 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
-		GameEngine::GetSingleton()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.bottom - 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
+		game_engine::instance()->SetColor(COLOR(160, 160, 160));
+		game_engine::instance()->DrawLine(m_BoundingRect.right - 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
+		game_engine::instance()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.bottom - 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
 
 		// Draw fore color when this is enabled
-		if (m_bEnabled)GameEngine::GetSingleton()->SetColor(m_ForeColor);
+		if (m_bEnabled)game_engine::instance()->SetColor(m_ForeColor);
 
 		// gray when disabled
-		else GameEngine::GetSingleton()->SetColor(COLOR(187, 187, 187));
+		else game_engine::instance()->SetColor(COLOR(187, 187, 187));
 
-		GameEngine::GetSingleton()->DrawString(m_Text, m_BoundingRect);
+		game_engine::instance()->DrawString(m_Text, m_BoundingRect);
 	}
 	else
 	{
-		GameEngine::GetSingleton()->SetColor(COLOR(101, 101, 101));
-		GameEngine::GetSingleton()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.top + 2);
-		GameEngine::GetSingleton()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.left + 2, m_BoundingRect.bottom - 2);
+		game_engine::instance()->SetColor(COLOR(101, 101, 101));
+		game_engine::instance()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.top + 2);
+		game_engine::instance()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.left + 2, m_BoundingRect.bottom - 2);
 
-		GameEngine::GetSingleton()->SetColor(COLOR(160, 160, 160));
-		GameEngine::GetSingleton()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.top + 3, m_BoundingRect.right - 3, m_BoundingRect.top + 3);
-		GameEngine::GetSingleton()->DrawLine(m_BoundingRect.left + 3, m_BoundingRect.top + 3, m_BoundingRect.left + 3, m_BoundingRect.bottom - 3);
+		game_engine::instance()->SetColor(COLOR(160, 160, 160));
+		game_engine::instance()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.top + 3, m_BoundingRect.right - 3, m_BoundingRect.top + 3);
+		game_engine::instance()->DrawLine(m_BoundingRect.left + 3, m_BoundingRect.top + 3, m_BoundingRect.left + 3, m_BoundingRect.bottom - 3);
 
 		//++r.left; ++r.top; --r.right; --r.bottom;
 		//if (!m_bArmed) GameEngine::GetSingleton()->SetColor(COLOR(240, 240, 240));
 		//else GameEngine::GetSingleton()->SetColor(COLOR(180, 180, 180));
 		////GameEngine::GetSingleton()->SetColor(COLOR(240, 240, 240));
 		//GameEngine::GetSingleton()->FillRect(r.left, r.top, r.right, r.bottom);
-		GameEngine::GetSingleton()->SetColor(m_ForeColor);
-		GameEngine::GetSingleton()->DrawString(m_Text, m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right + 2, m_BoundingRect.bottom + 2);
+		game_engine::instance()->SetColor(m_ForeColor);
+		game_engine::instance()->DrawString(m_Text, m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right + 2, m_BoundingRect.bottom + 2);
 	}
 }
 
@@ -129,11 +129,11 @@ void Button::DrawImageButton()
 {
 	if (m_bArmed)
 	{
-		GameEngine::GetSingleton()->DrawBitmap(m_BmpPressedPtr, m_BoundingRect.left, m_BoundingRect.top);
+		game_engine::instance()->DrawBitmap(m_BmpPressedPtr, m_BoundingRect.left, m_BoundingRect.top);
 	}
 	else
 	{
-		GameEngine::GetSingleton()->DrawBitmap(m_BmpReleasedPtr, m_BoundingRect.left, m_BoundingRect.top);
+		game_engine::instance()->DrawBitmap(m_BmpReleasedPtr, m_BoundingRect.left, m_BoundingRect.top);
 	}
 }
 
@@ -145,26 +145,26 @@ void Button::Tick(double deltaTime)
 		return;
 	}
 
-	MATRIX3X2 matInverse = (GameEngine::GetSingleton()->GetWorldMatrix() * GameEngine::GetSingleton()->GetViewMatrix()).Inverse();
+	MATRIX3X2 matInverse = (game_engine::instance()->GetWorldMatrix() * game_engine::instance()->GetViewMatrix()).Inverse();
 
-	DOUBLE2 mouseScreenSpace(GameEngine::GetSingleton()->GetMousePosition().x, GameEngine::GetSingleton()->GetMousePosition().y);
+	DOUBLE2 mouseScreenSpace(game_engine::instance()->GetMousePosition().x, game_engine::instance()->GetMousePosition().y);
 	DOUBLE2 mouseViewSpace = matInverse.TransformPoint(mouseScreenSpace);
 
 	//RMB in button rect armes the button and paint will draw the pressed button
-	if (GameEngine::GetSingleton()->IsMouseButtonDown(VK_LBUTTON) && PointInRect(m_BoundingRect, mouseViewSpace))
+	if (game_engine::instance()->IsMouseButtonDown(VK_LBUTTON) && PointInRect(m_BoundingRect, mouseViewSpace))
 	{
 		m_bArmed = true;
 	}
 	else
 	{
 		//if mouse button is released while in rect, then pressed is true
-		if (m_bArmed && !GameEngine::GetSingleton()->IsMouseButtonDown(VK_LBUTTON) && PointInRect(m_BoundingRect, mouseViewSpace))
+		if (m_bArmed && !game_engine::instance()->IsMouseButtonDown(VK_LBUTTON) && PointInRect(m_BoundingRect, mouseViewSpace))
 		{
 			m_bTriggered = true;
 			m_bArmed = false;
 		}
 		//while armed the RMB is released or outside the rect, then armed is false
-		else if (m_bArmed && (!GameEngine::GetSingleton()->IsMouseButtonDown(VK_LBUTTON) || !PointInRect(m_BoundingRect, mouseViewSpace)))
+		else if (m_bArmed && (!game_engine::instance()->IsMouseButtonDown(VK_LBUTTON) || !PointInRect(m_BoundingRect, mouseViewSpace)))
 		{
 			m_bArmed = false;
 		}

@@ -1,25 +1,9 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "EnemyRocket.h"
 #include "Avatar.h"
 #include "Trail.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 EnemyRocket::EnemyRocket(DOUBLE2 startPosition, DOUBLE2 startVelocity):
 Enemy(startPosition),
 m_Direction(startVelocity)
@@ -93,8 +77,8 @@ void EnemyRocket::Tick(double deltaTime)
     DOUBLE2 unitVector(1,0);
     double targetAngle = m_AdjustedVelocity.Normalized().AngleWith(vectorToAvatar);
     double dotProduct = m_AdjustedVelocity.Normalized().DotProduct(vectorToAvatar);
-    /*GAME_ENGINE->ConsolePrintString(String("Dot: ") + String(dotProduct));
-    GAME_ENGINE->ConsolePrintString(String("Angle: ") + String(targetAngle));*/
+    /*game_engine::instance()->ConsolePrintString(String("Dot: ") + String(dotProduct));
+    game_engine::instance()->ConsolePrintString(String("Angle: ") + String(targetAngle));*/
     //m_ActPtr->SetAngularVelocity(deltaTime);
     m_AdjustedVelocity.x = cos(m_Angle);
     m_AdjustedVelocity.y = sin(m_Angle);
@@ -139,16 +123,16 @@ void EnemyRocket::Paint()
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
     matPivot.SetAsTranslate(DOUBLE2(- WIDTH /2,-HEIGHT/2));
     matWorldTransform = matPivot * matRotate * matTranslate;
-    GAME_ENGINE->SetWorldMatrix(matWorldTransform);
+    game_engine::instance()->SetWorldMatrix(matWorldTransform);
     std::vector<DOUBLE2>trianglePointsArr;
     trianglePointsArr.push_back(DOUBLE2(0,0));
     trianglePointsArr.push_back(DOUBLE2(WIDTH,HEIGHT/2));
     trianglePointsArr.push_back(DOUBLE2(0,HEIGHT));
-    GAME_ENGINE->FillPolygon(trianglePointsArr, 3);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->FillPolygon(trianglePointsArr, 3);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
     
-    /*GAME_ENGINE->DrawLine(m_Position.x, m_Position.y, m_AvatarPtr->GetPosition().x, m_AvatarPtr->GetPosition().y);
-    GAME_ENGINE->DrawLine(m_Position.x, m_Position.y, m_Position.x + 10*m_AdjustedVelocity.x, m_Position.y + 10*m_AdjustedVelocity.y);*/
+    /*game_engine::instance()->DrawLine(m_Position.x, m_Position.y, m_AvatarPtr->GetPosition().x, m_AvatarPtr->GetPosition().y);
+    game_engine::instance()->DrawLine(m_Position.x, m_Position.y, m_Position.x + 10*m_AdjustedVelocity.x, m_Position.y + 10*m_AdjustedVelocity.y);*/
 
 }
 PhysicsActor* EnemyRocket::GetActor()

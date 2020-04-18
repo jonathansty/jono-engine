@@ -34,8 +34,8 @@ void ModelResource::load()
 
 	std::string dir_path = path;
 	dir_path = dir_path.substr(0, dir_path.rfind('/') + 1);
-	auto device = GameEngine::Instance()->GetD3DDevice();
-	auto ctx = GameEngine::Instance()->GetD3DDeviceContext();
+	auto device = game_engine::instance()->GetD3DDevice();
+	auto ctx = game_engine::instance()->GetD3DDeviceContext();
 
 	using namespace Assimp;
 	Importer importer{};
@@ -227,7 +227,7 @@ void ModelResource::load()
 			}
 
 
-			_materials.push_back(ResourceLoader::Instance()->load<MaterialResource>(parameters, true));
+			_materials.push_back(ResourceLoader::instance()->load<MaterialResource>(parameters, true));
 		}
 
 	}

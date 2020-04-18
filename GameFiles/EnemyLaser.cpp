@@ -5,20 +5,10 @@
 //-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "EnemyLaser.h"
 #include "Level.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 EnemyLaser::EnemyLaser(DOUBLE2 position):
 Enemy(position)
 {
@@ -112,9 +102,9 @@ void EnemyLaser::Tick(double deltaTime)
 }
 void EnemyLaser::Paint()
 {
-    //GAME_ENGINE->DrawLine(m_RayStart, m_RayEnd);
-    GAME_ENGINE->DrawLine(m_IntersectionLeft, m_RayStart);
-    GAME_ENGINE->DrawLine(m_IntersectionRight, m_RayStart);
+    //game_engine::instance()->DrawLine(m_RayStart, m_RayEnd);
+    game_engine::instance()->DrawLine(m_IntersectionLeft, m_RayStart);
+    game_engine::instance()->DrawLine(m_IntersectionRight, m_RayStart);
 
 
     double leftLength = (m_IntersectionLeft - m_Position).Length();
@@ -123,14 +113,14 @@ void EnemyLaser::Paint()
 
     matTranslate.SetAsTranslate(m_Position);
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
-    GAME_ENGINE->SetWorldMatrix(matRotate * matTranslate);
-    GAME_ENGINE->SetColor(COLOR(125, 125, 125));
-    GAME_ENGINE->FillEllipse(DOUBLE2(), 20, 20);
-    GAME_ENGINE->SetColor(COLOR(255, 255, 255));
-    GAME_ENGINE->FillRect((int)-leftLength, -5, 0, 5);
-    GAME_ENGINE->FillRect(0, -5, (int)rightLength, 5);
-    GAME_ENGINE->SetColor(COLOR(0, 0, 0));
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matRotate * matTranslate);
+    game_engine::instance()->SetColor(COLOR(125, 125, 125));
+    game_engine::instance()->FillEllipse(DOUBLE2(), 20, 20);
+    game_engine::instance()->SetColor(COLOR(255, 255, 255));
+    game_engine::instance()->FillRect((int)-leftLength, -5, 0, 5);
+    game_engine::instance()->FillRect(0, -5, (int)rightLength, 5);
+    game_engine::instance()->SetColor(COLOR(0, 0, 0));
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 PhysicsActor* EnemyLaser::GetActor()
 {

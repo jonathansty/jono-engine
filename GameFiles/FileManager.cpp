@@ -45,9 +45,6 @@
 #include "NpcHinter.h"
 #include "Game.h"
 
-#define GAME_ENGINE (GameEngine::GetSingleton())
-#define BITMAP_MANAGER (BitmapManager::GetSingleton())
-
 FileManager::FileManager()
 {
     m_AnimationListPtr = new AnimationList();
@@ -100,11 +97,11 @@ void FileManager::ReadGameInitForObject(const std::string& filePath, const std::
     inputFile.open(filePath);
     if (inputFile.fail())
     {
-        GAME_ENGINE->MessageBox(String("Failed to open ") + String(filePath.c_str()));
+        game_engine::instance()->MessageBox(String("Failed to open ") + String(filePath.c_str()));
     }
     else
     {
-        GAME_ENGINE->ConsolePrintString(String("Successfully loaded GameInit.txt."));
+        game_engine::instance()->ConsolePrintString(String("Successfully loaded GameInit.txt."));
     }
     std::wstringstream expressionStream;
     std::wstring extractedLine;
@@ -227,7 +224,7 @@ void FileManager::ExtractBgMusic(tinyxml2::XMLElement* element)
         String path = String(attribute->Value());
 		if (m_SndBgMusicPtr == nullptr)
 		{
-			m_SndBgMusicPtr = SoundManager::Instance()->LoadMusic(path);
+			m_SndBgMusicPtr = sound_manager::instance()->LoadMusic(path);
 			m_SndBgMusicPtr->Stop();
 		}
 		else
@@ -235,7 +232,7 @@ void FileManager::ExtractBgMusic(tinyxml2::XMLElement* element)
 			if (m_SndBgMusicPtr->GetPath() != path)
 			{
 				m_SndBgMusicPtr->Stop();
-				m_SndBgMusicPtr = SoundManager::Instance()->LoadMusic(path);
+				m_SndBgMusicPtr = sound_manager::instance()->LoadMusic(path);
 			}
 		}
 
@@ -272,7 +269,7 @@ void FileManager::ExtractAvatar(tinyxml2::XMLElement* element)
 
     if (m_AvatarPtr == nullptr)
     {
-        m_AvatarPtr = new Avatar(respawnPosition, BITMAP_MANAGER->LoadBitmapFile(bitmapName), BITMAP_MANAGER->LoadBitmapFile(bitmapEpicMode));
+        m_AvatarPtr = new Avatar(respawnPosition, bitmap_manager::instance()->LoadBitmapFile(bitmapName), bitmap_manager::instance()->LoadBitmapFile(bitmapEpicMode));
     }
     //m_AvatarPtr->AddAmountOfCoins(coins);
     m_AvatarPtr->SetPosition(respawnPosition);
@@ -281,13 +278,13 @@ void FileManager::ExtractAvatar(tinyxml2::XMLElement* element)
     m_AvatarPtr->SetLevel(m_LevelPtr);
     m_AvatarPtr->SetJumpHeight(jumpHeight);
 
-    GameEngine::Instance()->ConsolePrintString(String("Avatar succesfully created!"));
+    game_engine::instance()->ConsolePrintString(String("Avatar succesfully created!"));
 }
 void FileManager::ExtractLevel(tinyxml2::XMLElement* element)
 {
     if (m_LevelPtr != nullptr && m_LevelPtr->GetBgBmpPtr())
     {
-        BITMAP_MANAGER->RemoveBitmapFile(m_LevelPtr->GetBgBmpPtr()->GetFileName());
+        bitmap_manager::instance()->RemoveBitmapFile(m_LevelPtr->GetBgBmpPtr()->GetFileName());
     }
 
     // Attributes
@@ -309,13 +306,13 @@ void FileManager::ExtractLevel(tinyxml2::XMLElement* element)
 
     if (svgNameBounds == String("NULL"))
     {
-        m_LevelPtr = new Level(BITMAP_MANAGER->LoadBitmapFile(bitmapName), svgName);
+        m_LevelPtr = new Level(bitmap_manager::instance()->LoadBitmapFile(bitmapName), svgName);
     }
     else
     {
-        m_LevelPtr = new Level(BITMAP_MANAGER->LoadBitmapFile(bitmapName), svgName, svgNameBounds);
+        m_LevelPtr = new Level(bitmap_manager::instance()->LoadBitmapFile(bitmapName), svgName, svgNameBounds);
     }
-    GAME_ENGINE->ConsolePrintString(String("Level succesfully created!"));
+    game_engine::instance()->ConsolePrintString(String("Level succesfully created!"));
 }
 void FileManager::ExtractLevelEnd(tinyxml2::XMLElement* element)
 {
@@ -351,7 +348,7 @@ void FileManager::ExtractLevelEnd(tinyxml2::XMLElement* element)
             DOUBLE2 leverPosition = StringToDouble2(attr->Value());
 			Lever* tmpLeverPtr = nullptr;
 			int color = rand() & 3;
-			tmpLeverPtr = new Lever(leverPosition, BITMAP_MANAGER->LoadBitmapFile(String(paths[color].c_str())));
+			tmpLeverPtr = new Lever(leverPosition, bitmap_manager::instance()->LoadBitmapFile(String(paths[color].c_str())));
 
 			tmpLeverPtr->SetAvatar(m_AvatarPtr);
 			tmpLevelEnd->Add(tmpLeverPtr);
@@ -360,7 +357,7 @@ void FileManager::ExtractLevelEnd(tinyxml2::XMLElement* element)
     } while (attr);
     m_LevelEndPtr = tmpLevelEnd;
 
-    GAME_ENGINE->ConsolePrintString(String("LevelEnd succesfully created!"));
+    game_engine::instance()->ConsolePrintString(String("LevelEnd succesfully created!"));
 }
 void FileManager::ExtractCamera(tinyxml2::XMLElement* element)
 {
@@ -421,7 +418,7 @@ void FileManager::ExtractCamera(tinyxml2::XMLElement* element)
         tmpCamera->SetCameraSpeed(speed);
         tmpCamera->SetScale(scale);
         m_CameraPtr = tmpCamera;
-        GAME_ENGINE->ConsolePrintString(String("Camera succesfully created!"));
+        game_engine::instance()->ConsolePrintString(String("Camera succesfully created!"));
     }
 }
 void FileManager::ExtractBlockSlide(tinyxml2::XMLElement* element)
@@ -434,7 +431,7 @@ void FileManager::ExtractBlockSlide(tinyxml2::XMLElement* element)
     tmpBlockSlide->SetAvatar(m_AvatarPtr);
     tmpBlockSlide->SetName(name);
     m_EntityListPtr->Add(tmpBlockSlide);
-    GAME_ENGINE->ConsolePrintString(name + String(" sucessfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" sucessfully created!"));
 }
 void FileManager::ExtractGate(tinyxml2::XMLElement* element)
 {
@@ -446,7 +443,7 @@ void FileManager::ExtractGate(tinyxml2::XMLElement* element)
     tmpGate->SetAvatar(m_AvatarPtr);
     tmpGate->SetName(name);
     m_EntityListPtr->Add(tmpGate);
-    GAME_ENGINE->ConsolePrintString(name + String(" sucessfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" sucessfully created!"));
 }
 void FileManager::ExtractLaser(tinyxml2::XMLElement* element)
 {
@@ -466,12 +463,12 @@ void FileManager::ExtractArrow(tinyxml2::XMLElement* element)
     String name = String(GetValue("name", element).c_str());
     String bitmapName = String(GetValue("bitmap", element).c_str());
     double pushpower = String(GetValue("pushpower", element).c_str()).ToDouble();
-    Arrow* tmpArrow = new Arrow(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName));
+    Arrow* tmpArrow = new Arrow(position, bitmap_manager::instance()->LoadBitmapFile(bitmapName));
     tmpArrow->SetPushPower(pushpower);
     tmpArrow->SetName(name);
 
     m_EntityListPtr->Add(tmpArrow);
-    GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
 void FileManager::ExtractArrowShooter(tinyxml2::XMLElement* element)
 {
@@ -484,7 +481,7 @@ void FileManager::ExtractArrowShooter(tinyxml2::XMLElement* element)
     tmpArrowShooterPtr->SetName(name);
     tmpArrowShooterPtr->SetPushPower(pushpower);
     m_EntityListPtr->Add(tmpArrowShooterPtr);
-    GAME_ENGINE->ConsolePrintString(name + String(" sucessfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" sucessfully created!"));
 }
 void FileManager::ExtractEnemyShooter(tinyxml2::XMLElement* element)
 {
@@ -494,13 +491,13 @@ void FileManager::ExtractEnemyShooter(tinyxml2::XMLElement* element)
     double angle = String(GetValue("angle", element).c_str()).ToDouble();
     bool mirror = element->FindAttribute("mirror")->BoolValue();
     double gravityScale = String(GetValue("gravityScale", element).c_str()).ToDouble();
-    EnemyShooter* tmpEnemyPtr = new EnemyShooter(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName), angle);
+    EnemyShooter* tmpEnemyPtr = new EnemyShooter(position, bitmap_manager::instance()->LoadBitmapFile(bitmapName), angle);
     tmpEnemyPtr->SetMirror(mirror);
     tmpEnemyPtr->SetLevel(m_LevelPtr);
     tmpEnemyPtr->SetAvatar(m_AvatarPtr);
     tmpEnemyPtr->setName(name);
     m_EnemyListPtr->Add(tmpEnemyPtr);
-    GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
 void FileManager::ExtractCheckPoint(tinyxml2::XMLElement* element)
 {
@@ -517,25 +514,25 @@ void FileManager::ExtractCheckPoint(tinyxml2::XMLElement* element)
     {
         cameraPosition = StringToDouble2(GetValue("cameraPosition", element));
     }
-    CheckPoint* tmpCheckPoint = new CheckPoint(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName));
+    CheckPoint* tmpCheckPoint = new CheckPoint(position, bitmap_manager::instance()->LoadBitmapFile(bitmapName));
     tmpCheckPoint->SetAvatar(m_AvatarPtr);
     tmpCheckPoint->SetName(name);
     tmpCheckPoint->SetCameraPosition(cameraPosition);
     tmpCheckPoint->SetCameraAngle(angle);
     m_EntityListPtr->Add(tmpCheckPoint);
-    GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
 void FileManager::ExtractEnemyRotater(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
     String bitmapName = String(GetValue("bitmap", element).c_str());
-    EnemyRotater* tmpEnemyRotater = new EnemyRotater(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName));
+    EnemyRotater* tmpEnemyRotater = new EnemyRotater(position, bitmap_manager::instance()->LoadBitmapFile(bitmapName));
     tmpEnemyRotater->SetLevel(m_LevelPtr);
     tmpEnemyRotater->SetAvatar(m_AvatarPtr);
     tmpEnemyRotater->setName(name);
     m_EnemyListPtr->Add(tmpEnemyRotater);
-    GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
 void FileManager::ExtractEnemyHorizontal(tinyxml2::XMLElement* element)
 {
@@ -549,14 +546,14 @@ void FileManager::ExtractEnemyHorizontal(tinyxml2::XMLElement* element)
     {
         lifes = String(GetValue("lifes", element).c_str()).ToInteger();
     }
-    EnemyHorizontal* tmpEnemyPtr = new EnemyHorizontal(position, BITMAP_MANAGER->LoadBitmapFile(bitmapname), m_AvatarPtr);
+    EnemyHorizontal* tmpEnemyPtr = new EnemyHorizontal(position, bitmap_manager::instance()->LoadBitmapFile(bitmapname), m_AvatarPtr);
     tmpEnemyPtr->SetLevel(m_LevelPtr);
     tmpEnemyPtr->SetVelocity(velocity);
     tmpEnemyPtr->SetOffSet(offset);
     tmpEnemyPtr->setName(name);
     tmpEnemyPtr->SetLifes(lifes);
     m_EnemyListPtr->Add(tmpEnemyPtr);
-    GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
 void FileManager::ExtractCoin(tinyxml2::XMLElement* element)
 {
@@ -564,11 +561,11 @@ void FileManager::ExtractCoin(tinyxml2::XMLElement* element)
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
     String bitmapname = String(GetValue("bitmap", element).c_str());
     int coinValue = String(GetValue("value", element).c_str()).ToInteger();
-    Coin* tmpCoin = new Coin(position, BITMAP_MANAGER->LoadBitmapFile(bitmapname));
+    Coin* tmpCoin = new Coin(position, bitmap_manager::instance()->LoadBitmapFile(bitmapname));
     tmpCoin->SetCoinValue(coinValue);
     tmpCoin->SetName(name);
     m_CoinListPtr->Add(tmpCoin);
-    GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
 void FileManager::ExtractTeleport(tinyxml2::XMLElement* element)
 {
@@ -576,12 +573,12 @@ void FileManager::ExtractTeleport(tinyxml2::XMLElement* element)
     DOUBLE2 entrancePos = StringToDouble2(GetValue("entrancePos", element));
     DOUBLE2 exitPos = StringToDouble2(GetValue("exitPos", element));
     String bitmapname = String(GetValue("bitmap", element).c_str());
-    Teleport* tmpTeleport = new Teleport(entrancePos, exitPos, BITMAP_MANAGER->LoadBitmapFile(bitmapname));
+    Teleport* tmpTeleport = new Teleport(entrancePos, exitPos, bitmap_manager::instance()->LoadBitmapFile(bitmapname));
     tmpTeleport->SetAvatar(m_AvatarPtr);
     tmpTeleport->SetLevel(m_LevelPtr);
     tmpTeleport->SetName(name);
     m_EntityListPtr->Add(tmpTeleport);
-    GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
 void FileManager::ExtractEnemyRocketLauncher(tinyxml2::XMLElement* element)
 {
@@ -592,7 +589,7 @@ void FileManager::ExtractEnemyRocketLauncher(tinyxml2::XMLElement* element)
     tmpEnemyRocketLauncher->SetAvatar(m_AvatarPtr);
     tmpEnemyRocketLauncher->setName(name);
     m_EnemyListPtr->Add(tmpEnemyRocketLauncher);
-    GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
+    game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
 void FileManager::ExtractMetalFan(tinyxml2::XMLElement* element)
 {
@@ -650,11 +647,11 @@ void FileManager::LoadGameMusic(const std::string& filePath)
     tinyxml2::XMLDocument musicDocument;
     if(musicDocument.LoadFile(filePath.c_str()) != XML_SUCCESS)
 	{
-		GAME_ENGINE->MessageBox(String("Failed to open ") + String(filePath.c_str()));
+		game_engine::instance()->MessageBox(String("Failed to open ") + String(filePath.c_str()));
 	}
 	else
 	{
-		GAME_ENGINE->ConsolePrintString(String("Succesfully opened GameInit.txt."));
+		game_engine::instance()->ConsolePrintString(String("Succesfully opened GameInit.txt."));
 	}
 
 
@@ -668,7 +665,7 @@ void FileManager::LoadGameMusic(const std::string& filePath)
             if (attr)
             {
 				String filePath = String(attr->Value());
-				SoundManager::GetSingleton()->LoadMusic(filePath);
+				sound_manager::instance()->LoadMusic(filePath);
 
             }
         }
@@ -684,11 +681,11 @@ void FileManager::CreateSpecificObject(const std::wstring& expressionStringRef, 
     //    String name = String(GetValue(L"name", expressionStringRef).c_str());
     //    String bitmapName = String(GetValue(L"bitmap", expressionStringRef).c_str());
     //    double pushpower = String(GetValue(L"pushpower", expressionStringRef).c_str()).ToDouble();
-    //    Arrow* tmpArrow = new Arrow(position, BITMAP_MANAGER->LoadBitmapFile(bitmapName));
+    //    Arrow* tmpArrow = new Arrow(position, bitmap_manager::instance()->LoadBitmapFile(bitmapName));
     //    tmpArrow->SetPushPower(pushpower);
     //    tmpArrow->SetName(name);
     //    m_EntityListPtr->Add(tmpArrow);
-    //    GAME_ENGINE->ConsolePrintString(name + String(" succesfully created!"));
+    //    game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
     //}
 }
 
@@ -832,7 +829,7 @@ FileManager::KeyMap FileManager::LoadAvatarKeybinds(const std::string& filePath)
 	tinyxml2::XMLDocument document{};
 	if (document.LoadFile(filePath.c_str()) != XML_SUCCESS)
 	{
-		GAME_ENGINE->MessageBox(String("Failed to open ") + String(filePath.c_str()));
+		game_engine::instance()->MessageBox(String("Failed to open ") + String(filePath.c_str()));
 	}
 
 	if (auto avatar_controls = document.FirstChildElement("AvatarControls"); avatar_controls != nullptr)
@@ -856,7 +853,7 @@ void FileManager::SetKeyBinds(KeyMap& keyBinds, std::string filePath)
     tinyxml2::XMLDocument document;
     if (document.LoadFile(filePath.c_str()) != XML_SUCCESS)
     {
-        GameEngine::Instance()->ConsolePrintString(String("Failed to set keybinds!"));
+        game_engine::instance()->ConsolePrintString(String("Failed to set keybinds!"));
         return;
     }
 
@@ -871,7 +868,7 @@ void FileManager::SetKeyBinds(KeyMap& keyBinds, std::string filePath)
 
     if(document.SaveFile(filePath.c_str()) != XML_SUCCESS)
     {
-        GAME_ENGINE->MessageBox(String("Failed to open the config file and update keybinds"));
+        game_engine::instance()->MessageBox(String("Failed to open the config file and update keybinds"));
         return;
     }
 
@@ -889,12 +886,12 @@ LevelList* FileManager::LoadLevels(const std::string& filePath)
     tinyxml2::XMLDocument document{};
     if(document.LoadFile(filePath.c_str()) != XML_SUCCESS)
     {
-        GAME_ENGINE->MessageBox(String("Failed to open ") + String(filePath.c_str()));
+        game_engine::instance()->MessageBox(String("Failed to open ") + String(filePath.c_str()));
         return nullptr;
     }
     else
     {
-        GAME_ENGINE->ConsolePrintString(String("Succesfully opened GameInit.txt."));
+        game_engine::instance()->ConsolePrintString(String("Succesfully opened GameInit.txt."));
     }
     auto root = document.FirstChildElement("LevelList");
     if (root)
@@ -907,7 +904,7 @@ LevelList* FileManager::LoadLevels(const std::string& filePath)
             {
 				std::string filePath = attr->Value();
 				tmpLevelList->Add(filePath);
-				GAME_ENGINE->ConsolePrintString(String("Added ") + String(filePath.c_str()) + String(" to the levelList."));
+				game_engine::instance()->ConsolePrintString(String("Added ") + String(filePath.c_str()) + String(" to the levelList."));
 
             }
 
@@ -925,7 +922,7 @@ void FileManager::SaveGameResults(tm beginTime, tm endTime, Game* gamePtr)
     fileStream.open(L"./Resources/GameResults.txt", std::ios_base::app);
     if (fileStream.fail() == true)
     {
-        GAME_ENGINE->MessageBox(String("Failed to save in ./Resources/GameResults.txt"));
+        game_engine::instance()->MessageBox(String("Failed to save in ./Resources/GameResults.txt"));
 
     }
 
@@ -975,7 +972,7 @@ void FileManager::ReadGameResults(std::vector<sessionStats*> &tmpSessionStatsPtr
     inputFile.open("./Resources/GameResults.txt");
     if (inputFile.fail())
     {
-        GAME_ENGINE->MessageBox(String(" Could not read GameResults.txt"));
+        game_engine::instance()->MessageBox(String(" Could not read GameResults.txt"));
         return;
     }
     std::wstringstream expressionstream;

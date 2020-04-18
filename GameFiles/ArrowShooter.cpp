@@ -1,26 +1,13 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "ArrowShooter.h"
 #include "Arrow.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
-ArrowShooter::ArrowShooter(DOUBLE2 position, DOUBLE2 direction,double intervalTime):
-Entity(position), m_direction(direction.Normalized()), m_IntervalTime(intervalTime)
+ArrowShooter::ArrowShooter(DOUBLE2 position, DOUBLE2 direction,double intervalTime)
+    : Entity(position)
+    , m_direction(direction.Normalized())
+    , m_IntervalTime(intervalTime)
 {
     double angle = DOUBLE2(1, 0).AngleWith(direction);
     m_Angle = angle;
@@ -65,7 +52,7 @@ void ArrowShooter::Tick(double deltaTime)
 
     if (m_AccuTime > m_IntervalTime)
     {
-        Arrow* tmpArrowPtr = new Arrow(m_Position + m_direction*30,BitmapManager::GetSingleton()->LoadBitmapFile(String("Resources/Interactions/arrowUp.png")));
+        Arrow* tmpArrowPtr = new Arrow(m_Position + m_direction*30,bitmap_manager::instance()->LoadBitmapFile(String("Resources/Interactions/arrowUp.png")));
         tmpArrowPtr->GetActor()->SetLinearVelocity(m_direction * SPEED);
         tmpArrowPtr->GetActor()->SetAngle(m_Angle);
         tmpArrowPtr->SetPushPower(m_PushPower);
@@ -92,11 +79,11 @@ void ArrowShooter::Paint()
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-WIDTH/2,-HEIGHT/2));
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
-    GAME_ENGINE->SetWorldMatrix(matPivot * matRotate * matTranslate);
-    GAME_ENGINE->FillRect(0, 0, WIDTH, HEIGHT);
-    GAME_ENGINE->FillRect(-10, HEIGHT, 0, HEIGHT + 10);
-    GAME_ENGINE->FillRect(WIDTH, HEIGHT, WIDTH + 10, HEIGHT + 10);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matPivot * matRotate * matTranslate);
+    game_engine::instance()->FillRect(0, 0, WIDTH, HEIGHT);
+    game_engine::instance()->FillRect(-10, HEIGHT, 0, HEIGHT + 10);
+    game_engine::instance()->FillRect(WIDTH, HEIGHT, WIDTH + 10, HEIGHT + 10);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
     for (int i = 0; i < m_AmountOfArrows; i++)
     {
         if (m_ArrowsPtrArr[i] != nullptr)

@@ -1,23 +1,8 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "CoinList.h"
 #include "Coin.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 CoinList::CoinList()
 {
 	// nothing to create
@@ -74,7 +59,7 @@ void CoinList::PaintDebug()
         {
             DOUBLE2 position = m_CoinsPtrArr[i]->GetPosition() - DOUBLE2(10,30);
             String name = m_CoinsPtrArr[i]->GetName();
-            GAME_ENGINE->DrawString(name,position);
+            game_engine::instance()->DrawString(name,position);
         }
     }
 }

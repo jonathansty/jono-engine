@@ -13,7 +13,7 @@
 //---------------------------
 // Defines
 //---------------------------
-//#define GAME_ENGINE (GameEngine::GetSingleton())
+//#define game_engine::instance() (GameEngine::GetSingleton())
 
 //---------------------------
 // Constructor & Destructor

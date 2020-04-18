@@ -1,23 +1,8 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "NpcHinter.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 NpcHinter::NpcHinter(DOUBLE2 position, String tipText, Bitmap* bmpCharacterBmp):
 Entity(position), m_TipText(tipText), m_BmpBodyPtr(bmpCharacterBmp)
 {
@@ -26,7 +11,7 @@ Entity(position), m_TipText(tipText), m_BmpBodyPtr(bmpCharacterBmp)
 NpcHinter::NpcHinter(DOUBLE2 position, String tipText):
 Entity(position), m_TipText(tipText)
 {
-    m_BmpBodyPtr = BitmapManager::GetSingleton()->LoadBitmapFile(String("Resources/Entity/NpcIdle.png"));
+    m_BmpBodyPtr = bitmap_manager::instance()->LoadBitmapFile(String("Resources/Entity/NpcIdle.png"));
 }
 NpcHinter::~NpcHinter()
 {
@@ -56,9 +41,9 @@ void NpcHinter::PaintDebug()
 {
     MATRIX3X2 matPosition;
     matPosition.SetAsTranslate(m_Position);
-    GAME_ENGINE->SetWorldMatrix(matPosition);
-    GAME_ENGINE->DrawEllipse(DOUBLE2(), TALKRADIUS, TALKRADIUS);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matPosition);
+    game_engine::instance()->DrawEllipse(DOUBLE2(), TALKRADIUS, TALKRADIUS);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void NpcHinter::Paint()
 {
@@ -88,26 +73,26 @@ void NpcHinter::Paint()
         matMirror.SetAsScale(1, 1);
     }
     
-    GAME_ENGINE->SetWorldMatrix(matPivot * matMirror*matTranslate);
-    GAME_ENGINE->DrawBitmap(m_BmpBodyPtr, boundingBox);
-    GAME_ENGINE->SetWorldMatrix(matNpcHitBoxTransform);
+    game_engine::instance()->SetWorldMatrix(matPivot * matMirror*matTranslate);
+    game_engine::instance()->DrawBitmap(m_BmpBodyPtr, boundingBox);
+    game_engine::instance()->SetWorldMatrix(matNpcHitBoxTransform);
     Font* fntTmpPtr = new Font(String(""), 16);
     fntTmpPtr->SetAlignHCenter();
-    GAME_ENGINE->SetFont(fntTmpPtr);
+    game_engine::instance()->SetFont(fntTmpPtr);
     matPivot.SetAsTranslate(DOUBLE2(-(m_TipText.Length() * 16) / 2, -50));
 
     matTextTranslate.SetAsTranslate(DOUBLE2(0, 0));
-    GAME_ENGINE->SetWorldMatrix(matPivot* matTextTranslate*matNpcHitBoxTransform);
+    game_engine::instance()->SetWorldMatrix(matPivot* matTextTranslate*matNpcHitBoxTransform);
     if (m_IsArmed)
     {
         
-        GAME_ENGINE->SetColor(COLOR(255,255,255, m_Opacity));
-        GAME_ENGINE->DrawString(m_TipText, RECT2(0, 0, m_TipText.Length() * 16, 50));
+        game_engine::instance()->SetColor(COLOR(255,255,255, m_Opacity));
+        game_engine::instance()->DrawString(m_TipText, RECT2(0, 0, m_TipText.Length() * 16, 50));
     }
    
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
-    GAME_ENGINE->SetColor(COLOR(0, 0, 0, 255));
-    GAME_ENGINE->SetDefaultFont();
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetColor(COLOR(0, 0, 0, 255));
+    game_engine::instance()->SetDefaultFont();
     delete fntTmpPtr;
 }
 void NpcHinter::Tick(double deltaTime)
@@ -171,7 +156,7 @@ void NpcHinter::SetFacingDirection(String facingDirection)
     if (facingDirection != String("LEFT") &&
         facingDirection != String("RIGHT"))
     {
-        GAME_ENGINE->MessageBox(String("Please fix your config file! At object ") + m_Name);
+        game_engine::instance()->MessageBox(String("Please fix your config file! At object ") + m_Name);
     }
     m_FacingDirection = facingDirection;
 }

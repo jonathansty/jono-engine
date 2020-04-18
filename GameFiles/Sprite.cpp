@@ -7,8 +7,6 @@
 	
 #include "Sprite.h"
 
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
 Sprite::Sprite(String spritesheetPath, int amountRows, int amountCols, int maxFrame) :
 m_Rows(amountRows),
 m_Cols(amountCols),
@@ -36,7 +34,7 @@ void Sprite::Paint(int rowNumber)
     boundingBox.top = rowNumber * clipHeight;
     boundingBox.right = boundingBox.left + clipWidth;
     boundingBox.bottom = boundingBox.top + clipHeight;
-    GAME_ENGINE->DrawBitmap(m_BmpSpriteSheetPtr,boundingBox);
+    game_engine::instance()->DrawBitmap(m_BmpSpriteSheetPtr,boundingBox);
 }
 void Sprite::Paint(int rowNumber, int maxFrame)
 {
@@ -47,7 +45,7 @@ void Sprite::Paint(int rowNumber, int maxFrame)
     boundingBox.top = rowNumber * clipHeight;
     boundingBox.right = boundingBox.left + clipWidth;
     boundingBox.bottom = boundingBox.top + clipHeight;
-    GAME_ENGINE->DrawBitmap(m_BmpSpriteSheetPtr, boundingBox);
+    game_engine::instance()->DrawBitmap(m_BmpSpriteSheetPtr, boundingBox);
 }
 void Sprite::SetFrameRate(double frameRate)
 {

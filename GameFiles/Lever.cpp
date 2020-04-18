@@ -1,23 +1,8 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "Lever.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 Lever::Lever(DOUBLE2 position, Bitmap* bmpPtr):
 Entity(position),
 m_BmpPtr(bmpPtr)
@@ -60,7 +45,7 @@ void Lever::Paint()
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-(m_BmpPtr->GetWidth()/AMOUNTOFFRAMES) / 2, -m_BmpPtr->GetHeight() / 2));
-    GAME_ENGINE->SetWorldMatrix(matPivot * matTranslate);
+    game_engine::instance()->SetWorldMatrix(matPivot * matTranslate);
     RECT boundingBox;
     boundingBox.left = 0;
     boundingBox.top = 0;
@@ -72,8 +57,8 @@ void Lever::Paint()
     }
     boundingBox.right = boundingBox.left + (LONG)m_ClipWidth;
     boundingBox.bottom = m_BmpPtr->GetHeight();
-    GAME_ENGINE->DrawBitmap(m_BmpPtr,boundingBox);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->DrawBitmap(m_BmpPtr,boundingBox);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Lever::Tick(double deltaTime)
 {

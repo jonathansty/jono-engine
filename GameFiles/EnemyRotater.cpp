@@ -11,11 +11,6 @@
 #include "EnemyRotater.h"
 
 //---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-//---------------------------
 // Constructor & Destructor
 //---------------------------
 EnemyRotater::EnemyRotater(DOUBLE2 position, Bitmap* bmpPtr): Enemy(position), m_BmpPtr(bmpPtr)
@@ -61,9 +56,9 @@ void EnemyRotater::Paint()
     matOrbitRadius.SetAsTranslate(DOUBLE2(m_Radius,0));
     matOrbitCenter.SetAsTranslate(position);
     matBitmapRotation = matRotation.Inverse();
-    GAME_ENGINE->SetWorldMatrix(matCenter *matBitmapRotation * matOrbitRadius*matRotation*matOrbitCenter);
-    GAME_ENGINE->DrawBitmap(m_BmpPtr);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matCenter *matBitmapRotation * matOrbitRadius*matRotation*matOrbitCenter);
+    game_engine::instance()->DrawBitmap(m_BmpPtr);
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void EnemyRotater::Tick(double deltaTime)
 {

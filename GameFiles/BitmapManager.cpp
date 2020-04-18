@@ -5,9 +5,7 @@
 #include "stdafx.h"	
 #include "BitmapManager.h"
 
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-BitmapManager::BitmapManager() : m_BitmapPtrArr{}
+bitmap_manager::bitmap_manager() : m_BitmapPtrArr{}
 {
     for (int i = 0; i < SIZE; i++)
     {
@@ -15,7 +13,7 @@ BitmapManager::BitmapManager() : m_BitmapPtrArr{}
     }
 }
 
-BitmapManager::~BitmapManager()
+bitmap_manager::~bitmap_manager()
 {
     for (int i = 0; i < m_NumberOfStoredBitmaps; i++)
     {
@@ -24,16 +22,12 @@ BitmapManager::~BitmapManager()
     }
 }
 
-BitmapManager* BitmapManager::GetSingleton()
-{
-    return Instance();
-}
-Bitmap* BitmapManager::LoadBitmapFile(const String& fileName)
+Bitmap* bitmap_manager::LoadBitmapFile(const String& fileName)
 {
     // Check the whole array for the filename, if it already exists return the existing bitmap
     if (m_NumberOfStoredBitmaps+ 1 > SIZE)
     {
-        GAME_ENGINE->MessageBox(String("Maximum amount of bitmaps reached. Please increase the size of the array."));
+        game_engine::instance()->MessageBox(String("Maximum amount of bitmaps reached. Please increase the size of the array."));
     }
     for (int i = 0; i < m_NumberOfStoredBitmaps; i++)
     {
@@ -59,7 +53,7 @@ Bitmap* BitmapManager::LoadBitmapFile(const String& fileName)
     m_NumberOfStoredBitmaps++;
     return bmpPtr;
 }
-void BitmapManager::RemoveBitmapFile(const String& fileName)
+void bitmap_manager::RemoveBitmapFile(const String& fileName)
 {
     for (int i = 0; i < m_NumberOfStoredBitmaps; i++)
     {
@@ -68,11 +62,11 @@ void BitmapManager::RemoveBitmapFile(const String& fileName)
             m_FileNameArr[i] = String("NULL");
             delete m_BitmapPtrArr[i];
             m_BitmapPtrArr[i] = nullptr;
-            GAME_ENGINE->ConsolePrintString(String("Succesfully deleted ") + fileName);
+            game_engine::instance()->ConsolePrintString(String("Succesfully deleted ") + fileName);
             return;
         }
     }
-    GAME_ENGINE->ConsolePrintString(fileName + String(" was not found in the BitmapManager"));
+    game_engine::instance()->ConsolePrintString(fileName + String(" was not found in the BitmapManager"));
 }
 
 

@@ -1,35 +1,20 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "HUD.h"
 #include "BitmapManager.h"
 #include "Avatar.h"
 #include "Slider.h"
 #include "Game.h"
 #include "Lever.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-#define BITMAP_MANAGER (BitmapManager::GetSingleton())
-#define SND_MANAGER (SoundManager::GetSingleton())
-//---------------------------
-// Constructor & Destructor
-//---------------------------
+
+
 HUD::HUD(Game* gamePtr)
 {
     m_AvatarPtr = gamePtr->GetAvatar();
     m_LevelPtr = gamePtr->GetLevel();
-    m_BmpMoneyDisplayPtr = BITMAP_MANAGER->LoadBitmapFile(String("Resources/UI/ui_MoneyDisplay.png"));
-    m_BmpDeathIconPtr = BITMAP_MANAGER->LoadBitmapFile(String("Resources/UI/ui_DeathIcon.png"));
-    m_BmpGameOverPtr = BITMAP_MANAGER->LoadBitmapFile(String("Resources/Menu/gameOver.png"));
+    m_BmpMoneyDisplayPtr = bitmap_manager::instance()->LoadBitmapFile(String("Resources/UI/ui_MoneyDisplay.png"));
+    m_BmpDeathIconPtr = bitmap_manager::instance()->LoadBitmapFile(String("Resources/UI/ui_DeathIcon.png"));
+    m_BmpGameOverPtr = bitmap_manager::instance()->LoadBitmapFile(String("Resources/Menu/gameOver.png"));
     m_FntPtr = new Font(String("KenVector Future"), 40);
 }
 
@@ -49,39 +34,37 @@ HUD::~HUD()
 
 void HUD::Paint()
 {
-    GAME_ENGINE->SetFont(m_FntPtr);
+    game_engine::instance()->SetFont(m_FntPtr);
     PaintMoneyWindow(DOUBLE2(10, 10));
-    PaintDeathCounterWindow(DOUBLE2(GAME_ENGINE->GetWidth() - 100, 50));
+    PaintDeathCounterWindow(DOUBLE2(game_engine::instance()->GetWidth() - 100, 50));
     
-    GAME_ENGINE->SetWorldMatrix(GAME_ENGINE->GetViewMatrix().Inverse());
-    GAME_ENGINE->DrawString(String(m_AccuTime, 2), GAME_ENGINE->GetWidth() / 2, 10);
-    GAME_ENGINE->SetDefaultFont(); 
+    game_engine::instance()->SetWorldMatrix(game_engine::instance()->GetViewMatrix().Inverse());
+    game_engine::instance()->DrawString(String(m_AccuTime, 2), game_engine::instance()->GetWidth() / 2, 10);
+    game_engine::instance()->SetDefaultFont(); 
     
     PaintLeverInfo();
-    GAME_ENGINE->SetViewMatrix(GAME_ENGINE->GetViewMatrix());
-
-    //GAME_ENGINE->SetWorldMatrix(GAME_ENGINE->GetViewMatrix().Inverse());
+    game_engine::instance()->SetViewMatrix(game_engine::instance()->GetViewMatrix());
     
 }
 void HUD::Tick(double deltaTime)
 {
 
-    DOUBLE2 mousePosition = GAME_ENGINE->GetMousePositionDOUBLE2();
+    DOUBLE2 mousePosition = game_engine::instance()->GetMousePositionDOUBLE2();
     if (m_BtnSndMutePtr != nullptr && m_BtnSndMutePtr->IsPressed())
     {
         if (m_Muted)
         {
-            Bitmap* tmpBitmapPressed = BITMAP_MANAGER->LoadBitmapFile(String("Resources/UI/audioOn.png"));
+            Bitmap* tmpBitmapPressed = bitmap_manager::instance()->LoadBitmapFile(String("Resources/UI/audioOn.png"));
             m_BtnSndMutePtr->SetPressedBitmap(tmpBitmapPressed);
             m_BtnSndMutePtr->SetReleasedBitmap(tmpBitmapPressed);
-            SND_MANAGER->UnMuteAll();
+            sound_manager::instance()->UnMuteAll();
         }
         else
         {
-            Bitmap* tmpBitmapPressed = BITMAP_MANAGER->LoadBitmapFile(String("Resources/UI/audioOff.png"));
+            Bitmap* tmpBitmapPressed = bitmap_manager::instance()->LoadBitmapFile(String("Resources/UI/audioOff.png"));
             m_BtnSndMutePtr->SetPressedBitmap(tmpBitmapPressed);
             m_BtnSndMutePtr->SetReleasedBitmap(tmpBitmapPressed);
-            SND_MANAGER->MuteAll();
+            sound_manager::instance()->MuteAll();
         }
         m_Muted = !m_Muted;
     }
@@ -89,7 +72,7 @@ void HUD::Tick(double deltaTime)
 
     if (m_BtnQuitGamePtr!= nullptr && m_BtnQuitGamePtr->IsPressed())
     {
-        GAME_ENGINE->QuitGame();
+        game_engine::instance()->quit_game();
     }
     if (m_BtnQuitToMenuPtr != nullptr && m_BtnQuitToMenuPtr->IsPressed())
     {
@@ -108,7 +91,7 @@ void HUD::Tick(double deltaTime)
 }
 void HUD::PaintMoneyWindow(DOUBLE2 position)
 {
-    GAME_ENGINE->SetDefaultFont();
+    game_engine::instance()->SetDefaultFont();
     int amountOfMoney = 0;
     if (m_AvatarPtr != nullptr)
     {
@@ -132,38 +115,43 @@ void HUD::PaintMoneyWindow(DOUBLE2 position)
 
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(position);
-    GAME_ENGINE->SetWorldMatrix(matTranslate * GAME_ENGINE->GetViewMatrix().Inverse());
-    GAME_ENGINE->DrawBitmap(m_BmpMoneyDisplayPtr);
-    GAME_ENGINE->SetColor(COLOR(255, 255, 255));
-    GAME_ENGINE->DrawString(String(amountOfGold), (int)(bitmapWidth - 30), (int)(5 ));
-    GAME_ENGINE->DrawString(String(amountOfSilver), (int)(bitmapWidth - 70), (int)(5 ));
-    GAME_ENGINE->DrawString(String(amountOfCopper), (int)(bitmapWidth - 110), (int)( 5 ));
-    GAME_ENGINE->SetColor(COLOR(0, 0, 0));
-    GAME_ENGINE->SetFont(m_FntPtr);
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+
+    game_engine* eng = game_engine::instance();
+    eng->SetWorldMatrix(matTranslate * game_engine::instance()->GetViewMatrix().Inverse());
+    eng->DrawBitmap(m_BmpMoneyDisplayPtr);
+    eng->SetColor(COLOR(255, 255, 255));
+    eng->DrawString(String(amountOfGold), (int)(bitmapWidth - 30), (int)(5 ));
+    eng->DrawString(String(amountOfSilver), (int)(bitmapWidth - 70), (int)(5 ));
+    eng->DrawString(String(amountOfCopper), (int)(bitmapWidth - 110), (int)( 5 ));
+    eng->SetColor(COLOR(0, 0, 0));
+    eng->SetFont(m_FntPtr);
+    eng->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 
 }
+
 void HUD::PaintDeathCounterWindow(DOUBLE2 position)
 {
     MATRIX3X2 matTranslate, matPivot;
     DOUBLE2 positionIcon = DOUBLE2(-m_BmpDeathIconPtr->GetWidth() / 2, -m_BmpDeathIconPtr->GetHeight() / 2);
     matTranslate.SetAsTranslate(position);
     matPivot.SetAsTranslate(positionIcon);
-    GAME_ENGINE->SetWorldMatrix(matPivot * matTranslate * GAME_ENGINE->GetViewMatrix().Inverse());
-    GAME_ENGINE->DrawBitmap(m_BmpDeathIconPtr);
+
+    game_engine* eng = game_engine::instance();
+    eng->SetWorldMatrix(matPivot * matTranslate * game_engine::instance()->GetViewMatrix().Inverse());
+    eng->DrawBitmap(m_BmpDeathIconPtr);
 
     matPivot.SetAsTranslate(DOUBLE2(20 + m_BmpDeathIconPtr->GetWidth() / 2, -m_BmpDeathIconPtr->GetHeight() / 2));
-    GAME_ENGINE->SetWorldMatrix(matPivot * matTranslate * GAME_ENGINE->GetViewMatrix().Inverse());
-    GAME_ENGINE->DrawString(String(m_AvatarPtr->GetDeaths()),DOUBLE2());
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    eng->SetWorldMatrix(matPivot * matTranslate * game_engine::instance()->GetViewMatrix().Inverse());
+    eng->DrawString(String(m_AvatarPtr->GetDeaths()),DOUBLE2());
+    eng->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void HUD::CreatePauseMenu()
 {
     int dy = 30;
     m_BtnQuitGamePtr = new Button(String("Quit to desktop!"));
-    m_BtnQuitGamePtr->SetBounds(GAME_ENGINE->GetWidth()/2 - 100, GAME_ENGINE->GetHeight() / 2, 200, 25);
+    m_BtnQuitGamePtr->SetBounds(game_engine::instance()->GetWidth()/2 - 100, game_engine::instance()->GetHeight() / 2, 200, 25);
     m_BtnQuitToMenuPtr = new Button(String("Quit to main menu!"));
-    m_BtnQuitToMenuPtr->SetBounds(GAME_ENGINE->GetWidth()/2 - 100, GAME_ENGINE->GetHeight() / 2 - dy, 200, 25);
+    m_BtnQuitToMenuPtr->SetBounds(game_engine::instance()->GetWidth()/2 - 100, game_engine::instance()->GetHeight() / 2 - dy, 200, 25);
     
     m_IsInMenu = true;
 }
@@ -185,11 +173,11 @@ void HUD::PaintGameOverWindow(DOUBLE2 position)
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(position);
     matPivot.SetAsTranslate(DOUBLE2(-m_BmpGameOverPtr->GetWidth() / 2, -m_BmpGameOverPtr->GetHeight() / 2));
-    GAME_ENGINE->SetWorldMatrix(matPivot*matTranslate * GAME_ENGINE->GetViewMatrix().Inverse());
-    GAME_ENGINE->SetColor(COLOR(0, 0, 0, m_GameOverOpacity));
-    GAME_ENGINE->DrawBitmap(m_BmpGameOverPtr);
+    game_engine::instance()->SetWorldMatrix(matPivot*matTranslate * game_engine::instance()->GetViewMatrix().Inverse());
+    game_engine::instance()->SetColor(COLOR(0, 0, 0, m_GameOverOpacity));
+    game_engine::instance()->DrawBitmap(m_BmpGameOverPtr);
     m_IsGameOverDrawn = true;
-    GAME_ENGINE->SetWorldMatrix(GAME_ENGINE->GetViewMatrix().Inverse());
+    game_engine::instance()->SetWorldMatrix(game_engine::instance()->GetViewMatrix().Inverse());
 }
 bool HUD::IsGoToStartMenu()
 {
@@ -201,9 +189,9 @@ void HUD::ResetIsInMenu()
 }
 void HUD::CreateSoundMuteBtn()
 {
-    Bitmap* tmpBitmapPressed = BITMAP_MANAGER->LoadBitmapFile(String("Resources/UI/audioOn.png"));
+    Bitmap* tmpBitmapPressed = bitmap_manager::instance()->LoadBitmapFile(String("Resources/UI/audioOn.png"));
     m_BtnSndMutePtr = new Button(String("Mute Sound"));
-    m_BtnSndMutePtr->SetBounds(GAME_ENGINE->GetWidth() - 60, GAME_ENGINE->GetHeight() - 60, tmpBitmapPressed->GetWidth(), tmpBitmapPressed->GetHeight());
+    m_BtnSndMutePtr->SetBounds(game_engine::instance()->GetWidth() - 60, game_engine::instance()->GetHeight() - 60, tmpBitmapPressed->GetWidth(), tmpBitmapPressed->GetHeight());
     m_BtnSndMutePtr->SetImageMode(true);
     m_BtnSndMutePtr->SetPressedBitmap(tmpBitmapPressed);
     m_BtnSndMutePtr->SetReleasedBitmap(tmpBitmapPressed);
@@ -242,11 +230,11 @@ void HUD::PaintLeverInfo()
     {
         if (m_LeversPtrArr[i]->isHit())
         {
-            GAME_ENGINE->DrawString(String("Lever ") + String(i) + String(" is hit!"), 10, 150 + (int)i * 15);
+            game_engine::instance()->DrawString(String("Lever ") + String(i) + String(" is hit!"), 10, 150 + (int)i * 15);
         }
         else
         {
-            GAME_ENGINE->DrawString(String("Lever ") + String(i) + String(" is not hit!"), 10, 150 + (int)i * 15);
+            game_engine::instance()->DrawString(String("Lever ") + String(i) + String(" is not hit!"), 10, 150 + (int)i * 15);
         }
     }
 }

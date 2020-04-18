@@ -20,7 +20,7 @@ PhysicsActor::~PhysicsActor()
     }
 
     // remove the body from the scene
-    (GameEngine::GetSingleton())->GetBox2DWorld()->DestroyBody(m_BodyPtr);
+    (game_engine::instance())->GetBox2DWorld()->DestroyBody(m_BodyPtr);
     // from here, there can be a jump to GameEngine::EndContact !!
     m_BodyPtr = nullptr;
 }
@@ -59,7 +59,7 @@ bool PhysicsActor::SetBody(DOUBLE2 pos, double angle, BodyType bodyType)
 	bodyDef.position.Set((float)(pos.x), (float)(pos.y));
 	bodyDef.angle = (float)angle;
 
-	m_BodyPtr = (GameEngine::GetSingleton())->GetBox2DWorld()->CreateBody(&bodyDef);
+	m_BodyPtr = (game_engine::instance())->GetBox2DWorld()->CreateBody(&bodyDef);
 
 	if (m_BodyPtr == nullptr) return false;
 	return true;

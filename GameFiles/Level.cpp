@@ -1,23 +1,6 @@
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 #include "stdafx.h"		
-	
-//---------------------------
-// Includes
-//---------------------------
 #include "Level.h"
 
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
-
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 Level::Level(Bitmap* bmpPtr, String svgPath)
 {
 	// nothing to create
@@ -70,8 +53,7 @@ Level::~Level()
 //}
 void Level::Paint()
 {
-
-    GAME_ENGINE->DrawBitmap(m_BmpLevelPtr);
+    game_engine::instance()->DrawBitmap(m_BmpLevelPtr);
 
 }
 int Level::GetHeight()

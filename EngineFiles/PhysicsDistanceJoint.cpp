@@ -15,13 +15,13 @@ PhysicsDistanceJoint::PhysicsDistanceJoint(PhysicsActor *actAPtr, DOUBLE2 anchor
 	DistanceJointDef.frequencyHz = (float)frequencyHz;
 	DistanceJointDef.dampingRatio = (float)dampingRatio;
 
-	m_DistanceJointPtr = dynamic_cast <b2DistanceJoint*>((GameEngine::GetSingleton())->GetBox2DWorld()->CreateJoint(&DistanceJointDef));
+	m_DistanceJointPtr = dynamic_cast <b2DistanceJoint*>((game_engine::instance())->GetBox2DWorld()->CreateJoint(&DistanceJointDef));
 
 }
 
 PhysicsDistanceJoint::~PhysicsDistanceJoint()
 {
-	(GameEngine::GetSingleton())->GetBox2DWorld()->DestroyJoint(m_DistanceJointPtr);
+	(game_engine::instance())->GetBox2DWorld()->DestroyJoint(m_DistanceJointPtr);
 }
 
 double PhysicsDistanceJoint::GetLength() const
@@ -33,7 +33,7 @@ void PhysicsDistanceJoint::SetLength(double length)
 {
 	if (length < 0.1)
 	{
-		GameEngine::GetSingleton()->MessageBox(String("Length can not be a very small number "));
+		game_engine::instance()->MessageBox(String("Length can not be a very small number "));
 	}
 	m_DistanceJointPtr->SetLength((float)length / (float)PhysicsActor::SCALE);
 }

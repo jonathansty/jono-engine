@@ -1,23 +1,8 @@
-//-----------------------------------------------------
-// Name:
-// First name:
-// Group: 1DAE.
-//-----------------------------------------------------
 #include "stdafx.h"		
 	
-//---------------------------
-// Includes
-//---------------------------
 #include "StickyWall.h"
 #include "Avatar.h"
-//---------------------------
-// Defines
-//---------------------------
-#define GAME_ENGINE (GameEngine::GetSingleton())
 
-//---------------------------
-// Constructor & Destructor
-//---------------------------
 StickyWall::StickyWall(DOUBLE2 position, int width, int height):
 Entity(position),
 m_Width(width),
@@ -63,17 +48,17 @@ void StickyWall::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 }
 void StickyWall::Paint()
 {
-    GAME_ENGINE->SetColor(COLOR(0, 0, 0));
+    game_engine::instance()->SetColor(COLOR(0, 0, 0));
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
-    GAME_ENGINE->SetWorldMatrix(matPivot*matTranslate);
-    GAME_ENGINE->FillRect(0, 0, (int)m_Width, (int)m_Height);
-    GAME_ENGINE->SetColor(COLOR(0, 125, 50));
-    GAME_ENGINE->FillRect(0, 0, (int)(m_Width * 0.2), (int)(m_Height));
-    GAME_ENGINE->FillRect((int)(m_Width - (m_Width*0.2)), 0, (int)m_Width, (int)m_Height);
-    GAME_ENGINE->SetColor(COLOR(0, 0, 0));
-    GAME_ENGINE->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->SetWorldMatrix(matPivot*matTranslate);
+    game_engine::instance()->FillRect(0, 0, (int)m_Width, (int)m_Height);
+    game_engine::instance()->SetColor(COLOR(0, 125, 50));
+    game_engine::instance()->FillRect(0, 0, (int)(m_Width * 0.2), (int)(m_Height));
+    game_engine::instance()->FillRect((int)(m_Width - (m_Width*0.2)), 0, (int)m_Width, (int)m_Height);
+    game_engine::instance()->SetColor(COLOR(0, 0, 0));
+    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void StickyWall::Tick(double deltaTime)
 {
