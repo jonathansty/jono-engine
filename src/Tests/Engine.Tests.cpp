@@ -13,6 +13,10 @@ namespace Core
 	class MockTypeA
 	{
 		REFLECT(MockTypeA);
+
+	public:
+		int _a;
+		int _b;
 	};
 
 	class MockTypeB : public MockTypeA
@@ -20,16 +24,34 @@ namespace Core
 		REFLECT(MockTypeB);
 
 	public:
+		void add(double d) {
+			_c += d;
+		}
 
+		double _c;
 	};
 
 	IMPL_REFLECT(MockTypeA)
 	{
+		type.register_property("a", &MockTypeA::_a);
+		type.register_property("b", &MockTypeA::_b);
 	}
 
 	IMPL_REFLECT(MockTypeB)
 	{
 		type.bind_parent<MockTypeA>();
+		type.register_property("c", &MockTypeB::_c);
+
+		type.register_property<MockTypeB, double>("custom_c", 
+			[](MockTypeB* obj, double const* val) 
+			{
+				obj->_c = (*val) * 20.0; 
+			}, 
+			[](MockTypeB* obj, double** val) 
+			{
+				*val = &obj->_c;
+			}
+		);
 	}
 
 	TEST_CLASS(RTTITests)
@@ -68,6 +90,34 @@ namespace Core
 			auto type = MockTypeB::get_static_type();
 			Assert::IsNotNull(type);
 		}
+
+		TEST_METHOD(MockTypeB_Inherits_MockTypeA)
+		{
+			rtti::TypeInfo* info = rtti::Registry::get<MockTypeB>();
+			Assert::IsTrue(info->inherits(rtti::Registry::get<MockTypeA>()));
+		}
+
+		TEST_METHOD(MockTypeB_HasInheritedProperties)
+		{
+			rtti::TypeInfo* info = rtti::Registry::get<MockTypeB>();
+			Assert::IsNotNull(info->find_property("a"));
+			Assert::IsNotNull(info->find_property("b"));
+			Assert::IsNotNull(info->find_property("c"));
+			Assert::IsNotNull(info->find_property("custom_c"));
+		}
+
+		TEST_METHOD(MockTypeB_SetUsingCustomProperty)
+		{
+			MockTypeB obj{};
+			rtti::Object dynamic_obj = rtti::Object::create_as_ref(&obj);
+
+			rtti::TypeInfo* info = rtti::Registry::get<MockTypeB>();
+			dynamic_obj.set_property("custom_c", -1.0);
+			double value = dynamic_obj.get_property<double>("custom_c");
+			Assert::AreEqual(value, -20.0, 0.01);
+		}
+
+
 	};
 }
 
