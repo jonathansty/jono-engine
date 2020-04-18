@@ -36,7 +36,7 @@ m_BmpPtr(bmpPtr)
     m_ActBottomTriggerPtr->SetCollisionFilter(collisionFilter);
 
     m_SndJumpPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/Jump2.wav"));
-    m_SndJumpPtr->SetVolume(0.2);
+    m_SndJumpPtr->set_volume(0.2);
 }
 
 Arrow::~Arrow()

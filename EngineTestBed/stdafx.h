@@ -83,7 +83,7 @@ using namespace D2D1;
 #include "EngineFiles/TextBox.h"
 #include "EngineFiles/Button.h"
 #include "EngineFiles/SVGParser.h"
-#include "EngineFiles/Sound.h"
+#include "EngineFiles/sound.h"
 #include "EngineFiles/PhysicsActor.h"
 #include "EngineFiles/PhysicsRevoluteJoint.h"
 #include "EngineFiles/PhysicsPrismaticJoint.h"

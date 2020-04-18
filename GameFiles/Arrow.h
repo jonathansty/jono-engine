@@ -44,7 +44,7 @@ private:
     static int m_InstanceCounter;
 
     //Sounds
-    Sound* m_SndJumpPtr = nullptr;
+    sound* m_SndJumpPtr = nullptr;
 
 };
 

@@ -151,7 +151,7 @@ void SimpleMeshComponent::render()
 	{
 		std::shared_ptr<MaterialResource> material = _resource->_materials[m.materialID]; 
 		(*material)->apply();
-		ctx->DrawIndexed(m.indexCount, m.firstIndex, m.firstVertex);
+		ctx->DrawIndexed((UINT)m.indexCount, (UINT)m.firstIndex, (INT)m.firstVertex);
 	}
 
 }
@@ -285,8 +285,8 @@ void CameraComponent::update(float dt)
 		double y = current.y - _prev_position.y;
 		_prev_position = current;
 
-		_x_angle += x;
-		_y_angle += y;
+		_x_angle += (float)x;
+		_y_angle += (float)y;
 		// Do stuff
 
 		float x_angle = XMConvertToRadians(25.0f) * dt * _x_angle;

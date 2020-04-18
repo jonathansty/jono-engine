@@ -95,7 +95,7 @@ void TextBox::Paint()
 	}
 
 	//Store font
-	Font *originalFont = game_engine::instance()->GetFont();
+	Font *originalFont = game_engine::instance()->get_font();
 	// make sure that the text is left aligned
 	m_FontPtr->SetAlignHLeft();
 	// working copy of the bounds
@@ -104,27 +104,27 @@ void TextBox::Paint()
 	//border color depends on armed state: filling is faster than line drawing
 	if (!m_bArmed)
 	{
-		game_engine::instance()->SetColor(COLOR(201, 201, 201));
+		game_engine::instance()->set_color(COLOR(201, 201, 201));
 		game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 	}
 	else
 	{
-		game_engine::instance()->SetColor(COLOR(101, 101, 101));
+		game_engine::instance()->set_color(COLOR(101, 101, 101));
 		game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 	}
 
 	// fill interior
 	++r.left; ++r.top; --r.right; --r.bottom;
-	game_engine::instance()->SetColor(m_BackColor);
+	game_engine::instance()->set_color(m_BackColor);
 	game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 
-	game_engine::instance()->SetFont(m_FontPtr);
+	game_engine::instance()->set_font(m_FontPtr);
 
 	// Draw forecolor when this is enabled
-	if (m_bEnabled)game_engine::instance()->SetColor(m_ForeColor);
+	if (m_bEnabled)game_engine::instance()->set_color(m_ForeColor);
 
 	// GRAY when disabled
-	else game_engine::instance()->SetColor(COLOR(127, 127, 127));
+	else game_engine::instance()->set_color(COLOR(127, 127, 127));
 
 	// Draw the text
 	game_engine::instance()->DrawString(m_Text, m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
@@ -133,7 +133,7 @@ void TextBox::Paint()
 	if (m_bArmed) DrawCaret();
 
 	//restore font
-	game_engine::instance()->SetFont(originalFont);
+	game_engine::instance()->set_font(originalFont);
 }
 
 void TextBox::DrawCaret()

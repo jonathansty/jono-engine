@@ -41,12 +41,12 @@ void GUIBase::Initialize()
 	m_FontPtr = new Font(String("Consolas"), 14);
 	m_FontPtr->SetAlignVCenter();
 	m_FontPtr->SetAlignHCenter();
-	game_engine::instance()->RegisterGUI(this);
+	game_engine::instance()->register_gui(this);
 }
 
 GUIBase::~GUIBase()
 {
-	game_engine::instance()->UnRegisterGUI(this);
+	game_engine::instance()->unregister_gui(this);
 	delete m_FontPtr;
 }
 

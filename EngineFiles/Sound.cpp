@@ -1,7 +1,7 @@
 #include "stdafx.h"    // for compiler
 #include "../stdafx.h" // for intellisense
 
-#include "Sound.h"
+#include "sound.h"
 #include <locale>
 #include <codecvt>
 
@@ -14,13 +14,13 @@
 //-----------------------------------------------------------------
 // Sound methods
 //-----------------------------------------------------------------
-Sound::Sound(const String &filenameRef)
+sound::sound(const String &filenameRef)
 {
 	Create(filenameRef);
     m_FilePath = filenameRef;
 }
 
-Sound::Sound(int resourceID)
+sound::sound(int resourceID)
 {
 	String sType("MP3");
 	String fileName = String(resourceID) + String(".") + sType;
@@ -29,7 +29,7 @@ Sound::Sound(int resourceID)
 	Create(resultingFilename);
 }
 
-Sound::~Sound()
+sound::~sound()
 {
 	m_pSourceVoice->Stop(0);
 	m_pSourceVoice->DestroyVoice();
@@ -42,7 +42,7 @@ Sound::~Sound()
 	}
 }
 
-void Sound::Extract(int resourceID, const String& typeRef, String &resultingFilenameRef)
+void sound::Extract(int resourceID, const String& typeRef, String &resultingFilenameRef)
 {
 	HRSRC hrsrc = FindResource(NULL, MAKEINTRESOURCE(resourceID), typeRef.C_str());
 	HGLOBAL hLoaded = LoadResource(NULL, hrsrc);
@@ -60,7 +60,7 @@ void Sound::Extract(int resourceID, const String& typeRef, String &resultingFile
 	FreeResource(hLoaded);
 }
 
-void Sound::Create(const String& filenameRef)
+void sound::Create(const String& filenameRef)
 {
 	// catch endplay event
 	m_VoiceCallback.SetVoice(this);
@@ -85,78 +85,80 @@ void Sound::Create(const String& filenameRef)
 	}
 }
 
-bool Sound::Play()
+bool sound::play(play_mode mode)
 {
 	HRESULT hr = S_FALSE;
-	if (m_PlayState != PlayState::Playing)
+	if (mode == play_mode::Queued)
 	{
-		// if stopped, queue a buffer
-		if (m_PlayState == PlayState::Stopped)
+		if (m_PlayState != PlayState::Playing)
 		{
-			// 4. Submit an XAUDIO2_BUFFER to the source voice using the function SubmitSourceBuffer.
-			if (FAILED(hr = m_pSourceVoice->SubmitSourceBuffer(&m_Buffer)))
+			// if stopped, queue a buffer
+			if (m_PlayState == PlayState::Stopped)
 			{
-				MessageBoxA(NULL, "Error SubmitSourceBuffer", "GameEngine says NO", MB_OK);
-				exit(-1);
+				// 4. Submit an XAUDIO2_BUFFER to the source voice using the function SubmitSourceBuffer.
+				if (FAILED(hr = m_pSourceVoice->SubmitSourceBuffer(&m_Buffer)))
+				{
+					MessageBoxA(NULL, "Error SubmitSourceBuffer", "GameEngine says NO", MB_OK);
+					exit(-1);
+				}
+			}
+			// if paused, then just continue playing the buffer
+			hr = m_pSourceVoice->Start(0);
+			if (SUCCEEDED(hr))
+			{
+				m_PlayState = PlayState::Playing;
+				return true;
 			}
 		}
-		// if paused, then just continue playing the buffer
-		hr = m_pSourceVoice->Start(0);
-		if (SUCCEEDED(hr))
+	}
+	else
+	{
+		HRESULT hr = S_FALSE;
+		IXAudio2SourceVoice* pSourceVoice = nullptr;
+
+		for (auto it = m_OverlappingVoices.begin(); it != m_OverlappingVoices.end(); ++it)
 		{
-			m_PlayState = PlayState::Playing;
-			return true;
+			IXAudio2SourceVoice* pExistingVoice = *it;
+			XAUDIO2_VOICE_STATE state;
+			pExistingVoice->GetState(&state);
+
+			if (state.BuffersQueued == 0) {
+				pSourceVoice = pExistingVoice;
+			}
+
 		}
+		if (pSourceVoice == nullptr)
+		{
+
+			if (FAILED(hr = game_engine::instance()->GetXAudio()->GetIXAudio()->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)&m_Wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &m_VoiceCallback, NULL, NULL)))
+				//if (FAILED(hr = AudioSystem::m_pXAudio2->CreateSourceVoice(&m_pSourceVoice, (WAVEFORMATEX*)&m_Wfx)))
+			{
+				MessageBoxA(NULL, "Error Creating the Sound", "GameEngine says NO", MB_OK);
+				exit(-1);
+			}
+			else
+			{
+				m_OverlappingVoices.push_back(pSourceVoice);
+			}
+		}
+
+		// 4. Submit an XAUDIO2_BUFFER to the source voice using the function SubmitSourceBuffer.
+		//m_pSourceVoice->
+		if (FAILED(hr = pSourceVoice->SubmitSourceBuffer(&m_Buffer)))
+		{
+			MessageBoxA(NULL, "Error SubmitSourceBuffer", "GameEngine says NO", MB_OK);
+			exit(-1);
+		}
+
+
+		hr = pSourceVoice->Start(0);
+
+		return hr != S_FALSE;
 	}
 	return false;
 }
 
-bool Sound::PlayImmediately()
-{
-	HRESULT hr = S_FALSE;
-	IXAudio2SourceVoice * pSourceVoice = nullptr;
-
-	for (auto it = m_OverlappingVoices.begin(); it != m_OverlappingVoices.end(); ++it)
-	{
-		IXAudio2SourceVoice* pExistingVoice = *it;
-		XAUDIO2_VOICE_STATE state;
-		pExistingVoice->GetState(&state);
-
-		if (state.BuffersQueued == 0){
-			pSourceVoice = pExistingVoice;
-		}
-		
-	}
-	if (pSourceVoice == nullptr)
-	{
-
-		if (FAILED(hr = game_engine::instance()->GetXAudio()->GetIXAudio()->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)&m_Wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &m_VoiceCallback, NULL, NULL)))
-			//if (FAILED(hr = AudioSystem::m_pXAudio2->CreateSourceVoice(&m_pSourceVoice, (WAVEFORMATEX*)&m_Wfx)))
-		{
-			MessageBoxA(NULL, "Error Creating the Sound", "GameEngine says NO", MB_OK);
-			exit(-1);
-		}
-		else
-		{
-			m_OverlappingVoices.push_back(pSourceVoice);
-		}
-	}
-	
-	// 4. Submit an XAUDIO2_BUFFER to the source voice using the function SubmitSourceBuffer.
-	//m_pSourceVoice->
-	if (FAILED(hr = pSourceVoice->SubmitSourceBuffer(&m_Buffer)))
-	{
-		MessageBoxA(NULL, "Error SubmitSourceBuffer", "GameEngine says NO", MB_OK);
-		exit(-1);
-	}
-		
-		
-	hr = pSourceVoice->Start(0);
-		
-	return hr != S_FALSE;
-}
-
-bool Sound::Stop()
+bool sound::stop()
 {
 	m_PlayState = PlayState::Stopped;
 	HRESULT hr = m_pSourceVoice->Stop(0);
@@ -168,7 +170,7 @@ bool Sound::Stop()
 	return false;
 }
 
-bool Sound::Pause()
+bool sound::pause()
 {
 	m_PlayState = PlayState::Paused;
 	HRESULT hr = m_pSourceVoice->Stop(0);
@@ -176,66 +178,62 @@ bool Sound::Pause()
 	return false;
 }
 
-bool Sound::SetVolume(double volume)
+bool sound::set_volume(double volume)
 {
 	HRESULT hr = m_pSourceVoice->SetVolume((float)volume);
 	if (SUCCEEDED(hr)) return true;
 	return false;
 }
 
-double Sound::GetVolume() const
+double sound::get_volume() const
 {
 	float volume = 0;
 	m_pSourceVoice->GetVolume(&volume);
 	return volume;
 }
 
-void Sound::SetPlayState(PlayState playState)
+void sound::SetPlayState(PlayState playState)
 {
 	m_PlayState = playState;
 }
 
-Sound::PlayState Sound::GetPlayState() const
+sound::PlayState sound::GetPlayState() const
 {
 	return m_PlayState;
 }
 
-void Sound::SetRepeat(bool repeat)
+void sound::set_repeat(bool repeat)
 {
 	if (repeat)m_Buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
 	else m_Buffer.LoopCount = 0;
 }
 
-bool Sound::GetRepeat() const
+bool sound::get_repeat() const
 {
 	if (m_Buffer.LoopCount != 0) return true;
 	return false;
 }
 
-void Sound::SetPitch(double ratio)
+void sound::set_pitch(double ratio)
 {
 	m_pSourceVoice->SetFrequencyRatio((float)ratio);
 }
 
-double Sound::GetPitch() const
+double sound::get_pitch() const
 {
 	float ratio = 0;
 	m_pSourceVoice->GetFrequencyRatio(&ratio);
 	return ratio;
 }
 
-double Sound::GetDuration() const
+double sound::get_duration() const
 {
 	double duration = (double)m_Buffer.AudioBytes / (m_Wfx.Format.nSamplesPerSec * m_Wfx.Format.wBitsPerSample / 8 * m_Wfx.Format.nChannels);
 	return duration;
 }
-String Sound::GetPath()
+String sound::GetPath()
 {
     return m_FilePath;
-}
-void Sound::SetEffect()
-{
-    
 }
 
 //-----------------------------------------------------------------
@@ -243,10 +241,10 @@ void Sound::SetEffect()
 //-----------------------------------------------------------------
 void __stdcall VoiceCallback::OnStreamEnd()
 {
-	m_pXSound->SetPlayState(Sound::PlayState::Stopped);
+	m_pXSound->SetPlayState(sound::PlayState::Stopped);
 }
 
-void VoiceCallback::SetVoice(Sound *pXSound)
+void VoiceCallback::SetVoice(sound *pXSound)
 {
 	m_pXSound = pXSound;
 }

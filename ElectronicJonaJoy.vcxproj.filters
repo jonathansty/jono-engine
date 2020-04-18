@@ -64,9 +64,6 @@
     <ClCompile Include="EngineFiles\AudioSystem.cpp">
       <Filter>Engine Files\Core\Sound</Filter>
     </ClCompile>
-    <ClCompile Include="EngineFiles\Sound.cpp">
-      <Filter>Engine Files\Core\Sound</Filter>
-    </ClCompile>
     <ClCompile Include="EngineFiles\Bitmap.cpp">
       <Filter>Engine Files\Core</Filter>
     </ClCompile>
@@ -154,6 +151,9 @@
     </ClCompile>
     <ClCompile Include="EngineFiles\Core\Material.cpp">
       <Filter>Engine Files\Core\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="EngineFiles\sound.cpp">
+      <Filter>Engine Files\Core\Sound</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -319,9 +319,6 @@
     <ClInclude Include="EngineFiles\AudioSystem.h">
       <Filter>Engine Files\Core\Sound</Filter>
     </ClInclude>
-    <ClInclude Include="EngineFiles\Sound.h">
-      <Filter>Engine Files\Core\Sound</Filter>
-    </ClInclude>
     <ClInclude Include="EngineFiles\Bitmap.h">
       <Filter>Engine Files\Core</Filter>
     </ClInclude>
@@ -439,6 +436,9 @@
     </ClInclude>
     <ClInclude Include="EngineFiles\Core\Material.h">
       <Filter>Engine Files\Core\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\sound.h">
+      <Filter>Engine Files\Core\Sound</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

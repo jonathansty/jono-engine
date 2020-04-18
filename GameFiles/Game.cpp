@@ -45,7 +45,7 @@
 #include "MetalFans.h"
 #include "StickyWall.h"
 #include "Lever.h"
-#include "FileManager.h"
+#include "ejj_data_manager.h"
 #include "Slicer.h"
 #include "NpcHinter.h"
 #include "SoundManager.h"
@@ -265,12 +265,12 @@ void Game::UpdateKeyChecks(double deltaTime)
             switch (tmpShakeMode)
             {
             case Camera::Shakemode::NOSHAKE:
-                m_SndEpicModePtr->Play();
+                m_SndEpicModePtr->play();
                 m_CameraPtr->SetCameraShakeMode(Camera::Shakemode::EPICEFFECT);
                 break;
             case Camera::Shakemode::EPICEFFECT:
-                m_SndEpicModePtr->Stop();
-                m_SndBgMusicPtr->Play();
+                m_SndEpicModePtr->stop();
+                m_SndBgMusicPtr->play();
                 m_CameraPtr->SetCameraShakeMode(Camera::Shakemode::NOSHAKE);
                 break;
             default:
@@ -389,7 +389,7 @@ void Game::paint()
         m_EnemyListPtr->PaintRockets();
         engine->SetWorldMatrix(matView.Inverse());
         m_CameraPtr->Paint();
-        engine->SetColor(COLOR(0, 0, 0));
+        engine->set_color(COLOR(0, 0, 0));
     }
 
     if(m_DrawMode & DrawMode::Physics)
@@ -432,8 +432,8 @@ void Game::Initializeall(const std::string& fileName)
     m_EnemyListPtr = m_FileManagerPtr->GetEnemyList();
     m_EnemyListPtr->SetAvatar(m_AvatarPtr);
     m_SndBgMusicPtr = m_FileManagerPtr->GetBgMusic();
-    m_SndBgMusicPtr->SetRepeat(true);
-    m_SndBgMusicPtr->SetVolume(0);
+    m_SndBgMusicPtr->set_repeat(true);
+    m_SndBgMusicPtr->set_volume(0);
     
     if (m_HudPtr != nullptr)
     {
@@ -446,7 +446,7 @@ void Game::LoadLevel(const std::string& filePath)
     m_GameState = GameState::Running;
     if (m_SndEpicModePtr != nullptr)
     {
-        m_SndEpicModePtr->Stop();
+        m_SndEpicModePtr->stop();
     }
     
     m_AccuTime = 0;
@@ -468,16 +468,16 @@ void Game::LoadLevel(const std::string& filePath)
     }
     UnPause();
     game_engine::instance()->ConsolePrintString(String("Loaded level ") + String(filePath.c_str()));
-    m_SndBgMusicPtr->SetVolume(0);
-    m_SndBgMusicPtr->Play();
+    m_SndBgMusicPtr->set_volume(0);
+    m_SndBgMusicPtr->play();
 }
 
 void Game::Unload()
 {
-    m_SndBgMusicPtr->Stop();
+    m_SndBgMusicPtr->stop();
     m_CheckPointBgPtr->SetPosition(DOUBLE2(-650, -300));
     m_AttackBeamListPtr->Remove();
-    m_SndEpicModePtr->Stop();
+    m_SndEpicModePtr->stop();
     m_FileManagerPtr->ClearLists();
 
 }
@@ -491,25 +491,25 @@ void Game::drawBackgroundGradient(int levels)
 {
     if (levels > 255)
     {
-        game_engine::instance()->MessageBox(String("Please input a valid amount of levels(under 255)"));
+        game_engine::instance()->message_box(String("Please input a valid amount of levels(under 255)"));
         game_engine::instance()->quit_game();
     }
     for (int i = 0; i < 255; i++)
     {
         COLOR tmpColor = COLOR(255 - (255 / levels)*i, 0, 255 - (255 / levels)*i);
-        game_engine::instance()->SetColor(tmpColor);
-        game_engine::instance()->FillRect(0, - 1 + i*game_engine::instance()->GetHeight() / levels, game_engine::instance()->GetWidth(), 1 + game_engine::instance()->GetHeight() / levels + i * game_engine::instance()->GetHeight() / levels);
-        game_engine::instance()->SetColor(COLOR(0, 0, 0));
+        game_engine::instance()->set_color(tmpColor);
+        game_engine::instance()->FillRect(0, - 1 + i*game_engine::instance()->get_height() / levels, game_engine::instance()->get_width(), 1 + game_engine::instance()->get_height() / levels + i * game_engine::instance()->get_height() / levels);
+        game_engine::instance()->set_color(COLOR(0, 0, 0));
     }
 }
 
 void Game::Pause()
 {
-    game_engine::instance()->SetPhysicsStep(false);
+    game_engine::instance()->set_physics_step(false);
 }
 void Game::UnPause()
 {
-    game_engine::instance()->SetPhysicsStep(true);
+    game_engine::instance()->set_physics_step(true);
     
 }
 /**
@@ -595,7 +595,7 @@ double Game::GetTotalTime()
 {
     return m_TotalTime;
 }
-void Game::SetFileManager(FileManager* tmpFileManager)
+void Game::SetFileManager(ejj_data_manager* tmpFileManager)
 {
     m_FileManagerPtr = tmpFileManager;
 }

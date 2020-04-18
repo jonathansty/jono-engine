@@ -53,13 +53,13 @@ AttackBeam::~AttackBeam()
 void AttackBeam::Paint()
 {
     
-    game_engine::instance()->SetColor(m_Color);
+    game_engine::instance()->set_color(m_Color);
     if (m_TopPosition.y < m_Position.y)
     {
         game_engine::instance()->FillRect((int)(-m_Width + m_Position.x), (int)m_TopPosition.y, (int)(m_Width + m_Position.x), (int)m_Position.y);
     }
     
-    game_engine::instance()->SetColor(COLOR(0, 0, 0,255));
+    game_engine::instance()->set_color(COLOR(0, 0, 0,255));
     //game_engine::instance()->DrawLine(m_RayStart, m_RayEnd);
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_Position);

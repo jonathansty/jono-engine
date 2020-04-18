@@ -114,12 +114,12 @@ void EnemyLaser::Paint()
     matTranslate.SetAsTranslate(m_Position);
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
     game_engine::instance()->SetWorldMatrix(matRotate * matTranslate);
-    game_engine::instance()->SetColor(COLOR(125, 125, 125));
+    game_engine::instance()->set_color(COLOR(125, 125, 125));
     game_engine::instance()->FillEllipse(DOUBLE2(), 20, 20);
-    game_engine::instance()->SetColor(COLOR(255, 255, 255));
+    game_engine::instance()->set_color(COLOR(255, 255, 255));
     game_engine::instance()->FillRect((int)-leftLength, -5, 0, 5);
     game_engine::instance()->FillRect(0, -5, (int)rightLength, 5);
-    game_engine::instance()->SetColor(COLOR(0, 0, 0));
+    game_engine::instance()->set_color(COLOR(0, 0, 0));
     game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 PhysicsActor* EnemyLaser::GetActor()

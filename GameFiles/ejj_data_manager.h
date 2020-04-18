@@ -31,15 +31,15 @@ class TriggerList;
 class LevelList;
 class Game;
 
-class FileManager 
+class ejj_data_manager 
 {
 public:
-	FileManager( );
-	virtual ~FileManager( );
+	ejj_data_manager( );
+	virtual ~ejj_data_manager( );
 
 	// C++11 make the class non-copyable
-	FileManager( const FileManager& ) = delete;
-	FileManager& operator=( const FileManager& ) = delete;
+	ejj_data_manager( const ejj_data_manager& ) = delete;
+	ejj_data_manager& operator=( const ejj_data_manager& ) = delete;
 
     struct sessionStats
     {
@@ -94,7 +94,7 @@ public:
     //! Returns the animationList
     AnimationList* GetAnimationList();
     //! Returns the background Music
-    Sound* GetBgMusic();
+    sound* GetBgMusic();
 
     //! Returns the keybinds as a vector
     KeyMap const& GetKeyBinds();
@@ -158,7 +158,7 @@ private:
     EntityList* m_EntityListPtr = nullptr;
     EnemyList* m_EnemyListPtr = nullptr;
 
-    Sound* m_SndBgMusicPtr = nullptr;
+    sound* m_SndBgMusicPtr = nullptr;
 };
 
  

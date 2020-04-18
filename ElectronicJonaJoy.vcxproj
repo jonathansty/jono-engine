@@ -151,7 +151,7 @@
     <ClCompile Include="EngineFiles\rtti\method.cpp" />
     <ClCompile Include="EngineFiles\rtti\object.cpp" />
     <ClCompile Include="EngineFiles\rtti\typeinfo.cpp" />
-    <ClCompile Include="EngineFiles\Sound.cpp" />
+    <ClCompile Include="EngineFiles\sound.cpp" />
     <ClCompile Include="EngineFiles\EString.cpp" />
     <ClCompile Include="EngineFiles\Structs.cpp" />
     <ClCompile Include="EngineFiles\SVGParser.cpp" />
@@ -231,7 +231,7 @@
     <ClInclude Include="EngineFiles\PhysicsPrismaticJoint.h" />
     <ClInclude Include="EngineFiles\PhysicsRevoluteJoint.h" />
     <ClInclude Include="EngineFiles\PrecisionTimer.h" />
-    <ClInclude Include="EngineFiles\Sound.h" />
+    <ClInclude Include="EngineFiles\sound.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="big.ico" />

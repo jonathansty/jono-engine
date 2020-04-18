@@ -40,9 +40,9 @@ void Coin::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
         if (m_SndHitPtr != nullptr)
         {
             game_engine::instance()->ConsolePrintString(String("Coin sound Played!"));
-            if (m_SndHitPtr->GetVolume() > 0)
+            if (m_SndHitPtr->get_volume() > 0)
             {
-                m_SndHitPtr->PlayImmediately();
+                m_SndHitPtr->play(sound::play_mode::Immediate);
             }
             
         }

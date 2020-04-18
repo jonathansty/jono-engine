@@ -1,8 +1,8 @@
 #pragma once
 
-#include "FileManager.h"
+#include "ejj_data_manager.h"
 
-class FileManager;
+class ejj_data_manager;
 
 class StartMenu 
 {
@@ -30,8 +30,8 @@ public:
     void EnableButtons();
     void Remove();
     void ReadGameResults();
-    void ReadKeyBindsForMenu(FileManager::KeyMap tmpKeybindsArr);
-    void SetFileManager(FileManager* fileManagerPtr);
+    void ReadKeyBindsForMenu(ejj_data_manager::KeyMap tmpKeybindsArr);
+    void SetFileManager(ejj_data_manager* fileManagerPtr);
 
     std::function<void()> _on_start_event;
 private: 
@@ -46,7 +46,7 @@ private:
         HIGHSCORES
     };
     int m_HighScoreOffsetCounter = 0;
-    std::vector<FileManager::sessionStats*>m_SessionStatsArr;
+    std::vector<ejj_data_manager::sessionStats*>m_SessionStatsArr;
     menuState m_MenuState = menuState::MAIN;
     static const int KEYLISTFNTSIZE = 25;
     static const int CONTROLLISTYPOS = 230;
@@ -62,9 +62,9 @@ private:
     std::vector<class TextLabel*>m_TxtLabels;
 
     bool m_IsOptionAdjusted = false;
-    Sound* m_BgMusicPtr = nullptr;
-    FileManager* m_FileManagerPtr = nullptr;
-    FileManager::KeyMap m_KeybindsArr;
+    sound* m_BgMusicPtr = nullptr;
+    ejj_data_manager* m_FileManagerPtr = nullptr;
+    ejj_data_manager::KeyMap m_KeybindsArr;
 
     std::shared_ptr<Font> m_ComicSansPtr = nullptr;
 

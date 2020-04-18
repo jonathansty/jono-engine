@@ -28,18 +28,18 @@ public:
 	sound_manager( const sound_manager& ) = delete;
 	sound_manager& operator=( const sound_manager& ) = delete;
 
-    Sound* LoadSound(const String& fileName);
-    Sound* LoadMusic(const String& fileName);
-    void UnLoadMusic(Sound* sndPtr);
-    void UnLoadSound(Sound* sndPtr);
+    sound* LoadSound(const String& fileName);
+    sound* LoadMusic(const String& fileName);
+    void UnLoadMusic(sound* sndPtr);
+    void UnLoadSound(sound* sndPtr);
 
     void SetSoundVolume(double volume);
     void SetMusicVolume(double volume);
 
-    Sound* GetCurrentSong();
+    sound* GetCurrentSong();
 
-    bool FadeIn(Sound* tmpSoundPtr, double deltaTime);
-    bool FadeOut(Sound* tmpSoundPtr, double deltaTime);
+    bool FadeIn(sound* tmpSoundPtr, double deltaTime);
+    bool FadeOut(sound* tmpSoundPtr, double deltaTime);
 
     bool isSoundMuted();
     bool isMusicMuted();
@@ -55,12 +55,12 @@ private:
     bool m_IsMusicMuted = false;
     bool m_IsSoundMuted = false;
     std::vector<String>m_FileNamesArr;
-    std::vector<Sound*> m_SoundsPtrArr;
+    std::vector<sound*> m_SoundsPtrArr;
     std::vector<double>m_SoundLevelsPtrArr;
     int m_NumbersOfStoredSounds = 0;
 
     std::vector<String>m_MusicFileNamesArr;
-    std::vector<Sound*>m_MusicPtrArr;
+    std::vector<sound*>m_MusicPtrArr;
     std::vector<double>m_MusicLevelsPtrArr;
     int m_NumberOfStoredMusicTracks = 0;
 

@@ -44,7 +44,7 @@ void CheckPoint::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPt
 {
     if (actOtherPtr == m_AvatarPtr->GetActor())
     {
-        m_SndPtr->Play();
+        m_SndPtr->play();
         m_IsHit = true;
     }
 }

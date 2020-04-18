@@ -3,8 +3,8 @@
 // C++ Header - version v2_16 jan 2015 
 // Copyright DAE Programming Team
 // http://www.digitalartsandentertainment.be/
+// Heavily modified by Jonathan Steyfkens.  
 //-----------------------------------------------------------------
-
 #pragma once
 #include "singleton.h"
 
@@ -13,6 +13,20 @@
 #include "DebugOverlays/OverlayManager.h"
 #include "DebugOverlays/MetricsOverlay.h"
 
+#include <Box2D/Dynamics/b2WorldCallbacks.h>
+
+class Bitmap;
+class String;
+class Font;
+class GUIBase;
+class InputManager;
+class AudioSystem;
+class AbstractGame;
+class AudioSystem;
+class PrecisionTimer;
+class b2World;
+class ContactListener;
+
 template<typename T>
 HRESULT SetDebugName(T* obj, std::string const& n)
 {
@@ -20,65 +34,44 @@ HRESULT SetDebugName(T* obj, std::string const& n)
 }
 
 
-//-----------------------------------------------------------------
-// ggngine Forward Declarations
-//-----------------------------------------------------------------
-class Bitmap;
-class String;
-class Font;
-class GUIBase;
-class InputManager;
-class AudioSystem; 
-class AbstractGame;
-class AudioSystem;
-class PrecisionTimer;
-class b2World;
-class ContactListener;
+enum class bitmap_interpolation_mode
+{
+	linear,
+	nearest_neighbor
+};
 
-//-----------------------------------------------------------------
-// Extra OutputDebugString functions
-//-----------------------------------------------------------------
+
 void OutputDebugString(const String& textRef);
 
-#include <Box2D/Dynamics/b2WorldCallbacks.h>
 
 class game_engine : public TSingleton<game_engine>, public b2ContactListener
 {
 private:
-	//! singleton implementation : private constructor + static pointer to game engine
 	game_engine();
 	friend class TSingleton<game_engine>;
+
 public:
-	//! Destructor
 	virtual ~game_engine();
 
-	// C++11 make the class non-copyable
 	game_engine(const game_engine&) = delete;
 	game_engine& operator=(const game_engine&) = delete;
 
 	// entry point to run a specific game  
 	static int run_game(HINSTANCE hInstance, int iCmdShow, class AbstractGame* game);
 
-private:
-	void			set_game(AbstractGame* gamePtr);
-	int 			run(HINSTANCE hInstance, int iCmdShow);
-	bool			register_wnd_class();
-	bool			open_window(int iCmdShow);
-
-	LRESULT			handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
 public:
-	void			quit_game(void);
+	void quit_game(void);
 
 	//! Create a messagebox
 	//! @param text the text to display
-	void			MessageBox(const String &text) const;
+	void message_box(const String &text) const;
 
 	// Box2D virtual overloads
 	virtual void BeginContact(b2Contact* contactPtr);
 	virtual void EndContact(b2Contact* contactPtr);
 	virtual void PreSolve(b2Contact* contact, const b2Manifold* oldManifold);
 	virtual void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse);
+
 	//! Darkens the output en displays the physics debug rendering
 	//! @param when true it draws the physicsdebug rendering
 	void EnablePhysicsDebugRendering(bool enable);
@@ -109,11 +102,11 @@ public:
 
 	// Add GUI derived object to the GUI std::vector to be ticked automatically
 	// NOT for students
-	void RegisterGUI(GUIBase *guiPtr);
+	void register_gui(GUIBase *guiPtr);
 
 	// Remove GUI derived object from the GUI vector
 	// NOT for students
-	void UnRegisterGUI(GUIBase *guiPtr);
+	void unregister_gui(GUIBase *guiPtr);
 
 	//Console Methods
 
@@ -132,7 +125,7 @@ public:
 	void ConsoleSetBackColor(bool red, bool green, bool blue, bool intensity);
 
 	//! ConsoleClear: Remove all characters from the console and set the cursor to the top left corner
-	void ConsoleClear() const;
+	void console_clear() const;
 
 	//! ConsoleSetCursorPosition: Set the cursor on a specific column and row number
 	void ConsoleSetCursorPosition(int column, int row);
@@ -308,6 +301,9 @@ public:
 	//! Returns the matrix that defines view space
 	MATRIX3X2		GetViewMatrix();
 
+
+	void set_bitmap_interpolation_mode(bitmap_interpolation_mode mode);
+
 	//! Bitmaps are drawn using linear interpolation: slow, results in blurred pixels
 	void			SetBitmapInterpolationModeLinear();
 
@@ -315,31 +311,31 @@ public:
 	void			SetBitmapInterpolationModeNearestNeighbor();
 
 	//! Set the font that is used to render text
-	void			SetFont(Font* fontPtr);
+	void			set_font(Font* fontPtr);
 
 	//! Returns the font that is used to render text
-	Font*			GetFont();
+	Font*			get_font();
 
 	//! Set the built-in font asthe one to be used to render text 
-	void			SetDefaultFont();
+	void			set_default_font();
 
 	//! Sets the color of the brush that is used to draw and fill
 	//! Example: game_engine::instance()->SetColor(COLOR(255,127,64));
-	void			SetColor(COLOR colorVal);
+	void			set_color(COLOR colorVal);
 
 	//! Returns the color of the brush used to draw and fill
 	//! Example: COLOR c = game_engine::instance()->GetColor();
-	COLOR			GetColor();
+	COLOR			get_color();
 
 	// Accessor Methods
-	HINSTANCE				GetInstance() const;
-	HWND					GetWindow() const;
-	String					GetTitle() const;
-	WORD					GetIcon() const;
-	WORD					GetSmallIcon() const;
-	int						GetWidth() const;
-	int						GetHeight() const;
-	bool					GetSleep() const;
+	HINSTANCE				get_instance() const;
+	HWND					get_window() const;
+	String					get_title() const;
+	WORD					get_icon() const;
+	WORD					get_small_icon() const;
+	int						get_width() const;
+	int						get_height() const;
+	bool					get_sleep() const;
 
 	ID3D11Device* GetD3DDevice() const;
 	ID3D11DeviceContext* GetD3DDeviceContext() const;
@@ -354,23 +350,20 @@ public:
 	// POINT mousePos = game_engine::instance()->GetMousePosition();
 	POINT					GetMousePosition() const;
     DOUBLE2                 GetMousePositionDOUBLE2() const;
+
 	//! returns pointer to the Audio object
 	AudioSystem *				GetXAudio() const;
 	//! returns pointer to the box2D world object
 	b2World*	GetBox2DWorld(){ return m_Box2DWorldPtr; }
 
-	// Mutator Methods	
+	void set_icon(WORD wIcon);
+	void set_small_icon(WORD wSmallIcon);
+	void apply_settings(GameSettings &gameSettings);
 
-	// Internal use only
-	void SetIcon(WORD wIcon);
-	// Internal use only
-	void SetSmallIcon(WORD wSmallIcon);
-	// Internal use only
-	void ApplyGameSettings(GameSettings &gameSettings);
+	void set_vsync(bool vsync);
+	bool get_vsync();
 
-	void SetVSync(bool vsync);
-	bool GetVSync();
-
+	// The overlay manager manages all active IMGUI debug overlays
 	std::shared_ptr<OverlayManager>const& get_overlay_manager() const
 	{
 		return m_OverlayManager;
@@ -379,30 +372,30 @@ public:
 	static enki::TaskScheduler s_TaskScheduler;
 	static std::thread::id s_MainThread;
 
-	void SetPhysicsStep(bool bEnabled);
+	// Enables/disables physics simulation stepping.
+	void set_physics_step(bool bEnabled);
+
 private:
-	// Set when the game loses focus
-	void SetSleep(bool bSleep);
-	// Private Mutator Methods	
-	void SetInstance(HINSTANCE hInstance);
-	void SetWindow(HWND hWindow);
-	// SetTitle automatically sets the window class name to the same name as the title - easier for students 
-	void SetTitle(const String& titleRef);
+	void set_game(AbstractGame* gamePtr);
+	int  run(HINSTANCE hInstance, int iCmdShow);
+	bool register_wnd_class();
+	bool open_window(int iCmdShow);
 
-	void SetWidth(int iWidth);
-	void SetHeight(int iHeight);
-	// If enable == true  --> then the game framerate is locked to the framerate of the attached display (60 fps)
-	// If enable == false --> then the game framerate is free and depends on the rendertime. 
-	void EnableVSync(bool bEnable = true);
+	LRESULT			handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
 
-	// ConsoleCreate: To be called from within in the GameInitialize method to prevent main window focus loss
-	void ConsoleCreate();
+	void set_sleep(bool bSleep);
+	void set_instance(HINSTANCE hInstance);
+	void set_window(HWND hWindow);
+	void set_title(const String& titleRef);
 
-	// True enable smooth drawing and filling of shapes
-	void EnableAntiAlias(bool isEnabled);
+	void set_width(int iWidth);
+	void set_height(int iHeight);
+	void enable_vsync(bool bEnable = true);
 
-	// Private Draw Methods
-	bool CanIPaint() const;
+	void console_create();
+	void enable_aa(bool isEnabled);
+	bool is_paint_allowed() const;
 
 	// Direct2D methods
 	void Initialize();
@@ -425,6 +418,7 @@ private:
 	void CallListeners();
 
 
+	private:
 	// Member Variables
 	HINSTANCE           m_hInstance;
 	HWND                m_hWindow;
@@ -436,10 +430,12 @@ private:
 	DWORD				m_dKeybThreadID;
 	AbstractGame*		m_GamePtr;
 	HANDLE				m_ConsoleHandle;
+
 	// Draw assistance variables
 	bool				m_bPaintingAllowed;
 	bool				m_bVSync;
-	// Direct2D
+
+	// DirectX resources
 	bool							m_bInitialized;
 	IDXGIFactory* m_DXGIFactoryPtr;
 	ID3D11Device* m_D3DDevicePtr;
@@ -457,12 +453,14 @@ private:
 	IDWriteFactory*					m_DWriteFactoryPtr;
 	PrecisionTimer*						m_GameTickTimerPtr;
 
-	// Direct2D Paint variables
 	ID2D1SolidColorBrush*			m_ColorBrushPtr;
 	DXGI_SAMPLE_DESC				m_AADesc;
-	D2D1_ANTIALIAS_MODE			m_D2DAAMode;
+	D2D1_ANTIALIAS_MODE				m_D2DAAMode;
 	MATRIX3X2						m_MatWorld, m_MatView;
-	D2D1_BITMAP_INTERPOLATION_MODE	m_BitmapInterpolationMode;	// used when painting scaled bitmaps:
+
+	bitmap_interpolation_mode		m_bitmap_interpolation_mode;
+	D2D1_BITMAP_INTERPOLATION_MODE	m_hw_bitmap_interpolation_mode;	// used when painting scaled bitmaps:
+
 	Font*							m_DefaultFontPtr;			// Default Font --> deleted in destructor
 	Font*							m_UserFontPtr;				// the pointer the user defines using SetFont() --> NOT deleted in destructor
 
@@ -494,16 +492,18 @@ private:
 	bool m_bQuit;
 };
 
-class ScopedGPUEvent
+// Helper class for scoped gpu debugging
+#ifdef _DEBUG
+class scoped_gpu_event final
 {
 public:
-	ScopedGPUEvent(ID3DUserDefinedAnnotation* annotation, std::wstring name)
+	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::wstring name)
 		: _name(name)
 		, _annotation(annotation)
 	{
 		annotation->BeginEvent(name.c_str());
 	}
-	~ScopedGPUEvent()
+	~scoped_gpu_event()
 	{
 		_annotation->EndEvent();
 	}
@@ -512,8 +512,7 @@ private:
 	std::wstring _name;
 };
 
-#ifdef _DEBUG
-#define GPU_SCOPED_EVENT(ctx, name) ScopedGPUEvent perf##__LINE__##Event = ScopedGPUEvent(ctx, name)
+#define GPU_SCOPED_EVENT(ctx, name) scoped_gpu_event perf##__LINE__##Event = scoped_gpu_event(ctx, name)
 #define GPU_MARKER(ctx, name) ctx->SetMarker(name);
 #else
 #define GPU_SCOPED_EVENT(ctx, name) 

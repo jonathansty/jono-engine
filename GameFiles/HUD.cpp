@@ -34,13 +34,13 @@ HUD::~HUD()
 
 void HUD::Paint()
 {
-    game_engine::instance()->SetFont(m_FntPtr);
+    game_engine::instance()->set_font(m_FntPtr);
     PaintMoneyWindow(DOUBLE2(10, 10));
-    PaintDeathCounterWindow(DOUBLE2(game_engine::instance()->GetWidth() - 100, 50));
+    PaintDeathCounterWindow(DOUBLE2(game_engine::instance()->get_width() - 100, 50));
     
     game_engine::instance()->SetWorldMatrix(game_engine::instance()->GetViewMatrix().Inverse());
-    game_engine::instance()->DrawString(String(m_AccuTime, 2), game_engine::instance()->GetWidth() / 2, 10);
-    game_engine::instance()->SetDefaultFont(); 
+    game_engine::instance()->DrawString(String(m_AccuTime, 2), game_engine::instance()->get_width() / 2, 10);
+    game_engine::instance()->set_default_font(); 
     
     PaintLeverInfo();
     game_engine::instance()->SetViewMatrix(game_engine::instance()->GetViewMatrix());
@@ -91,7 +91,7 @@ void HUD::Tick(double deltaTime)
 }
 void HUD::PaintMoneyWindow(DOUBLE2 position)
 {
-    game_engine::instance()->SetDefaultFont();
+    game_engine::instance()->set_default_font();
     int amountOfMoney = 0;
     if (m_AvatarPtr != nullptr)
     {
@@ -119,12 +119,12 @@ void HUD::PaintMoneyWindow(DOUBLE2 position)
     game_engine* eng = game_engine::instance();
     eng->SetWorldMatrix(matTranslate * game_engine::instance()->GetViewMatrix().Inverse());
     eng->DrawBitmap(m_BmpMoneyDisplayPtr);
-    eng->SetColor(COLOR(255, 255, 255));
+    eng->set_color(COLOR(255, 255, 255));
     eng->DrawString(String(amountOfGold), (int)(bitmapWidth - 30), (int)(5 ));
     eng->DrawString(String(amountOfSilver), (int)(bitmapWidth - 70), (int)(5 ));
     eng->DrawString(String(amountOfCopper), (int)(bitmapWidth - 110), (int)( 5 ));
-    eng->SetColor(COLOR(0, 0, 0));
-    eng->SetFont(m_FntPtr);
+    eng->set_color(COLOR(0, 0, 0));
+    eng->set_font(m_FntPtr);
     eng->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 
 }
@@ -149,9 +149,9 @@ void HUD::CreatePauseMenu()
 {
     int dy = 30;
     m_BtnQuitGamePtr = new Button(String("Quit to desktop!"));
-    m_BtnQuitGamePtr->SetBounds(game_engine::instance()->GetWidth()/2 - 100, game_engine::instance()->GetHeight() / 2, 200, 25);
+    m_BtnQuitGamePtr->SetBounds(game_engine::instance()->get_width()/2 - 100, game_engine::instance()->get_height() / 2, 200, 25);
     m_BtnQuitToMenuPtr = new Button(String("Quit to main menu!"));
-    m_BtnQuitToMenuPtr->SetBounds(game_engine::instance()->GetWidth()/2 - 100, game_engine::instance()->GetHeight() / 2 - dy, 200, 25);
+    m_BtnQuitToMenuPtr->SetBounds(game_engine::instance()->get_width()/2 - 100, game_engine::instance()->get_height() / 2 - dy, 200, 25);
     
     m_IsInMenu = true;
 }
@@ -174,7 +174,7 @@ void HUD::PaintGameOverWindow(DOUBLE2 position)
     matTranslate.SetAsTranslate(position);
     matPivot.SetAsTranslate(DOUBLE2(-m_BmpGameOverPtr->GetWidth() / 2, -m_BmpGameOverPtr->GetHeight() / 2));
     game_engine::instance()->SetWorldMatrix(matPivot*matTranslate * game_engine::instance()->GetViewMatrix().Inverse());
-    game_engine::instance()->SetColor(COLOR(0, 0, 0, m_GameOverOpacity));
+    game_engine::instance()->set_color(COLOR(0, 0, 0, m_GameOverOpacity));
     game_engine::instance()->DrawBitmap(m_BmpGameOverPtr);
     m_IsGameOverDrawn = true;
     game_engine::instance()->SetWorldMatrix(game_engine::instance()->GetViewMatrix().Inverse());
@@ -191,7 +191,7 @@ void HUD::CreateSoundMuteBtn()
 {
     Bitmap* tmpBitmapPressed = bitmap_manager::instance()->LoadBitmapFile(String("Resources/UI/audioOn.png"));
     m_BtnSndMutePtr = new Button(String("Mute Sound"));
-    m_BtnSndMutePtr->SetBounds(game_engine::instance()->GetWidth() - 60, game_engine::instance()->GetHeight() - 60, tmpBitmapPressed->GetWidth(), tmpBitmapPressed->GetHeight());
+    m_BtnSndMutePtr->SetBounds(game_engine::instance()->get_width() - 60, game_engine::instance()->get_height() - 60, tmpBitmapPressed->GetWidth(), tmpBitmapPressed->GetHeight());
     m_BtnSndMutePtr->SetImageMode(true);
     m_BtnSndMutePtr->SetPressedBitmap(tmpBitmapPressed);
     m_BtnSndMutePtr->SetReleasedBitmap(tmpBitmapPressed);

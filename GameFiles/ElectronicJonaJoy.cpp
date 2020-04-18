@@ -10,7 +10,7 @@
 #include "HUD.h"
 #include <time.h>
 #include "Avatar.h"
-#include "FileManager.h"
+#include "ejj_data_manager.h"
 
 const std::string ElectronicJonaJoy::CONFIGPATH = std::string("Resources/cfg/config.xml");
 
@@ -54,7 +54,7 @@ void ElectronicJonaJoy::GameStart()
 	m_CurrentLevel = 0;
 
 
-	m_FileManagerPtr = new FileManager();
+	m_FileManagerPtr = new ejj_data_manager();
 	m_LevelListPtr = m_FileManagerPtr->LoadLevels(CONFIGPATH);
 	m_FileManagerPtr->LoadAvatarKeybinds(CONFIGPATH);
 
@@ -194,13 +194,13 @@ void ElectronicJonaJoy::GamePaint(RECT rect)
 		m_Game->paint();
 		if (m_AccuTime < 5)
 		{
-			game_engine::instance()->SetDefaultFont();
-			game_engine::instance()->DrawString(String(m_LevelListPtr->GetLevel(m_CurrentLevel).c_str()), 10, game_engine::instance()->GetHeight() - 20);
+			game_engine::instance()->set_default_font();
+			game_engine::instance()->DrawString(String(m_LevelListPtr->GetLevel(m_CurrentLevel).c_str()), 10, game_engine::instance()->get_height() - 20);
 		}
 		m_HUDPtr->Paint();
 		if (m_Game->GetGameOver())
 		{
-			m_HUDPtr->PaintGameOverWindow(DOUBLE2(game_engine::instance()->GetWidth() / 2, game_engine::instance()->GetHeight() / 2));
+			m_HUDPtr->PaintGameOverWindow(DOUBLE2(game_engine::instance()->get_width() / 2, game_engine::instance()->get_height() / 2));
 		}
 		break;
 	case ElectronicJonaJoy::GameState::MENU:

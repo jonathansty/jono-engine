@@ -40,7 +40,7 @@ void Trail::Paint(DOUBLE2 position)
     {
         m_deqTrailPtrArr.pop_back();
     }
-    game_engine::instance()->SetColor(COLOR(255, 255, 255, m_Opacity));
+    game_engine::instance()->set_color(COLOR(255, 255, 255, m_Opacity));
     for (std::size_t i = 0, n = m_deqTrailPtrArr.size(); i < n - 1; i++)
     {
         DOUBLE2 pos = m_deqTrailPtrArr[i];
@@ -65,7 +65,7 @@ void Trail::Paint(DOUBLE2 position)
         }
 
     }
-    game_engine::instance()->SetColor(COLOR(0, 0, 0,255));
+    game_engine::instance()->set_color(COLOR(0, 0, 0,255));
 }
 void Trail::SetSize(double size)
 {

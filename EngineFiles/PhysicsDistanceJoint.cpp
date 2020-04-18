@@ -33,7 +33,7 @@ void PhysicsDistanceJoint::SetLength(double length)
 {
 	if (length < 0.1)
 	{
-		game_engine::instance()->MessageBox(String("Length can not be a very small number "));
+		game_engine::instance()->message_box(String("Length can not be a very small number "));
 	}
 	m_DistanceJointPtr->SetLength((float)length / (float)PhysicsActor::SCALE);
 }

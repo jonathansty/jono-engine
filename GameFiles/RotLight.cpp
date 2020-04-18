@@ -45,7 +45,7 @@ void RotLight::Paint()
     MATRIX3X2 matOrbitRadius, matOrbitCenter;
     matOrbitRadius.SetAsTranslate(DOUBLE2(20, 0));
     matOrbitCenter.SetAsTranslate(DOUBLE2(m_Position));
-    game_engine::instance()->SetColor(m_Color);
+    game_engine::instance()->set_color(m_Color);
     for (double angle = 0; angle < 2 * M_PI; angle += (2*M_PI)/6)
     {
         MATRIX3X2 matRectOrbitRotate, matWorldTransform;
@@ -65,7 +65,7 @@ void RotLight::Paint()
     }
 
    
-    game_engine::instance()->SetColor(COLOR(0, 0, 0));
+    game_engine::instance()->set_color(COLOR(0, 0, 0));
     game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void RotLight::Tick(double deltaTime)

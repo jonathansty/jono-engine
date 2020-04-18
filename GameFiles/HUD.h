@@ -68,7 +68,7 @@ public:
 private: 
     double m_AccuTime = 0;
 
-    Sound* m_BgMusicPtr = nullptr;
+    sound* m_BgMusicPtr = nullptr;
     Avatar* m_AvatarPtr = nullptr;
     Level* m_LevelPtr = nullptr;
     Font* m_FntPtr = nullptr;

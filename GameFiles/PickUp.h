@@ -48,7 +48,7 @@ protected:
     DOUBLE2 m_Position;
     bool m_IsHit = false;
     
-    Sound* m_SndHitPtr = nullptr;
+    sound* m_SndHitPtr = nullptr;
     b2Filter m_CollisionFilter;
 private: 
 	//-------------------------------------------------

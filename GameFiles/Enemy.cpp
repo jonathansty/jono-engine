@@ -85,7 +85,7 @@ void Enemy::PaintDebug()
     if (m_ActPtr != nullptr)
     {
         DOUBLE2 position = m_ActPtr->GetPosition();
-        engine->SetDefaultFont();
+        engine->set_default_font();
         engine->DrawString(String(m_Name), position);
     }
 }

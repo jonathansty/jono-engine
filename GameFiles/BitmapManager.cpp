@@ -27,7 +27,7 @@ Bitmap* bitmap_manager::LoadBitmapFile(const String& fileName)
     // Check the whole array for the filename, if it already exists return the existing bitmap
     if (m_NumberOfStoredBitmaps+ 1 > SIZE)
     {
-        game_engine::instance()->MessageBox(String("Maximum amount of bitmaps reached. Please increase the size of the array."));
+        game_engine::instance()->message_box(String("Maximum amount of bitmaps reached. Please increase the size of the array."));
     }
     for (int i = 0; i < m_NumberOfStoredBitmaps; i++)
     {

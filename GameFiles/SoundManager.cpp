@@ -42,7 +42,7 @@ sound_manager::~sound_manager()
 //{
 //
 //}
-Sound* sound_manager::LoadSound(const String& filename)
+sound* sound_manager::LoadSound(const String& filename)
 {
     for (int i = 0; i < m_NumbersOfStoredSounds; i++)
     {
@@ -52,7 +52,7 @@ Sound* sound_manager::LoadSound(const String& filename)
         }
         if (m_FileNamesArr[i] == String("NULL"))
         {
-            Sound* soundPtr = new Sound(filename);
+            sound* soundPtr = new sound(filename);
             m_FileNamesArr[i] = filename;
             m_SoundsPtrArr[i] = soundPtr;
             std::wcout << L"The Sound with name " << filename.C_str() << L" has been loaded into an empty slot." << std::endl;
@@ -60,13 +60,13 @@ Sound* sound_manager::LoadSound(const String& filename)
         }
     }
     std::wcout << L"The Sound with name " << filename.C_str() << L" is loaded" << std::endl;
-    Sound* soundPtr = new Sound(filename);
+    sound* soundPtr = new sound(filename);
     m_SoundsPtrArr.push_back(soundPtr);
     m_FileNamesArr.push_back(filename);
     m_NumbersOfStoredSounds++;
     return soundPtr;
 }
-Sound* sound_manager::LoadMusic(const String& fileName)
+sound* sound_manager::LoadMusic(const String& fileName)
 {
     for (int i = 0; i < m_NumberOfStoredMusicTracks; i++)
     {
@@ -76,7 +76,7 @@ Sound* sound_manager::LoadMusic(const String& fileName)
         }
         if (m_MusicFileNamesArr[i] == String("NULL"))
         {
-            Sound* soundPtr = new Sound(fileName);
+            sound* soundPtr = new sound(fileName);
             m_MusicFileNamesArr[i] = fileName;
             m_MusicPtrArr[i] = soundPtr;
             std::wcout << L"The music with name " << fileName.C_str() << L" has been loaded into an empty slot" << std::endl;
@@ -84,7 +84,7 @@ Sound* sound_manager::LoadMusic(const String& fileName)
         }
     }
     std::wcout << L"The music with name " << fileName.C_str() << L" is loaded" << std::endl;
-    Sound* soundPtr = new Sound(fileName);
+    sound* soundPtr = new sound(fileName);
     m_MusicFileNamesArr.push_back(fileName);
     m_MusicPtrArr.push_back(soundPtr);
     m_NumberOfStoredMusicTracks++;
@@ -97,8 +97,8 @@ void sound_manager::MuteAll()
     {
         if (m_SoundsPtrArr[i] != nullptr)
         {
-            m_SoundLevelsPtrArr.push_back(m_SoundsPtrArr[i]->GetVolume());
-            m_SoundsPtrArr[i]->SetVolume(0);
+            m_SoundLevelsPtrArr.push_back(m_SoundsPtrArr[i]->get_volume());
+            m_SoundsPtrArr[i]->set_volume(0);
             m_IsSoundMuted = true;
         }
     }
@@ -106,8 +106,8 @@ void sound_manager::MuteAll()
     {
         if (m_MusicPtrArr[i] != nullptr)
         {
-            m_MusicLevelsPtrArr.push_back(m_MusicPtrArr[i]->GetVolume());
-            m_MusicPtrArr[i]->SetVolume(0);
+            m_MusicLevelsPtrArr.push_back(m_MusicPtrArr[i]->get_volume());
+            m_MusicPtrArr[i]->set_volume(0);
             m_IsMusicMuted = true;
         }
     }
@@ -118,7 +118,7 @@ void sound_manager::UnMuteAll()
     {
         if (m_SoundsPtrArr[i] != nullptr)
         {
-            m_SoundsPtrArr[i]->SetVolume(m_SoundLevelsPtrArr[i]);
+            m_SoundsPtrArr[i]->set_volume(m_SoundLevelsPtrArr[i]);
         }
     }
     m_SoundLevelsPtrArr.clear();
@@ -127,7 +127,7 @@ void sound_manager::UnMuteAll()
     {
         if (m_MusicPtrArr[i] != nullptr)
         {
-            m_MusicPtrArr[i]->SetVolume(m_MusicLevelsPtrArr[i]);
+            m_MusicPtrArr[i]->set_volume(m_MusicLevelsPtrArr[i]);
         }
     }
 }
@@ -135,9 +135,9 @@ void sound_manager::SetMusicVolume(double volume)
 {
     for (size_t i = 0; i < m_MusicPtrArr.size(); i++)
     {
-        if (m_MusicPtrArr[i] != nullptr && volume != m_MusicPtrArr[i]->GetVolume())
+        if (m_MusicPtrArr[i] != nullptr && volume != m_MusicPtrArr[i]->get_volume())
         {
-            m_MusicPtrArr[i]->SetVolume(volume);
+            m_MusicPtrArr[i]->set_volume(volume);
         }
     }
 
@@ -147,16 +147,16 @@ void sound_manager::SetSoundVolume(double volume)
 {
     for (size_t i = 0; i < m_SoundsPtrArr.size(); i++)
     {
-        double OldVolume = m_SoundsPtrArr[i]->GetVolume();
+        double OldVolume = m_SoundsPtrArr[i]->get_volume();
         if (m_SoundsPtrArr[i] != nullptr && (int)(OldVolume*100) == (int)(volume*100))
         {
-            m_SoundsPtrArr[i]->SetVolume(volume);
+            m_SoundsPtrArr[i]->set_volume(volume);
             
         }
     }
 
 }
-void sound_manager::UnLoadMusic(Sound* sndPtr)
+void sound_manager::UnLoadMusic(sound* sndPtr)
 {
     for (int i = 0; i < m_NumberOfStoredMusicTracks; i++)
     {
@@ -169,7 +169,7 @@ void sound_manager::UnLoadMusic(Sound* sndPtr)
         }
     }
 }
-void sound_manager::UnLoadSound(Sound* sndPtr)
+void sound_manager::UnLoadSound(sound* sndPtr)
 {
     for (int i = 0; i <m_NumbersOfStoredSounds; i++)
     {
@@ -180,10 +180,10 @@ void sound_manager::UnLoadSound(Sound* sndPtr)
         }
     }
 }
-bool sound_manager::FadeIn(Sound* tmpSoundPtr, double deltaTime)
+bool sound_manager::FadeIn(sound* tmpSoundPtr, double deltaTime)
 {
     
-    if (tmpSoundPtr->GetVolume() > 1 - 0.01)
+    if (tmpSoundPtr->get_volume() > 1 - 0.01)
     {
         return true;
     }
@@ -192,28 +192,28 @@ bool sound_manager::FadeIn(Sound* tmpSoundPtr, double deltaTime)
     if (m_FadeAccuTime >  fadeSpeed)
     {
         m_FadeAccuTime -= fadeSpeed;
-        if (tmpSoundPtr->GetVolume() + 0.01 < 1)
+        if (tmpSoundPtr->get_volume() + 0.01 < 1)
         {
-            tmpSoundPtr->SetVolume(tmpSoundPtr->GetVolume() + 0.01);
+            tmpSoundPtr->set_volume(tmpSoundPtr->get_volume() + 0.01);
         }
     }
     return false;
     
 }
-bool sound_manager::FadeOut(Sound* tmpSoundPtr, double deltaTime)
+bool sound_manager::FadeOut(sound* tmpSoundPtr, double deltaTime)
 {
     m_FadeAccuTime += deltaTime;
     double fadeSpeed = 0.05;
-    if (tmpSoundPtr->GetVolume() < 0 + 0.01)
+    if (tmpSoundPtr->get_volume() < 0 + 0.01)
     {
         return true;
     }
     if (m_FadeAccuTime >  0)
     {
         m_FadeAccuTime -= fadeSpeed;
-        if (tmpSoundPtr->GetVolume() - 0.01 > 0)
+        if (tmpSoundPtr->get_volume() - 0.01 > 0)
         {
-            tmpSoundPtr->SetVolume(tmpSoundPtr->GetVolume() - 0.01);
+            tmpSoundPtr->set_volume(tmpSoundPtr->get_volume() - 0.01);
         }
     }
     return false;

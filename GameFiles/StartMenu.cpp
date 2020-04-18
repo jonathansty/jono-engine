@@ -2,7 +2,7 @@
 #include "EngineFiles/TextLabel.h"
 	
 #include "StartMenu.h"
-#include "FileManager.h"
+#include "ejj_data_manager.h"
 #include "ElectronicJonaJoy.h"
 #include "SoundManager.h"
 #include <winuser.h>
@@ -11,7 +11,7 @@ StartMenu::StartMenu()
 {
 	m_ComicSansPtr = std::make_shared<Font>(String("Comic Sans MS"), (float)KEYLISTFNTSIZE);
     m_BgMusicPtr = sound_manager::instance()->LoadMusic(String("Resources/Sound/BgMusic/main.mp3"));
-    m_BgMusicPtr->Play();
+    m_BgMusicPtr->play();
     EnableButtons();
     m_FileManagerPtr->ReadGameResults(m_SessionStatsArr);
 
@@ -46,7 +46,7 @@ void StartMenu::Tick(double deltaTime)
 
             
             m_BtnApplyChangesPtr = new Button(String("Apply"));
-            m_BtnApplyChangesPtr->SetBounds(game_engine::instance()->GetWidth()/2 - 50, game_engine::instance()->GetHeight()/2 +40, 100, 30);
+            m_BtnApplyChangesPtr->SetBounds(game_engine::instance()->get_width()/2 - 50, game_engine::instance()->get_height()/2 +40, 100, 30);
             m_BtnApplyChangesPtr->SetEnabled(false);
             CreateKeyBindTextBoxes();
         }
@@ -206,7 +206,7 @@ void StartMenu::Paint()
                     game_engine::instance()->DrawString(String("^"), DOUBLE2(100, 120));
                 }
                 Font* tmpFntPtr = new Font(String("KenVector Future"), (float)KEYLISTFNTSIZE - 8);
-                game_engine::instance()->SetFont(tmpFntPtr);
+                game_engine::instance()->set_font(tmpFntPtr);
                 game_engine::instance()->DrawString(String("id"), DOUBLE2(INDEXSTARTXPOS, TABLELEGENDYPOS));
                 game_engine::instance()->DrawString(String("Start Session"), DOUBLE2(DATESTARTPOS + 75, TABLELEGENDYPOS));
                 game_engine::instance()->DrawString(String("End Session"),DOUBLE2(DATEENDPOS+75, TABLELEGENDYPOS));
@@ -216,7 +216,7 @@ void StartMenu::Paint()
                 game_engine::instance()->DrawString(String("Last level"), DOUBLE2(LASTLEVELPOS, TABLELEGENDYPOS));
 
                 
-                int halfScreenWidth = game_engine::instance()->GetWidth() / 2;
+                int halfScreenWidth = game_engine::instance()->get_width() / 2;
                 double gap = 50;
                 
                 tm beginTime = m_SessionStatsArr[index]->beginTime;
@@ -243,7 +243,7 @@ void StartMenu::Paint()
                 game_engine::instance()->DrawString(String(amountOfMoney), DOUBLE2(MONEYPOS, INDEXSTARTYPOS + double(i)*gap));
                 game_engine::instance()->DrawString(String(lifeTime), DOUBLE2(LIFETIMEPOS, INDEXSTARTYPOS + double(i)*gap));
                 game_engine::instance()->DrawString(String(lastLevel), DOUBLE2(LASTLEVELPOS, INDEXSTARTYPOS + double(i)*gap));
-                game_engine::instance()->SetDefaultFont();
+                game_engine::instance()->set_default_font();
                 delete tmpFntPtr;
             }
             
@@ -252,7 +252,7 @@ void StartMenu::Paint()
     case StartMenu::menuState::MAIN:
         if (m_BmpPtr != nullptr)
         {
-            game_engine::instance()->SetFont(m_ComicSansPtr.get());
+            game_engine::instance()->set_font(m_ComicSansPtr.get());
             MATRIX3X2 matTranslateControl;
             matTranslateControl.SetAsTranslate(100, CONTROLLISTYPOS - (float)KEYLISTFNTSIZE);
             game_engine::instance()->SetWorldMatrix(matTranslateControl);
@@ -282,7 +282,7 @@ void StartMenu::Paint()
 
                 ++i;
             }
-            game_engine::instance()->SetDefaultFont();
+            game_engine::instance()->set_default_font();
         }
         break;
     }
@@ -293,7 +293,7 @@ void StartMenu::Paint()
 
 void StartMenu::Remove()
 {
-    m_BgMusicPtr->Stop();
+    m_BgMusicPtr->stop();
     delete m_BtnQuitPtr;
     m_BtnQuitPtr = nullptr;
     delete m_BtnStartPtr;
@@ -321,8 +321,8 @@ void StartMenu::Remove()
 
 void StartMenu::EnableButtons()
 {
-    int width = game_engine::instance()->GetWidth();
-    int height = game_engine::instance()->GetHeight();
+    int width = game_engine::instance()->get_width();
+    int height = game_engine::instance()->get_height();
     float spacing = 1.25;
     int buttonHeight = 100;
     int buttonWidth = 100;
@@ -358,7 +358,7 @@ void StartMenu::EnableButtons()
 
 }
 
-void StartMenu::ReadKeyBindsForMenu(FileManager::KeyMap tmpKeybindsArr)
+void StartMenu::ReadKeyBindsForMenu(ejj_data_manager::KeyMap tmpKeybindsArr)
 {
     m_KeybindsArr = tmpKeybindsArr;
 }
@@ -366,8 +366,8 @@ void StartMenu::CreateKeyBindTextBoxes()
 {
     int buttonHeight = 40;
     int buttonWidth = 40;
-    int width = game_engine::instance()->GetWidth();
-    int height = game_engine::instance()->GetHeight();
+    int width = game_engine::instance()->get_width();
+    int height = game_engine::instance()->get_height();
 
     int amountOfBoxesNeeded = int(m_KeybindsArr.size());
     int boundingHeight = 250;
@@ -390,7 +390,7 @@ void StartMenu::CreateKeyBindTextBoxes()
     }
 }
 
-void StartMenu::SetFileManager(FileManager* tmpFileManagerPtr)
+void StartMenu::SetFileManager(ejj_data_manager* tmpFileManagerPtr)
 {
     m_FileManagerPtr = tmpFileManagerPtr;
 }

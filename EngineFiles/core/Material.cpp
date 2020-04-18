@@ -70,5 +70,5 @@ void Material::apply()
 			views[i] = _textures[i]->get_srv();
 		}
 	}
-	ctx->PSSetShaderResources(0, views.size(), (ID3D11ShaderResourceView**)views.data());
+	ctx->PSSetShaderResources(0, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
 }

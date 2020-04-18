@@ -24,7 +24,7 @@ Bitmap::Bitmap(const String& fileName) : m_BitmapPtr(nullptr), m_ConvertorPtr(nu
 	if (FAILED(hr))
 	{
 		//show messagebox and leave the program
-		game_engine::instance()->MessageBox(String("IMAGE LOADING ERROR File ") + fileName);
+		game_engine::instance()->message_box(String("IMAGE LOADING ERROR File ") + fileName);
 		exit(-1);
 	}
 }
@@ -45,7 +45,7 @@ Bitmap::Bitmap(int resourceID) : m_BitmapPtr(nullptr), m_ConvertorPtr(nullptr), 
 	if (FAILED(hr))
 	{
 		//show messagebox 
-		game_engine::instance()->MessageBox(String("RESOURCE IMAGE LOADING ERROR File. ID: ") + String(resourceID));
+		game_engine::instance()->message_box(String("RESOURCE IMAGE LOADING ERROR File. ID: ") + String(resourceID));
 		exit(-1);
 	}
 }

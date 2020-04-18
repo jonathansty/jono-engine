@@ -65,18 +65,18 @@ void Slider::Tick(double deltaTime){
 	
 }
 void Slider::Paint(){
-	game_engine::instance()->SetColor(m_BackgroundColor);
+	game_engine::instance()->set_color(m_BackgroundColor);
 	game_engine::instance()->FillRect(m_PosX, m_PosY, m_PosX + m_Width, m_PosY + m_Height);
 
-	game_engine::instance()->SetColor(m_ValueColor);
+	game_engine::instance()->set_color(m_ValueColor);
 	game_engine::instance()->FillRect(m_PosX, m_PosY, m_PosX + (m_Value - m_MinValue) * m_Width / (m_MaxValue - m_MinValue) + 1, m_PosY + m_Height - 1); // See this. value to pixels
 
-	game_engine::instance()->SetColor(COLOR(0, 0, 0));
+	game_engine::instance()->set_color(COLOR(0, 0, 0));
 	game_engine::instance()->DrawRect(m_PosX, m_PosY, m_PosX + m_Width, m_PosY + m_Height);
 	
 
-	game_engine::instance()->SetColor(COLOR(0, 0, 0));
-    game_engine::instance()->SetColor(m_ValueColor);
+	game_engine::instance()->set_color(COLOR(0, 0, 0));
+    game_engine::instance()->set_color(m_ValueColor);
 	game_engine::instance()->DrawString(String(m_MinValue), m_PosX, m_PosY + m_Height + 2);
 	game_engine::instance()->DrawString(String(m_MaxValue), m_PosX + m_Width, m_PosY + m_Height + 2);
 	game_engine::instance()->DrawString(String(m_String) + String(": ") + String(m_Value) , m_PosX, m_PosY - m_Height);

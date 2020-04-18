@@ -10,11 +10,11 @@ const double Camera::EPICMODEDELAY = 1.2;
 Camera::Camera(Level* levelPtr, Avatar* avatarPtr,double scale):
 m_AvatarPtr(avatarPtr),
 m_LevelPtr(levelPtr),
-m_CameraPosition(game_engine::instance()->GetWidth() / 2, game_engine::instance()->GetHeight()/2),
-m_CameraPositionWithoutShaking(game_engine::instance()->GetWidth() / 2, game_engine::instance()->GetHeight()/2),
-m_OldCameraPosition(game_engine::instance()->GetWidth()/2,game_engine::instance()->GetHeight()/2),
-m_CameraDimension(game_engine::instance()->GetWidth(), game_engine::instance()->GetHeight()),
-m_StartPosition(game_engine::instance()->GetWidth() / 2, game_engine::instance()->GetHeight() / 2),
+m_CameraPosition(game_engine::instance()->get_width() / 2, game_engine::instance()->get_height()/2),
+m_CameraPositionWithoutShaking(game_engine::instance()->get_width() / 2, game_engine::instance()->get_height()/2),
+m_OldCameraPosition(game_engine::instance()->get_width()/2,game_engine::instance()->get_height()/2),
+m_CameraDimension(game_engine::instance()->get_width(), game_engine::instance()->get_height()),
+m_StartPosition(game_engine::instance()->get_width() / 2, game_engine::instance()->get_height() / 2),
 m_Direction(0,1)
 {
     m_ActPtr = new PhysicsActor(m_CameraPosition, 0, BodyType::DYNAMIC);
@@ -26,9 +26,9 @@ m_Direction(0,1)
     m_Scale = scale;
     m_ActBoundsPtr = new PhysicsActor(m_CameraPosition, 0, BodyType::KINEMATIC);
     std::vector<DOUBLE2>pointsPtrArr;
-    pointsPtrArr.push_back(DOUBLE2(-game_engine::instance()->GetWidth()/2,-game_engine::instance()->GetHeight()/2));
-    pointsPtrArr.push_back(DOUBLE2(-game_engine::instance()->GetWidth()/2, 20 + game_engine::instance()->GetHeight()/2));
-    pointsPtrArr.push_back(DOUBLE2( game_engine::instance()->GetWidth()/2, 20 + game_engine::instance()->GetHeight()/2));
+    pointsPtrArr.push_back(DOUBLE2(-game_engine::instance()->get_width()/2,-game_engine::instance()->get_height()/2));
+    pointsPtrArr.push_back(DOUBLE2(-game_engine::instance()->get_width()/2, 20 + game_engine::instance()->get_height()/2));
+    pointsPtrArr.push_back(DOUBLE2( game_engine::instance()->get_width()/2, 20 + game_engine::instance()->get_height()/2));
 
     for (size_t i = 0; i < pointsPtrArr.size(); i++)
     {
@@ -62,7 +62,7 @@ MATRIX3X2 Camera::GetViewMatrix(){
     // These 2 if statements check for the boundaries
     MATRIX3X2 matTranslate, matCenter, matRotate,matScale;
     MATRIX3X2 matWorldTransform;
-    matCenter.SetAsTranslate(-game_engine::instance()->GetWidth() / 2, -game_engine::instance()->GetHeight() / 2);
+    matCenter.SetAsTranslate(-game_engine::instance()->get_width() / 2, -game_engine::instance()->get_height() / 2);
     game_engine::instance()->SetBitmapInterpolationModeLinear();
     matTranslate.SetAsTranslate(m_CameraPosition);
     matRotate.SetAsRotate(m_Angle);
@@ -198,7 +198,7 @@ void Camera::AutomaticMode(double deltaTime, DOUBLE2 &oldPosition)
         DOUBLE2 vectorToAvatar = m_AvatarPtr->GetPosition() - oldPosition;
         DOUBLE2 normalizedVector = vectorToAvatar.Normalized();
         double length = vectorToAvatar.Length();
-        DOUBLE2 offsetPosition2 = DOUBLE2(game_engine::instance()->GetWidth() - 200, 0);
+        DOUBLE2 offsetPosition2 = DOUBLE2(game_engine::instance()->get_width() - 200, 0);
         MATRIX3X2 matTranslate, matRotate, matScale, matTransform, matPivot;
         matPivot.SetAsTranslate(DOUBLE2(-m_CameraDimension.x / 2, -m_CameraDimension.y / 2));
         matTranslate.SetAsTranslate(oldPosition);
@@ -262,9 +262,9 @@ void Camera::Paint()
     }
     if (m_EpicEffectBarsSize > 2)
     {
-        int width = engine->GetWidth();
-        int height = engine->GetHeight();
-        engine->SetColor(COLOR(0, 0, 0));
+        int width = engine->get_width();
+        int height = engine->get_height();
+        engine->set_color(COLOR(0, 0, 0));
         engine->FillRect(0, 0, width, static_cast<int>(m_EpicEffectBarsSize));
         engine->FillRect(0, static_cast<int>(height - m_EpicEffectBarsSize), width, height);
     }

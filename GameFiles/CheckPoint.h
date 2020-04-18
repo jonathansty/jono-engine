@@ -49,7 +49,7 @@ private:
 	//-------------------------------------------------
     double m_CameraAngle = 0;
     DOUBLE2 m_CameraPosition;
-    Sound* m_SndPtr = nullptr;
+    sound* m_SndPtr = nullptr;
     Bitmap* m_BmpFlagPtr = nullptr;
     RotLight* m_RotLightPtr = nullptr;
     bool m_IsHit = false;

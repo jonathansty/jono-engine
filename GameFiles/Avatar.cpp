@@ -6,9 +6,7 @@
 #include "EntityList.h"
 #include "EnemyList.h"
 
-#include "FileManager.h"
-
-#define SND_MANAGER sound_manager::instance()
+#include "ejj_data_manager.h"
 
 Avatar::Avatar(DOUBLE2 position, Bitmap* BmpPtr, Bitmap* bmpEpicModePtr) :
 Entity(position), 
@@ -44,9 +42,9 @@ m_BmpEpicModePtr(bmpEpicModePtr)
 
     
     m_SndAttackPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/Attack.wav"));
-    m_SndJumpPtr = SND_MANAGER->LoadSound(String("Resources/Sound/Entity/Jump.wav"));
-    m_SndJumpPtr->SetVolume(0.5);
-    m_SndWalkPtr = SND_MANAGER->LoadSound(String("Resources/Sound/Entity/running.wav"));
+    m_SndJumpPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/Jump.wav"));
+    m_SndJumpPtr->set_volume(0.5);
+    m_SndWalkPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/running.wav"));
 
 }
 
@@ -283,7 +281,7 @@ void Avatar::Paint()
     game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
     matTranslate.SetAsTranslate(DOUBLE2(m_ActPtr->GetPosition().x, 0));
     game_engine::instance()->SetWorldMatrix(matTranslate);
-    game_engine::instance()->SetColor(COLOR(0, 0, 0));
+    game_engine::instance()->set_color(COLOR(0, 0, 0));
 }
 void Avatar::PaintTrail()
 {
@@ -293,7 +291,7 @@ void Avatar::PaintTrail()
     {
         m_deqTrail.pop_back();
     }
-    game_engine::instance()->SetColor(COLOR(255, 255, 255, 10));
+    game_engine::instance()->set_color(COLOR(255, 255, 255, 10));
     for (int i = 0, n = int(m_deqTrail.size()); i < n - 1; i++)
     {
         DOUBLE2 pos = m_deqTrail[i];
@@ -385,7 +383,7 @@ void Avatar::SlidingMoveState(double dTime)
     if (game_engine::instance()->IsKeyboardKeyPressed(m_Jump) && (m_moveState == moveState::SLIDINGSTANDING || m_moveState == moveState::SLIDINGWALKING))
     {
         m_moveState = moveState::SLIDINGJUMPING;
-        m_SndJumpPtr->Play();
+        m_SndJumpPtr->play();
         m_ActPtr->ApplyLinearImpulse(-DOUBLE2(0, m_JumpHeight) * m_ActPtr->GetMass() / PhysicsActor::SCALE);
         m_NumberOfContactPointsWithLevel = 0;
 
@@ -423,13 +421,13 @@ void Avatar::NormalMoveState(double dTime)
         m_ActPtr->SetLinearVelocity(DOUBLE2(oldVelocity.x, 0));
         m_ActPtr->ApplyLinearImpulse(2 * m_JumpHeight*m_ActPtr->GetMass() / PhysicsActor::SCALE*DOUBLE2(0, 1));
         m_moveState = moveState::ATTACK;
-        m_SndAttackPtr->Play();
+        m_SndAttackPtr->play();
     }
     DOUBLE2 actVelocity = m_ActPtr->GetLinearVelocity();
     if (game_engine::instance()->IsKeyboardKeyPressed(m_Jump) && m_JumpCounter < MAX_JUMPS && m_moveState != moveState::JUMPING )
     {
         //m_moveState = moveState::JUMPING;
-        m_SndJumpPtr->Play();
+        m_SndJumpPtr->play();
         desiredVelocity.y = -m_JumpHeight;
         m_ActPtr->SetFriction(0);
         m_NumberOfContactPointsWithLevel = 0;
@@ -647,7 +645,7 @@ void Avatar::SetNrJumps(int nr)
     m_JumpCounter = nr;
 }
 //! Sets the keybinds the player specified
-void Avatar::SetKeyBinds(FileManager::KeyMap tmpKeyBindsArr)
+void Avatar::SetKeyBinds(ejj_data_manager::KeyMap tmpKeyBindsArr)
 {
     // Player actions
 	m_Jump = tmpKeyBindsArr["jump"];

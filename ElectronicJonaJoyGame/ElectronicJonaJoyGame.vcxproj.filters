@@ -153,9 +153,6 @@
     <ClCompile Include="..\GameFiles\LevelList.cpp">
       <Filter>Managers</Filter>
     </ClCompile>
-    <ClCompile Include="..\GameFiles\FileManager.cpp">
-      <Filter>Managers</Filter>
-    </ClCompile>
     <ClCompile Include="..\GameFiles\Coin.cpp">
       <Filter>Pickups</Filter>
     </ClCompile>
@@ -170,6 +167,9 @@
     <ClCompile Include="..\GameFiles\StartMenu.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="..\GameFiles\GameWinMain.cpp" />
+    <ClCompile Include="..\GameFiles\ejj_data_manager.cpp">
+      <Filter>Managers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\GameFiles\CheckPointBg.h">
@@ -298,9 +298,6 @@
     <ClInclude Include="..\GameFiles\LevelList.h">
       <Filter>Managers</Filter>
     </ClInclude>
-    <ClInclude Include="..\GameFiles\FileManager.h">
-      <Filter>Managers</Filter>
-    </ClInclude>
     <ClInclude Include="..\GameFiles\Coin.h">
       <Filter>Pickups</Filter>
     </ClInclude>
@@ -316,5 +313,8 @@
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="..\config.h" />
     <ClInclude Include="..\GameFiles\GameWinMain.h" />
+    <ClInclude Include="..\GameFiles\ejj_data_manager.h">
+      <Filter>Managers</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

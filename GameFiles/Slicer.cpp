@@ -75,7 +75,7 @@ void Slicer::Paint()
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
     matPivot.SetAsTranslate(DOUBLE2(-BLADEWIDTH / 2, -BLADEHEIGHT / 2));
     game_engine::instance()->SetWorldMatrix(matPivot * matRotate * matTranlate);
-    game_engine::instance()->SetColor(COLOR(0, 0, 0));
+    game_engine::instance()->set_color(COLOR(0, 0, 0));
     game_engine::instance()->FillRect(0, 0, BLADEWIDTH, BLADEHEIGHT);
 
     matRotate.SetAsRotate(m_ActPtr->GetAngle() + M_PI_2);

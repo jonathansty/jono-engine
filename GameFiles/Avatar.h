@@ -11,7 +11,7 @@
 
 //#include "ContactListener.h"
 #include "Entity.h"
-#include "FileManager.h"
+#include "ejj_data_manager.h"
 //-----------------------------------------------------
 // Avatar Class									
 //-----------------------------------------------------
@@ -93,7 +93,7 @@ public:
     //! Sets how many times to avatar has jumped
     void SetNrJumps(int nr);
     //! Sets the keybinds the player specified
-    void SetKeyBinds(FileManager::KeyMap tmpKeyBindsPtrArr);
+    void SetKeyBinds(ejj_data_manager::KeyMap tmpKeyBindsPtrArr);
 private: 
     //-------------------------------------------------
     // private functions							
@@ -147,7 +147,7 @@ private:
     double m_JumpHeight = 460;
     bool m_IsEpicModeOn = false;
     //Sounds
-    Sound *m_SndJumpPtr = nullptr, *m_SndAttackPtr = nullptr, *m_SndWalkPtr = nullptr;
+    sound *m_SndJumpPtr = nullptr, *m_SndAttackPtr = nullptr, *m_SndWalkPtr = nullptr;
 
 
     bool m_Mirror = false;

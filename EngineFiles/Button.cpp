@@ -53,7 +53,7 @@ void Button::Paint()
 		exit(-1);
 	}
 	// store original font
-	Font *originalFont = game_engine::instance()->GetFont();
+	Font *originalFont = game_engine::instance()->get_font();
 
 	//automatically enable bitmapmode when the pointers are not nullptr
 	if (m_BmpPressedPtr != nullptr && m_BmpReleasedPtr != nullptr) m_bImageMode = true;
@@ -63,55 +63,55 @@ void Button::Paint()
 	else DrawImageButton();
 
 	//restore font
-	game_engine::instance()->SetFont(originalFont);
+	game_engine::instance()->set_font(originalFont);
 }
 
 void Button::DrawClassicButton()
 {
 	// Draw the borders
 	RECT r = m_BoundingRect;
-	game_engine::instance()->SetColor(COLOR(101, 101, 101));
+	game_engine::instance()->set_color(COLOR(101, 101, 101));
 	game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 
 	++r.left; ++r.top; --r.right; --r.bottom;
-	if (!m_bArmed) game_engine::instance()->SetColor(COLOR(254, 254, 254));
-	else game_engine::instance()->SetColor(COLOR(101, 101, 101));
+	if (!m_bArmed) game_engine::instance()->set_color(COLOR(254, 254, 254));
+	else game_engine::instance()->set_color(COLOR(101, 101, 101));
 	game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 
 	// Fill interior
 	++r.left; ++r.top; --r.right; --r.bottom;
-	game_engine::instance()->SetColor(m_BackColor);
+	game_engine::instance()->set_color(m_BackColor);
 	game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 
 	// Set the Font
-	game_engine::instance()->SetFont(m_FontPtr);
+	game_engine::instance()->set_font(m_FontPtr);
 
 	if (!m_bArmed)
 	{
 
-		game_engine::instance()->SetColor(COLOR(101, 101, 101));
+		game_engine::instance()->set_color(COLOR(101, 101, 101));
 		game_engine::instance()->DrawLine(m_BoundingRect.right - 1, m_BoundingRect.top + 1, m_BoundingRect.right - 1, m_BoundingRect.bottom - 1);
 		game_engine::instance()->DrawLine(m_BoundingRect.left + 1, m_BoundingRect.bottom - 1, m_BoundingRect.right - 1, m_BoundingRect.bottom - 1);
 
-		game_engine::instance()->SetColor(COLOR(160, 160, 160));
+		game_engine::instance()->set_color(COLOR(160, 160, 160));
 		game_engine::instance()->DrawLine(m_BoundingRect.right - 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
 		game_engine::instance()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.bottom - 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
 
 		// Draw fore color when this is enabled
-		if (m_bEnabled)game_engine::instance()->SetColor(m_ForeColor);
+		if (m_bEnabled)game_engine::instance()->set_color(m_ForeColor);
 
 		// gray when disabled
-		else game_engine::instance()->SetColor(COLOR(187, 187, 187));
+		else game_engine::instance()->set_color(COLOR(187, 187, 187));
 
 		game_engine::instance()->DrawString(m_Text, m_BoundingRect);
 	}
 	else
 	{
-		game_engine::instance()->SetColor(COLOR(101, 101, 101));
+		game_engine::instance()->set_color(COLOR(101, 101, 101));
 		game_engine::instance()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.top + 2);
 		game_engine::instance()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.left + 2, m_BoundingRect.bottom - 2);
 
-		game_engine::instance()->SetColor(COLOR(160, 160, 160));
+		game_engine::instance()->set_color(COLOR(160, 160, 160));
 		game_engine::instance()->DrawLine(m_BoundingRect.left + 2, m_BoundingRect.top + 3, m_BoundingRect.right - 3, m_BoundingRect.top + 3);
 		game_engine::instance()->DrawLine(m_BoundingRect.left + 3, m_BoundingRect.top + 3, m_BoundingRect.left + 3, m_BoundingRect.bottom - 3);
 
@@ -120,7 +120,7 @@ void Button::DrawClassicButton()
 		//else GameEngine::GetSingleton()->SetColor(COLOR(180, 180, 180));
 		////GameEngine::GetSingleton()->SetColor(COLOR(240, 240, 240));
 		//GameEngine::GetSingleton()->FillRect(r.left, r.top, r.right, r.bottom);
-		game_engine::instance()->SetColor(m_ForeColor);
+		game_engine::instance()->set_color(m_ForeColor);
 		game_engine::instance()->DrawString(m_Text, m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right + 2, m_BoundingRect.bottom + 2);
 	}
 }

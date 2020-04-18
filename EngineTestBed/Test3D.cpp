@@ -68,7 +68,7 @@ void Hello3D::GameStart()
 	auto ctx = game_engine::instance()->GetD3DDeviceContext();
 
 
-	::SetCapture(game_engine::instance()->GetWindow());
+	::SetCapture(game_engine::instance()->get_window());
 
 	using namespace framework;
 	_world = std::make_shared<framework::World>();
@@ -249,7 +249,7 @@ void Hello3D::Render3D()
 
 	XMMATRIX View = XMMatrixIdentity();
 
-	float aspect = (float)game_engine::instance()->GetWidth() / (float)game_engine::instance()->GetHeight();
+	float aspect = (float)game_engine::instance()->get_width() / (float)game_engine::instance()->get_height();
 	float near_plane = 0.01f;
 	float far_plane = 100.0f;
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH( XMConvertToRadians(45.0f), aspect, far_plane, near_plane);

@@ -81,7 +81,7 @@ void MetalFans::Paint()
     game_engine::instance()->SetWorldMatrix(matWorldTransform);
     
     game_engine::instance()->FillRect(0, 0, WIDTH, HEIGHT);
-    game_engine::instance()->SetColor(COLOR(0, 0, 120));
+    game_engine::instance()->set_color(COLOR(0, 0, 120));
     game_engine::instance()->FillRect(0, 0, WIDTH, HEIGHT / 2);
     game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
     

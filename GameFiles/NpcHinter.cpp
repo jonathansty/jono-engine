@@ -78,7 +78,7 @@ void NpcHinter::Paint()
     game_engine::instance()->SetWorldMatrix(matNpcHitBoxTransform);
     Font* fntTmpPtr = new Font(String(""), 16);
     fntTmpPtr->SetAlignHCenter();
-    game_engine::instance()->SetFont(fntTmpPtr);
+    game_engine::instance()->set_font(fntTmpPtr);
     matPivot.SetAsTranslate(DOUBLE2(-(m_TipText.Length() * 16) / 2, -50));
 
     matTextTranslate.SetAsTranslate(DOUBLE2(0, 0));
@@ -86,13 +86,13 @@ void NpcHinter::Paint()
     if (m_IsArmed)
     {
         
-        game_engine::instance()->SetColor(COLOR(255,255,255, m_Opacity));
+        game_engine::instance()->set_color(COLOR(255,255,255, m_Opacity));
         game_engine::instance()->DrawString(m_TipText, RECT2(0, 0, m_TipText.Length() * 16, 50));
     }
    
     game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
-    game_engine::instance()->SetColor(COLOR(0, 0, 0, 255));
-    game_engine::instance()->SetDefaultFont();
+    game_engine::instance()->set_color(COLOR(0, 0, 0, 255));
+    game_engine::instance()->set_default_font();
     delete fntTmpPtr;
 }
 void NpcHinter::Tick(double deltaTime)
@@ -156,7 +156,7 @@ void NpcHinter::SetFacingDirection(String facingDirection)
     if (facingDirection != String("LEFT") &&
         facingDirection != String("RIGHT"))
     {
-        game_engine::instance()->MessageBox(String("Please fix your config file! At object ") + m_Name);
+        game_engine::instance()->message_box(String("Please fix your config file! At object ") + m_Name);
     }
     m_FacingDirection = facingDirection;
 }

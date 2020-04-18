@@ -183,7 +183,7 @@
     <ClCompile Include="..\GameFiles\Entity.cpp" />
     <ClCompile Include="..\GameFiles\EntityDestroy.cpp" />
     <ClCompile Include="..\GameFiles\EntityList.cpp" />
-    <ClCompile Include="..\GameFiles\FileManager.cpp" />
+    <ClCompile Include="..\GameFiles\ejj_data_manager.cpp" />
     <ClCompile Include="..\GameFiles\Game.cpp" />
     <ClCompile Include="..\GameFiles\GameWinMain.cpp" />
     <ClCompile Include="..\GameFiles\Gate.cpp" />
@@ -242,7 +242,7 @@
     <ClInclude Include="..\GameFiles\Entity.h" />
     <ClInclude Include="..\GameFiles\EntityDestroy.h" />
     <ClInclude Include="..\GameFiles\EntityList.h" />
-    <ClInclude Include="..\GameFiles\FileManager.h" />
+    <ClInclude Include="..\GameFiles\ejj_data_manager.h" />
     <ClInclude Include="..\GameFiles\Game.h" />
     <ClInclude Include="..\GameFiles\GameWinMain.h" />
     <ClInclude Include="..\GameFiles\Gate.h" />
