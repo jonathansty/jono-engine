@@ -13,6 +13,7 @@
 #include "DebugOverlays/ImGuiOverlays.h"
 
 #include "Core/ResourceLoader.h"
+#include "Core/logging.h"
 
 enki::TaskScheduler game_engine::s_TaskScheduler;
 std::thread::id game_engine::s_MainThread;
@@ -67,7 +68,10 @@ game_engine::game_engine() :
 	m_XaudioPtr(nullptr),
 	m_GameSettings(),
 	m_PhysicsStepEnabled(true),
-	m_bQuit(false)
+	m_bQuit(false),
+	m_ViewportFocused(false),
+	_recreate_swapchain(false),
+	_recreate_game_texture(false)
 {
 	m_Gravity = DOUBLE2(0, 9.81);
 
@@ -191,6 +195,7 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 
 	ImGui::CreateContext();
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	ImGui_ImplWin32_Init(get_window());
 	ImGui_ImplDX11_Init(m_D3DDevicePtr, m_D3DDeviceContextPtr);
@@ -282,7 +287,7 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 
 				int32 velocityIterations = 6;
 				int32 positionIterations = 2;
-				if(m_PhysicsStepEnabled)
+				if (m_PhysicsStepEnabled)
 				{
 					m_Box2DWorldPtr->Step((float)m_PhysicsTimeStep, velocityIterations, positionIterations);
 				}
@@ -294,19 +299,55 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 			t.Stop();
 			m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
 
+			if (_recreate_swapchain)
+			{
+				logging::logf("Recreating swapchain. New size: %dx%d\n", (uint32_t)m_iWidth, (uint32_t)m_iHeight);
+
+				this->resize_swapchain(m_iWidth, m_iHeight);
+				_recreate_swapchain = false;
+			}
+
+			// Recreating the game viewport texture needs to happen before running IMGUI and the actual rendering
+			if (_recreate_game_texture)
+			{
+				logging::logf("Recreating game texture. New size: %dx%d\n", (uint32_t)_game_viewport_size.x, (uint32_t)_game_viewport_size.y);
+
+				this->resize_game_view(_game_viewport_size.x, _game_viewport_size.y);
+				_recreate_game_texture = false;
+			}
 
 			ImGui_ImplDX11_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
+			build_ui();
 			{
 				m_GamePtr->DebugUI();
 				m_OverlayManager->render_overlay();
+
+				ImVec2 game_width = { get_width() / 2.0f, get_height() / 2.0f };
+				ImGui::SetNextWindowSize(game_width, ImGuiCond_FirstUseEver);
+				ImGui::Begin("Viewport");
+				{
+					m_ViewportFocused = ImGui::IsWindowFocused();
+					ImVec2 size = ImGui::GetContentRegionAvail();
+					if (_game_viewport_size.x != size.x || _game_viewport_size.y != size.y)
+					{
+						_recreate_game_texture = true;
+						_game_viewport_size.x = std::max(size.x, 4.f);
+						_game_viewport_size.y = std::max(size.y, 4.f);
+					}
+
+					ImGui::GetWindowDrawList()->AddImage(_game_output_srv, ImVec2(0.0, 0.0), ImVec2(1.0, 1.0));
+					ImVec2 actual_size{ ImGui::GetWindowContentRegionMax().x - ImGui::GetWindowContentRegionMin().x, ImGui::GetWindowContentRegionMax().y - ImGui::GetWindowContentRegionMin().y };
+					ImGui::Image(_game_output_srv, actual_size);
+				}
+				ImGui::End();
 			}
 			ImGui::EndFrame();
 			ImGui::UpdatePlatformWindows();
 			ImGui::Render();
 
-			// Get pgu data 
+			// Get gpu data 
 			size_t idx = m_FrameCounter % 2;
 			if (m_FrameCounter > 2)
 			{
@@ -327,25 +368,26 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 
 		GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Frame");
 
+
+
 		size_t idx = m_FrameCounter % 2;
 
 		m_D3DDeviceContextPtr->Begin(gpuTimings[idx][0]);
 		m_D3DDeviceContextPtr->End(gpuTimings[idx][1]);
 
 		D3D11_VIEWPORT vp{};
-		vp.Width = static_cast<float>(this->get_width());
-		vp.Height = static_cast<float>(this->get_height());
+		vp.Width = static_cast<float>(this->get_viewport_size().x);
+		vp.Height = static_cast<float>(this->get_viewport_size().y);
 		vp.TopLeftX = 0.0f;
 		vp.TopLeftY = 0.0f;
 		vp.MinDepth = 0.0f;
 		vp.MaxDepth = 1.0f;
 		m_D3DDeviceContextPtr->RSSetViewports(1, &vp);
 
-		FLOAT color[4] = { 0.25f,0.25,0.25f,0.0f };
-		m_D3DDeviceContextPtr->ClearRenderTargetView(m_D3DBackBufferView, color);
-		m_D3DDeviceContextPtr->ClearDepthStencilView(m_D3DDepthBufferView, D3D11_CLEAR_DEPTH, 0.0f, 0);
-		m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, m_D3DDepthBufferView);
-
+		FLOAT color[4] = { 0.25f,0.25,0.25f,1.0f };
+		m_D3DDeviceContextPtr->ClearRenderTargetView(_game_output_rtv, color);
+		m_D3DDeviceContextPtr->ClearDepthStencilView(_game_output_dsv, D3D11_CLEAR_DEPTH, 0.0f, 0);
+		m_D3DDeviceContextPtr->OMSetRenderTargets(1, &_game_output_rtv, _game_output_dsv);
 
 		// Render 3D before 2D
 		{
@@ -356,24 +398,27 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 		// Render Direct2D to the swapchain
 		ExecuteDirect2DPaint();
 
-
 		// Render main viewport ImGui
+
+		m_D3DDeviceContextPtr->ClearRenderTargetView(m_D3DBackBufferView, color);
+		m_D3DDeviceContextPtr->OMSetRenderTargets(1, &m_D3DBackBufferView, nullptr);
+
 		{
 			GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"ImGui");
 			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 		}
 
-		// Render all Imgui windows
-		ImGui::RenderPlatformWindowsDefault();
-
-
 		// Present
 		GPU_MARKER(m_D3DUserDefinedAnnotation, L"DrawEnd");
 		m_DXGISwapchainPtr->Present(m_bVSync ? 1 : 0, 0);
 
+
+
 		m_D3DDeviceContextPtr->End(gpuTimings[idx][2]);
 		m_D3DDeviceContextPtr->End(gpuTimings[idx][0]);
 
+		// Render all other imgui windows  
+		ImGui::RenderPlatformWindowsDefault();
 	}
 	// undo the timer setting
 	timeEndPeriod(tc.wPeriodMin);
@@ -403,7 +448,7 @@ void game_engine::ExecuteDirect2DPaint()
 	GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Game2D");
 
 	D2DBeginPaint();
-	RECT usedClientRect = { 0, 0, get_width(), get_height() };
+	RECT usedClientRect = { 0, 0, _game_viewport_size.x, _game_viewport_size.y };
 
 	m_bPaintingAllowed = true;
 	// make sure the view matrix is taken in account
@@ -463,7 +508,7 @@ bool game_engine::register_wnd_class()
 bool game_engine::open_window(int iCmdShow)
 {
 	// Calculate the window size and position based upon the game size
-	DWORD windowStyle = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_MAXIMIZEBOX;
+	DWORD windowStyle = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_MAXIMIZEBOX | WS_OVERLAPPEDWINDOW;
 	RECT R = { 0, 0, m_iWidth, m_iHeight };
 	AdjustWindowRect(&R, windowStyle, false);
 	int iWindowWidth = R.right - R.left;
@@ -493,6 +538,74 @@ bool game_engine::open_window(int iCmdShow)
 	m_iHeight = r.bottom - r.top;
 
 	return true;
+}
+
+void game_engine::resize_swapchain(uint32_t width, uint32_t height)
+{
+
+	// Resize the swapchain
+	if (m_D3DBackBufferView) m_D3DBackBufferView->Release();
+	if (m_D3DBackBufferSRV)  m_D3DBackBufferSRV->Release();
+
+	DXGI_SWAP_CHAIN_DESC desc;
+	m_DXGISwapchainPtr->GetDesc(&desc);
+	m_DXGISwapchainPtr->ResizeBuffers(desc.BufferCount, width, height, desc.BufferDesc.Format, desc.Flags);
+
+	// Recreate the views
+	ID3D11Texture2D* backBuffer;
+	m_DXGISwapchainPtr->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+	assert(backBuffer);
+	SUCCEEDED(m_D3DDevicePtr->CreateRenderTargetView(backBuffer, NULL, &m_D3DBackBufferView));
+	SUCCEEDED(m_D3DDevicePtr->CreateShaderResourceView(backBuffer, NULL, &m_D3DBackBufferSRV));
+	backBuffer->Release();
+}
+
+void game_engine::resize_game_view(uint32_t width, uint32_t height)
+{
+	m_D3DDeviceContextPtr->Flush();
+
+	if (_game_output_tex)
+		_game_output_tex->Release();
+	if (_game_output_srv)
+		_game_output_rtv->Release();
+	if (_game_output_srv)
+		_game_output_srv->Release();
+	if (_game_output_dsv)
+		_game_output_dsv->Release();
+	if (_game_output_depth)
+		_game_output_depth->Release();
+
+	if (m_RenderTargetPtr)
+		m_RenderTargetPtr->Release();
+
+
+	{
+		CD3D11_TEXTURE2D_DESC texture_desc{ DXGI_FORMAT_R8G8B8A8_UNORM, (UINT)_game_viewport_size.x, (UINT)_game_viewport_size.y };
+		texture_desc.Usage = D3D11_USAGE_DEFAULT;
+		texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+		texture_desc.MipLevels = 1;
+		texture_desc.ArraySize = 1;
+
+		SUCCEEDED(m_D3DDevicePtr->CreateTexture2D(&texture_desc, NULL, &_game_output_tex));
+
+		texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+		texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+		SUCCEEDED(m_D3DDevicePtr->CreateTexture2D(&texture_desc, NULL, &_game_output_depth));
+
+		// Create the views
+		SUCCEEDED(m_D3DDevicePtr->CreateDepthStencilView(_game_output_depth, NULL, &_game_output_dsv));
+		SUCCEEDED(m_D3DDevicePtr->CreateRenderTargetView(_game_output_tex, NULL, &_game_output_rtv));
+		SUCCEEDED(m_D3DDevicePtr->CreateShaderResourceView(_game_output_tex, NULL, &_game_output_srv));
+
+
+		UINT dpi = GetDpiForWindow(get_window());
+		D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)dpi, (FLOAT)dpi);
+		IDXGISurface* surface;
+		_game_output_tex->QueryInterface(&surface);
+		SUCCEEDED(m_D2DFactoryPtr->CreateDxgiSurfaceRenderTarget(surface, rtp, &m_RenderTargetPtr));
+		surface->Release();
+
+	}
 }
 
 void game_engine::quit_game()
@@ -1283,6 +1396,17 @@ WORD game_engine::get_small_icon() const
 	return m_wSmallIcon;
 }
 
+ImVec2 game_engine::get_window_size() const
+{
+	return { (float)m_iWidth, (float)m_iHeight };
+}
+
+ImVec2 game_engine::get_viewport_size(int id ) const
+{
+	assert(id == 0);
+	return _game_viewport_size;
+}
+
 int game_engine::get_width() const
 {
 	return m_iWidth;
@@ -1477,7 +1601,6 @@ bool game_engine::IsMouseButtonReleased(int button) const
 
 LRESULT game_engine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-
 	// Get window rectangle and HDC
 	RECT windowClientRect;
 	GetClientRect(hWindow, &windowClientRect);
@@ -1517,13 +1640,7 @@ LRESULT game_engine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM 
 		m_iWidth = r.right - r.left;
 		m_iHeight = r.bottom - r.top;
 
-		// TODO: Re-create this in the rendering code rather then on the event
-		if (m_DXGISwapchainPtr)
-		{
-			DXGI_SWAP_CHAIN_DESC desc;
-			m_DXGISwapchainPtr->GetDesc(&desc);
-			m_DXGISwapchainPtr->ResizeBuffers(desc.BufferCount, m_iWidth, m_iHeight, desc.BufferDesc.Format, desc.Flags);
-		}
+		this->_recreate_swapchain = true;
 		return 0;
 
 		//case WM_KEYUP:
@@ -1568,7 +1685,6 @@ LRESULT game_engine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM 
 // duration of the app. These resources include the Direct2D and
 // DirectWrite factories,  and a DirectWrite Text Format object
 // (used for identifying particular font characteristics).
-//
 void game_engine::CreateDeviceIndependentResources()
 {
 	// Create Direct3D 11 factory
@@ -1658,7 +1774,7 @@ void game_engine::CreateDeviceResources()
 		desc.BufferDesc.RefreshRate.Denominator = 1;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
-		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
 		desc.OutputWindow = get_window();
 		if (m_GameSettings.m_FullscreenMode == GameSettings::FullScreenMode::Windowed || m_GameSettings.m_FullscreenMode == GameSettings::FullScreenMode::BorderlessWindowed)
 		{
@@ -1675,29 +1791,42 @@ void game_engine::CreateDeviceResources()
 		SetDebugName(m_DXGISwapchainPtr, "DXGISwapchain");
 		SetDebugName(m_DXGIFactoryPtr, "DXGIFactory");
 
-
 		ID3D11Texture2D* backBuffer;
 		m_DXGISwapchainPtr->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
 		SetDebugName(backBuffer, "DXGIBackBuffer");
 		assert(backBuffer);
-		m_D3DDevicePtr->CreateRenderTargetView(backBuffer, NULL, &m_D3DBackBufferView);
+		SUCCEEDED(m_D3DDevicePtr->CreateRenderTargetView(backBuffer, NULL, &m_D3DBackBufferView));
+		SUCCEEDED(m_D3DDevicePtr->CreateShaderResourceView(backBuffer, NULL, &m_D3DBackBufferSRV));
+		backBuffer->Release();
 
+		// Create the game viewport texture
+		{
+			CD3D11_TEXTURE2D_DESC texture_desc{ DXGI_FORMAT_B8G8R8A8_UNORM, (UINT)4, (UINT)4 };
+			texture_desc.Usage = D3D11_USAGE_DEFAULT;
+			texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+			texture_desc.MipLevels = 1;
+			texture_desc.ArraySize = 1;
+			SUCCEEDED(m_D3DDevicePtr->CreateTexture2D(&texture_desc, NULL, &_game_output_tex));
 
-		CD3D11_TEXTURE2D_DESC texture_desc{ DXGI_FORMAT_D24_UNORM_S8_UINT, (UINT)get_width(), (UINT)get_height() };
-		texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+			texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+			texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+			SUCCEEDED(m_D3DDevicePtr->CreateTexture2D(&texture_desc, NULL, &_game_output_depth));
 
-		SUCCEEDED(m_D3DDevicePtr->CreateTexture2D(&texture_desc, nullptr, &m_D3DDepthBuffer));
-		SUCCEEDED(m_D3DDevicePtr->CreateDepthStencilView(m_D3DDepthBuffer, NULL, &m_D3DDepthBufferView));
+			// Create the views
+			SUCCEEDED(m_D3DDevicePtr->CreateDepthStencilView(_game_output_depth, NULL, &_game_output_dsv));
+			SUCCEEDED(m_D3DDevicePtr->CreateRenderTargetView(_game_output_tex, NULL, &_game_output_rtv));
+			SUCCEEDED(m_D3DDevicePtr->CreateShaderResourceView(_game_output_tex, NULL, &_game_output_srv));
+		}
+
 
 		UINT dpi = GetDpiForWindow(get_window());
 		D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)dpi, (FLOAT)dpi);
 
-		IDXGISurface* dxgiBackBuffer;
-		m_DXGISwapchainPtr->GetBuffer(0, IID_PPV_ARGS(&dxgiBackBuffer));
-		assert(dxgiBackBuffer);
-		hr = m_D2DFactoryPtr->CreateDxgiSurfaceRenderTarget(dxgiBackBuffer, rtp, &m_RenderTargetPtr);
+		IDXGISurface* surface;
+		_game_output_tex->QueryInterface(&surface);
 
-		dxgiBackBuffer->Release();
+		hr = m_D2DFactoryPtr->CreateDxgiSurfaceRenderTarget(surface, rtp, &m_RenderTargetPtr);
+		surface->Release();
 
 		if (FAILED(hr))
 		{
@@ -1922,6 +2051,65 @@ void game_engine::CallListeners()
 		if (contactListenerBPtr != nullptr) contactListenerBPtr->ContactImpulse(reinterpret_cast<PhysicsActor *>(m_ImpulseDataArr[i].actBPtr), m_ImpulseDataArr[i].impulseB);
 	}
 	m_ImpulseDataArr.clear();
+}
+
+void game_engine::build_ui()
+{
+	{
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+		{
+			ImGuiViewport* viewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos(viewport->GetWorkPos());
+			ImGui::SetNextWindowSize(viewport->GetWorkSize());
+			ImGui::SetNextWindowViewport(viewport->ID);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+		}
+
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		ImGui::Begin("DockSpace Demo", nullptr, window_flags);
+		ImGui::PopStyleVar();
+		ImGui::PopStyleVar(2);
+
+		// DockSpace
+		ImGuiIO& io = ImGui::GetIO();
+		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f));
+
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("About"))
+			{
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Simulation"))
+			{
+				ImGui::EndMenu();
+			}
+
+			if (ImGui::BeginMenu("Windows"))
+			{
+				ImGui::MenuItem("Debug Log");
+				ImGui::MenuItem("Viewport");
+				ImGui::MenuItem("Scene Hierarchy");
+				ImGui::MenuItem("Properties");
+
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMenuBar();
+		}
+
+		ImGui::End();
+	}
 }
 
 int game_engine::run_game(HINSTANCE hInstance, int iCmdShow, AbstractGame* game)

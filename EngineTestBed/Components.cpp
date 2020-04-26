@@ -211,7 +211,7 @@ void CameraComponent::look_at(XMFLOAT3 eye, XMFLOAT3 target, XMFLOAT3 up /*= { 0
 void CameraComponent::update(float dt)
 {
 	// Ignore any input if ImGui is focused
-	if (ImGui::IsAnyWindowFocused())
+	if (!game_engine::instance()->is_viewport_focused() || !game_engine::instance()->IsMouseButtonDown(VK_LBUTTON))
 	{
 		_prev_position = game_engine::instance()->GetMousePositionDOUBLE2();
 		return;

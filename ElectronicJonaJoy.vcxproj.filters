@@ -155,6 +155,9 @@
     <ClCompile Include="EngineFiles\sound.cpp">
       <Filter>Engine Files\Core\Sound</Filter>
     </ClCompile>
+    <ClCompile Include="EngineFiles\Core\logging.cpp">
+      <Filter>Engine Files\Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -439,6 +442,9 @@
     </ClInclude>
     <ClInclude Include="EngineFiles\sound.h">
       <Filter>Engine Files\Core\Sound</Filter>
+    </ClInclude>
+    <ClInclude Include="EngineFiles\Core\logging.h">
+      <Filter>Engine Files\Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

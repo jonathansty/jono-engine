@@ -175,9 +175,7 @@ void ElectronicJonaJoy::GameTick(double deltaTime)
 
 			}
 		}
-
 	}
-
 }
 
 void ElectronicJonaJoy::GamePaint(RECT rect)
@@ -186,6 +184,15 @@ void ElectronicJonaJoy::GamePaint(RECT rect)
 	{
 		_current_state->render_2d();
 	}
+
+	ImVec2 vp_size = game_engine::instance()->get_viewport_size();
+	game_engine* engine = game_engine::instance();
+	engine->set_color(COLOR{ 255,255,255,255 });
+	engine->FillRect(5, 5, 20, 20);
+	engine->FillRect(5, vp_size.y - 20, 20, vp_size.y - 5);
+	engine->FillRect(vp_size.x - 20, 5, vp_size.x - 5, 20);
+	engine->FillRect(vp_size.x - 20, vp_size.y - 20, vp_size.x - 5, vp_size.y - 5);
+
 	return;
 
 	switch (m_GameState)
@@ -195,12 +202,12 @@ void ElectronicJonaJoy::GamePaint(RECT rect)
 		if (m_AccuTime < 5)
 		{
 			game_engine::instance()->set_default_font();
-			game_engine::instance()->DrawString(String(m_LevelListPtr->GetLevel(m_CurrentLevel).c_str()), 10, game_engine::instance()->get_height() - 20);
+			game_engine::instance()->DrawString(String(m_LevelListPtr->GetLevel(m_CurrentLevel).c_str()), 10, game_engine::instance()->get_viewport_size().y - 20);
 		}
 		m_HUDPtr->Paint();
 		if (m_Game->GetGameOver())
 		{
-			m_HUDPtr->PaintGameOverWindow(DOUBLE2(game_engine::instance()->get_width() / 2, game_engine::instance()->get_height() / 2));
+			m_HUDPtr->PaintGameOverWindow(DOUBLE2(game_engine::instance()->get_viewport_size().x / 2, game_engine::instance()->get_viewport_size().y / 2));
 		}
 		break;
 	case ElectronicJonaJoy::GameState::MENU:

@@ -84,35 +84,6 @@ void Hello3D::GameStart()
 		ent->set_local_position(XMFLOAT3(0.0f, 0.0f, -2.0f));
 	}
 
-	//{
-	//	World::EntityId model = _world->create_entity();
-	//	Entity* ent = _world->get_entity(model);
-	//	ent->set_name("Suzanne");
-	//	ent->set_local_position({ 4.0f,0.0f,0.0f });
-	//	auto comp = ent->create_component<SimpleMeshComponent>();
-	//	comp->load("Resources/Models/Suzanne.fbx");
-	//}
-
-	//{
-	//	World::EntityId model = _world->create_entity();
-	//	Entity* ent = _world->get_entity(model);
-	//	ent->set_name("Ball");
-	//	ent->set_local_position({ -4.0f, 0.0f, 0.0f });
-	//	auto comp = ent->create_component<SimpleMeshComponent>();
-	//	comp->load("Resources/Models/ball.fbx");
-	//	auto mov = ent->create_component<SimpleMovement>();
-	//	mov->set_speed(1.0f);
-	//}
-
-	//{
-	//	World::EntityId model = _world->create_entity();
-	//	Entity* ent = _world->get_entity(model);
-	//	ent->set_name("Axes");
-	//	ent->set_local_position({ 0.0f,0.0f,0.0f });
-	//	auto comp = ent->create_component<SimpleMeshComponent>();
-	//	comp->load("Resources/Models/axes.fbx");
-	//}
-
 	{
 		for (int i = 0; i < 1; ++i)
 		{
@@ -249,7 +220,8 @@ void Hello3D::Render3D()
 
 	XMMATRIX View = XMMatrixIdentity();
 
-	float aspect = (float)game_engine::instance()->get_width() / (float)game_engine::instance()->get_height();
+	ImVec2 size = game_engine::instance()->get_viewport_size();
+	float aspect = (float)size.x / (float)size.y;
 	float near_plane = 0.01f;
 	float far_plane = 100.0f;
 	XMMATRIX Projection = XMMatrixPerspectiveFovLH( XMConvertToRadians(45.0f), aspect, far_plane, near_plane);
@@ -320,7 +292,6 @@ void Hello3D::Render3D()
 			ctx->PSSetConstantBuffers(0, 1, _cb_MVP.GetAddressOf());
 
 			comp->render();
-
 		}
 	}
 }

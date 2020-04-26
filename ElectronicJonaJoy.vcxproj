@@ -98,6 +98,7 @@
     <ClInclude Include="EngineFiles\AbstractGame.h" />
     <ClInclude Include="EngineFiles\ContactListener.h" />
     <ClInclude Include="EngineFiles\core\identifier.h" />
+    <ClInclude Include="EngineFiles\Core\logging.h" />
     <ClInclude Include="EngineFiles\Core\Material.h" />
     <ClInclude Include="EngineFiles\Core\MaterialResource.h" />
     <ClInclude Include="EngineFiles\Core\ModelResource.h" />
@@ -129,6 +130,7 @@
     <ClCompile Include="EngineFiles\Box2DDebugRenderer.cpp" />
     <ClCompile Include="EngineFiles\Button.cpp" />
     <ClCompile Include="EngineFiles\ContactListener.cpp" />
+    <ClCompile Include="EngineFiles\Core\logging.cpp" />
     <ClCompile Include="EngineFiles\Core\Material.cpp" />
     <ClCompile Include="EngineFiles\Core\MaterialResource.cpp" />
     <ClCompile Include="EngineFiles\Core\ModelResource.cpp" />

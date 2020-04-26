@@ -333,6 +333,8 @@ public:
 	String					get_title() const;
 	WORD					get_icon() const;
 	WORD					get_small_icon() const;
+	ImVec2					get_viewport_size(int id = 0) const;
+	ImVec2					get_window_size() const;
 	int						get_width() const;
 	int						get_height() const;
 	bool					get_sleep() const;
@@ -375,11 +377,16 @@ public:
 	// Enables/disables physics simulation stepping.
 	void set_physics_step(bool bEnabled);
 
+	bool is_viewport_focused() const { return m_ViewportFocused; }
+
 private:
 	void set_game(AbstractGame* gamePtr);
 	int  run(HINSTANCE hInstance, int iCmdShow);
 	bool register_wnd_class();
 	bool open_window(int iCmdShow);
+
+	void resize_swapchain(uint32_t width, uint32_t height);
+	void resize_game_view(uint32_t width, uint32_t height);
 
 	LRESULT			handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -417,6 +424,8 @@ private:
 	// This for begin and endcontacts
 	void CallListeners();
 
+	void build_ui();
+
 
 	private:
 	// Member Variables
@@ -442,10 +451,20 @@ private:
 	ID3D11DeviceContext* m_D3DDeviceContextPtr;
 	IDXGISwapChain* m_DXGISwapchainPtr;
 	ID3D11RenderTargetView* m_D3DBackBufferView;
+	ID3D11ShaderResourceView* m_D3DBackBufferSRV;
 	ID3DUserDefinedAnnotation* m_D3DUserDefinedAnnotation;
 
-	ID3D11Texture2D* m_D3DDepthBuffer;
-	ID3D11DepthStencilView* m_D3DDepthBufferView;
+	bool m_ViewportFocused;
+	bool _recreate_game_texture;
+	bool _recreate_swapchain;
+	ImVec2 _game_viewport_size;
+
+	// Game viewport resources
+	ID3D11Texture2D* _game_output_tex;
+	ID3D11Texture2D* _game_output_depth;
+	ID3D11DepthStencilView* _game_output_dsv;
+	ID3D11ShaderResourceView* _game_output_srv;
+	ID3D11RenderTargetView* _game_output_rtv;
 
 	ID2D1Factory*					m_D2DFactoryPtr;
 	IWICImagingFactory*				m_WICFactoryPtr;
@@ -518,3 +537,5 @@ private:
 #define GPU_SCOPED_EVENT(ctx, name) 
 #define GPU_MARKER(ctx, name) 
 #endif
+
+
