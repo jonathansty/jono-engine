@@ -128,7 +128,7 @@ private:
 	float _x_angle;
 	float _y_angle;
 	
-	DOUBLE2 _prev_position;
+	XMFLOAT2 _prev_position;
 
 };
 

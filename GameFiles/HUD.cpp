@@ -49,7 +49,7 @@ void HUD::Paint()
 void HUD::Tick(double deltaTime)
 {
 
-    DOUBLE2 mousePosition = game_engine::instance()->GetMousePositionDOUBLE2();
+    XMFLOAT2 mousePosition = game_engine::instance()->get_mouse_pos_in_viewport();
     if (m_BtnSndMutePtr != nullptr && m_BtnSndMutePtr->IsPressed())
     {
         if (m_Muted)

@@ -33,8 +33,8 @@ public:
 	void SetBounds(int posX, int posY, int width, int height);
 	void SetValueColor(const COLOR & valueColorRef);
 	void SetBackColor(const COLOR & backColorRef);
-	int GetValue();
-    void SetValue(int value);
+	float GetValue();
+    void SetValue(float value);
     bool IsPressed();
 
 private: 
@@ -43,7 +43,11 @@ private:
 	//-------------------------------------------------
 	int m_MinValue, m_MaxValue;
 
-	int m_PosX = 0, m_PosY = 0, m_Width = 0, m_Height = 0, m_Value = 100;
+	int m_PosX = 0; 
+	int m_PosY = 0; 
+	int m_Width = 0; 
+	int m_Height = 0;
+	float m_Value = 100;
 	COLOR m_ValueColor;
 	COLOR m_BackgroundColor;
 	String m_String;

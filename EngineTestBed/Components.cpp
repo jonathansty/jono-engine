@@ -213,7 +213,7 @@ void CameraComponent::update(float dt)
 	// Ignore any input if ImGui is focused
 	if (!game_engine::instance()->is_viewport_focused() || !game_engine::instance()->IsMouseButtonDown(VK_LBUTTON))
 	{
-		_prev_position = game_engine::instance()->GetMousePositionDOUBLE2();
+		_prev_position = game_engine::instance()->get_mouse_pos_in_viewport();
 		return;
 	}
 
@@ -280,7 +280,7 @@ void CameraComponent::update(float dt)
 
 	// Handle rotation
 	{
-		DOUBLE2 current = game_engine::instance()->GetMousePositionDOUBLE2();
+		XMFLOAT2 current = game_engine::instance()->get_mouse_pos_in_viewport();
 		double x = current.x - _prev_position.x;
 		double y = current.y - _prev_position.y;
 		_prev_position = current;

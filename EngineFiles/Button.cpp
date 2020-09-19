@@ -147,7 +147,7 @@ void Button::Tick(double deltaTime)
 
 	MATRIX3X2 matInverse = (game_engine::instance()->GetWorldMatrix() * game_engine::instance()->GetViewMatrix()).Inverse();
 
-	DOUBLE2 mouseScreenSpace(game_engine::instance()->GetMousePosition().x, game_engine::instance()->GetMousePosition().y);
+	DOUBLE2 mouseScreenSpace(game_engine::instance()->get_mouse_pos_in_viewport().x, game_engine::instance()->get_mouse_pos_in_viewport().y);
 	DOUBLE2 mouseViewSpace = matInverse.TransformPoint(mouseScreenSpace);
 
 	//RMB in button rect armes the button and paint will draw the pressed button

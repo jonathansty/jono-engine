@@ -1,7 +1,7 @@
 #pragma once
 #include "singleton.h"
 
-interface IOverlay
+struct IOverlay
 {
 	virtual void render_overlay() = 0;
 };

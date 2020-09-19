@@ -347,11 +347,11 @@ public:
 	IWICImagingFactory*		GetWICImagingFactory() const;
 	ID2D1RenderTarget*		GetHwndRenderTarget() const;
 	IDWriteFactory*			GetDWriteFactory() const;
-	// Returns a POINT containing the window coordinates of the mouse
+
+	// Returns a POINT containing the window coordinates of the mouse offset in the viewport
 	// Usage example:
 	// POINT mousePos = game_engine::instance()->GetMousePosition();
-	POINT					GetMousePosition() const;
-    DOUBLE2                 GetMousePositionDOUBLE2() const;
+	XMFLOAT2 get_mouse_pos_in_viewport() const;
 
 	//! returns pointer to the Audio object
 	AudioSystem *				GetXAudio() const;
@@ -378,6 +378,8 @@ public:
 	void set_physics_step(bool bEnabled);
 
 	bool is_viewport_focused() const { return m_ViewportFocused; }
+
+	ID2D1RenderTarget* get_2d_draw_ctx() const { return m_RenderTargetPtr; }
 
 private:
 	void set_game(AbstractGame* gamePtr);
@@ -458,6 +460,7 @@ private:
 	bool _recreate_game_texture;
 	bool _recreate_swapchain;
 	ImVec2 _game_viewport_size;
+	ImVec2 _game_viewport_offset;
 
 	// Game viewport resources
 	ID3D11Texture2D* _game_output_tex;

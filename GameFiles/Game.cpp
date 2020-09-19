@@ -321,8 +321,9 @@ void Game::UpdateKeyChecks(double deltaTime)
 	}
 	if (engine->IsKeyboardKeyPressed(VK_F6))
 	{
-		DOUBLE2 mousePosition = engine->GetMousePositionDOUBLE2();
-		mousePosition = m_CameraPtr->GetViewMatrix().Inverse().TransformPoint(mousePosition);
+		XMFLOAT2 mousePosition = engine->get_mouse_pos_in_viewport();
+		DOUBLE2 pos = m_CameraPtr->GetViewMatrix().Inverse().TransformPoint(DOUBLE2(mousePosition.x, mousePosition.y));
+		mousePosition = XMFLOAT2{ (float)pos.x, (float)pos.y };
         engine->ConsolePrintString(String("[") +
 			String(mousePosition.x) +
 			String(", ") +

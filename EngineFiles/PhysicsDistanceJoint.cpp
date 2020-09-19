@@ -15,7 +15,7 @@ PhysicsDistanceJoint::PhysicsDistanceJoint(PhysicsActor *actAPtr, DOUBLE2 anchor
 	DistanceJointDef.frequencyHz = (float)frequencyHz;
 	DistanceJointDef.dampingRatio = (float)dampingRatio;
 
-	m_DistanceJointPtr = dynamic_cast <b2DistanceJoint*>((game_engine::instance())->GetBox2DWorld()->CreateJoint(&DistanceJointDef));
+	m_DistanceJointPtr = reinterpret_cast<b2DistanceJoint*>((game_engine::instance())->GetBox2DWorld()->CreateJoint(&DistanceJointDef));
 
 }
 

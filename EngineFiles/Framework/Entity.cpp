@@ -106,6 +106,7 @@ Entity::~Entity()
 {
 	for (auto comp : _components)
 	{
+		comp->on_detach(this);
 		delete comp;
 	}
 	_components.clear();

@@ -446,6 +446,9 @@
     <ClInclude Include="EngineFiles\Core\logging.h">
       <Filter>Engine Files\Core</Filter>
     </ClInclude>
+    <ClInclude Include="EngineFiles\Engine.hpp">
+      <Filter>Engine Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="small.ico">

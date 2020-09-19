@@ -8,6 +8,7 @@
 // http://box2d.org/manual.pdf
 
 PhysicsActor::PhysicsActor(DOUBLE2 pos, double angle, BodyType bodyType)
+	: m_BodyPtr(nullptr)
 {
 	SetBody(pos, angle, bodyType);
 }

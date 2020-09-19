@@ -321,8 +321,8 @@ void StartMenu::Remove()
 
 void StartMenu::EnableButtons()
 {
-    int width = game_engine::instance()->get_width();
-    int height = game_engine::instance()->get_height();
+    float width = game_engine::instance()->get_viewport_size().x;
+    float height = game_engine::instance()->get_viewport_size().y;
     float spacing = 1.25;
     int buttonHeight = 100;
     int buttonWidth = 100;

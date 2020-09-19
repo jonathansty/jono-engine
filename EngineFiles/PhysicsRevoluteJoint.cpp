@@ -14,7 +14,7 @@ PhysicsRevoluteJoint::PhysicsRevoluteJoint(PhysicsActor *actAPtr, DOUBLE2 anchor
 	revoluteJointDef.collideConnected = collide;
 	revoluteJointDef.referenceAngle = (float)referenceAngle;
 
-	m_RevoluteJointPtr = dynamic_cast <b2RevoluteJoint*>((game_engine::instance())->GetBox2DWorld()->CreateJoint(&revoluteJointDef));
+	m_RevoluteJointPtr = reinterpret_cast<b2RevoluteJoint*>((game_engine::instance())->GetBox2DWorld()->CreateJoint(&revoluteJointDef));
 }
 
 PhysicsRevoluteJoint::~PhysicsRevoluteJoint()

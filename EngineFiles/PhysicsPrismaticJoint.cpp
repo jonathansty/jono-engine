@@ -14,7 +14,7 @@ PhysicsPrismaticJoint::PhysicsPrismaticJoint(PhysicsActor *actAPtr, DOUBLE2 anch
 	prismaticJointDef.collideConnected = collide;
 	prismaticJointDef.referenceAngle = (float)0;
 	prismaticJointDef.localAxisA.Set((float)jointAxis.x, (float)jointAxis.y);
-	m_PrismaticJointPtr = dynamic_cast <b2PrismaticJoint*>((game_engine::instance())->GetBox2DWorld()->CreateJoint(&prismaticJointDef));
+	m_PrismaticJointPtr = reinterpret_cast <b2PrismaticJoint*>((game_engine::instance())->GetBox2DWorld()->CreateJoint(&prismaticJointDef));
 }
 
 PhysicsPrismaticJoint::~PhysicsPrismaticJoint()

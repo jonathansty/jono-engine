@@ -326,3 +326,78 @@
 </LastLevel>
 	</End>
 </Session>
+<Session>
+	<Start>
+		<Date>2020:01:20</Date>
+		<Time>20:28:18</Time>
+	</Start>
+	<End>
+		<Date>2020:01:20</Date>
+		<Time>20:28:22</Time>
+		<Deaths>0</Deaths>
+		<Money>0</Money>
+		<LifeTime>2.7</LifeTime>
+		<LastLevel>0
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2020:01:20</Date>
+		<Time>20:29:54</Time>
+	</Start>
+	<End>
+		<Date>2020:01:20</Date>
+		<Time>20:29:58</Time>
+		<Deaths>0</Deaths>
+		<Money>0</Money>
+		<LifeTime>3.4</LifeTime>
+		<LastLevel>0
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2020:01:20</Date>
+		<Time>20:30:04</Time>
+	</Start>
+	<End>
+		<Date>2020:01:20</Date>
+		<Time>20:30:10</Time>
+		<Deaths>0</Deaths>
+		<Money>0</Money>
+		<LifeTime>6.3</LifeTime>
+		<LastLevel>0
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2020:01:20</Date>
+		<Time>20:33:08</Time>
+	</Start>
+	<End>
+		<Date>2020:01:20</Date>
+		<Time>20:33:14</Time>
+		<Deaths>0</Deaths>
+		<Money>0</Money>
+		<LifeTime>5.2</LifeTime>
+		<LastLevel>0
+</LastLevel>
+	</End>
+</Session>
+<Session>
+	<Start>
+		<Date>2020:01:20</Date>
+		<Time>20:33:26</Time>
+	</Start>
+	<End>
+		<Date>2020:01:20</Date>
+		<Time>20:33:29</Time>
+		<Deaths>0</Deaths>
+		<Money>0</Money>
+		<LifeTime>6.8</LifeTime>
+		<LastLevel>0
+</LastLevel>
+	</End>
+</Session>

@@ -105,7 +105,6 @@ game_engine::~game_engine()
 
 	delete m_InputPtr;
 	delete m_GameTickTimerPtr;
-	delete m_GamePtr;
 	delete m_DefaultFontPtr;
     delete m_Box2DContactFilter;
 
@@ -265,39 +264,46 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 		{
 			++m_FrameCounter;
 
-			double current = m_GameTickTimerPtr->GetGameTime();
-			double elapsed = current - previous; // calc timedifference
-			m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::FrameTime, (float)(elapsed * 1000.0f));
-			if (elapsed > 0.25) elapsed = 0.25; //prevent jumps in time when break point or sleeping
-			previous = current;  // reset
-			lag += elapsed;
-
-			Timer t{};
-			t.Start();
-			while (lag >= m_PhysicsTimeStep)
+			if (m_FrameCounter == 2)
 			{
-				// Check the state of keyboard and mouse
-				m_InputPtr->Update();
-
-				//tick GUI -> for blinking caret
-				GUITick(m_PhysicsTimeStep);
-
-				// Call the Game Tick method
-				m_GamePtr->GameTick(m_PhysicsTimeStep);
-
-				int32 velocityIterations = 6;
-				int32 positionIterations = 2;
-				if (m_PhysicsStepEnabled)
-				{
-					m_Box2DWorldPtr->Step((float)m_PhysicsTimeStep, velocityIterations, positionIterations);
-				}
-
-				// Step generates contact lists, pass to Listeners and clear the vector
-				CallListeners();
-				lag -= m_PhysicsTimeStep;
+				m_GamePtr->GameStart();
 			}
-			t.Stop();
-			m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
+			else
+			{
+				double current = m_GameTickTimerPtr->GetGameTime();
+				double elapsed = current - previous; // calc timedifference
+				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::FrameTime, (float)(elapsed * 1000.0f));
+				if (elapsed > 0.25) elapsed = 0.25; //prevent jumps in time when break point or sleeping
+				previous = current;  // reset
+				lag += elapsed;
+
+				Timer t{};
+				t.Start();
+				while (lag >= m_PhysicsTimeStep)
+				{
+					// Check the state of keyboard and mouse
+					m_InputPtr->Update();
+
+					//tick GUI -> for blinking caret
+					GUITick(m_PhysicsTimeStep);
+
+					// Call the Game Tick method
+					m_GamePtr->GameTick(m_PhysicsTimeStep);
+
+					int32 velocityIterations = 6;
+					int32 positionIterations = 2;
+					if (m_PhysicsStepEnabled)
+					{
+						m_Box2DWorldPtr->Step((float)m_PhysicsTimeStep, velocityIterations, positionIterations);
+					}
+
+					// Step generates contact lists, pass to Listeners and clear the vector
+					CallListeners();
+					lag -= m_PhysicsTimeStep;
+				}
+				t.Stop();
+				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
+			}
 
 			if (_recreate_swapchain)
 			{
@@ -321,12 +327,10 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 			ImGui::NewFrame();
 			build_ui();
 			{
-				m_GamePtr->DebugUI();
-				m_OverlayManager->render_overlay();
-
 				ImVec2 game_width = { get_width() / 2.0f, get_height() / 2.0f };
 				ImGui::SetNextWindowSize(game_width, ImGuiCond_FirstUseEver);
-				ImGui::Begin("Viewport");
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+				ImGui::Begin("Viewport", NULL, ImGuiWindowFlags_NoDecoration);
 				{
 					m_ViewportFocused = ImGui::IsWindowFocused();
 					ImVec2 size = ImGui::GetContentRegionAvail();
@@ -336,12 +340,25 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 						_game_viewport_size.x = std::max(size.x, 4.f);
 						_game_viewport_size.y = std::max(size.y, 4.f);
 					}
+					RECT r;
+					::GetWindowRect(m_hWindow, &r);
+
+					float left = r.left; 
+					float top = r.top; 
+					_game_viewport_offset = { ImGui::GetWindowPos().x - left, ImGui::GetWindowPos().y - top};
 
 					ImGui::GetWindowDrawList()->AddImage(_game_output_srv, ImVec2(0.0, 0.0), ImVec2(1.0, 1.0));
 					ImVec2 actual_size{ ImGui::GetWindowContentRegionMax().x - ImGui::GetWindowContentRegionMin().x, ImGui::GetWindowContentRegionMax().y - ImGui::GetWindowContentRegionMin().y };
 					ImGui::Image(_game_output_srv, actual_size);
 				}
 				ImGui::End();
+				ImGui::PopStyleVar(1);
+
+				if (m_FrameCounter >= 2)
+				{
+					m_GamePtr->DebugUI();
+				}
+				m_OverlayManager->render_overlay();
 			}
 			ImGui::EndFrame();
 			ImGui::UpdatePlatformWindows();
@@ -392,11 +409,17 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 		// Render 3D before 2D
 		{
 			GPU_SCOPED_EVENT(m_D3DUserDefinedAnnotation, L"Render3D");
-			m_GamePtr->Render3D();
+			if (m_FrameCounter >= 2)
+			{
+				m_GamePtr->Render3D();
+			}
 		}
 
 		// Render Direct2D to the swapchain
-		ExecuteDirect2DPaint();
+		if (m_FrameCounter >= 2)
+		{
+			ExecuteDirect2DPaint();
+		}
 
 		// Render main viewport ImGui
 
@@ -428,6 +451,7 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 
 	// User defined code for exiting the game
 	m_GamePtr->GameEnd();
+	delete m_GamePtr;
 
 	ResourceLoader::instance()->unload_all();
 	ResourceLoader::Shutdown();
@@ -1457,13 +1481,9 @@ IDWriteFactory* game_engine::GetDWriteFactory() const
 	return m_DWriteFactoryPtr;
 }
 
-POINT game_engine::GetMousePosition()const
+XMFLOAT2 game_engine::get_mouse_pos_in_viewport()const
 {
-	return m_InputPtr->GetMousePosition();
-}
-DOUBLE2 game_engine::GetMousePositionDOUBLE2()const
-{
-    return DOUBLE2(m_InputPtr->GetMousePosition().x,m_InputPtr->GetMousePosition().y);
+	return XMFLOAT2{ m_InputPtr->GetMousePosition().x - _game_viewport_offset.x, m_InputPtr->GetMousePosition().y - _game_viewport_offset.y };
 }
 
 AudioSystem * game_engine::GetXAudio() const
@@ -2080,27 +2100,44 @@ void game_engine::build_ui()
 
 		if (ImGui::BeginMenuBar())
 		{
-			if (ImGui::BeginMenu("File"))
-			{
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("About"))
-			{
-				ImGui::EndMenu();
-			}
-
 			if (ImGui::BeginMenu("Simulation"))
 			{
+				static bool s_should_simulate = true;
+				if (ImGui::MenuItem(s_should_simulate ? "Stop" : "Start", "", nullptr))
+				{
+					s_should_simulate = !s_should_simulate;
+					logging::logf("Toggling Simulation %s.\n", s_should_simulate ? "On" : "Off");
+
+					this->set_sleep(!s_should_simulate);
+				}
+
 				ImGui::EndMenu();
 			}
 
 			if (ImGui::BeginMenu("Windows"))
 			{
-				ImGui::MenuItem("Debug Log");
-				ImGui::MenuItem("Viewport");
-				ImGui::MenuItem("Scene Hierarchy");
-				ImGui::MenuItem("Properties");
+				static bool s_show_debuglog = false;
+				static bool s_show_viewport = false;
+				static bool s_show_scene_hierarchy = false;
+				static bool s_show_properties = false;
+
+				if (ImGui::MenuItem("Debug Log"))
+				{
+					s_show_debuglog = !s_show_debuglog;
+				}
+				if (ImGui::MenuItem("Viewport"))
+				{
+					s_show_viewport = !s_show_viewport;
+				}
+				if(ImGui::MenuItem("Scene Hierarchy"))
+				{
+					s_show_scene_hierarchy = !s_show_scene_hierarchy;
+				}
+
+				if (ImGui::MenuItem("Properties"))
+				{
+					s_show_properties = !s_show_properties;
+				}
 
 				ImGui::EndMenu();
 			}
