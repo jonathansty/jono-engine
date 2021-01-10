@@ -1,0 +1,535 @@
+//-----------------------------------------------------------------
+// Game Engine Object
+// C++ Header - version v2_16 jan 2015 
+// Copyright DAE Programming Team
+// http://www.digitalartsandentertainment.be/
+// Heavily modified by Jonathan Steyfkens.  
+//-----------------------------------------------------------------
+#pragma once
+#include "singleton.h"
+
+#include "TaskScheduler.h"
+
+#include "DebugOverlays/OverlayManager.h"
+#include "DebugOverlays/MetricsOverlay.h"
+
+#include <Box2D/b2_world_callbacks.h>
+
+class Bitmap;
+class String;
+class Font;
+class GUIBase;
+class InputManager;
+class AudioSystem;
+class AbstractGame;
+class AudioSystem;
+class PrecisionTimer;
+class b2World;
+class ContactListener;
+
+template<typename T>
+HRESULT SetDebugName(T* obj, std::string const& n)
+{
+	return obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(n.size()), n.data());
+}
+
+
+enum class bitmap_interpolation_mode
+{
+	linear,
+	nearest_neighbor
+};
+
+
+void OutputDebugString(const String& textRef);
+
+
+class game_engine : public TSingleton<game_engine>, public b2ContactListener
+{
+private:
+	game_engine();
+	friend class TSingleton<game_engine>;
+
+public:
+	virtual ~game_engine();
+
+	game_engine(const game_engine&) = delete;
+	game_engine& operator=(const game_engine&) = delete;
+
+	// entry point to run a specific game  
+	static int run_game(HINSTANCE hInstance, int iCmdShow, class AbstractGame* game);
+
+public:
+	void quit_game(void);
+
+	//! Create a messagebox
+	//! @param text the text to display
+	void message_box(const String &text) const;
+
+	// Box2D virtual overloads
+	virtual void BeginContact(b2Contact* contactPtr);
+	virtual void EndContact(b2Contact* contactPtr);
+	virtual void PreSolve(b2Contact* contact, const b2Manifold* oldManifold);
+	virtual void PostSolve(b2Contact* contact, const b2ContactImpulse* impulse);
+
+	//! Darkens the output en displays the physics debug rendering
+	//! @param when true it draws the physicsdebug rendering
+	void EnablePhysicsDebugRendering(bool enable);
+
+	// Input methods
+
+	//! Returns true when button is down and was down the previous GG
+	//! Example values for key are: VK_LEFT, 'A'. ONLY CAPITALS.
+	bool IsKeyboardKeyDown(int key) const;
+	//! Returns true when button is down and was up the previous frame
+	//! Example values for key are: VK_LEFT, 'A'. ONLY CAPITALS.
+	bool IsKeyboardKeyPressed(int key) const;
+	//! Returns true when button is up and was down the previous frame
+	//! Example values for key are: VK_LEFT, 'A'. ONLY CAPITALS.
+	bool IsKeyboardKeyReleased(int key) const;
+
+	//! Returns true when button is down and was down the previous frame
+	//! Possible values for button are: VK_LBUTTON, VK_RBUTTON and VK_MBUTTON
+	bool IsMouseButtonDown(int button) const;
+
+	//! Returns true when button is down and was up the previous frame
+	//! Possible values for button are: VK_LBUTTON, VK_RBUTTON and VK_MBUTTON
+	bool IsMouseButtonPressed(int button) const;
+
+	//! Returns true when button is up and was down the previous frame
+	//! Possible values for button are: VK_LBUTTON, VK_RBUTTON and VK_MBUTTON
+	bool IsMouseButtonReleased(int button) const;
+
+	// Add GUI derived object to the GUI std::vector to be ticked automatically
+	// NOT for students
+	void register_gui(GUIBase *guiPtr);
+
+	// Remove GUI derived object from the GUI vector
+	// NOT for students
+	void unregister_gui(GUIBase *guiPtr);
+
+	//Console Methods
+
+	//! ConsoleSetForeColor: Set the color of the text by blending the 3 basic colors to create 8 different color values
+	//! @param red:	enable(true) or disable(false) the red component
+	//! @param green: enable(true) or disable(false) the green component
+	//! @param blue: enable(true) or disable(false) the blue component
+	//! @param intensity: enable(true) or disable(false) highlight
+	void ConsoleSetForeColor(bool red, bool green, bool blue, bool intensity);
+
+	//! ConsoleSetBackColor: Set the color of the background by blending the 3 basic colors to create 8 different color values
+	//! @param red: enable(true) or disable(false) the red component
+	//! @param green: enable(true) or disable(false) the green component
+	//! @param blue: enable(true) or disable(false) the blue component
+	//! @param intensity: enable(true) or disable(false) highlight
+	void ConsoleSetBackColor(bool red, bool green, bool blue, bool intensity);
+
+	//! ConsoleClear: Remove all characters from the console and set the cursor to the top left corner
+	void console_clear() const;
+
+	//! ConsoleSetCursorPosition: Set the cursor on a specific column and row number
+	void ConsoleSetCursorPosition(int column, int row);
+
+	//! ConsolePrintString: Display a String on the current cursor position. A new line is appended automatically
+	void ConsolePrintString(const String& textRef);
+	void ConsolePrintString(std::string const& msg);
+
+	// ConsolePrintString: Display a std::string on the current cursor position. A new line is appended automatically
+	//void ConsolePrintString(std::string text);
+
+	//! ConsolePrintString: Display a String on the position determined by column and row. A new line is appended automatically.
+	//!	-column: the column number 
+	//!	-row: the row number 
+	void ConsolePrintString(const String& textRef, int column, int row);
+
+	// ConsolePrintString: Display a std::string on the position determined by column and row. A new line is appended automatically.
+	//	-column: the column number 
+	//	-row: the row number 
+	//void ConsolePrintString(std::string text, int column, int row);
+
+	// Draw Methods		
+
+	//! Fills the client area of the window using the provided color, alpha is ignored 
+	bool			DrawSolidBackground(COLOR backgroundColor);
+	//! Draws a line from p1 to p2 using the strokewidth
+	bool			DrawLine(DOUBLE2 p1, DOUBLE2 p2, double strokeWidth = 1.0);
+	//! Draws a line from the coordinate defined by x1 and y1 to the coordinate define by x2 and y2
+	bool			DrawLine(int x1, int y1, int x2, int y2);
+
+	//! Draws a polygon defined by the coordinates in ptsArr
+	//! count is the number of points that must be drawn
+	//! If close is true then it will connect the start and end coordinate
+	bool			DrawPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned  int count, bool close = true, double strokeWidth = 1.0);
+
+	//! Draws a polygon defined by the coordinates in ptsArr
+	//! count is the number of points that must be drawn
+	//! If close is true then it will connect the start and end coordinate
+	bool			DrawPolygon(const std::vector<POINT>& ptsArr, unsigned  int count, bool close = true);
+
+	//! Fills the interior of a polygon defined by the coordinates in ptsArr
+	//! count is the number of points that must be drawn
+	//! If close is true then it will connect the start and end coordinate
+	bool			FillPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned  int count);
+
+	//! Fills the interior of a polygon defined by the coordinates in ptsArr
+	//! count is the number of points that must be drawn
+	//! If close is true then it will connect the start and end coordinate
+	bool			FillPolygon(const std::vector<POINT>& ptsArr, unsigned  int count);
+
+	//! Draws a rectangle defined by a RECT2 struct
+	bool			DrawRect(RECT2 rect, double strokeWidth = 1);
+	//! Draws a rectangle defined by two coordinates: topleft and rightbottom
+	bool			DrawRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, double strokeWidth = 1.0);
+	//! Draws a rectangle defined by a RECT struct
+	bool			DrawRect(RECT rect);
+	//! Draws a rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
+	bool			DrawRect(int left, int top, int right, int bottom);
+
+	//! Fills the interior of a rectangle defined by a RECT2 struct
+	bool			FillRect(RECT2 rect);
+	//! Fills the interior of a rectangle defined by two coordinates: topleft and rightbottom
+	bool			FillRect(DOUBLE2 topLeft, DOUBLE2 rightbottom);
+	//! Fills the interior of a rectangle defined by a RECT struct
+	bool			FillRect(RECT rect);
+	//! Fills the interior of a rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
+	bool			FillRect(int left, int top, int right, int bottom);
+
+	//! Draws a rounded rectangle defined by a RECT2 struct,
+	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	bool			DrawRoundedRect(RECT2 rect, int radiusX, int radiusY, double strokeWidth = 1.0);
+
+	//! Draws a rounded rectangle defined by two coordinates: topleft and rightbottom,
+	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	bool			DrawRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY, double strokeWidth = 1.0);
+
+	//! Draws a rounded rectangle defined by a RECT struct
+	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	bool			DrawRoundedRect(RECT rect, int radiusX, int radiusY);
+
+	//! Draws a rounded rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
+	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	bool			DrawRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY);
+
+	//! Fills the interior of a rounded rectangle defined by a RECT2 struct,
+	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	bool			FillRoundedRect(RECT2 rect, int radiusX, int radiusY);
+
+	//! Fills the interior of a rounded rectangle defined by two coordinates: topleft and rightbottom,
+	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	bool			FillRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY);
+
+	//! Fills the interior of a rounded rectangle defined by a RECT struct
+	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	bool			FillRoundedRect(RECT rect, int radiusX, int radiusY);
+
+	//! Fills the interior of a rounded rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
+	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	bool			FillRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY);
+
+	//! Draws the outline of the specified ellipse using the specified position and radius
+	//! strokeWidth: The width of the stroke, in device-independent pixels. The value must be greater than or equal to 0.0f. 
+	//! If this parameter isn't specified, it defaults to 1.0f. The stroke is centered on the line.
+	bool			DrawEllipse(DOUBLE2 centerPt, double radiusX, double radiusY, double strokeWidth = 1.0);
+
+	//! Draws the outline of the specified ellipse using the specified position and radius
+	bool			DrawEllipse(int centerX, int centerY, int radiusX, int radiusY);
+
+	//! Paints the interior of the specified ellipse using the specified position and radius
+	bool			FillEllipse(DOUBLE2 centerPt, double radiusX, double radiusY);
+
+	//! Paints the interior of the specified ellipse using the specified position and radius
+	bool			FillEllipse(int centerX, int centerY, int radiusX, int radiusY);
+
+	// Commented to prevent that this would compile: DrawString("blah", 10, 10);
+	//bool			DrawString(std::string text, RECT boundingRect);
+	//bool			DrawString(std::string text, RECT2 boundingRect);
+	//bool			DrawString(std::string text, DOUBLE2 topLeft, double right = -1, double bottom = -1);
+	//bool			DrawString(std::string text, int xPos, int yPos, int right = -1, int bottom = -1);
+
+	//! Draws text in the specified rectangle 
+	bool			DrawString(const String& textRef, RECT boundingRect);
+
+	//! Draws text in the specified rectangle 
+	bool			DrawString(const String& textRef, RECT2 boundingRect);
+
+	//! Draws text in the specified rectangle the topleft corner of the rectange is defined by the param topLeft
+	//! The params right and bottom are optional, if left out they are set to the max value of an float type 
+	bool			DrawString(const String& textRef, DOUBLE2 topLeft, double right = -1, double bottom = -1);
+
+	//! Draws text in the specified rectangle; the topleft corner of the rectange is defined by the params xPos and yPos
+	//! The params right and bottom are optional, if left out they are set to the max value of an float type 
+	bool			DrawString(const String& textRef, int xPos, int yPos, int right = -1, int bottom = -1);
+
+	//! Draws an image on the position
+	//! srcRect: defines the cliprect on the source image. Allows to draw a part of an image
+	bool			DrawBitmap(Bitmap* imagePtr, DOUBLE2 position, RECT2 srcRect);
+
+	//! Draws an image on the position
+	bool			DrawBitmap(Bitmap* imagePtr, DOUBLE2 position);
+
+	//! Draws an image on the position defined by x and y
+	//! srcRect: defines the cliprect on the source image. Allows to draw a part of an image
+	bool			DrawBitmap(Bitmap* imagePtr, int x, int y, RECT srcRect);
+
+	//! Draws an image on the position defined by x and y
+	bool			DrawBitmap(Bitmap* imagePtr, int x, int y);
+
+	//! Draws an image on position x:0, and y:0. Assuming that matrices are used to define the position.
+	//! srcRect: defines the cliprect on the source image. Allows to draw a part of an image
+	bool			DrawBitmap(Bitmap* imagePtr, RECT srcRect);
+
+	//! Draws an image on position x:0, and y:0. Assuming that matrices are used to define the position.
+	bool			DrawBitmap(Bitmap* imagePtr);
+
+	//! Sets the matrix that defines world space
+	void			SetWorldMatrix(const MATRIX3X2& mat);
+
+	//! Returns the matrix that defines world space
+	MATRIX3X2		GetWorldMatrix();
+
+	//! Sets the matrix that defines view space
+	void			SetViewMatrix(const MATRIX3X2& mat);
+
+	//! Returns the matrix that defines view space
+	MATRIX3X2		GetViewMatrix();
+
+
+	void set_bitmap_interpolation_mode(bitmap_interpolation_mode mode);
+
+	//! Bitmaps are drawn using linear interpolation: slow, results in blurred pixels
+	void			SetBitmapInterpolationModeLinear();
+
+	//! Bitmaps are drawn using nearest neighbour interpolation: fast,  results in big pixels
+	void			SetBitmapInterpolationModeNearestNeighbor();
+
+	//! Set the font that is used to render text
+	void			set_font(Font* fontPtr);
+
+	//! Returns the font that is used to render text
+	Font*			get_font();
+
+	//! Set the built-in font asthe one to be used to render text 
+	void			set_default_font();
+
+	//! Sets the color of the brush that is used to draw and fill
+	//! Example: game_engine::instance()->SetColor(COLOR(255,127,64));
+	void			set_color(COLOR colorVal);
+
+	//! Returns the color of the brush used to draw and fill
+	//! Example: COLOR c = game_engine::instance()->GetColor();
+	COLOR			get_color();
+
+	// Accessor Methods
+	HINSTANCE				get_instance() const;
+	HWND					get_window() const;
+	String					get_title() const;
+	WORD					get_icon() const;
+	WORD					get_small_icon() const;
+	ImVec2					get_viewport_size(int id = 0) const;
+	ImVec2					get_window_size() const;
+	int						get_width() const;
+	int						get_height() const;
+	bool					get_sleep() const;
+
+	ID3D11Device* GetD3DDevice() const;
+	ID3D11DeviceContext* GetD3DDeviceContext() const;
+	ID3D11RenderTargetView* GetD3DBackBufferView() const;
+
+	ID2D1Factory*			GetD2DFactory() const;
+	IWICImagingFactory*		GetWICImagingFactory() const;
+	ID2D1RenderTarget*		GetHwndRenderTarget() const;
+	IDWriteFactory*			GetDWriteFactory() const;
+
+	// Returns a POINT containing the window coordinates of the mouse offset in the viewport
+	// Usage example:
+	// POINT mousePos = game_engine::instance()->GetMousePosition();
+	XMFLOAT2 get_mouse_pos_in_viewport() const;
+
+	//! returns pointer to the Audio object
+	AudioSystem *				GetXAudio() const;
+	//! returns pointer to the box2D world object
+	b2World*	GetBox2DWorld(){ return m_Box2DWorldPtr; }
+
+	void set_icon(WORD wIcon);
+	void set_small_icon(WORD wSmallIcon);
+	void apply_settings(GameSettings &gameSettings);
+
+	void set_vsync(bool vsync);
+	bool get_vsync();
+
+	// The overlay manager manages all active IMGUI debug overlays
+	std::shared_ptr<OverlayManager>const& get_overlay_manager() const
+	{
+		return m_OverlayManager;
+	}
+
+	static enki::TaskScheduler s_TaskScheduler;
+	static std::thread::id s_MainThread;
+
+	// Enables/disables physics simulation stepping.
+	void set_physics_step(bool bEnabled);
+
+	bool is_viewport_focused() const { return m_ViewportFocused; }
+
+	ID2D1RenderTarget* get_2d_draw_ctx() const { return m_RenderTargetPtr; }
+
+private:
+	void set_game(AbstractGame* gamePtr);
+	int  run(HINSTANCE hInstance, int iCmdShow);
+	bool register_wnd_class();
+	bool open_window(int iCmdShow);
+
+	void resize_swapchain(uint32_t width, uint32_t height);
+
+	LRESULT			handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
+
+	void set_sleep(bool bSleep);
+	void set_instance(HINSTANCE hInstance);
+	void set_window(HWND hWindow);
+	void set_title(const String& titleRef);
+
+	void set_width(int iWidth);
+	void set_height(int iHeight);
+	void enable_vsync(bool bEnable = true);
+
+	void console_create();
+	void enable_aa(bool isEnabled);
+	bool is_paint_allowed() const;
+
+	// Direct2D methods
+	void Initialize();
+	void D2DBeginPaint();
+	bool D2DEndPaint();
+	void CreateDeviceIndependentResources();
+	void CreateD2DFactory();
+	void CreateWICFactory();
+	void CreateWriteFactory();
+	void CreateDeviceResources();
+	void DiscardDeviceResources();
+	void ExecuteDirect2DPaint();
+	void GUITick(double deltaTime);
+	void GUIPaint();
+	void GUIConsumeEvents();
+
+	// Trigger Contacts are stored as pairs in a std::vector. 
+	// Iterates the vector and calls the ContactListeners
+	// This for begin and endcontacts
+	void CallListeners();
+
+	void build_ui();
+
+
+	private:
+	// Member Variables
+	HINSTANCE           m_hInstance;
+	HWND                m_hWindow;
+	String              m_Title;
+	WORD                m_wIcon, m_wSmallIcon;
+	int                 m_iWidth, m_iHeight;
+	bool                m_bSleep;
+	HANDLE				m_hKeybThread;
+	DWORD				m_dKeybThreadID;
+	AbstractGame*		m_GamePtr;
+	HANDLE				m_ConsoleHandle;
+
+	// Draw assistance variables
+	bool				m_bPaintingAllowed;
+	bool				m_bVSync;
+
+	// DirectX resources
+	bool							m_bInitialized;
+	IDXGIFactory* m_DXGIFactoryPtr;
+	ID3D11Device* m_D3DDevicePtr;
+	ID3D11DeviceContext* m_D3DDeviceContextPtr;
+	IDXGISwapChain* m_DXGISwapchainPtr;
+	ID3D11RenderTargetView* m_D3DBackBufferView;
+	ID3D11ShaderResourceView* m_D3DBackBufferSRV;
+	ID3DUserDefinedAnnotation* m_D3DUserDefinedAnnotation;
+
+	bool m_ViewportFocused;
+	bool _recreate_game_texture;
+	bool _recreate_swapchain;
+
+	// Game viewport resources
+	ID2D1Factory*					m_D2DFactoryPtr;
+	IWICImagingFactory*				m_WICFactoryPtr;
+	ID2D1RenderTarget*			m_RenderTargetPtr;
+	IDWriteFactory*					m_DWriteFactoryPtr;
+	PrecisionTimer*						m_GameTickTimerPtr;
+
+	ID2D1SolidColorBrush*			m_ColorBrushPtr;
+	DXGI_SAMPLE_DESC				m_AADesc;
+	D2D1_ANTIALIAS_MODE				m_D2DAAMode;
+	MATRIX3X2						m_MatWorld, m_MatView;
+
+	bitmap_interpolation_mode		m_bitmap_interpolation_mode;
+	D2D1_BITMAP_INTERPOLATION_MODE	m_hw_bitmap_interpolation_mode;	// used when painting scaled bitmaps:
+
+	Font*							m_DefaultFontPtr;			// Default Font --> deleted in destructor
+	Font*							m_UserFontPtr;				// the pointer the user defines using SetFont() --> NOT deleted in destructor
+
+	// GUI array
+	std::vector<GUIBase*> m_GUIPtrArr;
+
+	// Input manager
+	InputManager* m_InputPtr;
+
+	// Box2D
+	b2World *m_Box2DWorldPtr = nullptr;
+    b2ContactFilter* m_Box2DContactFilter = nullptr;
+	double m_Box2DTime = 0;
+	Box2DDebugRenderer m_Box2DDebugRenderer;
+	bool m_DebugRendering;
+	std::vector<ContactData> m_BeginContactDataArr, m_EndContactDataArr;
+	std::vector<ImpulseData> m_ImpulseDataArr;
+	double m_PhysicsTimeStep = 1 / 60.0f;
+	DOUBLE2 m_Gravity; 
+	unsigned long m_FrameCounter = 0;
+
+	AudioSystem *m_XaudioPtr = nullptr;
+
+	MetricsOverlay* m_MetricsOverlay;
+	std::shared_ptr<OverlayManager> m_OverlayManager;
+	GameSettings m_GameSettings;
+
+	bool m_PhysicsStepEnabled;
+	bool m_bQuit;
+};
+
+// Helper class for scoped gpu debugging
+#ifdef _DEBUG
+class scoped_gpu_event final
+{
+public:
+	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::wstring name)
+		: _name(name)
+		, _annotation(annotation)
+	{
+		annotation->BeginEvent(name.c_str());
+	}
+	~scoped_gpu_event()
+	{
+		_annotation->EndEvent();
+	}
+private:
+	ID3DUserDefinedAnnotation* _annotation;
+	std::wstring _name;
+};
+
+#define GPU_SCOPED_EVENT(ctx, name) scoped_gpu_event perf##__LINE__##Event = scoped_gpu_event(ctx, name)
+#define GPU_MARKER(ctx, name) ctx->SetMarker(name);
+#else
+#define GPU_SCOPED_EVENT(ctx, name) 
+#define GPU_MARKER(ctx, name) 
+#endif
+
+

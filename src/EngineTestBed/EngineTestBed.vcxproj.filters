@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="HelloWorld.cpp" />
+    <ClCompile Include="Tests/RttiTest.tests.cpp" />
+    <ClCompile Include="Test3D.cpp" />
+    <ClCompile Include="Components.cpp" />
+    <ClCompile Include="Overlays.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="HelloWorld.h" />
+    <ClInclude Include="Test3D.h" />
+    <ClInclude Include="Components.h" />
+    <ClInclude Include="Overlays.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Tests">
+      <UniqueIdentifier>{2da2495c-3730-494d-9899-cb470c2afe25}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

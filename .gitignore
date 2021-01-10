@@ -11,5 +11,11 @@ ipch/
 *.VC.db
 *.aps
 *.vcxproj.user
+build/
+generated/
+
+*.csproj
+*.csproj.user
+*.sln
 
 
