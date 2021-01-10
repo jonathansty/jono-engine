@@ -50,7 +50,7 @@ public:
         tm      endTime;
         int     lastLevel = 0;
     };
-    using KeyMap = std::map<std::string, UINT32>;
+    using KeyMap = std::unordered_map<std::string, int>;
 
     //! Reads the level file
     void ReadGameInit(const std::string& filePath);

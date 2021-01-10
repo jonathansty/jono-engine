@@ -93,11 +93,11 @@ void ElectronicJonaJoy::tick(double deltaTime)
 	{
 	case ElectronicJonaJoy::GameState::RUNNING:
 		m_Game->tick(deltaTime);
-		if (game_engine::instance()->IsKeyboardKeyPressed(VK_F3))
+		if (game_engine::instance()->is_key_pressed(VK_F3))
 		{
 			LoadNextLevel(m_Game.get());
 		}
-		if (game_engine::instance()->IsKeyboardKeyPressed(VK_F4))
+		if (game_engine::instance()->is_key_pressed(VK_F4))
 		{
 			ReloadCurrentLevel();
 		}
@@ -128,7 +128,7 @@ void ElectronicJonaJoy::tick(double deltaTime)
 	}
 
 	//Create pause menu on escape press.
-	if (game_engine::instance()->IsKeyboardKeyPressed(VK_ESCAPE))
+	if (game_engine::instance()->is_key_pressed(VK_ESCAPE))
 	{
 		switch (m_GameState)
 		{

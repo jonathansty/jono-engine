@@ -42,9 +42,9 @@ void NpcHinter::PaintDebug()
 {
     MATRIX3X2 matPosition;
     matPosition.SetAsTranslate(m_Position);
-    game_engine::instance()->SetWorldMatrix(matPosition);
+    game_engine::instance()->set_world_matrix(matPosition);
     game_engine::instance()->DrawEllipse(DOUBLE2(), TALKRADIUS, TALKRADIUS);
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void NpcHinter::Paint()
 {
@@ -74,16 +74,16 @@ void NpcHinter::Paint()
         matMirror.SetAsScale(1, 1);
     }
     
-    game_engine::instance()->SetWorldMatrix(matPivot * matMirror*matTranslate);
+    game_engine::instance()->set_world_matrix(matPivot * matMirror*matTranslate);
     game_engine::instance()->DrawBitmap(m_BmpBodyPtr, boundingBox);
-    game_engine::instance()->SetWorldMatrix(matNpcHitBoxTransform);
+    game_engine::instance()->set_world_matrix(matNpcHitBoxTransform);
     Font* fntTmpPtr = new Font(String(""), 16);
     fntTmpPtr->SetAlignHCenter();
     game_engine::instance()->set_font(fntTmpPtr);
     matPivot.SetAsTranslate(DOUBLE2(-(m_TipText.Length() * 16) / 2, -50));
 
     matTextTranslate.SetAsTranslate(DOUBLE2(0, 0));
-    game_engine::instance()->SetWorldMatrix(matPivot* matTextTranslate*matNpcHitBoxTransform);
+    game_engine::instance()->set_world_matrix(matPivot* matTextTranslate*matNpcHitBoxTransform);
     if (m_IsArmed)
     {
         
@@ -91,7 +91,7 @@ void NpcHinter::Paint()
         game_engine::instance()->DrawString(m_TipText, RECT2(0, 0, m_TipText.Length() * 16, 50));
     }
    
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     game_engine::instance()->set_color(COLOR(0, 0, 0, 255));
     game_engine::instance()->set_default_font();
     delete fntTmpPtr;

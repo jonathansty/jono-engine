@@ -89,9 +89,9 @@ void Arrow::Paint()
 {
     MATRIX3X2 matWorldTransform;
     matWorldTransform = { DOUBLE2(1, 0), DOUBLE2(0, 1), m_Position - DOUBLE2(m_BmpPtr->GetWidth()/2,m_BmpPtr->GetHeight()/2) };
-    game_engine::instance()->SetWorldMatrix(matWorldTransform);
+    game_engine::instance()->set_world_matrix(matWorldTransform);
     game_engine::instance()->DrawBitmap(m_BmpPtr);
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Arrow::Tick(double deltaTime)
 {

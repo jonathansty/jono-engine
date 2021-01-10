@@ -63,7 +63,7 @@ MATRIX3X2 Camera::GetViewMatrix(){
     MATRIX3X2 matTranslate, matCenter, matRotate,matScale;
     MATRIX3X2 matWorldTransform;
     matCenter.SetAsTranslate(-game_engine::instance()->get_width() / 2, -game_engine::instance()->get_height() / 2);
-    game_engine::instance()->SetBitmapInterpolationModeLinear();
+    game_engine::instance()->set_bitmap_interpolation_mode(bitmap_interpolation_mode::linear);
     matTranslate.SetAsTranslate(m_CameraPosition);
     matRotate.SetAsRotate(m_Angle);
     matScale.SetAsScale(m_Scale);
@@ -106,7 +106,7 @@ void Camera::Tick(double dTime)
     m_ActPtr->SetPosition(positionBeforeShaking + DOUBLE2(offsetx, offsety));
     m_CameraPosition = m_ActPtr->GetPosition();
     m_CameraPositionWithoutShaking = positionBeforeShaking;
-    if (game_engine::instance()->IsKeyboardKeyPressed(VK_F7))
+    if (game_engine::instance()->is_key_pressed(VK_F7))
     {
         switch (m_CameraControlState)
         {
@@ -222,19 +222,19 @@ void Camera::ManualMode(double deltaTime, DOUBLE2 &oldPosition)
 {
     DOUBLE2 actorPosition = m_ActPtr->GetPosition();
     DOUBLE2 newPosition = DOUBLE2();
-    if (game_engine::instance()->IsKeyboardKeyDown('I'))newPosition += DOUBLE2(0, -m_Speed * deltaTime);
-    if (game_engine::instance()->IsKeyboardKeyDown('J'))newPosition += DOUBLE2(-m_Speed * deltaTime, 0);
-    if (game_engine::instance()->IsKeyboardKeyDown('K'))newPosition += DOUBLE2(0, m_Speed * deltaTime);
-    if (game_engine::instance()->IsKeyboardKeyDown('L'))newPosition += DOUBLE2(m_Speed * deltaTime, 0);
+    if (game_engine::instance()->is_key_down('I'))newPosition += DOUBLE2(0, -m_Speed * deltaTime);
+    if (game_engine::instance()->is_key_down('J'))newPosition += DOUBLE2(-m_Speed * deltaTime, 0);
+    if (game_engine::instance()->is_key_down('K'))newPosition += DOUBLE2(0, m_Speed * deltaTime);
+    if (game_engine::instance()->is_key_down('L'))newPosition += DOUBLE2(m_Speed * deltaTime, 0);
     oldPosition = actorPosition + newPosition;
 
-    if (game_engine::instance()->IsKeyboardKeyDown('2'))
+    if (game_engine::instance()->is_key_down('2'))
     {
         m_Angle += 0.01;
         m_ActPtr->SetAngle(m_Angle);
 
     }
-    if (game_engine::instance()->IsKeyboardKeyDown('1'))
+    if (game_engine::instance()->is_key_down('1'))
     {
         m_Angle -= 0.01;
         m_ActPtr->SetAngle(m_Angle);
@@ -417,7 +417,7 @@ void Camera::SetDefaultCameraMode(Camera::controlState controlState)
 //! Updates the screen shaking modes for use with buttons certain actions etc
 void Camera::HandleScreenShaking(double deltaTime)
 {
-    if (game_engine::instance()->IsKeyboardKeyDown('X') && (m_AvatarPtr->GetMoveState() == Avatar::moveState::ATTACK) && m_ShakeMode != Shakemode::EPICEFFECT)
+    if (game_engine::instance()->is_key_down('X') && (m_AvatarPtr->GetMoveState() == Avatar::moveState::ATTACK) && m_ShakeMode != Shakemode::EPICEFFECT)
     {
         m_ShakeMode = Shakemode::ATTACKSHAKE;
     }

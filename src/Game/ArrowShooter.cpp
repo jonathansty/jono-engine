@@ -80,11 +80,11 @@ void ArrowShooter::Paint()
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-WIDTH/2,-HEIGHT/2));
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
-    game_engine::instance()->SetWorldMatrix(matPivot * matRotate * matTranslate);
+    game_engine::instance()->set_world_matrix(matPivot * matRotate * matTranslate);
     game_engine::instance()->FillRect(0, 0, WIDTH, HEIGHT);
     game_engine::instance()->FillRect(-10, HEIGHT, 0, HEIGHT + 10);
     game_engine::instance()->FillRect(WIDTH, HEIGHT, WIDTH + 10, HEIGHT + 10);
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     for (int i = 0; i < m_AmountOfArrows; i++)
     {
         if (m_ArrowsPtrArr[i] != nullptr)

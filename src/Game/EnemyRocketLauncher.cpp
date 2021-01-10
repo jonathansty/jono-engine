@@ -120,10 +120,10 @@ void EnemyRocketLauncher::Paint()
     matWorldTransform = matPivot * matRotate * matTranslate;
     m_AnimationListPtr->Paint();
 
-    game_engine::instance()->SetWorldMatrix(matWorldTransform);
+    game_engine::instance()->set_world_matrix(matWorldTransform);
     RECT boundingBox = updateFrameDisplay(m_FrameNr);
     game_engine::instance()->DrawBitmap(m_BmpPtr, boundingBox);
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void EnemyRocketLauncher::PaintRockets()
 {

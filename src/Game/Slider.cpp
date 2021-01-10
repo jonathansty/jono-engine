@@ -54,12 +54,12 @@ void Slider::Tick(double deltaTime)
 		p.y > m_PosY &&
 		p.y < m_PosY + m_Height)
 	{
-		if (game_engine::instance()->IsMouseButtonDown(VK_LBUTTON))
+		if (game_engine::instance()->is_mouse_button_down(VK_LBUTTON))
 		{
             m_IsPressed = true;
 			m_Value = m_MinValue + (p.x - m_PosX) * (m_MaxValue - m_MinValue) / m_Width; // See Paint for how to draw this. pixels to value
 		}
-        if (game_engine::instance()->IsMouseButtonReleased(VK_LBUTTON))
+        if (game_engine::instance()->is_mouse_button_released(VK_LBUTTON))
         {
             m_IsPressed = false;
         }

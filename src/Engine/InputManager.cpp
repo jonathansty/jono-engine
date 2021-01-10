@@ -89,7 +89,7 @@ void InputManager::Update()
 	m_MouseMovement.y = m_CurrMousePosition.y - m_OldMousePosition.y;
 }
 
-bool InputManager::IsKeyboardKeyDown(int key, bool previousFrame) const
+bool InputManager::is_key_down(int key, bool previousFrame) const
 {
 	if (!m_pCurrKeyboardState || !m_pOldKeyboardState)
 		return false;
@@ -100,7 +100,7 @@ bool InputManager::IsKeyboardKeyDown(int key, bool previousFrame) const
 	return false;
 }
 
-bool InputManager::IsMouseButtonDown(int button, bool previousFrame) const
+bool InputManager::is_mouse_button_down(int button, bool previousFrame) const
 {
 	if (button > 0x00 && button <= 0x06)
 		return IsMouseButtonDown_unsafe(button, previousFrame);
@@ -108,7 +108,7 @@ bool InputManager::IsMouseButtonDown(int button, bool previousFrame) const
 	return false;
 }
 
-bool InputManager::IsKeyboardKeyPressed(int key, bool previousFrame) const
+bool InputManager::is_key_pressed(int key, bool previousFrame) const
 {
 	if (!m_pCurrKeyboardState || !m_pOldKeyboardState)
 		return false;
@@ -153,7 +153,7 @@ bool InputManager::IsKeyboardKeyReleased(int key, bool previousFrame) const
 	return false;
 }
 
-bool InputManager::IsMouseButtonReleased(int button, bool previousFrame) const
+bool InputManager::is_mouse_button_released(int button, bool previousFrame) const
 {
 	if (button > 0x00 && button <= 0x06)
 	{

@@ -30,17 +30,17 @@ public:
 	// Not intended to be used by students
 	void CursorVisible(bool visible) { ShowCursor(visible); }
 	// Not intended to be used by students
-	bool IsKeyboardKeyDown(int key, bool previousFrame = false) const;
+	bool is_key_down(int key, bool previousFrame = false) const;
 	// Not intended to be used by students
-	bool IsMouseButtonDown(int button, bool previousFrame = false) const;
+	bool is_mouse_button_down(int button, bool previousFrame = false) const;
 	// Not intended to be used by students
-	bool IsKeyboardKeyPressed(int key, bool previousFrame = false) const;
+	bool is_key_pressed(int key, bool previousFrame = false) const;
 	// Not intended to be used by students
 	bool IsMouseButtonPressed(int button, bool previousFrame = false) const;
 	// Not intended to be used by students
 	bool IsKeyboardKeyReleased(int key, bool previousFrame = false) const;
 	// Not intended to be used by students
-	bool IsMouseButtonReleased(int button, bool previousFrame = false) const;
+	bool is_mouse_button_released(int button, bool previousFrame = false) const;
 
 
 private:

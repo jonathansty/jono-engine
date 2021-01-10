@@ -664,8 +664,7 @@ void DataManager::LoadGameMusic(const std::string& filePath)
 
             if (attr)
             {
-				String filePath = String(attr->Value());
-				sound_manager::instance()->LoadMusic(filePath);
+				sound_manager::instance()->LoadMusic(String(attr->Value()));
 
             }
         }
@@ -837,12 +836,12 @@ DataManager::KeyMap DataManager::LoadAvatarKeybinds(const std::string& filePath)
         for (auto action = avatar_controls->FirstChildElement("action"); action; action = action->NextSiblingElement("action"))
         {
             std::string action_name = action->FindAttribute("name")->Value();
-            UINT32 scan_code = action->FindAttribute("scan_code")->IntValue();
-            tmpKeyBindsArr[action_name] = scan_code;
+            int scan_code = action->FindAttribute("scan_code")->IntValue();
+            tmpKeyBindsArr.insert_or_assign(action_name, scan_code);
         }
 	}
-	m_KeyBindsArr = tmpKeyBindsArr;
-	return tmpKeyBindsArr;
+	m_KeyBindsArr = std::move(tmpKeyBindsArr);
+	return m_KeyBindsArr;
 }
 //! Sets the keysbinds for the avatar
 void DataManager::SetKeyBinds(KeyMap& keyBinds, std::string filePath)
@@ -902,9 +901,9 @@ LevelList* DataManager::LoadLevels(const std::string& filePath)
 
             if (attr)
             {
-				std::string filePath = attr->Value();
-				tmpLevelList->Add(filePath);
-				game_engine::instance()->ConsolePrintString(String("Added ") + String(filePath.c_str()) + String(" to the levelList."));
+				std::string finalFilepath = attr->Value();
+				tmpLevelList->Add(finalFilepath);
+				game_engine::instance()->ConsolePrintString(String("Added ") + String(finalFilepath.c_str()) + String(" to the levelList."));
 
             }
 

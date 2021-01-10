@@ -41,6 +41,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine,
 		std::cout << "Max FPS set to " << max_fps << std::endl;
 	}
 
-
-	return game_engine::run_game(hInstance,iCmdShow, new ElectronicJonaJoy());
+	return game_engine::run_game(hInstance,cmd,iCmdShow, new ElectronicJonaJoy());
 }

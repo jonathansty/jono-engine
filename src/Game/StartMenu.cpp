@@ -136,7 +136,7 @@ void StartMenu::Tick(double deltaTime)
             {
                 for (int j = 0; j < 250 + 1; j++)
                 {
-                    if (game_engine::instance()->IsKeyboardKeyPressed(j))
+                    if (game_engine::instance()->is_key_pressed(j))
                     {
                         if (j >= VK_F1 && j <= VK_F12)
                         {
@@ -164,7 +164,7 @@ void StartMenu::Tick(double deltaTime)
             EnableButtons();
             
         }
-        if (game_engine::instance()->IsKeyboardKeyPressed(VK_DOWN))
+        if (game_engine::instance()->is_key_pressed(VK_DOWN))
         {
             if (m_HighScoreOffsetCounter < m_SessionStatsArr.size() - MAXELEMENTSONSCREEN && m_HighScoreOffsetCounter >= 0)
             {
@@ -172,7 +172,7 @@ void StartMenu::Tick(double deltaTime)
             }
             
         }
-        if (game_engine::instance()->IsKeyboardKeyPressed(VK_UP))
+        if (game_engine::instance()->is_key_pressed(VK_UP))
         {
             if (m_HighScoreOffsetCounter > 0)
             {
@@ -255,15 +255,15 @@ void StartMenu::Paint()
             game_engine::instance()->set_font(m_ComicSansPtr.get());
             MATRIX3X2 matTranslateControl;
             matTranslateControl.SetAsTranslate(100, CONTROLLISTYPOS - (float)KEYLISTFNTSIZE);
-            game_engine::instance()->SetWorldMatrix(matTranslateControl);
+            game_engine::instance()->set_world_matrix(matTranslateControl);
             game_engine::instance()->DrawString(String("Controls: "), DOUBLE2());
-            game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+            game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
             int i = 0;
             for(auto& keybind : m_KeybindsArr)
             {
                 MATRIX3X2 matTranslate;
                 matTranslate.SetAsTranslate(DOUBLE2(150, CONTROLLISTYPOS + KEYLISTFNTSIZE + i*(float)KEYLISTFNTSIZE));
-                game_engine::instance()->SetWorldMatrix(matTranslate);
+                game_engine::instance()->set_world_matrix(matTranslate);
                 String KeyBind = String(keybind.second);
                 switch (keybind.second)
                 {
@@ -278,7 +278,7 @@ void StartMenu::Paint()
                     break;
                 }
                 game_engine::instance()->DrawString(String(keybind.first.c_str()) + String(": ") + KeyBind, DOUBLE2());
-                game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+                game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 
                 ++i;
             }

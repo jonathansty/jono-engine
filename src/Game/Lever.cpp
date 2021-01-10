@@ -45,7 +45,7 @@ void Lever::Paint()
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-(m_BmpPtr->GetWidth()/AMOUNTOFFRAMES) / 2, -m_BmpPtr->GetHeight() / 2));
-    game_engine::instance()->SetWorldMatrix(matPivot * matTranslate);
+    game_engine::instance()->set_world_matrix(matPivot * matTranslate);
     RECT boundingBox;
     boundingBox.left = 0;
     boundingBox.top = 0;
@@ -58,7 +58,7 @@ void Lever::Paint()
     boundingBox.right = boundingBox.left + (LONG)m_ClipWidth;
     boundingBox.bottom = m_BmpPtr->GetHeight();
     game_engine::instance()->DrawBitmap(m_BmpPtr,boundingBox);
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Lever::Tick(double deltaTime)
 {

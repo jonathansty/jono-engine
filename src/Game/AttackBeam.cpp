@@ -64,10 +64,10 @@ void AttackBeam::Paint()
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(-m_BmpGroundPtr->GetWidth() / 2, -m_BmpGroundPtr->GetHeight());
-    game_engine::instance()->SetWorldMatrix(matPivot * matTranslate);
+    game_engine::instance()->set_world_matrix(matPivot * matTranslate);
     game_engine::instance()->DrawBitmap(m_BmpGroundPtr);
    
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void AttackBeam::Tick(double deltaTime)
 {

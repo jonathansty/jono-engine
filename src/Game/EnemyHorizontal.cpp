@@ -100,9 +100,9 @@ void EnemyHorizontal::Paint()
     MATRIX3X2 matTranslate, matCenter;
     matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
     matCenter.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
-    game_engine::instance()->SetWorldMatrix(matCenter * matTranslate);
+    game_engine::instance()->set_world_matrix(matCenter * matTranslate);
     game_engine::instance()->DrawBitmap(m_BmpPtr);
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 PhysicsActor* EnemyHorizontal::GetActor()
 {

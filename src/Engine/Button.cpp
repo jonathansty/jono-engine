@@ -144,26 +144,26 @@ void Button::Tick(double)
 		return;
 	}
 
-	MATRIX3X2 matInverse = (game_engine::instance()->GetWorldMatrix() * game_engine::instance()->GetViewMatrix()).Inverse();
+	MATRIX3X2 matInverse = (game_engine::instance()->get_world_matrix() * game_engine::instance()->get_view_matrix()).Inverse();
 
 	DOUBLE2 mouseScreenSpace(game_engine::instance()->get_mouse_pos_in_viewport().x, game_engine::instance()->get_mouse_pos_in_viewport().y);
 	DOUBLE2 mouseViewSpace = matInverse.TransformPoint(mouseScreenSpace);
 
 	//RMB in button rect armes the button and paint will draw the pressed button
-	if (game_engine::instance()->IsMouseButtonDown(VK_LBUTTON) && PointInRect(m_BoundingRect, mouseViewSpace))
+	if (game_engine::instance()->is_mouse_button_down(VK_LBUTTON) && PointInRect(m_BoundingRect, mouseViewSpace))
 	{
 		m_bArmed = true;
 	}
 	else
 	{
 		//if mouse button is released while in rect, then pressed is true
-		if (m_bArmed && !game_engine::instance()->IsMouseButtonDown(VK_LBUTTON) && PointInRect(m_BoundingRect, mouseViewSpace))
+		if (m_bArmed && !game_engine::instance()->is_mouse_button_down(VK_LBUTTON) && PointInRect(m_BoundingRect, mouseViewSpace))
 		{
 			m_bTriggered = true;
 			m_bArmed = false;
 		}
 		//while armed the RMB is released or outside the rect, then armed is false
-		else if (m_bArmed && (!game_engine::instance()->IsMouseButtonDown(VK_LBUTTON) || !PointInRect(m_BoundingRect, mouseViewSpace)))
+		else if (m_bArmed && (!game_engine::instance()->is_mouse_button_down(VK_LBUTTON) || !PointInRect(m_BoundingRect, mouseViewSpace)))
 		{
 			m_bArmed = false;
 		}

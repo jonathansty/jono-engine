@@ -199,7 +199,7 @@ void Game::UpdateObjects(double deltaTime)
         }
         if (tmpHitEnemy->GetActor()->GetName() == String("EnemyHorizontal"))
         {
-            EnemyHorizontal* tmpEnemyHorizontal = dynamic_cast<EnemyHorizontal*>(tmpHitEnemy);
+            EnemyHorizontal* tmpEnemyHorizontal = reinterpret_cast<EnemyHorizontal*>(tmpHitEnemy);
             m_AnimationListPtr->Add(new EntityDestroy(tmpHitEnemy->GetPosition()));
             if (tmpEnemyHorizontal->GetLifes() <= 0)
             {
@@ -248,18 +248,18 @@ void Game::UpdateKeyChecks(double deltaTime)
     // Process input for when the game is running
     if (m_GameState == GameState::Running)
     {
-        if (engine->IsKeyboardKeyPressed('R') && !(engine->IsKeyboardKeyDown(VK_CONTROL)))
+        if (engine->is_key_pressed('R') && !(engine->is_key_down(VK_CONTROL)))
         {
             Restart();
         }
-        if (engine->IsKeyboardKeyPressed('X') && m_AvatarPtr->GetMoveState() == Avatar::moveState::ATTACK)
+        if (engine->is_key_pressed('X') && m_AvatarPtr->GetMoveState() == Avatar::moveState::ATTACK)
         {
             AttackBeam* tmpBeam = new AttackBeam(m_AvatarPtr->GetPosition());
             tmpBeam->SetLevel(m_LevelPtr);
             tmpBeam->SetGroundBitmap(String("Resources/Animations/AttackBeamGround.png"));
             m_AttackBeamListPtr->Add(tmpBeam);
         }
-        if (engine->IsKeyboardKeyPressed('L') && engine->IsKeyboardKeyPressed('K'))
+        if (engine->is_key_pressed('L') && engine->is_key_pressed('K'))
         {
             Camera::Shakemode tmpShakeMode = m_CameraPtr->GetCameraShakeMode();
             switch (tmpShakeMode)
@@ -278,7 +278,7 @@ void Game::UpdateKeyChecks(double deltaTime)
             }
 
         }
-        if (engine->IsKeyboardKeyPressed(VK_F5))
+        if (engine->is_key_pressed(VK_F5))
         {
             DOUBLE2 avatarPosition = m_AvatarPtr->GetPosition();
             DOUBLE2 avatarRespawnPosition = m_AvatarPtr->GetRespawnPosition();
@@ -291,19 +291,19 @@ void Game::UpdateKeyChecks(double deltaTime)
             }
             
         }
-        if (engine->IsKeyboardKeyPressed(VK_F11))
+        if (engine->is_key_pressed(VK_F11))
         {
             m_TimeMultiplier += 1;
             engine->ConsolePrintString(String("the game runs ") + String(m_TimeMultiplier) + String(" times faster."));
         }
-        if (engine->IsKeyboardKeyPressed(VK_F10))
+        if (engine->is_key_pressed(VK_F10))
         {
             m_TimeMultiplier -= 1;
             engine->ConsolePrintString(String("the game runs ") + String(m_TimeMultiplier) + String(" times slower."));
         }
     }
 
-	if (engine->IsKeyboardKeyPressed(VK_ESCAPE))
+	if (engine->is_key_pressed(VK_ESCAPE))
 	{
 		switch (m_GameState)
 		{
@@ -319,7 +319,7 @@ void Game::UpdateKeyChecks(double deltaTime)
 			break;
 		}
 	}
-	if (engine->IsKeyboardKeyPressed(VK_F6))
+	if (engine->is_key_pressed(VK_F6))
 	{
 		XMFLOAT2 mousePosition = engine->get_mouse_pos_in_viewport();
 		DOUBLE2 pos = m_CameraPtr->GetViewMatrix().Inverse().TransformPoint(DOUBLE2(mousePosition.x, mousePosition.y));
@@ -339,24 +339,24 @@ void Game::UpdateKeyChecks(double deltaTime)
 void Game::UpdateDrawMode()
 {
     auto engine = game_engine::instance();
-    if (engine->IsKeyboardKeyPressed('P'))
+    if (engine->is_key_pressed('P'))
     {
         if(m_DrawMode == DrawMode::Physics)
         {
             m_DrawMode = DrawMode::Bitmap;
-            engine->EnablePhysicsDebugRendering(false);
+            engine->enable_physics_debug_rendering(false);
             engine->ConsolePrintString(String("Draw mode is now changed to PhysicsActors and bitmaps."));
         }
         else if(m_DrawMode == (DrawMode::Physics | DrawMode::Bitmap))
         {
             m_DrawMode = DrawMode::Physics;
-            engine->EnablePhysicsDebugRendering(true);
+            engine->enable_physics_debug_rendering(true);
             engine->ConsolePrintString(String("Draw mode is now changed to Bitmaps."));
         }
         else if(m_DrawMode == DrawMode::Bitmap)
         {
             m_DrawMode = DrawMode::Physics | DrawMode::Bitmap;
-            engine->EnablePhysicsDebugRendering(true);
+            engine->enable_physics_debug_rendering(true);
             engine->ConsolePrintString(String("Draw mode is now changed to PhysicsActors only."));
         }
     }
@@ -371,9 +371,9 @@ void Game::paint()
     //TODO: Refactor these lists into an actual systems (entity system or actors)
     if (m_DrawMode & DrawMode::Bitmap)
     {
-        engine->SetViewMatrix(MATRIX3X2::CreateIdentityMatrix());
+        engine->set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
         drawBackgroundGradient(15);
-        engine->SetViewMatrix(matView);
+        engine->set_view_matrix(matView);
 
         m_CheckPointRotLightPtr->Paint();
         m_CheckPointBgPtr->Paint();
@@ -388,7 +388,7 @@ void Game::paint()
         m_CoinListPtr->Paint();
         m_LevelPtr->Paint();
         m_EnemyListPtr->PaintRockets();
-        engine->SetWorldMatrix(matView.Inverse());
+        engine->set_world_matrix(matView.Inverse());
         m_CameraPtr->Paint();
         engine->set_color(COLOR(0, 0, 0));
     }
@@ -399,9 +399,9 @@ void Game::paint()
         m_CoinListPtr->PaintDebug();
         m_EntityListPtr->PaintDebug();
         m_AvatarPtr->PaintDebug();
-        engine->SetViewMatrix(MATRIX3X2::CreateIdentityMatrix());
-        engine->SetViewMatrix(matView);
-        engine->SetWorldMatrix(matView.Inverse());
+        engine->set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
+        engine->set_view_matrix(matView);
+        engine->set_world_matrix(matView.Inverse());
     }
 
     m_HudPtr->Paint();

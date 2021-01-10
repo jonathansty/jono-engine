@@ -99,9 +99,9 @@ void EnemyShooter::Paint()
     matWorldTransform = matPivot* matScale * matRotate * matTransform;
     m_AnimationListPtr->Paint();
     
-    game_engine::instance()->SetWorldMatrix(matWorldTransform);
+    game_engine::instance()->set_world_matrix(matWorldTransform);
     game_engine::instance()->DrawBitmap(m_BmpEnemyBodyPtr,m_BoundingBox);
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 
     //Painting the bullet
     if (m_ActBulletPtr != nullptr)
@@ -109,9 +109,9 @@ void EnemyShooter::Paint()
         matTransform.SetAsTranslate(m_ActBulletPtr->GetPosition());
         matRotate.SetAsRotate(m_ActBulletPtr->GetAngle());
         matPivot.SetAsTranslate(DOUBLE2(-5, -10));
-        game_engine::instance()->SetWorldMatrix(matPivot * matRotate * matTransform);
+        game_engine::instance()->set_world_matrix(matPivot * matRotate * matTransform);
         game_engine::instance()->DrawRect(0, 0, 10, 20);
-        game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+        game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     }
     
 }

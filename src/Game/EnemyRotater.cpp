@@ -56,9 +56,9 @@ void EnemyRotater::Paint()
     matOrbitRadius.SetAsTranslate(DOUBLE2(m_Radius,0));
     matOrbitCenter.SetAsTranslate(position);
     matBitmapRotation = matRotation.Inverse();
-    game_engine::instance()->SetWorldMatrix(matCenter *matBitmapRotation * matOrbitRadius*matRotation*matOrbitCenter);
+    game_engine::instance()->set_world_matrix(matCenter *matBitmapRotation * matOrbitRadius*matRotation*matOrbitCenter);
     game_engine::instance()->DrawBitmap(m_BmpPtr);
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void EnemyRotater::Tick(double deltaTime)
 {

@@ -39,12 +39,12 @@ void HUD::Paint()
     PaintMoneyWindow(DOUBLE2(10, 10));
     PaintDeathCounterWindow(DOUBLE2(game_engine::instance()->get_width() - 100, 50));
     
-    game_engine::instance()->SetWorldMatrix(game_engine::instance()->GetViewMatrix().Inverse());
+    game_engine::instance()->set_world_matrix(game_engine::instance()->get_view_matrix().Inverse());
     game_engine::instance()->DrawString(String(m_AccuTime, 2), game_engine::instance()->get_width() / 2, 10);
     game_engine::instance()->set_default_font(); 
     
     PaintLeverInfo();
-    game_engine::instance()->SetViewMatrix(game_engine::instance()->GetViewMatrix());
+    game_engine::instance()->set_view_matrix(game_engine::instance()->get_view_matrix());
     
 }
 void HUD::Tick(double deltaTime)
@@ -118,7 +118,7 @@ void HUD::PaintMoneyWindow(DOUBLE2 position)
     matTranslate.SetAsTranslate(position);
 
     game_engine* eng = game_engine::instance();
-    eng->SetWorldMatrix(matTranslate * game_engine::instance()->GetViewMatrix().Inverse());
+    eng->set_world_matrix(matTranslate * game_engine::instance()->get_view_matrix().Inverse());
     eng->DrawBitmap(m_BmpMoneyDisplayPtr);
     eng->set_color(COLOR(255, 255, 255));
     eng->DrawString(String(amountOfGold), (int)(bitmapWidth - 30), (int)(5 ));
@@ -126,7 +126,7 @@ void HUD::PaintMoneyWindow(DOUBLE2 position)
     eng->DrawString(String(amountOfCopper), (int)(bitmapWidth - 110), (int)( 5 ));
     eng->set_color(COLOR(0, 0, 0));
     eng->set_font(m_FntPtr);
-    eng->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    eng->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 
 }
 
@@ -138,13 +138,13 @@ void HUD::PaintDeathCounterWindow(DOUBLE2 position)
     matPivot.SetAsTranslate(positionIcon);
 
     game_engine* eng = game_engine::instance();
-    eng->SetWorldMatrix(matPivot * matTranslate * game_engine::instance()->GetViewMatrix().Inverse());
+    eng->set_world_matrix(matPivot * matTranslate * game_engine::instance()->get_view_matrix().Inverse());
     eng->DrawBitmap(m_BmpDeathIconPtr);
 
     matPivot.SetAsTranslate(DOUBLE2(20 + m_BmpDeathIconPtr->GetWidth() / 2, -m_BmpDeathIconPtr->GetHeight() / 2));
-    eng->SetWorldMatrix(matPivot * matTranslate * game_engine::instance()->GetViewMatrix().Inverse());
+    eng->set_world_matrix(matPivot * matTranslate * game_engine::instance()->get_view_matrix().Inverse());
     eng->DrawString(String(m_AvatarPtr->GetDeaths()),DOUBLE2());
-    eng->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    eng->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void HUD::CreatePauseMenu()
 {
@@ -174,11 +174,11 @@ void HUD::PaintGameOverWindow(DOUBLE2 position)
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(position);
     matPivot.SetAsTranslate(DOUBLE2(-m_BmpGameOverPtr->GetWidth() / 2, -m_BmpGameOverPtr->GetHeight() / 2));
-    game_engine::instance()->SetWorldMatrix(matPivot*matTranslate * game_engine::instance()->GetViewMatrix().Inverse());
+    game_engine::instance()->set_world_matrix(matPivot*matTranslate * game_engine::instance()->get_view_matrix().Inverse());
     game_engine::instance()->set_color(COLOR(0, 0, 0, m_GameOverOpacity));
     game_engine::instance()->DrawBitmap(m_BmpGameOverPtr);
     m_IsGameOverDrawn = true;
-    game_engine::instance()->SetWorldMatrix(game_engine::instance()->GetViewMatrix().Inverse());
+    game_engine::instance()->set_world_matrix(game_engine::instance()->get_view_matrix().Inverse());
 }
 bool HUD::IsGoToStartMenu()
 {

@@ -25,7 +25,7 @@ void Box2DDebugRenderer::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, 
 	{
 		vertexsArr.push_back(DOUBLE2(vertices[i].x, vertices[i].y));
 	}
-	game_engine::instance()->SetWorldMatrix(m_MatScale);
+	game_engine::instance()->set_world_matrix(m_MatScale);
 	game_engine::instance()->set_color(COLOR((byte)color.r, (byte)color.g, (byte)color.b, m_Color.alpha));
 	game_engine::instance()->DrawPolygon(vertexsArr, vertexCount, true, 1 / PhysicsActor::SCALE);
 }
@@ -42,7 +42,7 @@ void Box2DDebugRenderer::DrawSolidPolygon(const b2Vec2* vertices, int32 vertexCo
 	{
 		vertexsArr.push_back(DOUBLE2(vertices[i].x, vertices[i].y));
 	}
-	game_engine::instance()->SetWorldMatrix(m_MatScale);
+	game_engine::instance()->set_world_matrix(m_MatScale);
 	game_engine::instance()->set_color(m_Color);
 	game_engine::instance()->FillPolygon(vertexsArr, vertexCount);
 }
@@ -52,7 +52,7 @@ void Box2DDebugRenderer::DrawCircle(const b2Vec2& center, float radius, const b2
 {
 	UNREFERENCED_PARAMETER(color);
 
-	game_engine::instance()->SetWorldMatrix(m_MatScale);
+	game_engine::instance()->set_world_matrix(m_MatScale);
 	game_engine::instance()->set_color(m_Color);
 	game_engine::instance()->DrawEllipse(DOUBLE2(center.x, center.y), radius, radius, (double)1 / PhysicsActor::SCALE);
 }
@@ -64,7 +64,7 @@ void Box2DDebugRenderer::DrawSolidCircle(const b2Vec2& center, float radius, con
 	UNREFERENCED_PARAMETER(axis);
 
 
-	game_engine::instance()->SetWorldMatrix(m_MatScale);
+	game_engine::instance()->set_world_matrix(m_MatScale);
 	game_engine::instance()->set_color(m_Color);
 	game_engine::instance()->FillEllipse(DOUBLE2(center.x, center.y), radius, radius);
 }
@@ -74,7 +74,7 @@ void Box2DDebugRenderer::DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b
 {
 	UNREFERENCED_PARAMETER(color);
 
-	game_engine::instance()->SetWorldMatrix(m_MatScale);
+	game_engine::instance()->set_world_matrix(m_MatScale);
 	game_engine::instance()->set_color(m_Color);
 	game_engine::instance()->DrawLine(DOUBLE2(p1.x, p1.y), DOUBLE2(p2.x, p2.y), (double)1 / PhysicsActor::SCALE);
 }
@@ -83,7 +83,7 @@ void Box2DDebugRenderer::DrawSegment(const b2Vec2& p1, const b2Vec2& p2, const b
 /// @param xf a transform.
 void Box2DDebugRenderer::DrawTransform(const b2Transform& xf)
 {
-	game_engine::instance()->SetWorldMatrix(m_MatScale);
+	game_engine::instance()->set_world_matrix(m_MatScale);
 	game_engine::instance()->set_color(m_Color);
 	// the position
 	game_engine::instance()->set_color(COLOR(0, 0, 0));

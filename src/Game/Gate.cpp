@@ -71,10 +71,10 @@ void Gate::Paint()
     DOUBLE2 position = m_ActGatePtr->GetPosition();
     matTranslate.SetAsTranslate(position);
     matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
-    game_engine::instance()->SetWorldMatrix(matPivot * matTranslate);
+    game_engine::instance()->set_world_matrix(matPivot * matTranslate);
     game_engine::instance()->set_color(COLOR(0, 0, 0, 255));
     game_engine::instance()->FillRect(0, 0, m_Width, m_Height);
-    game_engine::instance()->SetWorldMatrix(MATRIX3X2::CreateIdentityMatrix());
+    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Gate::Reset()
 {

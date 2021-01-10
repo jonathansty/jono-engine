@@ -88,11 +88,11 @@ public class EngineProject : JonaBaseProject
         ));
         //conf.Options.Add(Options.Vc.General.TreatWarningsAsErrors.Enable);
 
-        conf.LibraryFiles.AddRange(new string[] { "dxgi", "d2d1", "WindowsCodecs", "dwrite", "d3d11", "d3dcompiler", "Propsys","XAudio2", "mfplat", "mfreadwrite","mfuuid", "XAudio2" });
+        conf.LibraryFiles.AddRange(new string[] { "dxgi", "d2d1", "WindowsCodecs", "dwrite", "d3d11", "d3dcompiler", "Propsys","XAudio2", "mfplat", "mfreadwrite","mfuuid", "XAudio2", "dxguid" });
 
 
         // Add engine include path
-        conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]");
+        conf.IncludePaths.Add(@"[project.SourceRootPath]");
     }
 }
 
@@ -298,12 +298,6 @@ public class FreeType : VCPKG
 public class ExternalProject : JonaBaseProject
 {
     protected string externalDir = @"[project.SharpmakeCsPath]/external";
-
-
-
-
-
-
 }
 
 
