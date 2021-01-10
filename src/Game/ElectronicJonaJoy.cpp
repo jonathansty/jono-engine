@@ -10,7 +10,7 @@
 #include "HUD.h"
 #include <time.h>
 #include "Avatar.h"
-#include "ejj_data_manager.h"
+#include "DataManager.h"
 
 const std::string ElectronicJonaJoy::CONFIGPATH = std::string("Resources/cfg/config.xml");
 
@@ -31,7 +31,7 @@ ElectronicJonaJoy::~ElectronicJonaJoy()
 
 void ElectronicJonaJoy::initialize(GameSettings &gameSettings)
 {
-	gameSettings.m_WindowTitle = String("ElectronicJonaJoy - Steyfkens, Jonathan - 1DAE01");
+	gameSettings.m_WindowTitle = String("ElectronicJonaJoy");
 	gameSettings.m_WindowWidth = 1280;
 	gameSettings.m_WindowHeight = 720;
 	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableVSync;
@@ -54,7 +54,7 @@ void ElectronicJonaJoy::start()
 	m_CurrentLevel = 0;
 
 
-	m_FileManagerPtr = new ejj_data_manager();
+	m_FileManagerPtr = new DataManager();
 	m_LevelListPtr = m_FileManagerPtr->LoadLevels(CONFIGPATH);
 	m_FileManagerPtr->LoadAvatarKeybinds(CONFIGPATH);
 
@@ -279,7 +279,7 @@ void MainMenuState::on_activate()
 	_menu->SetFileManager(_owner->m_FileManagerPtr);
 	_menu->ReadKeyBindsForMenu(_owner->m_FileManagerPtr->LoadAvatarKeybinds(ElectronicJonaJoy::CONFIGPATH.c_str()));
 
-	_menu->_on_start_event = [this]() {
+	_menu->on_start() = [this]() {
 		Game* game = new Game(_owner);
 		_owner->TransitionToState(game);
 	};

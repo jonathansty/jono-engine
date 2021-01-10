@@ -11,7 +11,7 @@
 
 //#include "ContactListener.h"
 #include "Entity.h"
-#include "ejj_data_manager.h"
+#include "DataManager.h"
 //-----------------------------------------------------
 // Avatar Class									
 //-----------------------------------------------------
@@ -93,7 +93,7 @@ public:
     //! Sets how many times to avatar has jumped
     void SetNrJumps(int nr);
     //! Sets the keybinds the player specified
-    void SetKeyBinds(ejj_data_manager::KeyMap tmpKeyBindsPtrArr);
+    void SetKeyBinds(DataManager::KeyMap tmpKeyBindsPtrArr);
 private: 
     //-------------------------------------------------
     // private functions							

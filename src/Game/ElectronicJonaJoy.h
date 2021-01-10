@@ -7,7 +7,7 @@ class Game;
 class HUD;
 class StartMenu;
 class LevelList;
-class ejj_data_manager;
+class DataManager;
 
 // Interface for defining a game state. This should *enable* easy state switching
 interface IGameState
@@ -46,7 +46,7 @@ public:
 
     void SaveGameResults();
 
-    ejj_data_manager* GetFileManager() const { return m_FileManagerPtr; }
+    DataManager* GetFileManager() const { return m_FileManagerPtr; }
 
     static const std::string CONFIGPATH;
 
@@ -54,7 +54,7 @@ public:
     LevelList* get_level_names() const { return m_LevelListPtr; }
 private:
     IGameState* _current_state = nullptr;
-    ejj_data_manager* m_FileManagerPtr = nullptr;
+    DataManager* m_FileManagerPtr = nullptr;
     Bitmap* m_BmpLoadingPtr = nullptr;
 
     tm m_BeginTime;

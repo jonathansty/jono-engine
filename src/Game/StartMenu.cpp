@@ -2,7 +2,7 @@
 #include "Engine/TextLabel.h"
 	
 #include "StartMenu.h"
-#include "ejj_data_manager.h"
+#include "DataManager.h"
 #include "ElectronicJonaJoy.h"
 #include "SoundManager.h"
 #include <winuser.h>
@@ -363,7 +363,7 @@ void StartMenu::EnableButtons()
 
 }
 
-void StartMenu::ReadKeyBindsForMenu(ejj_data_manager::KeyMap tmpKeybindsArr)
+void StartMenu::ReadKeyBindsForMenu(DataManager::KeyMap tmpKeybindsArr)
 {
     m_KeybindsArr = tmpKeybindsArr;
 }
@@ -395,7 +395,7 @@ void StartMenu::CreateKeyBindTextBoxes()
     }
 }
 
-void StartMenu::SetFileManager(ejj_data_manager* tmpFileManagerPtr)
+void StartMenu::SetFileManager(DataManager* tmpFileManagerPtr)
 {
     m_FileManagerPtr = tmpFileManagerPtr;
 }

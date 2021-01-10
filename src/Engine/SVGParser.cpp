@@ -273,7 +273,6 @@ bool SVGParser::ReadSvgPath(tstring& sPathInfoRef, std::vector<std::vector<DOUBL
 		{
 		case _T('Z'):
 		case _T('z'):
-			//geometrySinkPtr->EndFigure(D2D1_FIGURE_END_CLOSED);
 			// Close the current subpath by drawing a straight line from the current point to current subpath's initial point. Since the Z and z commands take no parameters, they have an identical effect.
 			verticesArrRef.push_back(currentChain);
 			currentChain.clear();
@@ -366,7 +365,6 @@ bool SVGParser::ReadSvgPath(tstring& sPathInfoRef, std::vector<std::vector<DOUBL
 			//	geometrySinkPtr->AddArc(arc);
 			//}
 			//	break;
-
 		default:
 			game_engine::instance()->message_box(String(cmd) + String(" is not a supported SVG command"));
 			//return false;

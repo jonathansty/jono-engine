@@ -1,8 +1,8 @@
 #pragma once
 
-#include "ejj_data_manager.h"
+#include "DataManager.h"
 
-class ejj_data_manager;
+class DataManager;
 
 class StartMenu 
 {
@@ -30,11 +30,15 @@ public:
     void EnableButtons();
     void Remove();
     void ReadGameResults();
-    void ReadKeyBindsForMenu(ejj_data_manager::KeyMap tmpKeybindsArr);
-    void SetFileManager(ejj_data_manager* fileManagerPtr);
+    void ReadKeyBindsForMenu(DataManager::KeyMap tmpKeybindsArr);
+    void SetFileManager(DataManager* fileManagerPtr);
 
-    std::function<void()> _on_start_event;
+    std::function<void()> &on_start() {
+		return _on_start_event;
+	};
+
 private: 
+    std::function<void()> _on_start_event;
     
     void CreateKeyBindTextBoxes();
 
@@ -46,7 +50,7 @@ private:
         HIGHSCORES
     };
     int m_HighScoreOffsetCounter = 0;
-    std::vector<ejj_data_manager::sessionStats*>m_SessionStatsArr;
+    std::vector<DataManager::sessionStats*>m_SessionStatsArr;
     menuState m_MenuState = menuState::MAIN;
     static const int KEYLISTFNTSIZE = 25;
     static const int CONTROLLISTYPOS = 230;
@@ -63,8 +67,8 @@ private:
 
     bool m_IsOptionAdjusted = false;
     sound* m_BgMusicPtr = nullptr;
-    ejj_data_manager* m_FileManagerPtr = nullptr;
-    ejj_data_manager::KeyMap m_KeybindsArr;
+    DataManager* m_FileManagerPtr = nullptr;
+    DataManager::KeyMap m_KeybindsArr;
 
     std::shared_ptr<Font> m_ComicSansPtr = nullptr;
 

@@ -1,7 +1,7 @@
 #include "stdafx.h"		
 	
 #include "SoundManager.h"
-#include "ejj_data_manager.h"
+#include "DataManager.h"
 #include "ElectronicJonaJoy.h"																				
 #include "Entity.h"
 #include "Avatar.h"
@@ -45,7 +45,7 @@
 #include "NpcHinter.h"
 #include "Game.h"
 
-ejj_data_manager::ejj_data_manager()
+DataManager::DataManager()
 {
     m_AnimationListPtr = new AnimationList();
     m_TriggerListPtr = new TriggerList();
@@ -54,7 +54,7 @@ ejj_data_manager::ejj_data_manager()
     m_CoinListPtr = new CoinList();
 }
 
-ejj_data_manager::~ejj_data_manager()
+DataManager::~DataManager()
 {
     delete m_AnimationListPtr;
     m_AnimationListPtr = nullptr;
@@ -79,7 +79,7 @@ ejj_data_manager::~ejj_data_manager()
 
 using namespace tinyxml2;
 //! Reads the level file
-void ejj_data_manager::ReadGameInit(const std::string& filePath)
+void DataManager::ReadGameInit(const std::string& filePath)
 {
     tinyxml2::XMLDocument document{};
     document.LoadFile(filePath.c_str());
@@ -91,7 +91,7 @@ void ejj_data_manager::ReadGameInit(const std::string& filePath)
     }
 }
 //! Reads the level file only for certain objects
-void ejj_data_manager::ReadGameInitForObject(const std::string& filePath, const std::string& objectName)
+void DataManager::ReadGameInitForObject(const std::string& filePath, const std::string& objectName)
 {
     std::wifstream inputFile;
     inputFile.open(filePath);
@@ -124,7 +124,7 @@ void ejj_data_manager::ReadGameInitForObject(const std::string& filePath, const 
     inputFile.close();
 }
 //! Creates all the objects.
-void ejj_data_manager::CreateObject(tinyxml2::XMLElement* element)
+void DataManager::CreateObject(tinyxml2::XMLElement* element)
 {
     std::string name = element->Name();
     if (name.compare("LevelSound") == 0)
@@ -216,7 +216,7 @@ void ejj_data_manager::CreateObject(tinyxml2::XMLElement* element)
 /*  Methods for extracting every object
 *   
 */
-void ejj_data_manager::ExtractBgMusic(tinyxml2::XMLElement* element)
+void DataManager::ExtractBgMusic(tinyxml2::XMLElement* element)
 {
     const XMLAttribute* attribute = element->FindAttribute("soundPath");
     if (attribute)
@@ -238,7 +238,7 @@ void ejj_data_manager::ExtractBgMusic(tinyxml2::XMLElement* element)
 
     }
 }
-void ejj_data_manager::ExtractAvatar(tinyxml2::XMLElement* element)
+void DataManager::ExtractAvatar(tinyxml2::XMLElement* element)
 {
 
     XMLAttribute const*  respawnPosAttribute = element->FindAttribute("respawnPosition");
@@ -280,7 +280,7 @@ void ejj_data_manager::ExtractAvatar(tinyxml2::XMLElement* element)
 
     game_engine::instance()->ConsolePrintString(String("Avatar succesfully created!"));
 }
-void ejj_data_manager::ExtractLevel(tinyxml2::XMLElement* element)
+void DataManager::ExtractLevel(tinyxml2::XMLElement* element)
 {
     if (m_LevelPtr != nullptr && m_LevelPtr->GetBgBmpPtr())
     {
@@ -314,7 +314,7 @@ void ejj_data_manager::ExtractLevel(tinyxml2::XMLElement* element)
     }
     game_engine::instance()->ConsolePrintString(String("Level succesfully created!"));
 }
-void ejj_data_manager::ExtractLevelEnd(tinyxml2::XMLElement* element)
+void DataManager::ExtractLevelEnd(tinyxml2::XMLElement* element)
 {
     XMLAttribute const* attribute = element->FindAttribute("position");
     assert(attribute);
@@ -359,7 +359,7 @@ void ejj_data_manager::ExtractLevelEnd(tinyxml2::XMLElement* element)
 
     game_engine::instance()->ConsolePrintString(String("LevelEnd succesfully created!"));
 }
-void ejj_data_manager::ExtractCamera(tinyxml2::XMLElement* element)
+void DataManager::ExtractCamera(tinyxml2::XMLElement* element)
 {
     std::string name = element->Name();
     if (name.compare("CameraTriggerRotate") == 0)
@@ -421,7 +421,7 @@ void ejj_data_manager::ExtractCamera(tinyxml2::XMLElement* element)
         game_engine::instance()->ConsolePrintString(String("Camera succesfully created!"));
     }
 }
-void ejj_data_manager::ExtractBlockSlide(tinyxml2::XMLElement* element)
+void DataManager::ExtractBlockSlide(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
@@ -433,7 +433,7 @@ void ejj_data_manager::ExtractBlockSlide(tinyxml2::XMLElement* element)
     m_EntityListPtr->Add(tmpBlockSlide);
     game_engine::instance()->ConsolePrintString(name + String(" sucessfully created!"));
 }
-void ejj_data_manager::ExtractGate(tinyxml2::XMLElement* element)
+void DataManager::ExtractGate(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     DOUBLE2 triggerPosition = StringToDouble2(GetValue("triggerPosition", element));
@@ -445,7 +445,7 @@ void ejj_data_manager::ExtractGate(tinyxml2::XMLElement* element)
     m_EntityListPtr->Add(tmpGate);
     game_engine::instance()->ConsolePrintString(name + String(" sucessfully created!"));
 }
-void ejj_data_manager::ExtractLaser(tinyxml2::XMLElement* element)
+void DataManager::ExtractLaser(tinyxml2::XMLElement* element)
 {
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
     String name = String(GetValue("name", element).c_str());
@@ -457,7 +457,7 @@ void ejj_data_manager::ExtractLaser(tinyxml2::XMLElement* element)
     tmpLaser->SetAvatar(m_AvatarPtr);
     m_EnemyListPtr->Add(tmpLaser);
 }
-void ejj_data_manager::ExtractArrow(tinyxml2::XMLElement* element)
+void DataManager::ExtractArrow(tinyxml2::XMLElement* element)
 {
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
     String name = String(GetValue("name", element).c_str());
@@ -470,7 +470,7 @@ void ejj_data_manager::ExtractArrow(tinyxml2::XMLElement* element)
     m_EntityListPtr->Add(tmpArrow);
     game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
-void ejj_data_manager::ExtractArrowShooter(tinyxml2::XMLElement* element)
+void DataManager::ExtractArrowShooter(tinyxml2::XMLElement* element)
 {
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
     DOUBLE2 direction = StringToDouble2(GetValue("direction", element));
@@ -483,7 +483,7 @@ void ejj_data_manager::ExtractArrowShooter(tinyxml2::XMLElement* element)
     m_EntityListPtr->Add(tmpArrowShooterPtr);
     game_engine::instance()->ConsolePrintString(name + String(" sucessfully created!"));
 }
-void ejj_data_manager::ExtractEnemyShooter(tinyxml2::XMLElement* element)
+void DataManager::ExtractEnemyShooter(tinyxml2::XMLElement* element)
 {
     String bitmapName = String(GetValue("bitmap", element).c_str());
     String name = String(GetValue("name", element).c_str());
@@ -499,7 +499,7 @@ void ejj_data_manager::ExtractEnemyShooter(tinyxml2::XMLElement* element)
     m_EnemyListPtr->Add(tmpEnemyPtr);
     game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
-void ejj_data_manager::ExtractCheckPoint(tinyxml2::XMLElement* element)
+void DataManager::ExtractCheckPoint(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     String bitmapName = String(GetValue("bitmap", element).c_str());
@@ -522,7 +522,7 @@ void ejj_data_manager::ExtractCheckPoint(tinyxml2::XMLElement* element)
     m_EntityListPtr->Add(tmpCheckPoint);
     game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
-void ejj_data_manager::ExtractEnemyRotater(tinyxml2::XMLElement* element)
+void DataManager::ExtractEnemyRotater(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
@@ -534,7 +534,7 @@ void ejj_data_manager::ExtractEnemyRotater(tinyxml2::XMLElement* element)
     m_EnemyListPtr->Add(tmpEnemyRotater);
     game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
-void ejj_data_manager::ExtractEnemyHorizontal(tinyxml2::XMLElement* element)
+void DataManager::ExtractEnemyHorizontal(tinyxml2::XMLElement* element)
 {
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
     String name = String(GetValue("name", element).c_str());
@@ -555,7 +555,7 @@ void ejj_data_manager::ExtractEnemyHorizontal(tinyxml2::XMLElement* element)
     m_EnemyListPtr->Add(tmpEnemyPtr);
     game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
-void ejj_data_manager::ExtractCoin(tinyxml2::XMLElement* element)
+void DataManager::ExtractCoin(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
@@ -567,7 +567,7 @@ void ejj_data_manager::ExtractCoin(tinyxml2::XMLElement* element)
     m_CoinListPtr->Add(tmpCoin);
     game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
-void ejj_data_manager::ExtractTeleport(tinyxml2::XMLElement* element)
+void DataManager::ExtractTeleport(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     DOUBLE2 entrancePos = StringToDouble2(GetValue("entrancePos", element));
@@ -580,7 +580,7 @@ void ejj_data_manager::ExtractTeleport(tinyxml2::XMLElement* element)
     m_EntityListPtr->Add(tmpTeleport);
     game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
-void ejj_data_manager::ExtractEnemyRocketLauncher(tinyxml2::XMLElement* element)
+void DataManager::ExtractEnemyRocketLauncher(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
@@ -591,7 +591,7 @@ void ejj_data_manager::ExtractEnemyRocketLauncher(tinyxml2::XMLElement* element)
     m_EnemyListPtr->Add(tmpEnemyRocketLauncher);
     game_engine::instance()->ConsolePrintString(name + String(" succesfully created!"));
 }
-void ejj_data_manager::ExtractMetalFan(tinyxml2::XMLElement* element)
+void DataManager::ExtractMetalFan(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
@@ -604,7 +604,7 @@ void ejj_data_manager::ExtractMetalFan(tinyxml2::XMLElement* element)
     tmpMetalFan->SetAvatar(m_AvatarPtr);
     m_EntityListPtr->Add(tmpMetalFan);
 }
-void ejj_data_manager::ExtractStickyWall(tinyxml2::XMLElement* element)
+void DataManager::ExtractStickyWall(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
@@ -615,7 +615,7 @@ void ejj_data_manager::ExtractStickyWall(tinyxml2::XMLElement* element)
     tmpStickyWall->SetAvatar(m_AvatarPtr);
     m_EntityListPtr->Add(tmpStickyWall);
 }
-void ejj_data_manager::ExtractSlicer(tinyxml2::XMLElement* element)
+void DataManager::ExtractSlicer(tinyxml2::XMLElement* element)
 {
     Slicer* tmpSlicerPtr = nullptr;
     String name = String(GetValue("name", element).c_str());
@@ -627,7 +627,7 @@ void ejj_data_manager::ExtractSlicer(tinyxml2::XMLElement* element)
     tmpSlicerPtr->SetLevel(m_LevelPtr);
     m_EnemyListPtr->Add(tmpSlicerPtr);
 }
-void ejj_data_manager::ExtractNpcHinter(tinyxml2::XMLElement* element)
+void DataManager::ExtractNpcHinter(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
     DOUBLE2 position = StringToDouble2(GetValue("position", element));
@@ -641,7 +641,7 @@ void ejj_data_manager::ExtractNpcHinter(tinyxml2::XMLElement* element)
 }
 
 //! Loads the background music
-void ejj_data_manager::LoadGameMusic(const std::string& filePath)
+void DataManager::LoadGameMusic(const std::string& filePath)
 {
 
     tinyxml2::XMLDocument musicDocument;
@@ -672,7 +672,7 @@ void ejj_data_manager::LoadGameMusic(const std::string& filePath)
 	}
 }
 //! creates a specific object
-void ejj_data_manager::CreateSpecificObject(const std::wstring& expressionStringRef, const String& objectName)
+void DataManager::CreateSpecificObject(const std::wstring& expressionStringRef, const String& objectName)
 {
     assert("RELOADING not supported anymore");
     //if (objectName == String("Arrow") && expressionStringRef.find(L"<Arrow") != std::string::npos)
@@ -689,7 +689,7 @@ void ejj_data_manager::CreateSpecificObject(const std::wstring& expressionString
     //}
 }
 
-std::string ejj_data_manager::GetValue(const std::string& nameRef, XMLElement* el)
+std::string DataManager::GetValue(const std::string& nameRef, XMLElement* el)
 {
     if (auto attr = el->FindAttribute(nameRef.c_str()); attr)
     {
@@ -698,7 +698,7 @@ std::string ejj_data_manager::GetValue(const std::string& nameRef, XMLElement* e
     return "";
 }
 
-std::wstring ejj_data_manager::GetValue(const std::wstring& nameRef, const std::wstring& objectRef)
+std::wstring DataManager::GetValue(const std::wstring& nameRef, const std::wstring& objectRef)
 {
 	int idStart = int(objectRef.find(nameRef) + int(nameRef.size()) + 2);
 	int idEnd = int(objectRef.find('\"', idStart + 1));
@@ -706,7 +706,7 @@ std::wstring ejj_data_manager::GetValue(const std::wstring& nameRef, const std::
 }
 
 //! Converts a string to double2
-DOUBLE2 ejj_data_manager::StringToDouble2(const std::wstring& valueRef)
+DOUBLE2 DataManager::StringToDouble2(const std::wstring& valueRef)
 {
     int idSeperator = int(valueRef.find(L","));
     int length = int(valueRef.size());
@@ -715,7 +715,7 @@ DOUBLE2 ejj_data_manager::StringToDouble2(const std::wstring& valueRef)
     return DOUBLE2(firstNumber.ToInteger(), secondNumber.ToInteger());
 }
 
-DOUBLE2 ejj_data_manager::StringToDouble2(const std::string& valueRef)
+DOUBLE2 DataManager::StringToDouble2(const std::string& valueRef)
 {
 	int idSeperator = int(valueRef.find(","));
 	int length = int(valueRef.size());
@@ -725,37 +725,37 @@ DOUBLE2 ejj_data_manager::StringToDouble2(const std::string& valueRef)
 }
 
 //! Returns the triggerList
-TriggerList* ejj_data_manager::GetTriggers()
+TriggerList* DataManager::GetTriggers()
 {
     return m_TriggerListPtr;
 }
 //! Returns the levelEnd
-LevelEnd* ejj_data_manager::GetLevelEnd()
+LevelEnd* DataManager::GetLevelEnd()
 {
     return m_LevelEndPtr;
 }
 //! Returns the coinList
-CoinList* ejj_data_manager::GetCoinList()
+CoinList* DataManager::GetCoinList()
 {
     return m_CoinListPtr;
 }
 //! Returns the EntityList
-EntityList* ejj_data_manager::GetEntityList()
+EntityList* DataManager::GetEntityList()
 {
     return m_EntityListPtr;
 }
 //! Returns the EnemyList
-EnemyList* ejj_data_manager::GetEnemyList()
+EnemyList* DataManager::GetEnemyList()
 {
     return m_EnemyListPtr;
 }
 //! Returns the background Music
-sound* ejj_data_manager::GetBgMusic()
+sound* DataManager::GetBgMusic()
 {
     return m_SndBgMusicPtr;
 }
 //! Removes everything
-void ejj_data_manager::RemoveAll()
+void DataManager::RemoveAll()
 {
     safe_delete(m_TriggerListPtr);
     safe_delete(m_LevelEndPtr);
@@ -770,22 +770,22 @@ void ejj_data_manager::RemoveAll()
     safe_delete(m_AvatarPtr);
 }
 //! Returns the avatar
-Avatar* ejj_data_manager::GetAvatar()
+Avatar* DataManager::GetAvatar()
 {
     return m_AvatarPtr;
 }
 //! Returns the level
-Level* ejj_data_manager::GetLevel()
+Level* DataManager::GetLevel()
 {
     return m_LevelPtr;
 }
 //! Returns the camera
-Camera* ejj_data_manager::GetCamera()
+Camera* DataManager::GetCamera()
 {
     return m_CameraPtr;
 }
 //! Removes all lists and clears them
-void ejj_data_manager::ClearLists()
+void DataManager::ClearLists()
 {
     if (m_TriggerListPtr != nullptr)
     {
@@ -816,14 +816,14 @@ void ejj_data_manager::ClearLists()
 
 }
 //! Returns the animationList
-AnimationList* ejj_data_manager::GetAnimationList()
+AnimationList* DataManager::GetAnimationList()
 {
     return m_AnimationListPtr;
 }
 
 //! Loads all the avatar keybindings from the filePath
 //! Make sure the config file layout is correct.
-ejj_data_manager::KeyMap ejj_data_manager::LoadAvatarKeybinds(const std::string& filePath)
+DataManager::KeyMap DataManager::LoadAvatarKeybinds(const std::string& filePath)
 {
 	KeyMap tmpKeyBindsArr{};
 	tinyxml2::XMLDocument document{};
@@ -845,7 +845,7 @@ ejj_data_manager::KeyMap ejj_data_manager::LoadAvatarKeybinds(const std::string&
 	return tmpKeyBindsArr;
 }
 //! Sets the keysbinds for the avatar
-void ejj_data_manager::SetKeyBinds(KeyMap& keyBinds, std::string filePath)
+void DataManager::SetKeyBinds(KeyMap& keyBinds, std::string filePath)
 {
     std::wifstream inputConfigFile;
     std::wstringstream filebuffer;
@@ -875,12 +875,12 @@ void ejj_data_manager::SetKeyBinds(KeyMap& keyBinds, std::string filePath)
     m_KeyBindsArr = keyBinds;
 }
 //! Returns the keybinds as a vector
-ejj_data_manager::KeyMap const& ejj_data_manager::GetKeyBinds()
+DataManager::KeyMap const& DataManager::GetKeyBinds()
 {
     return m_KeyBindsArr;
 }
 //! Loads a list of levels from the filePath
-LevelList* ejj_data_manager::LoadLevels(const std::string& filePath)
+LevelList* DataManager::LoadLevels(const std::string& filePath)
 {
     LevelList* tmpLevelList = new LevelList();
     tinyxml2::XMLDocument document{};
@@ -915,7 +915,7 @@ LevelList* ejj_data_manager::LoadLevels(const std::string& filePath)
 }
 
 //! Saves the game result in the file GameResults.txt
-void ejj_data_manager::SaveGameResults(tm beginTime, tm endTime, Game* gamePtr)
+void DataManager::SaveGameResults(tm beginTime, tm endTime, Game* gamePtr)
 {
     std::wofstream fileStream;
 
@@ -966,7 +966,7 @@ void ejj_data_manager::SaveGameResults(tm beginTime, tm endTime, Game* gamePtr)
     fileStream.close();
 }
 //! Reads the file GameResults.txt
-void ejj_data_manager::ReadGameResults(std::vector<sessionStats*> &tmpSessionStatsPtrArr)
+void DataManager::ReadGameResults(std::vector<sessionStats*> &tmpSessionStatsPtrArr)
 {
     std::wifstream inputFile;
     inputFile.open("./Resources/GameResults.txt");
@@ -1009,7 +1009,7 @@ void ejj_data_manager::ReadGameResults(std::vector<sessionStats*> &tmpSessionSta
     inputFile.close();
 }
 //! Reads a start block
-void ejj_data_manager::ReadGameResultsStart(std::wstring &expressionStringRef, sessionStats* tmpSessionStat)
+void DataManager::ReadGameResultsStart(std::wstring &expressionStringRef, sessionStats* tmpSessionStat)
 {
 
     //Read date
@@ -1040,7 +1040,7 @@ void ejj_data_manager::ReadGameResultsStart(std::wstring &expressionStringRef, s
     tmpSessionStat->beginTime = beginTime;
 }
 //! Read an end block
-void ejj_data_manager::ReadGameResultsEnd(std::wstring &expressionStringRef, sessionStats* tmpSessionStat)
+void DataManager::ReadGameResultsEnd(std::wstring &expressionStringRef, sessionStats* tmpSessionStat)
 {
     int numberofDeaths = String(GetValueOfBlock(L"Deaths", expressionStringRef).c_str()).ToInteger();
     int money = String(GetValueOfBlock(L"Money", expressionStringRef).c_str()).ToInteger();
@@ -1083,7 +1083,7 @@ void ejj_data_manager::ReadGameResultsEnd(std::wstring &expressionStringRef, ses
     tmpSessionStat->endTime = endTime;
 }
 //! Gets the value of a block
-std::wstring ejj_data_manager::GetValueOfBlock(const std::wstring& nameRef, const std::wstring& objectRef)
+std::wstring DataManager::GetValueOfBlock(const std::wstring& nameRef, const std::wstring& objectRef)
 {
     std::size_t idStart = objectRef.find(L"<" + nameRef + L">") + nameRef.length() + 2;
     std::size_t idEnd = objectRef.find(L"</" + nameRef + L">");
@@ -1094,7 +1094,7 @@ std::wstring ejj_data_manager::GetValueOfBlock(const std::wstring& nameRef, cons
 }
 
 //! Updates the m_LastLevel variable for use when saving and reading results
-void ejj_data_manager::UpdateLastLevel(int lastLevel)
+void DataManager::UpdateLastLevel(int lastLevel)
 {
     m_LastLevel = lastLevel;
 }

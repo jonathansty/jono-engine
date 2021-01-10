@@ -70,7 +70,8 @@ game_engine::game_engine() :
 	m_bQuit(false),
 	m_ViewportFocused(false),
 	_recreate_swapchain(false),
-	_recreate_game_texture(false)
+	_recreate_game_texture(false),
+	m_DebugRendering(false)
 {
 	m_Gravity = DOUBLE2(0, 9.81);
 

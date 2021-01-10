@@ -6,7 +6,7 @@
 #include "EntityList.h"
 #include "EnemyList.h"
 
-#include "ejj_data_manager.h"
+#include "DataManager.h"
 
 Avatar::Avatar(DOUBLE2 position, Bitmap* BmpPtr, Bitmap* bmpEpicModePtr) :
 Entity(position), 
@@ -645,7 +645,7 @@ void Avatar::SetNrJumps(int nr)
     m_JumpCounter = nr;
 }
 //! Sets the keybinds the player specified
-void Avatar::SetKeyBinds(ejj_data_manager::KeyMap tmpKeyBindsArr)
+void Avatar::SetKeyBinds(DataManager::KeyMap tmpKeyBindsArr)
 {
     // Player actions
 	m_Jump = tmpKeyBindsArr["jump"];

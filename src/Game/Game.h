@@ -41,7 +41,7 @@ class AnimationList;
 class CombRotLightCpBg;
 class LevelEnd;
 class TriggerList;
-class ejj_data_manager;
+class DataManager;
 
 
 class Game final : public IGameState
@@ -77,7 +77,7 @@ public:
     void LoadLevel(const std::string& filePath);
 
     // Links a file manager with the game. Yuk!
-    void SetFileManager(ejj_data_manager* tmpFileManager);
+    void SetFileManager(DataManager* tmpFileManager);
 
     Avatar* GetAvatar();
     Level* GetLevel();
@@ -100,7 +100,7 @@ private:
     Level* m_LevelPtr = nullptr;
     Camera* m_CameraPtr = nullptr;
 
-    ejj_data_manager* m_FileManagerPtr = nullptr;
+    DataManager* m_FileManagerPtr = nullptr;
     AnimationList* m_AnimationListPtr = nullptr;
     TriggerList* m_TriggerListPtr = nullptr;
     LevelEnd* m_LevelEndPtr = nullptr;

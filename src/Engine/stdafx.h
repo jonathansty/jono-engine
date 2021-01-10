@@ -1,14 +1,4 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015 
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
 #pragma once
-
-//-----------------------------------------------------------------
-// Include Files
-//-----------------------------------------------------------------
 
 #include "Resource.h"	
 
@@ -25,6 +15,7 @@
 #include <io.h>				// console
 #include <deque>
 #include <thread>
+#include <algorithm>
 
 #define NOMINMAX
 // WindowsSDK

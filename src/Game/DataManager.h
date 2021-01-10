@@ -31,15 +31,14 @@ class TriggerList;
 class LevelList;
 class Game;
 
-class ejj_data_manager 
-{
+class DataManager {
 public:
-	ejj_data_manager( );
-	virtual ~ejj_data_manager( );
+	DataManager( );
+	virtual ~DataManager( );
 
 	// C++11 make the class non-copyable
-	ejj_data_manager( const ejj_data_manager& ) = delete;
-	ejj_data_manager& operator=( const ejj_data_manager& ) = delete;
+	DataManager( const DataManager& ) = delete;
+	DataManager& operator=( const DataManager& ) = delete;
 
     struct sessionStats
     {

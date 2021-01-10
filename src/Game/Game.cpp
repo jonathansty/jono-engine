@@ -45,7 +45,7 @@
 #include "MetalFans.h"
 #include "StickyWall.h"
 #include "Lever.h"
-#include "ejj_data_manager.h"
+#include "DataManager.h"
 #include "Slicer.h"
 #include "NpcHinter.h"
 #include "SoundManager.h"
@@ -596,7 +596,7 @@ double Game::GetTotalTime()
 {
     return m_TotalTime;
 }
-void Game::SetFileManager(ejj_data_manager* tmpFileManager)
+void Game::SetFileManager(DataManager* tmpFileManager)
 {
     m_FileManagerPtr = tmpFileManager;
 }
