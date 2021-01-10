@@ -97,6 +97,38 @@ public class EngineProject : JonaBaseProject
 }
 
 [Generate]
+public class EngineTestProject : JonaBaseProject
+{
+    public EngineTestProject()
+         : base()
+    {
+        Name = "EngineTest";
+        SourceRootPath = @"[project.SharpmakeCsPath]/src/EngineTests";
+    }
+
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        // Private dependencies
+        conf.AddPrivateDependency<EngineProject>(target);
+
+        // Compile C++17 
+        conf.Output = Configuration.OutputType.Dll;
+        conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
+        conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
+        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
+
+        // Add engine include path
+        conf.IncludeSystemPaths.Add(@"[project.SharpmakeCsPath]/src/");
+        conf.IncludePrivatePaths.Add(@"[project.SourceRootPath]");
+    }
+}
+
+
+
+
+[Generate]
 public class GameProject : JonaBaseProject
 {
 	public GameProject() : base()
@@ -131,6 +163,7 @@ public class GameProject : JonaBaseProject
 
 
 }
+
 
 
 [Generate]
@@ -175,6 +208,7 @@ public class GameSolution : Solution
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]_[target.Platform]";
 
         conf.AddProject<EngineProject>(target);
+        conf.AddProject<EngineTestProject>(target);
         conf.AddProject<GameProject>(target);
 
     }

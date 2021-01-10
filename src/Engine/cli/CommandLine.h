@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vector>
+
 namespace helpers {
 
 void split_string(std::string const &in, std::string const &delim, std::string &lhs, std::string &rhs);
