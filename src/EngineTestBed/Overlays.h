@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Framework/framework.h"
-#include "DebugOverlays/OverlayManager.h"
+#include "debug_overlays/OverlayManager.h"
 
 class EntityDebugOverlay final : public DebugOverlay
 {

@@ -6,13 +6,13 @@
 class Hello3D : public AbstractGame
 {
 public:
-	void GameInitialize(GameSettings& gameSettings);
-	void GameStart() override;
-	void GameEnd() override;
-	void GamePaint(RECT rect) override;
-	void GameTick(double deltaTime) override;
-	void DebugUI() override;
-	void Render3D() override;
+	void initialize(GameSettings& gameSettings);
+	void start() override;
+	void end() override;
+	void paint(RECT rect) override;
+	void tick(double deltaTime) override;
+	void debug_ui() override;
+	void render_3d() override;
 
 private:
 	std::shared_ptr<framework::World> _world;

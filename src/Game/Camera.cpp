@@ -10,11 +10,11 @@ const double Camera::EPICMODEDELAY = 1.2;
 Camera::Camera(Level* levelPtr, Avatar* avatarPtr,double scale):
 m_AvatarPtr(avatarPtr),
 m_LevelPtr(levelPtr),
-m_CameraPosition(game_engine::instance()->get_width() / 2, game_engine::instance()->get_height()/2),
-m_CameraPositionWithoutShaking(game_engine::instance()->get_width() / 2, game_engine::instance()->get_height()/2),
-m_OldCameraPosition(game_engine::instance()->get_width()/2,game_engine::instance()->get_height()/2),
-m_CameraDimension(game_engine::instance()->get_width(), game_engine::instance()->get_height()),
-m_StartPosition(game_engine::instance()->get_width() / 2, game_engine::instance()->get_height() / 2),
+m_CameraPosition(GameEngine::instance()->get_width() / 2, GameEngine::instance()->get_height()/2),
+m_CameraPositionWithoutShaking(GameEngine::instance()->get_width() / 2, GameEngine::instance()->get_height()/2),
+m_OldCameraPosition(GameEngine::instance()->get_width()/2,GameEngine::instance()->get_height()/2),
+m_CameraDimension(GameEngine::instance()->get_width(), GameEngine::instance()->get_height()),
+m_StartPosition(GameEngine::instance()->get_width() / 2, GameEngine::instance()->get_height() / 2),
 m_Direction(0,1)
 {
     m_ActPtr = new PhysicsActor(m_CameraPosition, 0, BodyType::DYNAMIC);
@@ -26,9 +26,9 @@ m_Direction(0,1)
     m_Scale = scale;
     m_ActBoundsPtr = new PhysicsActor(m_CameraPosition, 0, BodyType::KINEMATIC);
     std::vector<DOUBLE2>pointsPtrArr;
-    pointsPtrArr.push_back(DOUBLE2(-game_engine::instance()->get_width()/2,-game_engine::instance()->get_height()/2));
-    pointsPtrArr.push_back(DOUBLE2(-game_engine::instance()->get_width()/2, 20 + game_engine::instance()->get_height()/2));
-    pointsPtrArr.push_back(DOUBLE2( game_engine::instance()->get_width()/2, 20 + game_engine::instance()->get_height()/2));
+    pointsPtrArr.push_back(DOUBLE2(-GameEngine::instance()->get_width()/2,-GameEngine::instance()->get_height()/2));
+    pointsPtrArr.push_back(DOUBLE2(-GameEngine::instance()->get_width()/2, 20 + GameEngine::instance()->get_height()/2));
+    pointsPtrArr.push_back(DOUBLE2( GameEngine::instance()->get_width()/2, 20 + GameEngine::instance()->get_height()/2));
 
     for (size_t i = 0; i < pointsPtrArr.size(); i++)
     {
@@ -62,8 +62,8 @@ MATRIX3X2 Camera::GetViewMatrix(){
     // These 2 if statements check for the boundaries
     MATRIX3X2 matTranslate, matCenter, matRotate,matScale;
     MATRIX3X2 matWorldTransform;
-    matCenter.SetAsTranslate(-game_engine::instance()->get_width() / 2, -game_engine::instance()->get_height() / 2);
-    game_engine::instance()->set_bitmap_interpolation_mode(bitmap_interpolation_mode::linear);
+    matCenter.SetAsTranslate(-GameEngine::instance()->get_width() / 2, -GameEngine::instance()->get_height() / 2);
+    GameEngine::instance()->set_bitmap_interpolation_mode(bitmap_interpolation_mode::linear);
     matTranslate.SetAsTranslate(m_CameraPosition);
     matRotate.SetAsRotate(m_Angle);
     matScale.SetAsScale(m_Scale);
@@ -106,7 +106,7 @@ void Camera::Tick(double dTime)
     m_ActPtr->SetPosition(positionBeforeShaking + DOUBLE2(offsetx, offsety));
     m_CameraPosition = m_ActPtr->GetPosition();
     m_CameraPositionWithoutShaking = positionBeforeShaking;
-    if (game_engine::instance()->is_key_pressed(VK_F7))
+    if (GameEngine::instance()->is_key_pressed(VK_F7))
     {
         switch (m_CameraControlState)
         {
@@ -198,7 +198,7 @@ void Camera::AutomaticMode(double deltaTime, DOUBLE2 &oldPosition)
         DOUBLE2 vectorToAvatar = m_AvatarPtr->GetPosition() - oldPosition;
         DOUBLE2 normalizedVector = vectorToAvatar.Normalized();
         double length = vectorToAvatar.Length();
-        DOUBLE2 offsetPosition2 = DOUBLE2(game_engine::instance()->get_width() - 200, 0);
+        DOUBLE2 offsetPosition2 = DOUBLE2(GameEngine::instance()->get_width() - 200, 0);
         MATRIX3X2 matTranslate, matRotate, matScale, matTransform, matPivot;
         matPivot.SetAsTranslate(DOUBLE2(-m_CameraDimension.x / 2, -m_CameraDimension.y / 2));
         matTranslate.SetAsTranslate(oldPosition);
@@ -222,19 +222,19 @@ void Camera::ManualMode(double deltaTime, DOUBLE2 &oldPosition)
 {
     DOUBLE2 actorPosition = m_ActPtr->GetPosition();
     DOUBLE2 newPosition = DOUBLE2();
-    if (game_engine::instance()->is_key_down('I'))newPosition += DOUBLE2(0, -m_Speed * deltaTime);
-    if (game_engine::instance()->is_key_down('J'))newPosition += DOUBLE2(-m_Speed * deltaTime, 0);
-    if (game_engine::instance()->is_key_down('K'))newPosition += DOUBLE2(0, m_Speed * deltaTime);
-    if (game_engine::instance()->is_key_down('L'))newPosition += DOUBLE2(m_Speed * deltaTime, 0);
+    if (GameEngine::instance()->is_key_down('I'))newPosition += DOUBLE2(0, -m_Speed * deltaTime);
+    if (GameEngine::instance()->is_key_down('J'))newPosition += DOUBLE2(-m_Speed * deltaTime, 0);
+    if (GameEngine::instance()->is_key_down('K'))newPosition += DOUBLE2(0, m_Speed * deltaTime);
+    if (GameEngine::instance()->is_key_down('L'))newPosition += DOUBLE2(m_Speed * deltaTime, 0);
     oldPosition = actorPosition + newPosition;
 
-    if (game_engine::instance()->is_key_down('2'))
+    if (GameEngine::instance()->is_key_down('2'))
     {
         m_Angle += 0.01;
         m_ActPtr->SetAngle(m_Angle);
 
     }
-    if (game_engine::instance()->is_key_down('1'))
+    if (GameEngine::instance()->is_key_down('1'))
     {
         m_Angle -= 0.01;
         m_ActPtr->SetAngle(m_Angle);
@@ -243,7 +243,7 @@ void Camera::ManualMode(double deltaTime, DOUBLE2 &oldPosition)
 
 void Camera::Paint()
 {
-    auto engine = game_engine::instance();
+    auto engine = GameEngine::instance();
     if (m_ShakeMode == Shakemode::EPICEFFECT)
     {
         
@@ -417,7 +417,7 @@ void Camera::SetDefaultCameraMode(Camera::controlState controlState)
 //! Updates the screen shaking modes for use with buttons certain actions etc
 void Camera::HandleScreenShaking(double deltaTime)
 {
-    if (game_engine::instance()->is_key_down('X') && (m_AvatarPtr->GetMoveState() == Avatar::moveState::ATTACK) && m_ShakeMode != Shakemode::EPICEFFECT)
+    if (GameEngine::instance()->is_key_down('X') && (m_AvatarPtr->GetMoveState() == Avatar::moveState::ATTACK) && m_ShakeMode != Shakemode::EPICEFFECT)
     {
         m_ShakeMode = Shakemode::ATTACKSHAKE;
     }

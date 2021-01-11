@@ -10,7 +10,7 @@ LevelEnd::LevelEnd(DOUBLE2 position, String nextLevel) :
 Entity(position),
 m_NextLevelPath(nextLevel)
 {
-    m_BmpPtr = bitmap_manager::instance()->LoadBitmapFile(String("Resources/Entity/LevelEnd.png"));
+    m_BmpPtr = BitmapManager::instance()->load_image(String("Resources/Entity/LevelEnd.png"));
     m_ActPtr = new PhysicsActor(position, 0, BodyType::STATIC);
     m_ActPtr->SetTrigger(true);
     m_ActPtr->AddCircleShape(-20 + m_BmpPtr->GetWidth()/2);
@@ -76,9 +76,9 @@ void LevelEnd::Paint()
         matTranslate.SetAsTranslate(m_Position);
         matRotate.SetAsRotate(m_Angle);
         matPivot.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
-        game_engine::instance()->set_world_matrix(matPivot*matRotate* matTranslate);
-        game_engine::instance()->DrawBitmap(m_BmpPtr);
-        game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+        GameEngine::instance()->set_world_matrix(matPivot*matRotate* matTranslate);
+        GameEngine::instance()->DrawBitmap(m_BmpPtr);
+        GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     }
     
     for (size_t i = 0; i < m_LeversPtrArr.size(); i++)

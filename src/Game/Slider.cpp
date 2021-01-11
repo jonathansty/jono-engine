@@ -48,18 +48,18 @@ float Slider::GetValue()
 
 void Slider::Tick(double deltaTime) 
 {
-	XMFLOAT2 p = game_engine::instance()->get_mouse_pos_in_viewport();
+	XMFLOAT2 p = GameEngine::instance()->get_mouse_pos_in_viewport();
 	if (p.x > m_PosX &&
 		p.x < m_PosX + m_Width &&
 		p.y > m_PosY &&
 		p.y < m_PosY + m_Height)
 	{
-		if (game_engine::instance()->is_mouse_button_down(VK_LBUTTON))
+		if (GameEngine::instance()->is_mouse_button_down(VK_LBUTTON))
 		{
             m_IsPressed = true;
 			m_Value = m_MinValue + (p.x - m_PosX) * (m_MaxValue - m_MinValue) / m_Width; // See Paint for how to draw this. pixels to value
 		}
-        if (game_engine::instance()->is_mouse_button_released(VK_LBUTTON))
+        if (GameEngine::instance()->is_mouse_button_released(VK_LBUTTON))
         {
             m_IsPressed = false;
         }
@@ -68,21 +68,21 @@ void Slider::Tick(double deltaTime)
 	
 }
 void Slider::Paint(){
-	game_engine::instance()->set_color(m_BackgroundColor);
-	game_engine::instance()->FillRect(m_PosX, m_PosY, m_PosX + m_Width, m_PosY + m_Height);
+	GameEngine::instance()->set_color(m_BackgroundColor);
+	GameEngine::instance()->FillRect(m_PosX, m_PosY, m_PosX + m_Width, m_PosY + m_Height);
 
-	game_engine::instance()->set_color(m_ValueColor);
-	game_engine::instance()->FillRect(m_PosX, m_PosY, int(m_PosX + (m_Value - m_MinValue) * m_Width / (m_MaxValue - m_MinValue) + 1), m_PosY + m_Height - 1); // See this. value to pixels
+	GameEngine::instance()->set_color(m_ValueColor);
+	GameEngine::instance()->FillRect(m_PosX, m_PosY, int(m_PosX + (m_Value - m_MinValue) * m_Width / (m_MaxValue - m_MinValue) + 1), m_PosY + m_Height - 1); // See this. value to pixels
 
-	game_engine::instance()->set_color(COLOR(0, 0, 0));
-	game_engine::instance()->DrawRect(m_PosX, m_PosY, m_PosX + m_Width, m_PosY + m_Height);
+	GameEngine::instance()->set_color(COLOR(0, 0, 0));
+	GameEngine::instance()->DrawRect(m_PosX, m_PosY, m_PosX + m_Width, m_PosY + m_Height);
 	
 
-	game_engine::instance()->set_color(COLOR(0, 0, 0));
-    game_engine::instance()->set_color(m_ValueColor);
-	game_engine::instance()->DrawString(String(m_MinValue), m_PosX, m_PosY + m_Height + 2);
-	game_engine::instance()->DrawString(String(m_MaxValue), m_PosX + m_Width, m_PosY + m_Height + 2);
-	game_engine::instance()->DrawString(String(m_String) + String(": ") + String(m_Value) , m_PosX, m_PosY - m_Height);
+	GameEngine::instance()->set_color(COLOR(0, 0, 0));
+    GameEngine::instance()->set_color(m_ValueColor);
+	GameEngine::instance()->DrawString(String(m_MinValue), m_PosX, m_PosY + m_Height + 2);
+	GameEngine::instance()->DrawString(String(m_MaxValue), m_PosX + m_Width, m_PosY + m_Height + 2);
+	GameEngine::instance()->DrawString(String(m_String) + String(": ") + String(m_Value) , m_PosX, m_PosY - m_Height);
 }
 bool Slider::IsPressed()
 {

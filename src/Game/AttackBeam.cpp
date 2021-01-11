@@ -53,21 +53,21 @@ AttackBeam::~AttackBeam()
 void AttackBeam::Paint()
 {
     
-    game_engine::instance()->set_color(m_Color);
+    GameEngine::instance()->set_color(m_Color);
     if (m_TopPosition.y < m_Position.y)
     {
-        game_engine::instance()->FillRect((int)(-m_Width + m_Position.x), (int)m_TopPosition.y, (int)(m_Width + m_Position.x), (int)m_Position.y);
+        GameEngine::instance()->FillRect((int)(-m_Width + m_Position.x), (int)m_TopPosition.y, (int)(m_Width + m_Position.x), (int)m_Position.y);
     }
     
-    game_engine::instance()->set_color(COLOR(0, 0, 0,255));
-    //game_engine::instance()->DrawLine(m_RayStart, m_RayEnd);
+    GameEngine::instance()->set_color(COLOR(0, 0, 0,255));
+    //GameEngine::instance()->DrawLine(m_RayStart, m_RayEnd);
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(-m_BmpGroundPtr->GetWidth() / 2, -m_BmpGroundPtr->GetHeight());
-    game_engine::instance()->set_world_matrix(matPivot * matTranslate);
-    game_engine::instance()->DrawBitmap(m_BmpGroundPtr);
+    GameEngine::instance()->set_world_matrix(matPivot * matTranslate);
+    GameEngine::instance()->DrawBitmap(m_BmpGroundPtr);
    
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void AttackBeam::Tick(double deltaTime)
 {
@@ -144,5 +144,5 @@ void AttackBeam::SetLevel(Level* levelPtr)
 }
 void AttackBeam::SetGroundBitmap(String bitmapPath)
 {
-    m_BmpGroundPtr = bitmap_manager::instance()->LoadBitmapFile(bitmapPath);
+    m_BmpGroundPtr = BitmapManager::instance()->load_image(bitmapPath);
 }

@@ -21,7 +21,7 @@ m_BmpPtr(bmpPtr)
     m_ActPtr->SetGravityScale(0);
     m_ActPtr->SetBullet(true);
     m_ActPtr->SetCollisionFilter(collisionFilter);
-    //game_engine::instance()->ConsolePrintString(m_Position.ToString());
+    //GameEngine::instance()->ConsolePrintString(m_Position.ToString());
 
     m_ActBottomTriggerPtr = new PhysicsActor(position + DOUBLE2(0, 40), 0, BodyType::DYNAMIC);
     //m_ActBottomTriggerPtr->AddBoxShape(m_BmpPtr->GetWidth() / 2, 20);
@@ -35,7 +35,7 @@ m_BmpPtr(bmpPtr)
     m_ActBottomTriggerPtr->AddContactListener(this);
     m_ActBottomTriggerPtr->SetCollisionFilter(collisionFilter);
 
-    m_SndJumpPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/Jump2.wav"));
+    m_SndJumpPtr = SoundManager::instance()->LoadSound(String("Resources/Sound/Entity/Jump2.wav"));
     m_SndJumpPtr->set_volume(0.2);
 }
 
@@ -89,9 +89,9 @@ void Arrow::Paint()
 {
     MATRIX3X2 matWorldTransform;
     matWorldTransform = { DOUBLE2(1, 0), DOUBLE2(0, 1), m_Position - DOUBLE2(m_BmpPtr->GetWidth()/2,m_BmpPtr->GetHeight()/2) };
-    game_engine::instance()->set_world_matrix(matWorldTransform);
-    game_engine::instance()->DrawBitmap(m_BmpPtr);
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(matWorldTransform);
+    GameEngine::instance()->DrawBitmap(m_BmpPtr);
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Arrow::Tick(double deltaTime)
 {

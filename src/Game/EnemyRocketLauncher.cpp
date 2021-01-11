@@ -25,7 +25,7 @@ Enemy(position)
     m_Direction = DOUBLE2(cos(angle - M_PI_2), sin(angle - M_PI_2));
     m_ActPtr->AddBoxShape(WIDTH, HEIGHT,0,0);
     m_ActPtr->SetName(String("EnemyRocketLauncher"));
-    m_BmpPtr = bitmap_manager::instance()->LoadBitmapFile(String("Resources/Enemy/RocketLauncher.png"));
+    m_BmpPtr = BitmapManager::instance()->load_image(String("Resources/Enemy/RocketLauncher.png"));
 }
 
 EnemyRocketLauncher::~EnemyRocketLauncher()
@@ -120,10 +120,10 @@ void EnemyRocketLauncher::Paint()
     matWorldTransform = matPivot * matRotate * matTranslate;
     m_AnimationListPtr->Paint();
 
-    game_engine::instance()->set_world_matrix(matWorldTransform);
+    GameEngine::instance()->set_world_matrix(matWorldTransform);
     RECT boundingBox = updateFrameDisplay(m_FrameNr);
-    game_engine::instance()->DrawBitmap(m_BmpPtr, boundingBox);
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->DrawBitmap(m_BmpPtr, boundingBox);
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void EnemyRocketLauncher::PaintRockets()
 {
@@ -159,7 +159,7 @@ void EnemyRocketLauncher::PaintDebug()
     m_EnemyListPtr->PaintDebug();
 
     
-    game_engine::instance()->DrawEllipse((int)m_Position.x, (int)m_Position.y, DETECTIONZONE, DETECTIONZONE);
+    GameEngine::instance()->DrawEllipse((int)m_Position.x, (int)m_Position.y, DETECTIONZONE, DETECTIONZONE);
 
 }
 void EnemyRocketLauncher::Reset()

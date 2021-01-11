@@ -39,7 +39,7 @@ void Coin::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
         m_IsHit = true;
         if (m_SndHitPtr != nullptr)
         {
-            game_engine::instance()->ConsolePrintString(String("Coin sound Played!"));
+            GameEngine::instance()->print_string(String("Coin sound Played!"));
             if (m_SndHitPtr->get_volume() > 0)
             {
                 m_SndHitPtr->play(sound::play_mode::Immediate);
@@ -71,9 +71,9 @@ void Coin::Paint()
     MATRIX3X2 matTranslate,matPivot;
     matPivot.SetAsTranslate(-m_BmpCoinPtr->GetWidth() / 2, -m_BmpCoinPtr->GetHeight() / 2);
     matTranslate.SetAsTranslate(m_Position);
-    game_engine::instance()->set_world_matrix(matPivot* matTranslate);
-    game_engine::instance()->DrawBitmap(m_BmpCoinPtr);
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(matPivot* matTranslate);
+    GameEngine::instance()->DrawBitmap(m_BmpCoinPtr);
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 bool Coin::IsHit()
 {

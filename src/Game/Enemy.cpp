@@ -81,7 +81,7 @@ void Enemy::setName(String name)
 
 void Enemy::PaintDebug()
 {
-    auto engine = game_engine::instance();
+    auto engine = GameEngine::instance();
     if (m_ActPtr != nullptr)
     {
         DOUBLE2 position = m_ActPtr->GetPosition();

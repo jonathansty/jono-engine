@@ -41,18 +41,18 @@ void RotLight::Paint()
 {
 
     std::vector<DOUBLE2>tmpPointsArr;
-    //game_engine::instance()->SetWorldMatrix(matWorldTransform);
+    //GameEngine::instance()->SetWorldMatrix(matWorldTransform);
     MATRIX3X2 matOrbitRadius, matOrbitCenter;
     matOrbitRadius.SetAsTranslate(DOUBLE2(20, 0));
     matOrbitCenter.SetAsTranslate(DOUBLE2(m_Position));
-    game_engine::instance()->set_color(m_Color);
+    GameEngine::instance()->set_color(m_Color);
     for (double angle = 0; angle < 2 * M_PI; angle += (2*M_PI)/6)
     {
         MATRIX3X2 matRectOrbitRotate, matWorldTransform;
         matRectOrbitRotate.SetAsRotate(angle + m_Angle);
         matWorldTransform = matOrbitRadius * matRectOrbitRotate * matOrbitCenter;
-        game_engine::instance()->set_world_matrix(matWorldTransform);
-        //game_engine::instance()->DrawRect(0, -10, 100, 10);
+        GameEngine::instance()->set_world_matrix(matWorldTransform);
+        //GameEngine::instance()->DrawRect(0, -10, 100, 10);
         std::vector<DOUBLE2>tmpPointsArr;
         tmpPointsArr.push_back(DOUBLE2(0,-10));
         tmpPointsArr.push_back(DOUBLE2(m_Radius,-m_Radius/4));
@@ -61,12 +61,12 @@ void RotLight::Paint()
         tmpPointsArr.push_back(DOUBLE2(m_Radius + 10, m_Radius / 6));
         tmpPointsArr.push_back(DOUBLE2(m_Radius,m_Radius/4));
         tmpPointsArr.push_back(DOUBLE2(0,10));
-        game_engine::instance()->FillPolygon(tmpPointsArr, 7);
+        GameEngine::instance()->FillPolygon(tmpPointsArr, 7);
     }
 
    
-    game_engine::instance()->set_color(COLOR(0, 0, 0));
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_color(COLOR(0, 0, 0));
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void RotLight::Tick(double deltaTime)
 {

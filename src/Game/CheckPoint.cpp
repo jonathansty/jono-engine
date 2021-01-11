@@ -26,7 +26,7 @@ CheckPoint::CheckPoint(DOUBLE2 position, Bitmap* bmpFlagPtr)
     m_ActPtr->SetName(String("CheckPoint"));
     m_ActPtr->AddContactListener(this);
 
-    m_SndPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/CheckPoint01.wav"));
+    m_SndPtr = SoundManager::instance()->LoadSound(String("Resources/Sound/Entity/CheckPoint01.wav"));
 }
 
 CheckPoint::~CheckPoint()
@@ -64,10 +64,10 @@ void CheckPoint::Paint()
     MATRIX3X2 matTranslate,matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-20, -m_BmpFlagPtr->GetHeight() / 2));
-    game_engine::instance()->set_world_matrix(matPivot * matTranslate);
-    game_engine::instance()->DrawBitmap(m_BmpFlagPtr);
+    GameEngine::instance()->set_world_matrix(matPivot * matTranslate);
+    GameEngine::instance()->DrawBitmap(m_BmpFlagPtr);
 
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void CheckPoint::Tick(double deltaTime)
 {

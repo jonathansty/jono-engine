@@ -9,7 +9,7 @@
 
 class Level;
 class Avatar;
-class sound_manager;
+class SoundManager;
 
 class Entity : public ContactListener
 {

@@ -59,7 +59,7 @@ void CoinList::PaintDebug()
         {
             DOUBLE2 position = m_CoinsPtrArr[i]->GetPosition() - DOUBLE2(10,30);
             String name = m_CoinsPtrArr[i]->GetName();
-            game_engine::instance()->DrawString(name,position);
+            GameEngine::instance()->DrawString(name,position);
         }
     }
 }

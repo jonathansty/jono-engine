@@ -39,7 +39,7 @@ using Microsoft::WRL::ComPtr;
 #include "rtti/rtti.h"
 
 #include "Box2DDebugRenderer.h"
-#include "DebugOverlays/OverlayManager.h"
+#include "debug_overlays/OverlayManager.h"
 #include "GameSettings.h"
 #include "GameEngine.h"
 

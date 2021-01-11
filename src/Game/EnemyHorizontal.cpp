@@ -49,7 +49,7 @@ void EnemyHorizontal::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOt
         {
             m_ActPtr->SetTrigger(true);
         }
-        game_engine::instance()->ConsolePrintString(m_Name + String(" has ") + String(m_Lifes) + String("left. "));
+        GameEngine::instance()->print_string(m_Name + String(" has ") + String(m_Lifes) + String("left. "));
     }
 }
 
@@ -59,7 +59,7 @@ void EnemyHorizontal::EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOthe
     {
         m_boolAttackContact = false;
         m_AvatarPtr->SetMoveState(Avatar::moveState::JUMPING);
-        //game_engine::instance()->ConsolePrintString(String(m_boolAttackContact));
+        //GameEngine::instance()->ConsolePrintString(String(m_boolAttackContact));
     }
 }
 
@@ -100,9 +100,9 @@ void EnemyHorizontal::Paint()
     MATRIX3X2 matTranslate, matCenter;
     matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
     matCenter.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
-    game_engine::instance()->set_world_matrix(matCenter * matTranslate);
-    game_engine::instance()->DrawBitmap(m_BmpPtr);
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(matCenter * matTranslate);
+    GameEngine::instance()->DrawBitmap(m_BmpPtr);
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 PhysicsActor* EnemyHorizontal::GetActor()
 {

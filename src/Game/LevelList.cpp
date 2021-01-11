@@ -26,7 +26,7 @@ std::string LevelList::GetLevel(int numberLevel)
     int level = numberLevel;
     if (level > m_NumberOfLevels)
     {
-        game_engine::instance()->message_box(String("The level with number ") + String(numberLevel) + String(" does not exist"));
+        GameEngine::instance()->message_box(String("The level with number ") + String(numberLevel) + String(" does not exist"));
     }
     level = numberLevel;
     return m_LevelPathsPtr[level];

@@ -23,12 +23,9 @@ public:
 	PickUp( const PickUp& ) = delete;
 	PickUp& operator=( const PickUp& ) = delete;
 
-	//--------------------------------------------------------
-	// ContactListener overloaded member function declarations
-	//--------------------------------------------------------
-	virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr); 
-	virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
-	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
+	virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr) override{};
+	virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr) override{};
+	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse) override{};
 
     virtual void Tick(double deltaTime) = 0;
     virtual void Paint() = 0;
@@ -39,10 +36,6 @@ public:
     virtual String GetName();
 
 protected:
-
-    //-------------------------------------------------
-    // Datamembers								
-    //-------------------------------------------------
     String m_Name = String("NaN");
     PhysicsActor* m_ActPtr = nullptr;
     DOUBLE2 m_Position;
@@ -50,10 +43,6 @@ protected:
     
     sound* m_SndHitPtr = nullptr;
     b2Filter m_CollisionFilter;
-private: 
-	//-------------------------------------------------
-	// Datamembers								
-	//-------------------------------------------------
 
 };
 

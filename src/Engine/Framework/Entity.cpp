@@ -32,12 +32,15 @@ Entity::Entity(XMFLOAT2 pos)
 Entity::Entity()
 	: _pos(0.0,0.0,0.0)
 	, _scale({ 1.0f,1.0f,1.0f })
+	, _parent(nullptr)
 {
 
 }
 
 framework::Entity::Entity(XMFLOAT3 pos)
 	: _pos(pos)
+	, _scale({ 1.0f, 1.0f, 1.0f })
+	, _parent(nullptr) 
 {
 
 }

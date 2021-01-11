@@ -10,6 +10,9 @@ namespace framework
 
 	struct EntityHandle
 	{
+		EntityHandle(){};
+		~EntityHandle() = default;
+
 		uint64_t id;
 		uint64_t generation;
 

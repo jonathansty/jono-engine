@@ -14,16 +14,16 @@ Entity(position), m_TriggerPosition(triggerposition)
     m_ActBasePtr = new PhysicsActor(position, 0, BodyType::STATIC);
     m_ActBasePtr->AddBoxShape(10, 10);
     m_ActBasePtr->SetGhost(true);
-    m_ActGatePtr = new PhysicsActor(position - DOUBLE2(0,game_engine::instance()->get_height()/2), 0, BodyType::DYNAMIC);
+    m_ActGatePtr = new PhysicsActor(position - DOUBLE2(0,GameEngine::instance()->get_height()/2), 0, BodyType::DYNAMIC);
     m_ActGatePtr->SetGravityScale(1);
     b2Filter filter;
     filter.groupIndex = -5;
     m_ActGatePtr->SetCollisionFilter(filter);
     m_Width = 50;
-    m_Height = game_engine::instance()->get_height() + 800;
+    m_Height = GameEngine::instance()->get_height() + 800;
     m_ActGatePtr->AddBoxShape(m_Width,m_Height);
-    m_JntGatePtr = new PhysicsPrismaticJoint(m_ActBasePtr, DOUBLE2(), m_ActGatePtr, DOUBLE2(0,(game_engine::instance()->get_height()+800)/2 ), DOUBLE2(0, 1), false);
-    m_JntGatePtr->EnableJointLimits(true, -game_engine::instance()->get_height(),0 );
+    m_JntGatePtr = new PhysicsPrismaticJoint(m_ActBasePtr, DOUBLE2(), m_ActGatePtr, DOUBLE2(0,(GameEngine::instance()->get_height()+800)/2 ), DOUBLE2(0, 1), false);
+    m_JntGatePtr->EnableJointLimits(true, -GameEngine::instance()->get_height(),0 );
 }
 
 Gate::~Gate()
@@ -71,10 +71,10 @@ void Gate::Paint()
     DOUBLE2 position = m_ActGatePtr->GetPosition();
     matTranslate.SetAsTranslate(position);
     matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
-    game_engine::instance()->set_world_matrix(matPivot * matTranslate);
-    game_engine::instance()->set_color(COLOR(0, 0, 0, 255));
-    game_engine::instance()->FillRect(0, 0, m_Width, m_Height);
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(matPivot * matTranslate);
+    GameEngine::instance()->set_color(COLOR(0, 0, 0, 255));
+    GameEngine::instance()->FillRect(0, 0, m_Width, m_Height);
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Gate::Reset()
 {

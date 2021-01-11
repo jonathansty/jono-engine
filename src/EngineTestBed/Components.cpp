@@ -137,7 +137,7 @@ void SimpleMeshComponent::update(float dt)
 
 void SimpleMeshComponent::render()
 {
-	auto ctx = game_engine::instance()->GetD3DDeviceContext();
+	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
 
 	// Draw mesh
 	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -211,9 +211,9 @@ void CameraComponent::look_at(XMFLOAT3 eye, XMFLOAT3 target, XMFLOAT3 up /*= { 0
 void CameraComponent::update(float dt)
 {
 	// Ignore any input if ImGui is focused
-	if (!game_engine::instance()->is_viewport_focused() || !game_engine::instance()->IsMouseButtonDown(VK_LBUTTON))
+	if (!GameEngine::instance()->is_viewport_focused() || !GameEngine::instance()->is_mouse_button_down(VK_LBUTTON))
 	{
-		_prev_position = game_engine::instance()->get_mouse_pos_in_viewport();
+		_prev_position = GameEngine::instance()->get_mouse_pos_in_viewport();
 		return;
 	}
 
@@ -236,43 +236,44 @@ void CameraComponent::update(float dt)
 	XMVECTOR movement = XMVectorZero();
 	float fly_speed = _fly_speed;
 
-	if (game_engine::instance()->IsKeyboardKeyDown(VK_LSHIFT))
+	if (GameEngine::instance()->is_key_down(VK_LSHIFT))
 	{
 		fly_speed *= 1.5f;
 	}
 
-	if (game_engine::instance()->IsKeyboardKeyDown('W'))
+	if (GameEngine::instance()->is_key_down('W'))
 	{
 		movement += movement + forward * fly_speed * dt;
 	}
 
-	if (game_engine::instance()->IsKeyboardKeyDown('S'))
+	if (GameEngine::instance()->is_key_down('S'))
 	{
 		movement += movement + forward * -fly_speed * dt;
 	}
 
-	if (game_engine::instance()->IsKeyboardKeyDown('A'))
+	if (GameEngine::instance()->is_key_down('A'))
 	{
 		movement += rght * -fly_speed * dt;
 	}
 
-	if (game_engine::instance()->IsKeyboardKeyDown('D'))
+	if (GameEngine::instance()->is_key_down('D'))
 	{
 		movement += rght * fly_speed * dt;
 	}
 
-	if (game_engine::instance()->IsKeyboardKeyDown(VK_SPACE))
+	if (GameEngine::instance()->is_key_down(VK_SPACE))
 	{
 		movement += up * (fly_speed * 0.5f) * dt;
 	}
 
-	if (game_engine::instance()->IsKeyboardKeyDown(VK_LCONTROL))
+	if (GameEngine::instance()->is_key_down(VK_LCONTROL))
 	{
 		movement -= up * (fly_speed * 0.5f) * dt;
 	}
 
 
-	XMVECTOR pos = XMLoadFloat3(&ent->get_local_position());
+	auto ent_pos = ent->get_local_position();
+	XMVECTOR pos = XMLoadFloat3(&ent_pos);
 	pos += movement;
 	XMFLOAT3 result{};
 	XMStoreFloat3(&result, pos);
@@ -280,7 +281,7 @@ void CameraComponent::update(float dt)
 
 	// Handle rotation
 	{
-		XMFLOAT2 current = game_engine::instance()->get_mouse_pos_in_viewport();
+		XMFLOAT2 current = GameEngine::instance()->get_mouse_pos_in_viewport();
 		double x = current.x - _prev_position.x;
 		double y = current.y - _prev_position.y;
 		_prev_position = current;
@@ -298,8 +299,8 @@ void CameraComponent::update(float dt)
 		rght0 = XMVector4Transform(rght0, XMMatrixRotationQuaternion(x_quat));
 
 		XMVECTOR y_quat = XMQuaternionRotationAxis(rght0, y_angle);
-		XMVECTOR result = XMQuaternionMultiply(x_quat, y_quat);
-		ent->set_rotation(result);
+		XMVECTOR transform_result = XMQuaternionMultiply(x_quat, y_quat);
+		ent->set_rotation(transform_result);
 	}
 
 

@@ -8,14 +8,14 @@
 
 namespace Shaders
 {
-#include "Shaders/generated/simple_px.h"
-#include "Shaders/generated/simple_vx.h"
-#include "Shaders/generated/debug_px.h"
+#include "shaders/simple_px.h"
+#include "shaders/simple_vx.h"
+#include "shaders/debug_px.h"
 }
 
 void MaterialResource::load()
 {
-	auto device = game_engine::instance()->GetD3DDevice();
+	auto device = GameEngine::instance()->GetD3DDevice();
 
 
 	using VertexType = ModelVertex;

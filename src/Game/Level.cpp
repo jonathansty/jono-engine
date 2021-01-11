@@ -53,7 +53,7 @@ Level::~Level()
 //}
 void Level::Paint()
 {
-    game_engine::instance()->DrawBitmap(m_BmpLevelPtr);
+    GameEngine::instance()->DrawBitmap(m_BmpLevelPtr);
 
 }
 int Level::GetHeight()

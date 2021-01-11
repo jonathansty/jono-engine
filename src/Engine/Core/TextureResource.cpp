@@ -11,8 +11,8 @@ TextureResource::TextureResource(FromFileResourceParameters params) : TCachedRes
 void TextureResource::load()
 {
 	std::string const& path = get_init_parameters().path;
-	auto device = game_engine::instance()->GetD3DDevice();
-	auto ctx = game_engine::instance()->GetD3DDeviceContext();
+	auto device = GameEngine::instance()->GetD3DDevice();
+	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
 
 	std::wstring wpath = std::wstring(path.begin(), path.end());
 	SUCCEEDED(DirectX::CreateWICTextureFromFile(device, wpath.c_str(), _resource.GetAddressOf(), _srv.GetAddressOf()));

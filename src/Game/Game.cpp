@@ -57,7 +57,7 @@ Game::Game(ElectronicJonaJoy* owner)
     m_FileManagerPtr = _owner->GetFileManager();
 
 
-    m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-6000, 0),bitmap_manager::instance()->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")));
+    m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-6000, 0),BitmapManager::instance()->load_image(String("Resources/Animations/CheckPointBg.png")));
     m_CheckPointRotLightPtr = new RotLight(DOUBLE2(-6000, 0));
     m_CheckPointRotLightPtr->SetColor(COLOR(255, 255, 255));
     m_CheckPointRotLightPtr->SetRadius(150);
@@ -119,12 +119,12 @@ void Game::tick(double deltaTime)
         m_AccuTime += deltaTime;
 
         //Fade in and fade out of the soundv
-        if (!(sound_manager::instance()->isMusicMuted())&& !(sound_manager::instance()->isSoundMuted()))
+        if (!(SoundManager::instance()->isMusicMuted())&& !(SoundManager::instance()->isSoundMuted()))
         {
-            sound_manager::instance()->FadeIn(m_SndBgMusicPtr, deltaTime);
+            SoundManager::instance()->FadeIn(m_SndBgMusicPtr, deltaTime);
             if (m_CameraPtr->GetCameraShakeMode() == Camera::Shakemode::EPICEFFECT)
             {
-                sound_manager::instance()->FadeOut(m_SndBgMusicPtr, deltaTime);
+                SoundManager::instance()->FadeOut(m_SndBgMusicPtr, deltaTime);
             }
         }
         UpdateDrawMode();
@@ -191,7 +191,7 @@ void Game::UpdateObjects(double deltaTime)
     {
         if (tmpHitEnemy->GetActor()->GetName() != String("EnemyRocketLauncher") && tmpHitEnemy->GetActor()->GetName() != String("EnemyLaser") && tmpHitEnemy->GetActor()->GetName() != String("EnemyHorizontal"))
         {
-            CombRotLightCpBg* tmpLightPtr = new CombRotLightCpBg(tmpHitEnemy->GetPosition(), 100, bitmap_manager::instance()->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")), COLOR(255, 255, 255));
+            CombRotLightCpBg* tmpLightPtr = new CombRotLightCpBg(tmpHitEnemy->GetPosition(), 100, BitmapManager::instance()->load_image(String("Resources/Animations/CheckPointBg.png")), COLOR(255, 255, 255));
             m_AnimationListPtr->Add(tmpLightPtr);
             m_AnimationListPtr->Add(new EntityDestroy(tmpHitEnemy->GetPosition()));
             m_EnemyListPtr->Remove(tmpHitEnemy);
@@ -203,7 +203,7 @@ void Game::UpdateObjects(double deltaTime)
             m_AnimationListPtr->Add(new EntityDestroy(tmpHitEnemy->GetPosition()));
             if (tmpEnemyHorizontal->GetLifes() <= 0)
             {
-                CombRotLightCpBg* tmpLightPtr = new CombRotLightCpBg(tmpHitEnemy->GetPosition(), 100, bitmap_manager::instance()->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")), COLOR(255, 255, 255));
+                CombRotLightCpBg* tmpLightPtr = new CombRotLightCpBg(tmpHitEnemy->GetPosition(), 100, BitmapManager::instance()->load_image(String("Resources/Animations/CheckPointBg.png")), COLOR(255, 255, 255));
                 m_AnimationListPtr->Add(tmpLightPtr);
                 m_EnemyListPtr->Remove(tmpEnemyHorizontal);
                 tmpHitEnemy = nullptr;
@@ -244,7 +244,7 @@ void Game::UpdateGameChecks(double deltaTime)
 }
 void Game::UpdateKeyChecks(double deltaTime)
 {
-	auto engine = game_engine::instance();
+	auto engine = GameEngine::instance();
     // Process input for when the game is running
     if (m_GameState == GameState::Running)
     {
@@ -294,12 +294,12 @@ void Game::UpdateKeyChecks(double deltaTime)
         if (engine->is_key_pressed(VK_F11))
         {
             m_TimeMultiplier += 1;
-            engine->ConsolePrintString(String("the game runs ") + String(m_TimeMultiplier) + String(" times faster."));
+            engine->print_string(String("the game runs ") + String(m_TimeMultiplier) + String(" times faster."));
         }
         if (engine->is_key_pressed(VK_F10))
         {
             m_TimeMultiplier -= 1;
-            engine->ConsolePrintString(String("the game runs ") + String(m_TimeMultiplier) + String(" times slower."));
+            engine->print_string(String("the game runs ") + String(m_TimeMultiplier) + String(" times slower."));
         }
     }
 
@@ -324,46 +324,46 @@ void Game::UpdateKeyChecks(double deltaTime)
 		XMFLOAT2 mousePosition = engine->get_mouse_pos_in_viewport();
 		DOUBLE2 pos = m_CameraPtr->GetViewMatrix().Inverse().TransformPoint(DOUBLE2(mousePosition.x, mousePosition.y));
 		mousePosition = XMFLOAT2{ (float)pos.x, (float)pos.y };
-        engine->ConsolePrintString(String("[") +
+        engine->print_string(String("[") +
 			String(mousePosition.x) +
 			String(", ") +
 			String(mousePosition.y) + String("]"));
 		if (m_EntityLastHitCheckpointPtr != nullptr)
 		{
-            engine->ConsolePrintString(String("The camera position is: "));
-            engine->ConsolePrintString(m_CameraPtr->GetCameraPosition().ToString());
+            engine->print_string(String("The camera position is: "));
+            engine->print_string(m_CameraPtr->GetCameraPosition().ToString());
 		}
 
 	}
 }
 void Game::UpdateDrawMode()
 {
-    auto engine = game_engine::instance();
+    auto engine = GameEngine::instance();
     if (engine->is_key_pressed('P'))
     {
         if(m_DrawMode == DrawMode::Physics)
         {
             m_DrawMode = DrawMode::Bitmap;
             engine->enable_physics_debug_rendering(false);
-            engine->ConsolePrintString(String("Draw mode is now changed to PhysicsActors and bitmaps."));
+            engine->print_string(String("Draw mode is now changed to PhysicsActors and bitmaps."));
         }
         else if(m_DrawMode == (DrawMode::Physics | DrawMode::Bitmap))
         {
             m_DrawMode = DrawMode::Physics;
             engine->enable_physics_debug_rendering(true);
-            engine->ConsolePrintString(String("Draw mode is now changed to Bitmaps."));
+            engine->print_string(String("Draw mode is now changed to Bitmaps."));
         }
         else if(m_DrawMode == DrawMode::Bitmap)
         {
             m_DrawMode = DrawMode::Physics | DrawMode::Bitmap;
             engine->enable_physics_debug_rendering(true);
-            engine->ConsolePrintString(String("Draw mode is now changed to PhysicsActors only."));
+            engine->print_string(String("Draw mode is now changed to PhysicsActors only."));
         }
     }
 }
 void Game::paint()
 {
-	auto engine = game_engine::instance();
+	auto engine = GameEngine::instance();
 
     assert(m_CameraPtr);
     MATRIX3X2 matView = m_CameraPtr->GetViewMatrix();
@@ -419,7 +419,7 @@ void Game::Initializeall(const std::string& fileName)
     m_EntityLastHitCheckpointPtr = nullptr;
     m_FileManagerPtr->ReadGameInit(fileName);
     
-    m_SndEpicModePtr = sound_manager::instance()->LoadMusic(String("Resources/Sound/BgMusic/Exhilarate.mp3"));
+    m_SndEpicModePtr = SoundManager::instance()->LoadMusic(String("Resources/Sound/BgMusic/Exhilarate.mp3"));
     // ----- Set The Items ---- //
     m_AvatarPtr = m_FileManagerPtr->GetAvatar();
     m_LevelPtr = m_FileManagerPtr->GetLevel();
@@ -457,7 +457,7 @@ void Game::LoadLevel(const std::string& filePath)
 
     if (m_CheckPointBgPtr == nullptr)
     {
-        m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-300, 0),bitmap_manager::instance()->LoadBitmapFile(String("Resources/Animations/CheckPointBg.png")));
+        m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-300, 0),BitmapManager::instance()->load_image(String("Resources/Animations/CheckPointBg.png")));
     }
     Initializeall(filePath);
     m_AvatarPtr->SetKeyBinds(m_FileManagerPtr->GetKeyBinds());
@@ -468,7 +468,7 @@ void Game::LoadLevel(const std::string& filePath)
         
     }
     UnPause();
-    game_engine::instance()->ConsolePrintString(String("Loaded level ") + String(filePath.c_str()));
+    GameEngine::instance()->print_string(String("Loaded level ") + String(filePath.c_str()));
     m_SndBgMusicPtr->set_volume(0);
     m_SndBgMusicPtr->play();
 }
@@ -492,25 +492,25 @@ void Game::drawBackgroundGradient(int levels)
 {
     if (levels > 255)
     {
-        game_engine::instance()->message_box(String("Please input a valid amount of levels(under 255)"));
-        game_engine::instance()->quit_game();
+        GameEngine::instance()->message_box(String("Please input a valid amount of levels(under 255)"));
+        GameEngine::instance()->quit_game();
     }
     for (int i = 0; i < 255; i++)
     {
         COLOR tmpColor = COLOR(255 - (255 / levels)*i, 0, 255 - (255 / levels)*i);
-        game_engine::instance()->set_color(tmpColor);
-        game_engine::instance()->FillRect(0, - 1 + i*game_engine::instance()->get_height() / levels, game_engine::instance()->get_width(), 1 + game_engine::instance()->get_height() / levels + i * game_engine::instance()->get_height() / levels);
-        game_engine::instance()->set_color(COLOR(0, 0, 0));
+        GameEngine::instance()->set_color(tmpColor);
+        GameEngine::instance()->FillRect(0, - 1 + i*GameEngine::instance()->get_height() / levels, GameEngine::instance()->get_width(), 1 + GameEngine::instance()->get_height() / levels + i * GameEngine::instance()->get_height() / levels);
+        GameEngine::instance()->set_color(COLOR(0, 0, 0));
     }
 }
 
 void Game::Pause()
 {
-    game_engine::instance()->set_physics_step(false);
+    GameEngine::instance()->set_physics_step(false);
 }
 void Game::UnPause()
 {
-    game_engine::instance()->set_physics_step(true);
+    GameEngine::instance()->set_physics_step(true);
     
 }
 /**
@@ -541,7 +541,7 @@ void Game::Restart()
     //TODO: Fix resetting the level state for checkpoints to the state of when we reached the checkpoint
     m_FileManagerPtr->ReadGameInitForObject(m_Level, "EnemyRocketLauncher");
     m_FileManagerPtr->ReadGameInitForObject(m_Level, "Arrow");
-    game_engine::instance()->ConsolePrintString(String("Respawned the avatar!"));
+    GameEngine::instance()->print_string(String("Respawned the avatar!"));
     if (m_EntityLastHitCheckpointPtr != nullptr)
     {
         m_CameraPtr->Reset(m_EntityLastHitCheckpointPtr->GetCameraPosition());
@@ -553,7 +553,7 @@ void Game::Restart()
         }
         
         //m_CameraPtr->SetCameraStartPosition(m_EntityLastHitCheckpointPtr->GetCameraPosition());
-        game_engine::instance()->ConsolePrintString(String("Camera angle set to: ") + String(m_EntityLastHitCheckpointPtr->GetCameraAngle()));
+        GameEngine::instance()->print_string(String("Camera angle set to: ") + String(m_EntityLastHitCheckpointPtr->GetCameraAngle()));
     }
     else
     {

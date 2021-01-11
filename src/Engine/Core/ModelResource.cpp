@@ -15,8 +15,8 @@
 // Inline shaders
 namespace Shaders
 {
-#include "shaders/generated/simple_vx.h"
-#include "shaders/generated/simple_px.h"
+#include "shaders/simple_vx.h"
+#include "shaders/simple_px.h"
 }
 
 
@@ -34,15 +34,15 @@ void ModelResource::load()
 
 	std::string dir_path = path;
 	dir_path = dir_path.substr(0, dir_path.rfind('/') + 1);
-	auto device = game_engine::instance()->GetD3DDevice();
-	auto ctx = game_engine::instance()->GetD3DDeviceContext();
+	auto device = GameEngine::instance()->GetD3DDevice();
+	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
 
 	using namespace Assimp;
 	Importer importer{};
 	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded | aiProcess_CalcTangentSpace);
 	if (!scene)
 	{
-		//TODO: Load error mesh
+		GameEngine::instance()->print_string(importer.GetErrorString());
 		return;
 	}
 

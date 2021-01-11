@@ -40,7 +40,7 @@ void Trail::Paint(DOUBLE2 position)
     {
         m_deqTrailPtrArr.pop_back();
     }
-    game_engine::instance()->set_color(COLOR(255, 255, 255, m_Opacity));
+    GameEngine::instance()->set_color(COLOR(255, 255, 255, m_Opacity));
     for (std::size_t i = 0, n = m_deqTrailPtrArr.size(); i < n - 1; i++)
     {
         DOUBLE2 pos = m_deqTrailPtrArr[i];
@@ -50,7 +50,7 @@ void Trail::Paint(DOUBLE2 position)
         if (size - (size / m_TrailLength)*(double)i > 0)
         {
 
-            game_engine::instance()->FillEllipse(pos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
+            GameEngine::instance()->FillEllipse(pos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
             DOUBLE2 vector = pos2 - pos;
             if (vector.Length() > 5)
             {
@@ -59,13 +59,13 @@ void Trail::Paint(DOUBLE2 position)
                     double spaceBetween = vector.Length() / m_AmountOfInterpolation;
                     DOUBLE2 normVector = vector.Normalized();
                     midPos = normVector*j*spaceBetween;
-                    game_engine::instance()->FillEllipse(pos + midPos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
+                    GameEngine::instance()->FillEllipse(pos + midPos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
                 }
             }
         }
 
     }
-    game_engine::instance()->set_color(COLOR(0, 0, 0,255));
+    GameEngine::instance()->set_color(COLOR(0, 0, 0,255));
 }
 void Trail::SetSize(double size)
 {

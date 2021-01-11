@@ -53,7 +53,7 @@ void ArrowShooter::Tick(double deltaTime)
 
     if (m_AccuTime > m_IntervalTime)
     {
-        Arrow* tmpArrowPtr = new Arrow(m_Position + m_direction*30,bitmap_manager::instance()->LoadBitmapFile(String("Resources/Interactions/arrowUp.png")));
+        Arrow* tmpArrowPtr = new Arrow(m_Position + m_direction*30,BitmapManager::instance()->load_image(String("Resources/Interactions/arrowUp.png")));
         tmpArrowPtr->GetActor()->SetLinearVelocity(m_direction * SPEED);
         tmpArrowPtr->GetActor()->SetAngle(m_Angle);
         tmpArrowPtr->SetPushPower(m_PushPower);
@@ -80,11 +80,11 @@ void ArrowShooter::Paint()
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-WIDTH/2,-HEIGHT/2));
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
-    game_engine::instance()->set_world_matrix(matPivot * matRotate * matTranslate);
-    game_engine::instance()->FillRect(0, 0, WIDTH, HEIGHT);
-    game_engine::instance()->FillRect(-10, HEIGHT, 0, HEIGHT + 10);
-    game_engine::instance()->FillRect(WIDTH, HEIGHT, WIDTH + 10, HEIGHT + 10);
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(matPivot * matRotate * matTranslate);
+    GameEngine::instance()->FillRect(0, 0, WIDTH, HEIGHT);
+    GameEngine::instance()->FillRect(-10, HEIGHT, 0, HEIGHT + 10);
+    GameEngine::instance()->FillRect(WIDTH, HEIGHT, WIDTH + 10, HEIGHT + 10);
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     for (int i = 0; i < m_AmountOfArrows; i++)
     {
         if (m_ArrowsPtrArr[i] != nullptr)

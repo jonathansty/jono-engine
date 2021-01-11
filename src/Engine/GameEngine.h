@@ -10,11 +10,11 @@
 
 #include "TaskScheduler.h"
 
-#include "DebugOverlays/MetricsOverlay.h"
-#include "DebugOverlays/OverlayManager.h"
+#include "debug_overlays/MetricsOverlay.h"
+#include "debug_overlays/OverlayManager.h"
 
-#include "cli/CommandLine.h"
 #include <Box2D/b2_world_callbacks.h>
+#include "cli/CommandLine.h"
 
 class Bitmap;
 class String;
@@ -40,16 +40,16 @@ enum class bitmap_interpolation_mode {
 
 void OutputDebugString(const String &textRef);
 
-class game_engine : public TSingleton<game_engine>, public b2ContactListener {
+class GameEngine : public TSingleton<GameEngine>, public b2ContactListener {
 private:
-	game_engine();
-	friend class TSingleton<game_engine>;
+	GameEngine();
+	friend class TSingleton<GameEngine>;
 
 public:
-	virtual ~game_engine();
+	virtual ~GameEngine();
 
-	game_engine(const game_engine &) = delete;
-	game_engine &operator=(const game_engine &) = delete;
+	GameEngine(const GameEngine &) = delete;
+	GameEngine &operator=(const GameEngine &) = delete;
 
 	// entry point to run a specific game
 	static int run_game(HINSTANCE hInstance, cli::CommandLine const &cmdLine, int iCmdShow, class AbstractGame *game);
@@ -296,11 +296,11 @@ public:
 	void set_default_font();
 
 	//! Sets the color of the brush that is used to draw and fill
-	//! Example: game_engine::instance()->SetColor(COLOR(255,127,64));
+	//! Example: GameEngine::instance()->SetColor(COLOR(255,127,64));
 	void set_color(COLOR colorVal);
 
 	//! Returns the color of the brush used to draw and fill
-	//! Example: COLOR c = game_engine::instance()->GetColor();
+	//! Example: COLOR c = GameEngine::instance()->GetColor();
 	COLOR get_color();
 
 	// Accessor Methods
@@ -326,7 +326,7 @@ public:
 
 	// Returns a POINT containing the window coordinates of the mouse offset in the viewport
 	// Usage example:
-	// POINT mousePos = game_engine::instance()->GetMousePosition();
+	// POINT mousePos = GameEngine::instance()->GetMousePosition();
 	XMFLOAT2 get_mouse_pos_in_viewport() const;
 
 	//! returns pointer to the Audio object
@@ -499,7 +499,9 @@ private:
 	std::wstring _name;
 };
 
-#define GPU_SCOPED_EVENT(ctx, name) scoped_gpu_event perf##__LINE__##Event = scoped_gpu_event(ctx, name)
+#define COMBINE1(X, Y) X##Y // helper macro
+#define COMBINE(X, Y) COMBINE1(X, Y)
+#define GPU_SCOPED_EVENT(ctx, name) scoped_gpu_event COMBINE(perfEvent, __LINE__) = scoped_gpu_event(ctx, name)
 #define GPU_MARKER(ctx, name) ctx->SetMarker(name);
 #else
 #define GPU_SCOPED_EVENT(ctx, name)

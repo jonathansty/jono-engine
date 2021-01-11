@@ -40,12 +40,12 @@ void GUIBase::Initialize()
 	m_FontPtr = new Font(String("Consolas"), 14);
 	m_FontPtr->SetAlignVCenter();
 	m_FontPtr->SetAlignHCenter();
-	game_engine::instance()->register_gui(this);
+	GameEngine::instance()->register_gui(this);
 }
 
 GUIBase::~GUIBase()
 {
-	game_engine::instance()->unregister_gui(this);
+	GameEngine::instance()->unregister_gui(this);
 	delete m_FontPtr;
 }
 
@@ -154,7 +154,7 @@ void GUIBase::LimitTextLengthToClientArea()
 	bool bRepeat = false;
 	do
 	{
-		game_engine::instance()->GetDWriteFactory()->CreateTextLayout(m_Text.C_str(), m_Text.Length(), m_FontPtr->GetTextFormat(),
+		GameEngine::instance()->GetDWriteFactory()->CreateTextLayout(m_Text.C_str(), m_Text.Length(), m_FontPtr->GetTextFormat(),
 			(FLOAT)(m_ClientRect.right - m_ClientRect.left),
 			(FLOAT)(m_ClientRect.bottom - m_ClientRect.top),
 			&textLayoutPtr);

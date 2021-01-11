@@ -33,7 +33,7 @@ bool SVGParser::LoadGeometryFromSvgFile(const String& svgFilePathRef, std::vecto
 
 	if (!svgFile)
 	{
-		game_engine::instance()->message_box(String("Failed to load geometry from file ") + svgFilePathRef);
+		GameEngine::instance()->message_box(String("Failed to load geometry from file ") + svgFilePathRef);
 		return false;
 	}
 	else
@@ -59,7 +59,7 @@ bool SVGParser::LoadGeometryFromSvgFile(const String& svgFilePathRef, std::vecto
 		result = ExtractPathInformation(svgText, sGeometryInfo);
 		if (result == false)
 		{
-			game_engine::instance()->message_box(String("Malformed geometry information in file ") + svgFilePathRef);
+			GameEngine::instance()->message_box(String("Malformed geometry information in file ") + svgFilePathRef);
 			return false;
 		}
 
@@ -150,7 +150,7 @@ bool SVGParser::ReadSvgFromData(tstring& sTransformInfoRef, tstring& sPathInfoRe
 	bool result = ReadSvgPath(sPathInfoRef, verticesArrRef);
 	if (!result)
 	{
-		game_engine::instance()->message_box(String("SVG path read failed"));
+		GameEngine::instance()->message_box(String("SVG path read failed"));
 		return false;
 	}
 	return true;
@@ -170,7 +170,7 @@ bool SVGParser::GetGeometryOrGroup(ID2D1Factory* factoryPtr, std::vector<ID2D1Ge
 			HRESULT hr = factoryPtr->CreateGeometryGroup(D2D1_FILL_MODE_WINDING, &childrenRef[0], UINT32(childrenRef.size()), &geometryGroupPtr);
 			if (FAILED(hr))
 			{
-				game_engine::instance()->message_box(String("CreateTransformedGeometry failed"));
+				GameEngine::instance()->message_box(String("CreateTransformedGeometry failed"));
 				return false;
 			}
 
@@ -226,7 +226,7 @@ MATRIX3X2 SVGParser::ReadTransform(tstring& sTransformInfoRef)
 			break;
 
 		default:
-			game_engine::instance()->message_box(String("unsupported transform attribute"));
+			GameEngine::instance()->message_box(String("unsupported transform attribute"));
 			break;
 		}
 	}
@@ -316,7 +316,7 @@ bool SVGParser::ReadSvgPath(tstring& sPathInfoRef, std::vector<std::vector<DOUBL
 
 		case _T('C'):
 		case _T('c'):
-			game_engine::instance()->message_box(String(cmd) + String(" Beziers are not supported. Have another look at the guide, or select all nodes in inkscape and press shift + L"));
+			GameEngine::instance()->message_box(String(cmd) + String(" Beziers are not supported. Have another look at the guide, or select all nodes in inkscape and press shift + L"));
 			break;
 
 			//case _T('S'):
@@ -366,7 +366,7 @@ bool SVGParser::ReadSvgPath(tstring& sPathInfoRef, std::vector<std::vector<DOUBL
 			//}
 			//	break;
 		default:
-			game_engine::instance()->message_box(String(cmd) + String(" is not a supported SVG command"));
+			GameEngine::instance()->message_box(String(cmd) + String(" is not a supported SVG command"));
 			//return false;
 		}
 	}
@@ -406,7 +406,7 @@ void SVGParser::SkipSvgComma(tstringstream& ssRef, bool isRequired)
 
 		if (ssRef.eof())
 		{
-			if (isRequired) game_engine::instance()->message_box(String("expected comma or whitespace"));
+			if (isRequired) GameEngine::instance()->message_box(String("expected comma or whitespace"));
 			break;
 		}
 
@@ -457,7 +457,7 @@ DOUBLE2 SVGParser::ReadSvgPoint(tstringstream& ssRef)
 
 DOUBLE2 SVGParser::FirstSvgPoint(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cmd, bool isOpen, bool advance)
 {
-	if (!isOpen) game_engine::instance()->message_box(String("expected 'Z' or 'z' command"));
+	if (!isOpen) GameEngine::instance()->message_box(String("expected 'Z' or 'z' command"));
 
 	DOUBLE2 p = ReadSvgPoint(ssRef);
 
@@ -480,7 +480,7 @@ DOUBLE2 SVGParser::FirstSvgPoint(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cm
 // Throws an exception if the figure is not open
 DOUBLE2 SVGParser::NextSvgPoint(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cmd, bool isOpen, bool advance)
 {
-	if (isOpen) game_engine::instance()->message_box(String("expected 'M' or 'm' command"));
+	if (isOpen) GameEngine::instance()->message_box(String("expected 'M' or 'm' command"));
 
 	DOUBLE2 p = ReadSvgPoint(ssRef);
 
@@ -502,7 +502,7 @@ DOUBLE2 SVGParser::NextSvgPoint(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cmd
 DOUBLE2 SVGParser::NextSvgCoordX(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cmd, bool isOpen)
 {
 	if (isOpen)
-		game_engine::instance()->message_box(String("expected 'M' or 'm' command"));
+		GameEngine::instance()->message_box(String("expected 'M' or 'm' command"));
 
 	double c;
 	ssRef >> c;
@@ -524,7 +524,7 @@ DOUBLE2 SVGParser::NextSvgCoordX(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cm
 DOUBLE2 SVGParser::NextSvgCoordY(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cmd, bool isOpen)
 {
 	if (isOpen)
-		game_engine::instance()->message_box(String("expected 'M' or 'm' command"));
+		GameEngine::instance()->message_box(String("expected 'M' or 'm' command"));
 
 	double c;
 	ssRef >> c;

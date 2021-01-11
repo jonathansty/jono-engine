@@ -7,23 +7,23 @@
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 
-#include "DebugOverlays/MetricsOverlay.h"
-#include "DebugOverlays/RTTIDebugOverlay.h"
-#include "DebugOverlays/ImGuiOverlays.h"
+#include "debug_overlays/MetricsOverlay.h"
+#include "debug_overlays/RTTIDebugOverlay.h"
+#include "debug_overlays/ImGuiOverlays.h"
 
 #include "Core/ResourceLoader.h"
 #include "Core/logging.h"
 
-enki::TaskScheduler game_engine::s_TaskScheduler;
-std::thread::id game_engine::s_MainThread;
+enki::TaskScheduler GameEngine::s_TaskScheduler;
+std::thread::id GameEngine::s_MainThread;
 
 //-----------------------------------------------------------------
 // Windows Functions
 //-----------------------------------------------------------------
-LRESULT CALLBACK game_engine::WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK GameEngine::WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Route all Windows messages to the game engine
-	return game_engine::instance()->handle_event(hWindow, msg, wParam, lParam);
+	return GameEngine::instance()->handle_event(hWindow, msg, wParam, lParam);
 }
 
 //-----------------------------------------------------------------
@@ -38,7 +38,7 @@ void OutputDebugString(const String& text)
 //-----------------------------------------------------------------
 // GameEngine Constructor(s)/Destructor
 //-----------------------------------------------------------------
-game_engine::game_engine() 
+GameEngine::GameEngine() 
 	: _hinstance(0)
 	, _hwindow(NULL)
 	, _icon(0)
@@ -96,7 +96,7 @@ game_engine::game_engine()
 	//m_hKeybThread = CreateThread(NULL, NULL, (LPTHREAD_START_ROUTINE) ::KeybThreadProc, this, NULL, &m_dKeybThreadID);
 }
 
-game_engine::~game_engine()
+GameEngine::~GameEngine()
 {
 
 	//Free the console
@@ -129,7 +129,7 @@ game_engine::~game_engine()
 	CoUninitialize();
 }
 
-void game_engine::set_game(AbstractGame* gamePtr)
+void GameEngine::set_game(AbstractGame* gamePtr)
 {
 	_game = gamePtr;
 }
@@ -137,13 +137,13 @@ void game_engine::set_game(AbstractGame* gamePtr)
 //-----------------------------------------------------------------
 // Game Engine General Methods
 //-----------------------------------------------------------------
-void game_engine::set_title(const String& titleRef)
+void GameEngine::set_title(const String& titleRef)
 {
 	_title = titleRef;
 }
 
 
-int game_engine::run(HINSTANCE hInstance, int iCmdShow)
+int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 {
 	s_MainThread = std::this_thread::get_id();
 
@@ -152,7 +152,7 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 	if (FAILED(hr))
 
 	// create the game engine object, exit if failure
-	assert(game_engine::instance());
+	assert(GameEngine::instance());
 
 	// set the instance member variable of the game engine
 	this->set_instance(hInstance);
@@ -224,10 +224,6 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 	// User defined functions for start of the game
 	_game->start();
 
-	//// Sleep is evil: default Sleep(1) actually sleeps for 14 msecs !!!
-	//// http://msdn.microsoft.com/en-us/library/windows/desktop/ms686307(v=vs.85).aspx
-	#include <Mmsystem.h>
-	#pragma comment (lib, "Winmm.lib")
 	TIMECAPS tc;
 	// Set time period to 1 msec, does not garantee this setting ( practical: set to 1 results in 2 as min on one system)
 	timeGetDevCaps(&tc, sizeof(TIMECAPS));
@@ -266,11 +262,6 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 		{
 			++_frame_cnt;
 
-			if (_frame_cnt == 2)
-			{
-				_game->start();
-			}
-			else
 			{
 				double current = _game_timer->GetGameTime();
 				double elapsed = current - previous; // calc timedifference
@@ -392,7 +383,7 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 		vp.MaxDepth = 1.0f;
 		_d3d_device_ctx->RSSetViewports(1, &vp);
 
-		FLOAT color[4] = { 0.0,0.25,0.25f,1.0f };
+		FLOAT color[4] = { 0.25f,0.25f,0.25f,1.0f };
 		//m_D3DDeviceContextPtr->ClearRenderTargetView(_game_output_rtv, color);
 		//m_D3DDeviceContextPtr->ClearDepthStencilView(_game_output_dsv, D3D11_CLEAR_DEPTH, 0.0f, 0);
 		//m_D3DDeviceContextPtr->OMSetRenderTargets(1, &_game_output_rtv, _game_output_dsv);
@@ -404,14 +395,10 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 		// Render 3D before 2D
 		{
 			GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Render3D");
-			if (_frame_cnt >= 2)
-			{
-				_game->render_3d();
-			}
+			_game->render_3d();
 		}
 
 		// Render Direct2D to the swapchain
-		//if (m_FrameCounter >= 2)
 		{
 			ExecuteDirect2DPaint();
 		}
@@ -458,13 +445,13 @@ int game_engine::run(HINSTANCE hInstance, int iCmdShow)
 	return 0;
 }
 
-void game_engine::ExecuteDirect2DPaint()
+void GameEngine::ExecuteDirect2DPaint()
 {
 	GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Game2D");
 
 	d2d_begin_paint();
 	auto size = this->get_viewport_size();
-	RECT usedClientRect = { 0, 0, size.x, size.y };
+	RECT usedClientRect = { 0, 0, (LONG)size.x, (LONG)size.y };
 
 	_can_paint = true;
 	// make sure the view matrix is taken in account
@@ -496,10 +483,10 @@ void game_engine::ExecuteDirect2DPaint()
 	bool result = d2d_end_paint();
 
 	// if drawing failed, terminate the game
-	if (!result) PostMessage(game_engine::get_window(), WM_DESTROY, 0, 0);
+	if (!result) PostMessage(GameEngine::get_window(), WM_DESTROY, 0, 0);
 }
 
-bool game_engine::register_wnd_class()
+bool GameEngine::register_wnd_class()
 {
 	WNDCLASSEX wndclass;
 
@@ -522,7 +509,7 @@ bool game_engine::register_wnd_class()
 	return true;
 }
 
-bool game_engine::open_window(int iCmdShow)
+bool GameEngine::open_window(int iCmdShow)
 {
 	// Calculate the window size and position based upon the game size
 	DWORD windowStyle = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_MAXIMIZEBOX | WS_OVERLAPPEDWINDOW;
@@ -557,7 +544,7 @@ bool game_engine::open_window(int iCmdShow)
 	return true;
 }
 
-void game_engine::resize_swapchain(uint32_t width, uint32_t height)
+void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 {
 
 	// Resize the swapchain
@@ -587,18 +574,18 @@ void game_engine::resize_swapchain(uint32_t width, uint32_t height)
 	backBuffer->Release();
 }
 
-void game_engine::quit_game()
+void GameEngine::quit_game()
 {
-	PostMessage(game_engine::get_window(), WM_DESTROY, 0, 0);
+	PostMessage(GameEngine::get_window(), WM_DESTROY, 0, 0);
 }
 
-void game_engine::message_box(const String &text) const
+void GameEngine::message_box(const String &text) const
 {
 	if constexpr (sizeof(TCHAR) == 2)	::MessageBoxW(get_window(),(wchar_t*)text.C_str(), (wchar_t*)_title.C_str(), MB_ICONEXCLAMATION | MB_OK);
 	else MessageBoxA(get_window(), (char*)text.C_str(), (char*)_title.C_str(), MB_ICONEXCLAMATION | MB_OK);
 }
 
-void game_engine::console_create()
+void GameEngine::console_create()
 {
 	if (_console == NULL && AllocConsole())
 	{
@@ -614,7 +601,7 @@ void game_engine::console_create()
 	}
 }
 
-void game_engine::console_set_fore_color(bool red, bool green, bool blue, bool intensity)
+void GameEngine::console_set_fore_color(bool red, bool green, bool blue, bool intensity)
 {
 	//retrieve current color settings
 	CONSOLE_SCREEN_BUFFER_INFO buffer = {};
@@ -631,7 +618,7 @@ void game_engine::console_set_fore_color(bool red, bool green, bool blue, bool i
 	SetConsoleTextAttribute(_console, wAttributes);
 }
 
-void game_engine::console_set_back_color(bool red, bool green, bool blue, bool intensity)
+void GameEngine::console_set_back_color(bool red, bool green, bool blue, bool intensity)
 {
 	//retrieve current color settings
 	CONSOLE_SCREEN_BUFFER_INFO buffer = {};
@@ -648,7 +635,7 @@ void game_engine::console_set_back_color(bool red, bool green, bool blue, bool i
 	SetConsoleTextAttribute(_console, wAttributes);
 }
 
-void game_engine::console_set_cursor_position(int column, int row)
+void GameEngine::console_set_cursor_position(int column, int row)
 {
 	//cool trick to avoid the use of the lettersX andY on COORD --> those are not compatible with the renaming used in the template classesXandY class templates
 	struct coord {
@@ -666,7 +653,7 @@ void game_engine::console_set_cursor_position(int column, int row)
 	SetConsoleCursorPosition(_console, myUnion.COORD);
 }
 
-void game_engine::ConsolePrintString(const String& textRef)
+void GameEngine::print_string(const String& textRef)
 {
 #ifdef _UNICODE
 	std::wcout << textRef.C_str() << "\n";
@@ -677,7 +664,7 @@ void game_engine::ConsolePrintString(const String& textRef)
 	::OutputDebugString(copy);
 }
 
-void game_engine::ConsolePrintString(std::string const& msg)
+void GameEngine::print_string(std::string const& msg)
 {
 	std::cout << msg.c_str() << "\n";
 	::OutputDebugStringA(msg.c_str());
@@ -693,10 +680,10 @@ void game_engine::ConsolePrintString(std::string const& msg)
 //#endif
 //}
 
-void game_engine::ConsolePrintString(const String& textRef, int column, int row)
+void GameEngine::print_string(const String& textRef, int column, int row)
 {
 	console_set_cursor_position(column, row);
-	ConsolePrintString(textRef);
+	print_string(textRef);
 }
 
 //void GameEngine::ConsolePrintString(string text, int column, int row) 
@@ -705,22 +692,22 @@ void game_engine::ConsolePrintString(const String& textRef, int column, int row)
 //	ConsolePrintString(text);
 //}
 
-void game_engine::console_clear() const
+void GameEngine::console_clear() const
 {
 	system("cls");
 }
 
-void game_engine::set_instance(HINSTANCE hInstance)
+void GameEngine::set_instance(HINSTANCE hInstance)
 {
 	_hinstance = hInstance;
 }
 
-void game_engine::set_window(HWND hWindow)
+void GameEngine::set_window(HWND hWindow)
 {
 	_hwindow = hWindow;
 }
 
-bool game_engine::is_paint_allowed() const
+bool GameEngine::is_paint_allowed() const
 {
 	if (_can_paint) return true;
 	else
@@ -732,18 +719,18 @@ bool game_engine::is_paint_allowed() const
 	}
 }
 
-void game_engine::set_color(COLOR color)
+void GameEngine::set_color(COLOR color)
 {
 	_color_brush->SetColor(D2D1::ColorF((FLOAT)(color.red / 255.0), (FLOAT)(color.green / 255.0), (FLOAT)(color.blue / 255.0), (FLOAT)(color.alpha / 255.0)));
 }
 
-COLOR game_engine::get_color()
+COLOR GameEngine::get_color()
 {
 	D2D1_COLOR_F dColor = _color_brush->GetColor();
 	return COLOR((unsigned char)(dColor.r * 255), (unsigned char)(dColor.g * 255), (unsigned char)(dColor.b * 255), (unsigned char)(dColor.a * 255));
 }
 
-bool game_engine::DrawSolidBackground(COLOR backgroundColor)
+bool GameEngine::DrawSolidBackground(COLOR backgroundColor)
 {
 	if (!is_paint_allowed()) return false;
 
@@ -752,12 +739,12 @@ bool game_engine::DrawSolidBackground(COLOR backgroundColor)
 	return true;
 }
 
-bool game_engine::DrawLine(int x1, int y1, int x2, int y2)
+bool GameEngine::DrawLine(int x1, int y1, int x2, int y2)
 {
 	return DrawLine(DOUBLE2(x1, y1), DOUBLE2(x2, y2), 1.0);
 }
 
-bool game_engine::DrawLine(DOUBLE2 p1, DOUBLE2 p2, double strokeWidth)
+bool GameEngine::DrawLine(DOUBLE2 p1, DOUBLE2 p2, double strokeWidth)
 {
 	if (!is_paint_allowed()) return false;
 	_d2d_rt->DrawLine(Point2F((FLOAT)p1.x, (FLOAT)p1.y), Point2F((FLOAT)p2.x, (FLOAT)p2.y), _color_brush, (FLOAT)strokeWidth);
@@ -765,7 +752,7 @@ bool game_engine::DrawLine(DOUBLE2 p1, DOUBLE2 p2, double strokeWidth)
 	return true;
 }
 
-bool game_engine::DrawPolygon(const std::vector<POINT>& ptsArr, unsigned int count, bool close)
+bool GameEngine::DrawPolygon(const std::vector<POINT>& ptsArr, unsigned int count, bool close)
 {
 	if (!is_paint_allowed()) return false;
 	//unsigned int count = ptsArr.size();
@@ -784,7 +771,7 @@ bool game_engine::DrawPolygon(const std::vector<POINT>& ptsArr, unsigned int cou
 	return true;
 }
 
-bool game_engine::DrawPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned int count, bool close, double strokeWidth)
+bool GameEngine::DrawPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned int count, bool close, double strokeWidth)
 {
 	if (!is_paint_allowed()) return false;
 	//unsigned int count = ptsArr.size();
@@ -804,7 +791,7 @@ bool game_engine::DrawPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned int c
 	return true;
 }
 
-bool game_engine::FillPolygon(const std::vector<POINT>& ptsArr, unsigned int count)
+bool GameEngine::FillPolygon(const std::vector<POINT>& ptsArr, unsigned int count)
 {
 	if (!is_paint_allowed()) return false;
 	//unsigned int count = ptsArr.size();
@@ -862,7 +849,7 @@ bool game_engine::FillPolygon(const std::vector<POINT>& ptsArr, unsigned int cou
 	return false;
 }
 
-bool game_engine::FillPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned int count)
+bool GameEngine::FillPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned int count)
 {
 	if (!is_paint_allowed())return false;
 	//unsigned int count = ptsArr.size();
@@ -923,25 +910,25 @@ bool game_engine::FillPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned int c
 	return false;
 }
 
-bool game_engine::DrawRect(int left, int top, int right, int bottom)
+bool GameEngine::DrawRect(int left, int top, int right, int bottom)
 {
 	RECT2 rect2(left, top, right, bottom);
 	return DrawRect(rect2, 1.0);
 }
 
-bool game_engine::DrawRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, double strokeWidth)
+bool GameEngine::DrawRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, double strokeWidth)
 {
 	RECT2 rect2(topLeft.x, topLeft.y, rightbottom.x, rightbottom.y);
 	return DrawRect(rect2, strokeWidth);
 }
 
-bool game_engine::DrawRect(RECT rect)
+bool GameEngine::DrawRect(RECT rect)
 {
 	RECT2 rect2(rect.left, rect.top, rect.right, rect.bottom);
 	return DrawRect(rect2, 1.0);
 }
 
-bool game_engine::DrawRect(RECT2 rect, double strokeWidth)
+bool GameEngine::DrawRect(RECT2 rect, double strokeWidth)
 {
 	if (!is_paint_allowed()) return false;
 	if ((rect.right < rect.left) || (rect.bottom < rect.top)) MessageBoxA(NULL, "GameEngine::DrawRect error: invalid dimensions!", "GameEngine says NO", MB_OK);
@@ -951,25 +938,25 @@ bool game_engine::DrawRect(RECT2 rect, double strokeWidth)
 	return true;
 }
 
-bool game_engine::FillRect(int left, int top, int right, int bottom)
+bool GameEngine::FillRect(int left, int top, int right, int bottom)
 {
 	RECT2 rect2(left, top, right, bottom);
 	return FillRect(rect2);
 }
 
-bool game_engine::FillRect(DOUBLE2 topLeft, DOUBLE2 rightbottom)
+bool GameEngine::FillRect(DOUBLE2 topLeft, DOUBLE2 rightbottom)
 {
 	RECT2 rect2(topLeft.x, topLeft.y, rightbottom.x, rightbottom.y);
 	return FillRect(rect2);
 }
 
-bool game_engine::FillRect(RECT rect)
+bool GameEngine::FillRect(RECT rect)
 {
 	RECT2 rect2(rect.left, rect.top, rect.right, rect.bottom);
 	return FillRect(rect2);
 }
 
-bool game_engine::FillRect(RECT2 rect)
+bool GameEngine::FillRect(RECT2 rect)
 {
 	if (!is_paint_allowed()) return false;
 	if ((rect.right < rect.left) || (rect.bottom < rect.top)) MessageBoxA(NULL, "GameEngine::DrawRect error: invalid dimensions!", "GameEngine says NO", MB_OK);
@@ -980,7 +967,7 @@ bool game_engine::FillRect(RECT2 rect)
 	return true;
 }
 
-bool game_engine::DrawRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY)
+bool GameEngine::DrawRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY)
 {
 	if (!is_paint_allowed()) return false;
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)left, (FLOAT)top, (FLOAT)(right), (FLOAT)(bottom));
@@ -989,7 +976,7 @@ bool game_engine::DrawRoundedRect(int left, int top, int right, int bottom, int 
 	return true;
 }
 
-bool game_engine::DrawRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY, double strokeWidth)
+bool GameEngine::DrawRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY, double strokeWidth)
 {
 	if (!is_paint_allowed()) return false;
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(rightbottom.x), (FLOAT)(rightbottom.y));
@@ -998,7 +985,7 @@ bool game_engine::DrawRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radi
 	return true;
 }
 
-bool game_engine::DrawRoundedRect(RECT rect, int radiusX, int radiusY)
+bool GameEngine::DrawRoundedRect(RECT rect, int radiusX, int radiusY)
 {
 	if (!is_paint_allowed()) return false;
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
@@ -1007,7 +994,7 @@ bool game_engine::DrawRoundedRect(RECT rect, int radiusX, int radiusY)
 	return true;
 }
 
-bool game_engine::DrawRoundedRect(RECT2 rect, int radiusX, int radiusY, double strokeWidth)
+bool GameEngine::DrawRoundedRect(RECT2 rect, int radiusX, int radiusY, double strokeWidth)
 {
 	if (!is_paint_allowed()) return false;
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
@@ -1016,7 +1003,7 @@ bool game_engine::DrawRoundedRect(RECT2 rect, int radiusX, int radiusY, double s
 	return true;
 }
 
-bool game_engine::FillRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY)
+bool GameEngine::FillRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY)
 {
 	if (!is_paint_allowed()) return false;
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)left, (FLOAT)top, (FLOAT)(right), (FLOAT)(bottom));
@@ -1025,7 +1012,7 @@ bool game_engine::FillRoundedRect(int left, int top, int right, int bottom, int 
 	return true;
 }
 
-bool game_engine::FillRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY)
+bool GameEngine::FillRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY)
 {
 	if (!is_paint_allowed()) return false;
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(rightbottom.x), (FLOAT)(rightbottom.y));
@@ -1034,7 +1021,7 @@ bool game_engine::FillRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radi
 	return true;
 }
 
-bool game_engine::FillRoundedRect(RECT rect, int radiusX, int radiusY)
+bool GameEngine::FillRoundedRect(RECT rect, int radiusX, int radiusY)
 {
 	if (!is_paint_allowed()) return false;
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
@@ -1043,7 +1030,7 @@ bool game_engine::FillRoundedRect(RECT rect, int radiusX, int radiusY)
 	return true;
 }
 
-bool game_engine::FillRoundedRect(RECT2 rect, int radiusX, int radiusY)
+bool GameEngine::FillRoundedRect(RECT2 rect, int radiusX, int radiusY)
 {
 	if (!is_paint_allowed()) return false;
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
@@ -1052,7 +1039,7 @@ bool game_engine::FillRoundedRect(RECT2 rect, int radiusX, int radiusY)
 	return true;
 }
 
-bool game_engine::DrawEllipse(int centerX, int centerY, int radiusX, int radiusY)
+bool GameEngine::DrawEllipse(int centerX, int centerY, int radiusX, int radiusY)
 {
 	if (!is_paint_allowed()) return false;
 
@@ -1062,7 +1049,7 @@ bool game_engine::DrawEllipse(int centerX, int centerY, int radiusX, int radiusY
 	return true;
 }
 
-bool game_engine::DrawEllipse(DOUBLE2 centerPt, double radiusX, double radiusY, double strokeWidth)
+bool GameEngine::DrawEllipse(DOUBLE2 centerPt, double radiusX, double radiusY, double strokeWidth)
 {
 	if (!is_paint_allowed()) return false;
 
@@ -1072,7 +1059,7 @@ bool game_engine::DrawEllipse(DOUBLE2 centerPt, double radiusX, double radiusY, 
 	return true;
 }
 
-bool game_engine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY)
+bool GameEngine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY)
 {
 	if (!is_paint_allowed()) return false;
 
@@ -1082,7 +1069,7 @@ bool game_engine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY
 	return true;
 }
 
-bool game_engine::FillEllipse(DOUBLE2 centerPt, double radiusX, double radiusY)
+bool GameEngine::FillEllipse(DOUBLE2 centerPt, double radiusX, double radiusY)
 {
 	if (!is_paint_allowed()) return false;
 
@@ -1091,12 +1078,12 @@ bool game_engine::FillEllipse(DOUBLE2 centerPt, double radiusX, double radiusY)
 
 	return true;
 }
-bool game_engine::DrawString(const String& text, RECT boundingRect)
+bool GameEngine::DrawString(const String& text, RECT boundingRect)
 {
 	return DrawString(text, boundingRect.left, boundingRect.top, boundingRect.right, boundingRect.bottom);
 }
 
-bool game_engine::DrawString(const String& text, RECT2 boundingRect)
+bool GameEngine::DrawString(const String& text, RECT2 boundingRect)
 {
 	return DrawString(text, (int)boundingRect.left, (int)boundingRect.top, (int)boundingRect.right, (int)boundingRect.bottom);
 }
@@ -1111,12 +1098,12 @@ bool game_engine::DrawString(const String& text, RECT2 boundingRect)
 //	return DrawString(text, (int)boundingRect.left, (int)boundingRect.top, (int)boundingRect.right, (int)boundingRect.bottom);
 //}
 
-bool game_engine::DrawString(const String& text, int left, int top, int right, int bottom)
+bool GameEngine::DrawString(const String& text, int left, int top, int right, int bottom)
 {
 	return DrawString(text, DOUBLE2(left, top), right, bottom);
 }
 
-bool game_engine::DrawString(const String& text, DOUBLE2 topLeft, double right, double bottom)
+bool GameEngine::DrawString(const String& text, DOUBLE2 topLeft, double right, double bottom)
 {
 	tstring stext(text.C_str(), text.C_str() + text.Length());
 	if (!is_paint_allowed()) return false;
@@ -1158,42 +1145,42 @@ bool game_engine::DrawString(const String& text, DOUBLE2 topLeft, double right, 
 //	return true;
 //}
 
-bool game_engine::DrawBitmap(Bitmap* imagePtr)
+bool GameEngine::DrawBitmap(Bitmap* imagePtr)
 {
 	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
 	return DrawBitmap(imagePtr, DOUBLE2(0, 0), srcRect2);
 }
 
-bool game_engine::DrawBitmap(Bitmap* imagePtr, RECT srcRect)
+bool GameEngine::DrawBitmap(Bitmap* imagePtr, RECT srcRect)
 {
 	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	RECT2 srcRect2(srcRect.left, srcRect.top, srcRect.right, srcRect.bottom);
 	return DrawBitmap(imagePtr, DOUBLE2(0, 0), srcRect2);
 }
 
-bool game_engine::DrawBitmap(Bitmap* imagePtr, int x, int y)
+bool GameEngine::DrawBitmap(Bitmap* imagePtr, int x, int y)
 {
 	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
 	return DrawBitmap(imagePtr, DOUBLE2(x, y), srcRect2);
 }
 
-bool game_engine::DrawBitmap(Bitmap* imagePtr, int x, int y, RECT srcRect)
+bool GameEngine::DrawBitmap(Bitmap* imagePtr, int x, int y, RECT srcRect)
 {
 	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	RECT2 srcRect2(srcRect.left, srcRect.top, srcRect.right, srcRect.bottom);
 	return DrawBitmap(imagePtr, DOUBLE2(x, y), srcRect2);
 }
 
-bool game_engine::DrawBitmap(Bitmap* imagePtr, DOUBLE2 position)
+bool GameEngine::DrawBitmap(Bitmap* imagePtr, DOUBLE2 position)
 {
 	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
 	return DrawBitmap(imagePtr, position, srcRect2);
 }
 
-bool game_engine::DrawBitmap(Bitmap* imagePtr, DOUBLE2 position, RECT2 srcRect)
+bool GameEngine::DrawBitmap(Bitmap* imagePtr, DOUBLE2 position, RECT2 srcRect)
 {
 	if (!is_paint_allowed()) return false;
 	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
@@ -1247,32 +1234,32 @@ bool game_engine::DrawBitmap(Bitmap* imagePtr, DOUBLE2 position, RECT2 srcRect)
 //}
 
 //world matrix operations
-void game_engine::set_world_matrix(const MATRIX3X2& mat)
+void GameEngine::set_world_matrix(const MATRIX3X2& mat)
 {
 	_mat_world = mat;
 	D2D1::Matrix3x2F matDirect2D = (_mat_world * _mat_view).ToMatrix3x2F();
 	_d2d_rt->SetTransform(matDirect2D);
 }
 
-MATRIX3X2 game_engine::get_world_matrix()
+MATRIX3X2 GameEngine::get_world_matrix()
 {
 	return _mat_world;
 }
 
 //view matrix operations
-void game_engine::set_view_matrix(const MATRIX3X2& mat)
+void GameEngine::set_view_matrix(const MATRIX3X2& mat)
 {
 	_mat_view = mat;
 	D2D1::Matrix3x2F matDirect2D = (_mat_world * _mat_view).ToMatrix3x2F();
 	_d2d_rt->SetTransform(matDirect2D);
 }
 
-MATRIX3X2 game_engine::get_view_matrix()
+MATRIX3X2 GameEngine::get_view_matrix()
 {
 	return _mat_view;
 }
 
-void game_engine::set_bitmap_interpolation_mode(bitmap_interpolation_mode mode)
+void GameEngine::set_bitmap_interpolation_mode(bitmap_interpolation_mode mode)
 {
 	switch (mode)
 	{
@@ -1290,7 +1277,7 @@ void game_engine::set_bitmap_interpolation_mode(bitmap_interpolation_mode mode)
 	_bitmap_interpolation_mode = mode;
 }
 
-void game_engine::enable_aa(bool isEnabled)
+void GameEngine::enable_aa(bool isEnabled)
 {
 	_aa_desc.Count = isEnabled ? 4 : 1;
 	_aa_desc.Quality = isEnabled ? D3D11_CENTER_MULTISAMPLE_PATTERN : 0;
@@ -1302,42 +1289,32 @@ void game_engine::enable_aa(bool isEnabled)
 	_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
 }
 
-void game_engine::enable_physics_debug_rendering(bool isEnabled)
+void GameEngine::enable_physics_debug_rendering(bool isEnabled)
 {
 	_debug_physics_rendering = isEnabled;
 }
 
-void game_engine::SetBitmapInterpolationModeLinear()
-{
-	_hw_bitmap_interpolation_mode = D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
-}
-
-void game_engine::SetBitmapInterpolationModeNearestNeighbor()
-{
-	_hw_bitmap_interpolation_mode = D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
-}
-
-void game_engine::set_font(Font* fontPtr)
+void GameEngine::set_font(Font* fontPtr)
 {
 	_user_font = fontPtr;
 }
 
-Font* game_engine::get_font()
+Font* GameEngine::get_font()
 {
 	return _user_font;
 }
 
-void game_engine::set_default_font()
+void GameEngine::set_default_font()
 {
 	_user_font = _default_font;
 }
 
-void game_engine::register_gui(GUIBase *guiPtr)
+void GameEngine::register_gui(GUIBase *guiPtr)
 {
 	_gui_elements.push_back(guiPtr);
 }
 
-void game_engine::unregister_gui(GUIBase *targetPtr)
+void GameEngine::unregister_gui(GUIBase *targetPtr)
 {
 	std::vector<GUIBase*>::iterator pos = find(_gui_elements.begin(), _gui_elements.end(), targetPtr); // find algorithm from STL
 
@@ -1349,129 +1326,129 @@ void game_engine::unregister_gui(GUIBase *targetPtr)
 	}
 }
 
-HINSTANCE game_engine::get_instance() const
+HINSTANCE GameEngine::get_instance() const
 {
 	return _hinstance;
 }
 
-HWND game_engine::get_window() const
+HWND GameEngine::get_window() const
 {
 	return _hwindow;
 }
 
-String game_engine::get_title() const
+String GameEngine::get_title() const
 {
 	//return *m_Title; 
 	return _title;
 }
 
-WORD game_engine::get_icon() const
+WORD GameEngine::get_icon() const
 {
 	return _icon;
 }
 
-WORD game_engine::get_small_icon() const
+WORD GameEngine::get_small_icon() const
 {
 	return _small_icon;
 }
 
-ImVec2 game_engine::get_window_size() const
+ImVec2 GameEngine::get_window_size() const
 {
 	return { (float)_window_width, (float)_window_height };
 }
 
-ImVec2 game_engine::get_viewport_size(int id ) const
+ImVec2 GameEngine::get_viewport_size(int id ) const
 {
 	assert(id == 0);
 	return { (float)_window_width, (float)_window_height };
 }
 
-int game_engine::get_width() const
+int GameEngine::get_width() const
 {
 	return _window_width;
 }
 
-int game_engine::get_height() const
+int GameEngine::get_height() const
 {
 	return _window_height;
 }
 
-bool game_engine::get_sleep() const
+bool GameEngine::get_sleep() const
 {
 	return _should_sleep ? true : false;
 }
 
-ID3D11Device* game_engine::GetD3DDevice() const
+ID3D11Device* GameEngine::GetD3DDevice() const
 {
 	return _d3d_device;
 }
 
-ID3D11DeviceContext* game_engine::GetD3DDeviceContext() const
+ID3D11DeviceContext* GameEngine::GetD3DDeviceContext() const
 {
 	return _d3d_device_ctx;
 }
 
-ID3D11RenderTargetView* game_engine::GetD3DBackBufferView() const
+ID3D11RenderTargetView* GameEngine::GetD3DBackBufferView() const
 {
 	return _d3d_backbuffer_view;
 }
 
-ID2D1Factory* game_engine::GetD2DFactory() const
+ID2D1Factory* GameEngine::GetD2DFactory() const
 {
 	return _d2d_factory;
 }
 
-IWICImagingFactory* game_engine::GetWICImagingFactory() const
+IWICImagingFactory* GameEngine::GetWICImagingFactory() const
 {
 	return _wic_factory;
 }
 
-ID2D1RenderTarget* game_engine::GetHwndRenderTarget() const
+ID2D1RenderTarget* GameEngine::GetHwndRenderTarget() const
 {
 	return _d2d_rt;
 }
 
-IDWriteFactory* game_engine::GetDWriteFactory() const
+IDWriteFactory* GameEngine::GetDWriteFactory() const
 {
 	return _dwrite_factory;
 }
 
-XMFLOAT2 game_engine::get_mouse_pos_in_viewport()const
+XMFLOAT2 GameEngine::get_mouse_pos_in_viewport()const
 {
 	return XMFLOAT2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y};
 }
 
-AudioSystem * game_engine::GetXAudio() const
+AudioSystem * GameEngine::GetXAudio() const
 {
 	return _xaudio_system;
 }
 
-void game_engine::set_icon(WORD wIcon)
+void GameEngine::set_icon(WORD wIcon)
 {
 	_icon = wIcon;
 }
 
-void game_engine::set_small_icon(WORD wSmallIcon)
+void GameEngine::set_small_icon(WORD wSmallIcon)
 {
 	_small_icon = wSmallIcon;
 }
 
-void game_engine::set_width(int iWidth)
+void GameEngine::set_width(int iWidth)
 {
 	_window_width = iWidth;
 }
 
-void game_engine::set_height(int iHeight)
+void GameEngine::set_height(int iHeight)
 {
 	_window_height = iHeight;
 }
 
-void game_engine::set_physics_step(bool bEnabled)
+void GameEngine::set_physics_step(bool bEnabled)
 {
 	_physics_step_enabled = bEnabled;
 }
 
-void game_engine::set_sleep(bool bSleep)
+void GameEngine::set_sleep(bool bSleep)
 {
 	if (_game_timer == nullptr)
 		return;
@@ -1487,12 +1464,12 @@ void game_engine::set_sleep(bool bSleep)
 	}
 }
 
-void game_engine::enable_vsync(bool bEnable)
+void GameEngine::enable_vsync(bool bEnable)
 {
 	_vsync_enabled = bEnable;
 }
 
-void game_engine::GUITick(double deltaTime)
+void GameEngine::GUITick(double deltaTime)
 {
 	for (GUIBase* guiPtr : _gui_elements)
 	{
@@ -1500,7 +1477,7 @@ void game_engine::GUITick(double deltaTime)
 	}
 }
 
-void game_engine::GUIPaint()
+void GameEngine::GUIPaint()
 {
 	for (GUIBase* guiPtr : _gui_elements)
 	{
@@ -1508,7 +1485,7 @@ void game_engine::GUIPaint()
 	}
 }
 
-void game_engine::GUIConsumeEvents()
+void GameEngine::GUIConsumeEvents()
 {
 	for (GUIBase* guiPtr : _gui_elements)
 	{
@@ -1517,7 +1494,7 @@ void game_engine::GUIConsumeEvents()
 
 }
 
-void game_engine::apply_settings(GameSettings &gameSettings)
+void GameEngine::apply_settings(GameSettings &gameSettings)
 {
 	set_width(gameSettings.m_WindowWidth);
 	set_height(gameSettings.m_WindowHeight);
@@ -1531,50 +1508,50 @@ void game_engine::apply_settings(GameSettings &gameSettings)
 	}
 }
 
-void game_engine::set_vsync(bool vsync)
+void GameEngine::set_vsync(bool vsync)
 {
 	_vsync_enabled = vsync;
 }
 
-bool game_engine::get_vsync()
+bool GameEngine::get_vsync()
 {
 	return _vsync_enabled;
 }
 
 
 // Input methods
-bool game_engine::is_key_down(int key) const
+bool GameEngine::is_key_down(int key) const
 {
 	return _input_manager->is_key_down(key);
 }
 
-bool game_engine::is_key_pressed(int key) const
+bool GameEngine::is_key_pressed(int key) const
 {
 	return _input_manager->is_key_pressed(key);
 }
 
-bool game_engine::is_key_released(int key) const
+bool GameEngine::is_key_released(int key) const
 {
 	return _input_manager->IsKeyboardKeyReleased(key);
 }
 
-bool game_engine::is_mouse_button_down(int button) const
+bool GameEngine::is_mouse_button_down(int button) const
 {
 	return _input_manager->is_mouse_button_down(button);
 }
 
-bool game_engine::is_mouse_button_pressed(int button) const
+bool GameEngine::is_mouse_button_pressed(int button) const
 {
 	return _input_manager->IsMouseButtonPressed(button);
 }
 
-bool game_engine::is_mouse_button_released(int button) const
+bool GameEngine::is_mouse_button_released(int button) const
 {
 	return _input_manager->is_mouse_button_released(button);
 }
 
 
-LRESULT game_engine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Get window rectangle and HDC
 	RECT windowClientRect;
@@ -1599,7 +1576,7 @@ LRESULT game_engine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM 
 
 	case WM_DESTROY:
 		// End the game and exit the application
-		game_engine::instance()->_should_quit = true;
+		GameEngine::instance()->_should_quit = true;
 		PostQuitMessage(0);
 		return 0;
 
@@ -1660,7 +1637,7 @@ LRESULT game_engine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM 
 // duration of the app. These resources include the Direct2D and
 // DirectWrite factories,  and a DirectWrite Text Format object
 // (used for identifying particular font characteristics).
-void game_engine::CreateDeviceIndependentResources()
+void GameEngine::CreateDeviceIndependentResources()
 {
 	// Create Direct3D 11 factory
 	{
@@ -1678,7 +1655,7 @@ void game_engine::CreateDeviceIndependentResources()
 	_d3d_device_ctx->QueryInterface(IID_PPV_ARGS(&_d3d_user_defined_annotation));
 }
 
-void game_engine::CreateD2DFactory()
+void GameEngine::CreateD2DFactory()
 {
 	HRESULT hr;
 	// Create a Direct2D factory.
@@ -1695,7 +1672,7 @@ void game_engine::CreateD2DFactory()
 	}
 }
 
-void game_engine::CreateWICFactory()
+void GameEngine::CreateWICFactory()
 {
 	HRESULT hr;
 	// Create a WIC factory if it does not exists
@@ -1712,7 +1689,7 @@ void game_engine::CreateWICFactory()
 	}
 }
 
-void game_engine::CreateWriteFactory()
+void GameEngine::CreateWriteFactory()
 {
 	HRESULT hr;
 	// Create a DirectWrite factory.
@@ -1735,7 +1712,7 @@ void game_engine::CreateWriteFactory()
 //  need to be recreated in case of Direct3D device loss (eg. display
 //  change, remoting, removal of video card, etc).
 //
-void game_engine::CreateDeviceResources()
+void GameEngine::CreateDeviceResources()
 {
 	HRESULT hr = S_OK;
 
@@ -1806,7 +1783,7 @@ void game_engine::CreateDeviceResources()
 //  Discard device-specific resources which need to be recreated
 //  when a Direct3D device is lost
 //
-void game_engine::DiscardDeviceResources()
+void GameEngine::DiscardDeviceResources()
 {
 	_initialized = false;
 	if (_color_brush)
@@ -1827,7 +1804,7 @@ void game_engine::DiscardDeviceResources()
 	_dxgi_swapchain = nullptr;
 }
 
-void game_engine::d2d_begin_paint()
+void GameEngine::d2d_begin_paint()
 {
 	if (_d2d_rt)
 	{
@@ -1839,7 +1816,7 @@ void game_engine::d2d_begin_paint()
 	}
 }
 
-bool game_engine::d2d_end_paint()
+bool GameEngine::d2d_end_paint()
 {
 	HRESULT hr = S_OK;
 	hr = _d2d_rt->EndDraw();
@@ -1853,7 +1830,7 @@ bool game_engine::d2d_end_paint()
 }
 
 // Box2D overloads
-void game_engine::BeginContact(b2Contact* contactPtr)
+void GameEngine::BeginContact(b2Contact* contactPtr)
 {
     b2Fixture * fixAPtr = contactPtr->GetFixtureA();
     b2Fixture * fixBPtr = contactPtr->GetFixtureB();
@@ -1899,7 +1876,7 @@ void game_engine::BeginContact(b2Contact* contactPtr)
     }
 };
 
-void game_engine::EndContact(b2Contact* contactPtr)
+void GameEngine::EndContact(b2Contact* contactPtr)
 {
     b2Fixture * fixAPtr = contactPtr->GetFixtureA();
     b2Fixture * fixBPtr = contactPtr->GetFixtureB();
@@ -1945,12 +1922,12 @@ void game_engine::EndContact(b2Contact* contactPtr)
     }
 };
 
-void game_engine::PreSolve(b2Contact* contactPtr, const b2Manifold* oldManifoldPtr)
+void GameEngine::PreSolve(b2Contact* contactPtr, const b2Manifold* oldManifoldPtr)
 {
 
 }
 
-void game_engine::PostSolve(b2Contact* contactPtr, const b2ContactImpulse* impulsePtr)
+void GameEngine::PostSolve(b2Contact* contactPtr, const b2ContactImpulse* impulsePtr)
 {
 	b2Fixture * fixAPtr = contactPtr->GetFixtureA();
 	b2Fixture * fixBPtr = contactPtr->GetFixtureB();
@@ -1971,7 +1948,7 @@ void game_engine::PostSolve(b2Contact* contactPtr, const b2ContactImpulse* impul
 	if(sum > 0.00001) _b2d_impulse_data.push_back(impulseData);
 }
 
-void game_engine::CallListeners()
+void GameEngine::CallListeners()
 {
 	// begin contact
 	for (size_t i = 0; i < _b2d_begin_contact_data.size(); i++)
@@ -2008,7 +1985,7 @@ void game_engine::CallListeners()
 	_b2d_impulse_data.clear();
 }
 
-void game_engine::build_ui()
+void GameEngine::build_ui()
 {
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
@@ -2084,7 +2061,7 @@ void game_engine::build_ui()
 	}
 }
 
-int game_engine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, AbstractGame* game)
+int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, AbstractGame* game)
 {
 	//notify user if heap is corrupt
 	HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
@@ -2103,12 +2080,17 @@ int game_engine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, 
 #endif
 
 	int result = 0;
-	game_engine::instance()->set_command_line(cmdLine);
-	game_engine::instance()->set_game(game);
-	result = game_engine::instance()->run(hInstance, iCmdShow); // run the game engine and return the result
+	// Apply the command line 
+	GameEngine::instance()->set_command_line(cmdLine);
+
+	// Apply the game
+	GameEngine::instance()->set_game(game);
+
+	// Startup the engine
+	result = GameEngine::instance()->run(hInstance, iCmdShow); // run the game engine and return the result
 
 	// Shutdown the game engine to make sure there's no leaks left. 
-	game_engine::Shutdown();
+	GameEngine::Shutdown();
 
 #if defined(DEBUG) | defined(_DEBUG)
 	if (pDXGIDebug)

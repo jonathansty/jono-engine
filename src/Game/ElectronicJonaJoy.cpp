@@ -46,7 +46,7 @@ void ElectronicJonaJoy::start()
 {
 	char msg[256];
 	sprintf_s(msg, "Electronic Jona Joy Version %d.%d.%d", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
-	game_engine::instance()->ConsolePrintString(String(msg));
+	GameEngine::instance()->print_string(String(msg));
 
 	time_t beginTime;
 	time(&beginTime);
@@ -72,8 +72,8 @@ void ElectronicJonaJoy::end()
 	safe_delete(m_Menu);
 	safe_delete(m_FileManagerPtr);
 
-	bitmap_manager::Shutdown();
-	sound_manager::Shutdown();
+	BitmapManager::Shutdown();
+	SoundManager::Shutdown();
 }
 
 void ElectronicJonaJoy::tick(double deltaTime)
@@ -93,11 +93,11 @@ void ElectronicJonaJoy::tick(double deltaTime)
 	{
 	case ElectronicJonaJoy::GameState::RUNNING:
 		m_Game->tick(deltaTime);
-		if (game_engine::instance()->is_key_pressed(VK_F3))
+		if (GameEngine::instance()->is_key_pressed(VK_F3))
 		{
 			LoadNextLevel(m_Game.get());
 		}
-		if (game_engine::instance()->is_key_pressed(VK_F4))
+		if (GameEngine::instance()->is_key_pressed(VK_F4))
 		{
 			ReloadCurrentLevel();
 		}
@@ -128,7 +128,7 @@ void ElectronicJonaJoy::tick(double deltaTime)
 	}
 
 	//Create pause menu on escape press.
-	if (game_engine::instance()->is_key_pressed(VK_ESCAPE))
+	if (GameEngine::instance()->is_key_pressed(VK_ESCAPE))
 	{
 		switch (m_GameState)
 		{
@@ -185,8 +185,8 @@ void ElectronicJonaJoy::paint(RECT rect)
 		_current_state->render_2d();
 	}
 
-	ImVec2 vp_size = game_engine::instance()->get_viewport_size();
-	game_engine* engine = game_engine::instance();
+	ImVec2 vp_size = GameEngine::instance()->get_viewport_size();
+	GameEngine* engine = GameEngine::instance();
 	return;
 }
 
@@ -315,7 +315,7 @@ LoadingScreenState::LoadingScreenState(ElectronicJonaJoy* owner)
 
 void LoadingScreenState::on_activate()
 {
-	_loading_bitmap = bitmap_manager::instance()->LoadBitmapFile(String("Resources/Menu/LoadingScreen.png"));
+	_loading_bitmap = BitmapManager::instance()->load_image(String("Resources/Menu/LoadingScreen.png"));
 }
 
 void LoadingScreenState::update(double dt)
@@ -329,5 +329,5 @@ void LoadingScreenState::update(double dt)
 
 void LoadingScreenState::render_2d()
 {
-	game_engine::instance()->DrawBitmap(_loading_bitmap);
+	GameEngine::instance()->DrawBitmap(_loading_bitmap);
 }

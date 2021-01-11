@@ -77,8 +77,8 @@ void EnemyRocket::Tick(double deltaTime)
     DOUBLE2 unitVector(1,0);
     double targetAngle = m_AdjustedVelocity.Normalized().AngleWith(vectorToAvatar);
     double dotProduct = m_AdjustedVelocity.Normalized().DotProduct(vectorToAvatar);
-    /*game_engine::instance()->ConsolePrintString(String("Dot: ") + String(dotProduct));
-    game_engine::instance()->ConsolePrintString(String("Angle: ") + String(targetAngle));*/
+    /*GameEngine::instance()->ConsolePrintString(String("Dot: ") + String(dotProduct));
+    GameEngine::instance()->ConsolePrintString(String("Angle: ") + String(targetAngle));*/
     //m_ActPtr->SetAngularVelocity(deltaTime);
     m_AdjustedVelocity.x = cos(m_Angle);
     m_AdjustedVelocity.y = sin(m_Angle);
@@ -123,16 +123,16 @@ void EnemyRocket::Paint()
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
     matPivot.SetAsTranslate(DOUBLE2(- WIDTH /2,-HEIGHT/2));
     matWorldTransform = matPivot * matRotate * matTranslate;
-    game_engine::instance()->set_world_matrix(matWorldTransform);
+    GameEngine::instance()->set_world_matrix(matWorldTransform);
     std::vector<DOUBLE2>trianglePointsArr;
     trianglePointsArr.push_back(DOUBLE2(0,0));
     trianglePointsArr.push_back(DOUBLE2(WIDTH,HEIGHT/2));
     trianglePointsArr.push_back(DOUBLE2(0,HEIGHT));
-    game_engine::instance()->FillPolygon(trianglePointsArr, 3);
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->FillPolygon(trianglePointsArr, 3);
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     
-    /*game_engine::instance()->DrawLine(m_Position.x, m_Position.y, m_AvatarPtr->GetPosition().x, m_AvatarPtr->GetPosition().y);
-    game_engine::instance()->DrawLine(m_Position.x, m_Position.y, m_Position.x + 10*m_AdjustedVelocity.x, m_Position.y + 10*m_AdjustedVelocity.y);*/
+    /*GameEngine::instance()->DrawLine(m_Position.x, m_Position.y, m_AvatarPtr->GetPosition().x, m_AvatarPtr->GetPosition().y);
+    GameEngine::instance()->DrawLine(m_Position.x, m_Position.y, m_Position.x + 10*m_AdjustedVelocity.x, m_Position.y + 10*m_AdjustedVelocity.y);*/
 
 }
 PhysicsActor* EnemyRocket::GetActor()

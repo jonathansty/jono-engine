@@ -41,10 +41,10 @@ m_BmpEpicModePtr(bmpEpicModePtr)
     m_AmountOfCoinsArr[2] = 0;
 
     
-    m_SndAttackPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/Attack.wav"));
-    m_SndJumpPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/Jump.wav"));
+    m_SndAttackPtr = SoundManager::instance()->LoadSound(String("Resources/Sound/Entity/Attack.wav"));
+    m_SndJumpPtr = SoundManager::instance()->LoadSound(String("Resources/Sound/Entity/Jump.wav"));
     m_SndJumpPtr->set_volume(0.5);
-    m_SndWalkPtr = sound_manager::instance()->LoadSound(String("Resources/Sound/Entity/running.wav"));
+    m_SndWalkPtr = SoundManager::instance()->LoadSound(String("Resources/Sound/Entity/running.wav"));
 
 }
 
@@ -136,7 +136,7 @@ void Avatar::EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
         {
             m_moveState = moveState::JUMPING;
         }
-        game_engine::instance()->ConsolePrintString(actThisPtr->GetName() + String(" ended contact with ") + actOtherPtr->GetName() + String(m_NumberOfContactPointsWithLevel));
+        GameEngine::instance()->print_string(actThisPtr->GetName() + String(" ended contact with ") + actOtherPtr->GetName() + String(m_NumberOfContactPointsWithLevel));
     }
     if (actOtherPtr != nullptr && actOtherPtr->GetName() == String("StickyWall"))
     {
@@ -204,46 +204,46 @@ void Avatar::PaintDebug()
 {
     MATRIX3X2 matTranslate;
     matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
-    game_engine::instance()->set_world_matrix(matTranslate);
+    GameEngine::instance()->set_world_matrix(matTranslate);
     switch (m_moveState)
     {
     case Avatar::moveState::RUNNING:
-        game_engine::instance()->DrawString(String("Running"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("Running"), DOUBLE2());
         break;
     case Avatar::moveState::STANDING:
-        game_engine::instance()->DrawString(String("Standing"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("Standing"), DOUBLE2());
         break;
     case Avatar::moveState::JUMPING:
-        game_engine::instance()->DrawString(String("Jumping"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("Jumping"), DOUBLE2());
         break;
     case Avatar::moveState::HANGING:
-        game_engine::instance()->DrawString(String("Hanging"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("Hanging"), DOUBLE2());
         break;
     case Avatar::moveState::ATTACK:
-        game_engine::instance()->DrawString(String("Attack"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("Attack"), DOUBLE2());
         break;
     case Avatar::moveState::DIE:
-        game_engine::instance()->DrawString(String("DEAD"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("DEAD"), DOUBLE2());
         break;
     case Avatar::moveState::DYING:
-        game_engine::instance()->DrawString(String("Dying"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("Dying"), DOUBLE2());
         break;
     case Avatar::moveState::SLIDINGSTANDING:
-        game_engine::instance()->DrawString(String("SlidingStanding"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("SlidingStanding"), DOUBLE2());
         break;
     case Avatar::moveState::SLIDINGWALKING:
-        game_engine::instance()->DrawString(String("SlidingWalking"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("SlidingWalking"), DOUBLE2());
         break;
     case Avatar::moveState::SLIDINGJUMPING:
-        game_engine::instance()->DrawString(String("SlidingJumping"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("SlidingJumping"), DOUBLE2());
         break;
     case Avatar::moveState::GOD:
-        game_engine::instance()->DrawString(String("God"), DOUBLE2());
+        GameEngine::instance()->DrawString(String("God"), DOUBLE2());
         break;
     default:
         break;
     }
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Avatar::Paint()
 {
@@ -256,32 +256,32 @@ void Avatar::Paint()
         matScale.SetAsScale(-1,1);
     }
     matWorldTransform = (matPivot * matScale * matTranslate);
-    if (game_engine::instance()->is_key_down(VK_LEFT))
+    if (GameEngine::instance()->is_key_down(VK_LEFT))
     {     
         m_Mirror = true;
     }
-    if (game_engine::instance()->is_key_down(VK_RIGHT))
+    if (GameEngine::instance()->is_key_down(VK_RIGHT))
     {
         m_Mirror = false;
     }
     
     RECT boundingBox = updateFrameDisplay(m_FrameNr);
     PaintTrail();
-    game_engine::instance()->set_world_matrix(matWorldTransform);
+    GameEngine::instance()->set_world_matrix(matWorldTransform);
     
     
     
-    game_engine::instance()->DrawBitmap(m_BmpPtr, boundingBox);
+    GameEngine::instance()->DrawBitmap(m_BmpPtr, boundingBox);
     if (m_IsEpicModeOn)
     {
-        game_engine::instance()->DrawBitmap(m_BmpEpicModePtr, boundingBox);
+        GameEngine::instance()->DrawBitmap(m_BmpEpicModePtr, boundingBox);
     }
     
     
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     matTranslate.SetAsTranslate(DOUBLE2(m_ActPtr->GetPosition().x, 0));
-    game_engine::instance()->set_world_matrix(matTranslate);
-    game_engine::instance()->set_color(COLOR(0, 0, 0));
+    GameEngine::instance()->set_world_matrix(matTranslate);
+    GameEngine::instance()->set_color(COLOR(0, 0, 0));
 }
 void Avatar::PaintTrail()
 {
@@ -291,7 +291,7 @@ void Avatar::PaintTrail()
     {
         m_deqTrail.pop_back();
     }
-    game_engine::instance()->set_color(COLOR(255, 255, 255, 10));
+    GameEngine::instance()->set_color(COLOR(255, 255, 255, 10));
     for (int i = 0, n = int(m_deqTrail.size()); i < n - 1; i++)
     {
         DOUBLE2 pos = m_deqTrail[i];
@@ -301,7 +301,7 @@ void Avatar::PaintTrail()
         if (size - (size / MAX_TRAIL)*i > 0)
         {
             
-            game_engine::instance()->FillEllipse(pos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
+            GameEngine::instance()->FillEllipse(pos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
             DOUBLE2 vector = pos2 - pos;
             int numberOfCircles = 4;
             if (vector.Length() > 5)
@@ -311,7 +311,7 @@ void Avatar::PaintTrail()
                     double spaceBetween = vector.Length() / numberOfCircles;
                     DOUBLE2 normVector = vector.Normalized();
                     midPos = normVector*j*spaceBetween;
-                    game_engine::instance()->FillEllipse(pos + midPos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
+                    GameEngine::instance()->FillEllipse(pos + midPos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
                 }
             }
         }
@@ -336,7 +336,7 @@ void Avatar::checkKeys(double dTime)
         NormalMoveState(dTime);       
     }   
 
-    if (game_engine::instance()->is_key_pressed(m_God))
+    if (GameEngine::instance()->is_key_pressed(m_God))
     {
         if (m_moveState == moveState::GOD)
         {
@@ -353,7 +353,7 @@ void Avatar::checkKeys(double dTime)
             m_moveState = moveState::GOD;
         }
     }
-    if (game_engine::instance()->is_key_pressed('K') && game_engine::instance()->is_key_pressed('L'))
+    if (GameEngine::instance()->is_key_pressed('K') && GameEngine::instance()->is_key_pressed('L'))
     {
         m_IsEpicModeOn = !m_IsEpicModeOn;
     }
@@ -363,24 +363,24 @@ void Avatar::GodMoveState(double dTime)
     DOUBLE2 position = m_ActPtr->GetPosition();
     m_ActPtr->SetLinearVelocity(DOUBLE2());
     DOUBLE2 desiredPosition = DOUBLE2();
-    if (game_engine::instance()->is_key_down(VK_RIGHT))    desiredPosition.x = GODMODE_SPEED   * dTime;
-    if (game_engine::instance()->is_key_down(VK_LEFT))    desiredPosition.x = -GODMODE_SPEED  * dTime;
-    if (game_engine::instance()->is_key_down(VK_UP))    desiredPosition.y = -GODMODE_SPEED  * dTime;
-    if (game_engine::instance()->is_key_down(VK_DOWN))    desiredPosition.y = GODMODE_SPEED   * dTime;
+    if (GameEngine::instance()->is_key_down(VK_RIGHT))    desiredPosition.x = GODMODE_SPEED   * dTime;
+    if (GameEngine::instance()->is_key_down(VK_LEFT))    desiredPosition.x = -GODMODE_SPEED  * dTime;
+    if (GameEngine::instance()->is_key_down(VK_UP))    desiredPosition.y = -GODMODE_SPEED  * dTime;
+    if (GameEngine::instance()->is_key_down(VK_DOWN))    desiredPosition.y = GODMODE_SPEED   * dTime;
     m_ActPtr->SetPosition(position + desiredPosition);
 }
 void Avatar::SlidingMoveState(double dTime)
 {
-    if (game_engine::instance()->is_key_down(m_Right))
+    if (GameEngine::instance()->is_key_down(m_Right))
     {
         m_ActPtr->ApplyLinearImpulse(DOUBLE2(1, 0) * m_Speed);
     }
-    if (game_engine::instance()->is_key_down(m_Left))
+    if (GameEngine::instance()->is_key_down(m_Left))
     {
         m_ActPtr->ApplyLinearImpulse(DOUBLE2(-1, 0) * m_Speed);
     }
     DOUBLE2 actVelocity = m_ActPtr->GetLinearVelocity();
-    if (game_engine::instance()->is_key_pressed(m_Jump) && (m_moveState == moveState::SLIDINGSTANDING || m_moveState == moveState::SLIDINGWALKING))
+    if (GameEngine::instance()->is_key_pressed(m_Jump) && (m_moveState == moveState::SLIDINGSTANDING || m_moveState == moveState::SLIDINGWALKING))
     {
         m_moveState = moveState::SLIDINGJUMPING;
         m_SndJumpPtr->play();
@@ -397,8 +397,8 @@ void Avatar::SlidingMoveState(double dTime)
     if (m_moveState == moveState::SLIDINGSTANDING || m_moveState == moveState::SLIDINGWALKING)
     {
         m_moveState = moveState::SLIDINGSTANDING;
-        if (game_engine::instance()->is_key_down(m_Left))    m_moveState = moveState::SLIDINGWALKING;
-        if (game_engine::instance()->is_key_down(m_Right))    m_moveState = moveState::SLIDINGWALKING;
+        if (GameEngine::instance()->is_key_down(m_Left))    m_moveState = moveState::SLIDINGWALKING;
+        if (GameEngine::instance()->is_key_down(m_Right))    m_moveState = moveState::SLIDINGWALKING;
     }
 }
 void Avatar::NormalMoveState(double dTime)
@@ -407,16 +407,16 @@ void Avatar::NormalMoveState(double dTime)
     DOUBLE2 desiredVelocity = DOUBLE2();
     DOUBLE2 dVelocity;
 
-    if (game_engine::instance()->is_key_down(m_Right))
+    if (GameEngine::instance()->is_key_down(m_Right))
     {
         desiredVelocity.x = m_Speed;
     }
-	if (game_engine::instance()->is_key_down(m_Left))
+	if (GameEngine::instance()->is_key_down(m_Left))
     {
         desiredVelocity.x = -m_Speed;
     }
     
-    if (game_engine::instance()->is_key_pressed(m_Attack) && m_NumberOfContactPointsWithLevel == 0)
+    if (GameEngine::instance()->is_key_pressed(m_Attack) && m_NumberOfContactPointsWithLevel == 0)
     {
         m_ActPtr->SetLinearVelocity(DOUBLE2(oldVelocity.x, 0));
         m_ActPtr->ApplyLinearImpulse(2 * m_JumpHeight*m_ActPtr->GetMass() / PhysicsActor::SCALE*DOUBLE2(0, 1));
@@ -424,7 +424,7 @@ void Avatar::NormalMoveState(double dTime)
         m_SndAttackPtr->play();
     }
     DOUBLE2 actVelocity = m_ActPtr->GetLinearVelocity();
-	if (game_engine::instance()->is_key_pressed(m_Jump) && m_JumpCounter < MAX_JUMPS && m_moveState != moveState::JUMPING)
+	if (GameEngine::instance()->is_key_pressed(m_Jump) && m_JumpCounter < MAX_JUMPS && m_moveState != moveState::JUMPING)
     {
         //m_moveState = moveState::JUMPING;
         m_SndJumpPtr->play();
@@ -441,10 +441,10 @@ void Avatar::NormalMoveState(double dTime)
     if (m_moveState == moveState::RUNNING || m_moveState == moveState::STANDING)
     {
         m_moveState = moveState::STANDING;
-        if (game_engine::instance()->is_key_down(m_Left))    m_moveState = moveState::RUNNING;
-        if (game_engine::instance()->is_key_down(m_Right))    m_moveState = moveState::RUNNING;
+        if (GameEngine::instance()->is_key_down(m_Left))    m_moveState = moveState::RUNNING;
+        if (GameEngine::instance()->is_key_down(m_Right))    m_moveState = moveState::RUNNING;
     }
-    if (game_engine::instance()->is_key_pressed(m_Attack) && m_JumpCounter > 0)m_moveState = moveState::ATTACK;
+    if (GameEngine::instance()->is_key_pressed(m_Attack) && m_JumpCounter > 0)m_moveState = moveState::ATTACK;
 }
 
 
@@ -526,7 +526,7 @@ void Avatar::AddAmountOfCoins(int amount)
         m_AmountOfCoinsArr[2]++;
         m_AmountOfCoinsArr[1] -= 60;
     }
-    game_engine::instance()->ConsolePrintString(String("Bronze: ") + String(m_AmountOfCoinsArr[0])
+    GameEngine::instance()->print_string(String("Bronze: ") + String(m_AmountOfCoinsArr[0])
         + String(" Silver: ") + String(m_AmountOfCoinsArr[1])
         + String(" Gold: ") + String(m_AmountOfCoinsArr[2]));
 }
@@ -586,7 +586,7 @@ void Avatar::SetMoveState(Avatar::moveState state)
 void Avatar::SetSpawnPosition(DOUBLE2 spawnPosition)
 {
     m_RespawnPosition = spawnPosition;
-    game_engine::instance()->ConsolePrintString(String("spawn position set to ") + String(spawnPosition.ToString()));
+    GameEngine::instance()->print_string(String("spawn position set to ") + String(spawnPosition.ToString()));
 }
 
 //! Resets the avatar back to original

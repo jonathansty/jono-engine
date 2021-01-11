@@ -24,7 +24,7 @@ public:
 	GUIBase(const GUIBase&) = delete;
 	GUIBase& operator=(const GUIBase&) = delete;
 
-	friend class game_engine;			//hide ConsumeEvent
+	friend class GameEngine;			//hide ConsumeEvent
 
 	//-------------------------------------------------
 	// Methods - Member functions							

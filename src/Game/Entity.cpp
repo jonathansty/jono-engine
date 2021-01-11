@@ -97,7 +97,7 @@ void Entity::PaintDebug()
 {
     MATRIX3X2 matTranslate;
     matTranslate.SetAsTranslate(m_Position);
-    game_engine::instance()->set_world_matrix(matTranslate);
-    game_engine::instance()->DrawString(m_Name,DOUBLE2());
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(matTranslate);
+    GameEngine::instance()->DrawString(m_Name,DOUBLE2());
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }

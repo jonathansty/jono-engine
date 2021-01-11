@@ -47,12 +47,12 @@ void BlockSlide::Paint()
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
-    game_engine::instance()->set_world_matrix(matPivot * matTranslate);
-    game_engine::instance()->FillRect(0, 0, m_Width, m_Height);
-    game_engine::instance()->set_color(COLOR(255,255,255));
-    game_engine::instance()->FillRect(0, 0, m_Width, 5);
-    game_engine::instance()->set_color(COLOR(0, 0, 0));
-    game_engine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    GameEngine::instance()->set_world_matrix(matPivot * matTranslate);
+    GameEngine::instance()->FillRect(0, 0, m_Width, m_Height);
+    GameEngine::instance()->set_color(COLOR(255,255,255));
+    GameEngine::instance()->FillRect(0, 0, m_Width, 5);
+    GameEngine::instance()->set_color(COLOR(0, 0, 0));
+    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void BlockSlide::Tick(double deltaTime)
 {

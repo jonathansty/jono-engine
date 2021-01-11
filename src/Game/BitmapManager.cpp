@@ -5,7 +5,7 @@
 #include "stdafx.h"	
 #include "BitmapManager.h"
 
-bitmap_manager::bitmap_manager() : m_BitmapPtrArr{}
+BitmapManager::BitmapManager() : m_BitmapPtrArr{}
 {
     for (int i = 0; i < SIZE; i++)
     {
@@ -13,7 +13,7 @@ bitmap_manager::bitmap_manager() : m_BitmapPtrArr{}
     }
 }
 
-bitmap_manager::~bitmap_manager()
+BitmapManager::~BitmapManager()
 {
     for (int i = 0; i < m_NumberOfStoredBitmaps; i++)
     {
@@ -22,12 +22,12 @@ bitmap_manager::~bitmap_manager()
     }
 }
 
-Bitmap* bitmap_manager::LoadBitmapFile(const String& fileName)
+Bitmap* BitmapManager::load_image(const String& fileName)
 {
     // Check the whole array for the filename, if it already exists return the existing bitmap
     if (m_NumberOfStoredBitmaps+ 1 > SIZE)
     {
-        game_engine::instance()->message_box(String("Maximum amount of bitmaps reached. Please increase the size of the array."));
+        GameEngine::instance()->message_box(String("Maximum amount of bitmaps reached. Please increase the size of the array."));
     }
     for (int i = 0; i < m_NumberOfStoredBitmaps; i++)
     {
@@ -53,7 +53,7 @@ Bitmap* bitmap_manager::LoadBitmapFile(const String& fileName)
     m_NumberOfStoredBitmaps++;
     return bmpPtr;
 }
-void bitmap_manager::RemoveBitmapFile(const String& fileName)
+void BitmapManager::RemoveBitmapFile(const String& fileName)
 {
     for (int i = 0; i < m_NumberOfStoredBitmaps; i++)
     {
@@ -62,11 +62,11 @@ void bitmap_manager::RemoveBitmapFile(const String& fileName)
             m_FileNameArr[i] = String("NULL");
             delete m_BitmapPtrArr[i];
             m_BitmapPtrArr[i] = nullptr;
-            game_engine::instance()->ConsolePrintString(String("Succesfully deleted ") + fileName);
+            GameEngine::instance()->print_string(String("Succesfully deleted ") + fileName);
             return;
         }
     }
-    game_engine::instance()->ConsolePrintString(fileName + String(" was not found in the BitmapManager"));
+    GameEngine::instance()->print_string(fileName + String(" was not found in the BitmapManager"));
 }
 
 

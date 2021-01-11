@@ -3,7 +3,7 @@
 #include "HelloWorld.h"
 #include "Test3D.h"
 
-int main()
+int main(const char** argvs, const int argcs)
 {
-	return game_engine::run_game(NULL, 1, new Hello3D());
+	return GameEngine::run_game(NULL, cli::parse(GetCommandLineA()), 1, new HelloWorldGame());
 }

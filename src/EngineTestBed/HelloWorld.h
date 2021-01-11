@@ -10,23 +10,25 @@ using framework::EntityHandle;
 class HelloWorldGame : public AbstractGame
 {
 public:
+	HelloWorldGame() = default;
+	virtual ~HelloWorldGame() = default;
 
-	void GameInitialize(GameSettings& gameSettings)
+	void initialize(GameSettings& gameSettings)
 	{
 		gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableConsole;
 	}
-	void GameStart() override;
+	void start() override;
 
-	void GameEnd() override;
+	void end() override;
 
-	void GamePaint(RECT rect) override;
+	void paint(RECT rect) override;
 
-	void GameTick(double deltaTime) override;
+	void tick(double deltaTime) override;
 
-	void DebugUI() override;
+	void debug_ui() override;
 
 private:
-	std::unique_ptr<World> _world;
+	std::shared_ptr<World> _world;
 	EntityHandle _rotatorEntity;
 	EntityHandle _parentEntity;
 };

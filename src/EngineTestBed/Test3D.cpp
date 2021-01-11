@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "Test3D.h"
 
-#include "EngineFiles/Core/ModelResource.h"
-#include "EngineFiles/Core/TextureResource.h"
-#include "EngineFiles/Core/MaterialResource.h"
+#include "Engine/Core/ModelResource.h"
+#include "Engine/Core/TextureResource.h"
+#include "Engine/Core/MaterialResource.h"
 
 #include "Framework/framework.h"
 #include "Components.h"
@@ -13,9 +13,9 @@ using framework::Entity;
 using framework::Component;
 
 namespace Shaders {
-#include "Shaders/generated/simple_px.h"
-#include "Shaders/generated/simple_vx.h"
-#include "Shaders/generated/debug_px.h"
+#include "shaders/simple_px.h"
+#include "shaders/simple_vx.h"
+#include "shaders/debug_px.h"
 }
 
 __declspec(align(16))
@@ -53,7 +53,7 @@ struct DebugCB
 
 int g_DebugMode = 0;
 
-void Hello3D::GameInitialize(GameSettings& gameSettings)
+void Hello3D::initialize(GameSettings& gameSettings)
 {
 	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableAA;
 	gameSettings.m_FullscreenMode = GameSettings::FullScreenMode::Windowed;
@@ -62,23 +62,24 @@ void Hello3D::GameInitialize(GameSettings& gameSettings)
 }
 
 
-void Hello3D::GameStart()
+void Hello3D::start()
 {
-	auto device = game_engine::instance()->GetD3DDevice();
-	auto ctx = game_engine::instance()->GetD3DDeviceContext();
+	auto device = GameEngine::instance()->GetD3DDevice();
+	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
 
 
-	::SetCapture(game_engine::instance()->get_window());
+	::SetCapture(GameEngine::instance()->get_window());
 
 	using namespace framework;
 	_world = std::make_shared<framework::World>();
 
-	game_engine::instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
+	EntityDebugOverlay *overlay = new EntityDebugOverlay(_world.get());
+	GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
 	// Create the world camera
 	{
 		World::EntityId cam_id = _world->create_entity();
-		Entity* ent = _world->get_entity(cam_id);
+		framework::Entity* ent = _world->get_entity(cam_id);
 		ent->set_name("MainCamera");
 		auto comp = ent->create_component<CameraComponent>();
 		ent->set_local_position(XMFLOAT3(0.0f, 0.0f, -2.0f));
@@ -155,23 +156,23 @@ void Hello3D::GameStart()
 
 }
 
-void Hello3D::GameEnd()
+void Hello3D::end()
 {
 
 }
 
-void Hello3D::GamePaint(RECT rect)
+void Hello3D::paint(RECT rect)
 {
 }
 
-void Hello3D::GameTick(double deltaTime)
+void Hello3D::tick(double deltaTime)
 {
 	_world->update((float)deltaTime);
 
 	_timer += (float)deltaTime;
 }
 
-void Hello3D::DebugUI()
+void Hello3D::debug_ui()
 {
 	static bool s_open = true;
 	ImGui::Begin("Game", &s_open);
@@ -201,10 +202,10 @@ XMVECTOR XMVector3Create(float x, float y, float z)
 	return XMVector4Create(x, y, z, 0.0);
 }
 
-void Hello3D::Render3D()
+void Hello3D::render_3d()
 {
-	auto device = game_engine::instance()->GetD3DDevice();
-	auto ctx = game_engine::instance()->GetD3DDeviceContext();
+	auto device = GameEngine::instance()->GetD3DDevice();
+	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
 
 	// Use RH system so that we can directly export from blender
 	//_timer = 0.0f;
@@ -220,7 +221,7 @@ void Hello3D::Render3D()
 
 	XMMATRIX View = XMMatrixIdentity();
 
-	ImVec2 size = game_engine::instance()->get_viewport_size();
+	ImVec2 size = GameEngine::instance()->get_viewport_size();
 	float aspect = (float)size.x / (float)size.y;
 	float near_plane = 0.01f;
 	float far_plane = 100.0f;
@@ -269,7 +270,7 @@ void Hello3D::Render3D()
 	for (auto& ent : _world->get_entities())
 	{
 		// If the entity has a mesh component and is done loading
-		if (SimpleMeshComponent* comp = ent->get_component<SimpleMeshComponent>(); comp && comp->is_loaded())
+		if (SimpleMeshComponent* mesh_comp = ent->get_component<SimpleMeshComponent>(); mesh_comp && mesh_comp->is_loaded())
 		{
 			XMMATRIX world = ent->get_world_transform();
 			XMMATRIX MVP = XMMatrixMultiply(XMMatrixMultiply(world, View), Projection);
@@ -291,7 +292,7 @@ void Hello3D::Render3D()
 			ctx->VSSetConstantBuffers(0, 1, _cb_MVP.GetAddressOf());
 			ctx->PSSetConstantBuffers(0, 1, _cb_MVP.GetAddressOf());
 
-			comp->render();
+			mesh_comp->render();
 		}
 	}
 }

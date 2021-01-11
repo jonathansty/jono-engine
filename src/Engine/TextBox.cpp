@@ -62,11 +62,11 @@ void TextBox::Tick(double deltaTime)
 	}
 
 	//RMB in button rect armes the button and paint will draw the pressed button
-	if (game_engine::instance()->is_mouse_button_down(VK_LBUTTON))
+	if (GameEngine::instance()->is_mouse_button_down(VK_LBUTTON))
 	{
-		MATRIX3X2 matInverse = (game_engine::instance()->get_world_matrix() * game_engine::instance()->get_view_matrix()).Inverse();
+		MATRIX3X2 matInverse = (GameEngine::instance()->get_world_matrix() * GameEngine::instance()->get_view_matrix()).Inverse();
 
-		DOUBLE2 mouseScreenSpace(game_engine::instance()->get_mouse_pos_in_viewport().x, game_engine::instance()->get_mouse_pos_in_viewport().y);
+		DOUBLE2 mouseScreenSpace(GameEngine::instance()->get_mouse_pos_in_viewport().x, GameEngine::instance()->get_mouse_pos_in_viewport().y);
 		DOUBLE2 mouseViewSpace = matInverse.TransformPoint(mouseScreenSpace);
 		if (PointInRect(m_BoundingRect, mouseViewSpace))
 		{
@@ -94,7 +94,7 @@ void TextBox::Paint()
 	}
 
 	//Store font
-	Font *originalFont = game_engine::instance()->get_font();
+	Font *originalFont = GameEngine::instance()->get_font();
 	// make sure that the text is left aligned
 	m_FontPtr->SetAlignHLeft();
 	// working copy of the bounds
@@ -103,36 +103,36 @@ void TextBox::Paint()
 	//border color depends on armed state: filling is faster than line drawing
 	if (!m_bArmed)
 	{
-		game_engine::instance()->set_color(COLOR(201, 201, 201));
-		game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
+		GameEngine::instance()->set_color(COLOR(201, 201, 201));
+		GameEngine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 	}
 	else
 	{
-		game_engine::instance()->set_color(COLOR(101, 101, 101));
-		game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
+		GameEngine::instance()->set_color(COLOR(101, 101, 101));
+		GameEngine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 	}
 
 	// fill interior
 	++r.left; ++r.top; --r.right; --r.bottom;
-	game_engine::instance()->set_color(m_BackColor);
-	game_engine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
+	GameEngine::instance()->set_color(m_BackColor);
+	GameEngine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
 
-	game_engine::instance()->set_font(m_FontPtr);
+	GameEngine::instance()->set_font(m_FontPtr);
 
 	// Draw forecolor when this is enabled
-	if (m_bEnabled)game_engine::instance()->set_color(m_ForeColor);
+	if (m_bEnabled)GameEngine::instance()->set_color(m_ForeColor);
 
 	// GRAY when disabled
-	else game_engine::instance()->set_color(COLOR(127, 127, 127));
+	else GameEngine::instance()->set_color(COLOR(127, 127, 127));
 
 	// Draw the text
-	game_engine::instance()->DrawString(m_Text, m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
+	GameEngine::instance()->DrawString(m_Text, m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
 
 	// draw caret
 	if (m_bArmed) DrawCaret();
 
 	//restore font
-	game_engine::instance()->set_font(originalFont);
+	GameEngine::instance()->set_font(originalFont);
 }
 
 void TextBox::DrawCaret()
@@ -142,7 +142,7 @@ void TextBox::DrawCaret()
 	{
 		// create a text layout object to retrieve info about the layout
 		IDWriteTextLayout *textLayoutPtr;
-		game_engine::instance()->GetDWriteFactory()->CreateTextLayout(m_Text.C_str(), m_Text.Length(), m_FontPtr->GetTextFormat(),
+		GameEngine::instance()->GetDWriteFactory()->CreateTextLayout(m_Text.C_str(), m_Text.Length(), m_FontPtr->GetTextFormat(),
 			(FLOAT)(m_BoundingRect.right - m_BoundingRect.left),
 			(FLOAT)(m_BoundingRect.bottom - m_BoundingRect.top),
 			&textLayoutPtr);
@@ -153,7 +153,7 @@ void TextBox::DrawCaret()
 		textLayoutPtr->HitTestTextPosition(m_Text.Length() - 1, true, &caretX, &caretY, &hitTestMetrics);
 
 		// draw the caret
-		game_engine::instance()->DrawLine(
+		GameEngine::instance()->DrawLine(
 			DOUBLE2(m_BoundingRect.left + 2 + caretX, m_BoundingRect.top + caretY),
 			DOUBLE2(m_BoundingRect.left + 2 + caretX, m_BoundingRect.top + caretY + hitTestMetrics.height)
 			);

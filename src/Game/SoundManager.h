@@ -1,32 +1,20 @@
 #pragma once
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 
-//-----------------------------------------------------
-// Include Files
-//-----------------------------------------------------
-
-//#include "ContactListener.h"
-//-----------------------------------------------------
-// SoundManager Class									
-//-----------------------------------------------------
 #include "singleton.h"
-class sound_manager : public TSingleton<sound_manager>
+
+class SoundManager : public TSingleton<SoundManager>
 {
 private:
-    sound_manager();
-    friend class TSingleton<sound_manager>;
+    SoundManager();
+    friend class TSingleton<SoundManager>;
 
 public:
 	
-	virtual ~sound_manager( );
+	virtual ~SoundManager( );
 
 	// C++11 make the class non-copyable
-	sound_manager( const sound_manager& ) = delete;
-	sound_manager& operator=( const sound_manager& ) = delete;
+	SoundManager( const SoundManager& ) = delete;
+	SoundManager& operator=( const SoundManager& ) = delete;
 
     sound* LoadSound(const String& fileName);
     sound* LoadMusic(const String& fileName);

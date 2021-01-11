@@ -15,7 +15,7 @@
 //-----------------------------------------------------
 class Avatar;
 class Level;
-class bitmap_manager;
+class BitmapManager;
 class Slider;
 class Game;
 class Lever;

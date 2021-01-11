@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "HelloWorld.h"
 
-#include "EngineFiles/Framework/framework.h"
+#include "Engine/Framework/framework.h"
 #include "core/identifier.h"
 
 #include "Components.h"
@@ -17,9 +17,6 @@ public:
 	static constexpr const char* bmp_coin_silver = "Resources/Pickups/coinSilver.png";
 	static constexpr const char* bmp_coin_gold = "Resources/Pickups/coinGold.png";
 };
-
-
-
 
 class GameOverlay : public DebugOverlay
 {
@@ -57,7 +54,7 @@ struct MemberTraits<std::vector<T>> {
 	using type = T;
 };
 
-void HelloWorldGame::GameStart()
+void HelloWorldGame::start()
 {
 #ifdef _DEBUG
 	ExecuteRttiTest_BasicTypes();
@@ -67,11 +64,11 @@ void HelloWorldGame::GameStart()
 	rtti::TypeInfo* info  =rtti::Registry::get<MemberTraits<std::vector<int>>::type>();
 
 	// Register default overlays to the overlay manager
-	game_engine::instance()->get_overlay_manager()->register_overlay(new GameOverlay());
+	GameEngine::instance()->get_overlay_manager()->register_overlay(new GameOverlay());
 
 	using namespace framework;
-	_world = std::make_unique<framework::World>();
-	game_engine::instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
+	_world = std::make_shared<framework::World>();
+	GameEngine::instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
 
 	_parentEntity = _world->create_entity(XMFLOAT2(100, 0));
 	_parentEntity->create_component<BitmapComponent>(ResourcePaths::bmp_coin_silver);
@@ -100,25 +97,25 @@ void HelloWorldGame::GameStart()
 
 }
 
-void HelloWorldGame::GameEnd()
+void HelloWorldGame::end()
 {
 
 }
 
-void HelloWorldGame::GamePaint(RECT rect)
+void HelloWorldGame::paint(RECT rect)
 {
-	auto engine = game_engine::instance();
+	auto engine = GameEngine::instance();
 	engine->DrawSolidBackground(COLOR(0, 0, 0));
 
 	_world->render();
 }
 
-void HelloWorldGame::GameTick(double deltaTime)
+void HelloWorldGame::tick(double deltaTime)
 {
 	_world->update(float(deltaTime));
 }
 
-void HelloWorldGame::DebugUI()
+void HelloWorldGame::debug_ui()
 {
 	ImGui::Begin("Game");
 	

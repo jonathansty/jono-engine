@@ -10,8 +10,8 @@ Bitmap::Bitmap(const String& fileName) : m_BitmapPtr(nullptr), m_ConvertorPtr(nu
 {
 	m_FileName = fileName;
 	//IWICFormatConverter *convertorPtr=nullptr;
-	ID2D1RenderTarget *renderTargetPtr = game_engine::instance()->GetHwndRenderTarget();
-	IWICImagingFactory *iWICFactoryPtr = game_engine::instance()->GetWICImagingFactory();
+	ID2D1RenderTarget *renderTargetPtr = GameEngine::instance()->GetHwndRenderTarget();
+	IWICImagingFactory *iWICFactoryPtr = GameEngine::instance()->GetWICImagingFactory();
 
 	HRESULT hr = LoadBitmapFromFile(renderTargetPtr, iWICFactoryPtr, m_FileName, 0, 0, &m_ConvertorPtr);
 	if (SUCCEEDED(hr))
@@ -23,7 +23,7 @@ Bitmap::Bitmap(const String& fileName) : m_BitmapPtr(nullptr), m_ConvertorPtr(nu
 	if (FAILED(hr))
 	{
 		//show messagebox and leave the program
-		game_engine::instance()->message_box(String("IMAGE LOADING ERROR File ") + fileName);
+		GameEngine::instance()->message_box(String("IMAGE LOADING ERROR File ") + fileName);
 		exit(-1);
 	}
 }
@@ -31,8 +31,8 @@ Bitmap::Bitmap(const String& fileName) : m_BitmapPtr(nullptr), m_ConvertorPtr(nu
 // Load an Bitmap using a resourceID
 Bitmap::Bitmap(int resourceID) : m_BitmapPtr(nullptr), m_ConvertorPtr(nullptr), m_Opacity(1), m_ResourceID(resourceID)
 {
-	ID2D1RenderTarget* renderTargetPtr = game_engine::instance()->GetHwndRenderTarget();
-	IWICImagingFactory* iWICFactoryPtr = game_engine::instance()->GetWICImagingFactory();
+	ID2D1RenderTarget* renderTargetPtr = GameEngine::instance()->GetHwndRenderTarget();
+	IWICImagingFactory* iWICFactoryPtr = GameEngine::instance()->GetWICImagingFactory();
 
 	HRESULT hr = LoadResourceBitmap(renderTargetPtr, iWICFactoryPtr, (unsigned int)resourceID, String("IMAGE"), &m_ConvertorPtr);
 	if (SUCCEEDED(hr))
@@ -44,7 +44,7 @@ Bitmap::Bitmap(int resourceID) : m_BitmapPtr(nullptr), m_ConvertorPtr(nullptr), 
 	if (FAILED(hr))
 	{
 		//show messagebox 
-		game_engine::instance()->message_box(String("RESOURCE IMAGE LOADING ERROR File. ID: ") + String(resourceID));
+		GameEngine::instance()->message_box(String("RESOURCE IMAGE LOADING ERROR File. ID: ") + String(resourceID));
 		exit(-1);
 	}
 }
@@ -258,13 +258,13 @@ void Bitmap::SetTransparencyColor(COLOR transparentColor)
 	}
 
 	//assign modified pixels to bitmap
-	IWICImagingFactory* iWICFactoryPtr = game_engine::instance()->GetWICImagingFactory();
+	IWICImagingFactory* iWICFactoryPtr = GameEngine::instance()->GetWICImagingFactory();
 	IWICBitmap* iWICBitmapPtr = nullptr;
 	HRESULT hr = iWICFactoryPtr->CreateBitmapFromMemory(width, height, GUID_WICPixelFormat32bppPBGRA, bitmapStride, size, pixelsPtr, &iWICBitmapPtr);
 	delete[] pixelsPtr; //destroy buffer
 	if (hr == S_OK)
 	{
-		ID2D1RenderTarget *renderTargetPtr = game_engine::instance()->GetHwndRenderTarget();
+		ID2D1RenderTarget *renderTargetPtr = GameEngine::instance()->GetHwndRenderTarget();
 		if (m_BitmapPtr != nullptr) m_BitmapPtr->Release();
 		renderTargetPtr->CreateBitmapFromWicBitmap(iWICBitmapPtr, &m_BitmapPtr);
 		iWICBitmapPtr->Release();

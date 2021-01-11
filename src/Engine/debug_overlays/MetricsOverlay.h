@@ -1,5 +1,5 @@
 #pragma once
-#include "DebugOverlays/OverlayManager.h"
+#include "debug_overlays/OverlayManager.h"
 
 // Standard metrics overlay for showing:
 // - FPS
