@@ -1,5 +1,7 @@
 #include "stdafx.h"		
 	
+#include "core/identifier.h"
+
 #include "SoundManager.h"
 #include "DataManager.h"
 #include "ElectronicJonaJoy.h"																				
@@ -126,91 +128,75 @@ void DataManager::ReadGameInitForObject(const std::string& filePath, const std::
 //! Creates all the objects.
 void DataManager::CreateObject(tinyxml2::XMLElement* element)
 {
-    std::string name = element->Name();
-    if (name.compare("LevelSound") == 0)
-    {
-        ExtractBgMusic(element);
-    }
-    if (name.compare("Avatar") == 0)
-    {
-        ExtractAvatar(element);
-    }
-    if (name.compare("LevelMap") == 0)
-    {
-        ExtractLevel(element);
-    }
-    if (name.compare("LevelEnd") == 0)
-    {
-        ExtractLevelEnd(element);
-    }
-    if (name.compare("Camera") == 0)
-    {
-        ExtractCamera(element);
-    }
-    if (name.compare("BlockSlide") == 0)
-    {
-        ExtractBlockSlide(element);
-    }
-    if (name.compare("Gate") == 0)
-    {
-        ExtractGate(element);
-    }
-    if (name.compare("Laser") == 0)
-    {
-        ExtractLaser(element);
-    }
-    if (name.compare("JumpShooter") == 0)
-    {
-        ExtractArrowShooter(element);
-    }
-    if (name.compare("Arrow") == 0)
-    {
-        ExtractArrow(element);
-    }
-    if (name.compare("EnemyShooter") == 0)
-    {
-        ExtractEnemyShooter(element);
-    }
-    if (name.compare("CheckPoint") == 0)
-    {
-        ExtractCheckPoint(element);
-    }
-    if (name.compare("EnemyRotater") == 0)
-    {
-        ExtractEnemyRotater(element);
-    }
-    if (name.compare("EnemyHorizontal") == 0)
-    {
-        ExtractEnemyHorizontal(element);
-    }
-    if (name.compare("Coin") == 0)
-    {
-        ExtractCoin(element);
-    }
-    if (name.compare("Teleport") == 0)
-    {
-        ExtractTeleport(element);
-    }
-    if (name.compare("EnemyRocketLauncher") == 0)
-    {
-        ExtractEnemyRocketLauncher(element);
-    }
-    if (name.compare("MetalFan") == 0)
-    {
-        ExtractMetalFan(element);
-    }
-    if (name.compare("StickyWall") == 0)
-    {
-        ExtractStickyWall(element);
-    }
-    if (name.compare("Slicer") == 0)
-    {
-        ExtractSlicer(element);
-    }
-    if (name.compare("NpcHinter") == 0)
-    {
-        ExtractNpcHinter(element);
-    }
+	// Static hashes
+	static Identifier64 id_level_sound = Identifier64("LevelSound");
+	static Identifier64 id_avatar = Identifier64("Avatar");
+	static Identifier64 id_level_map = Identifier64("LevelMap");
+	static Identifier64 id_level_end = Identifier64("LevelEnd");
+	static Identifier64 id_camera = Identifier64("Camera");
+	static Identifier64 id_block_slide = Identifier64("BlockSlide");
+	static Identifier64 id_gate = Identifier64("Gate");
+	static Identifier64 id_laser = Identifier64("Laser");
+	static Identifier64 id_jump_shooter = Identifier64("JumpShooter");
+	static Identifier64 id_arrow = Identifier64("Arrow");
+	static Identifier64 id_enemy_shooter = Identifier64("EnemyShooter");
+	static Identifier64 id_checkpoint = Identifier64("CheckPoint");
+	static Identifier64 id_enemy_rotator = Identifier64("EnemyRotater");
+	static Identifier64 id_enemy_horizontal = Identifier64("EnemyHorizontal");
+	static Identifier64 id_horizontal = Identifier64("EnemyHorizontal");
+	static Identifier64 id_coin = Identifier64("Coin");
+	static Identifier64 id_teleport = Identifier64("Teleport");
+	static Identifier64 id_rocket_launcher = Identifier64("EnemyRocketLauncher");
+	static Identifier64 id_metal_fan = Identifier64("MetalFan");
+	static Identifier64 id_sticky_wall = Identifier64("StickyWall");
+	static Identifier64 id_slicer = Identifier64("Slicer");
+	static Identifier64 id_npc_hinter = Identifier64("NpcHinter");
+	static Identifier64 id_enemy_rocket_launcher = Identifier64("EnemyRocketLauncher");
+
+	Identifier64 id = Identifier64(element->Name());
+	if (id == id_level_sound) {
+		ExtractBgMusic(element);
+	} else if (id == id_avatar) {
+		ExtractAvatar(element);
+	} else if (id == id_level_map) {
+		ExtractLevel(element);
+	} else if (id == id_level_end) {
+		ExtractLevelEnd(element);
+	} else if (id == id_camera) {
+		ExtractCamera(element);
+	} else if (id == id_block_slide) {
+		ExtractBlockSlide(element);
+	} else if (id == id_gate) {
+		ExtractGate(element);
+	} else if (id == id_laser) {
+		ExtractLaser(element);
+	} else if (id == id_jump_shooter) {
+		ExtractArrowShooter(element);
+	} else if (id == id_arrow) {
+		ExtractArrow(element);
+	} else if (id == id_enemy_shooter) {
+		ExtractEnemyShooter(element);
+	} else if (id == id_checkpoint) {
+		ExtractCheckPoint(element);
+	} else if (id == id_enemy_rotator) {
+		ExtractEnemyRotater(element);
+	} else if (id == id_enemy_horizontal) {
+		ExtractEnemyHorizontal(element);
+	} else if (id == id_coin) {
+		ExtractCoin(element);
+	} else if (id == id_teleport) {
+		ExtractTeleport(element);
+	} else if (id == id_enemy_rocket_launcher) {
+		ExtractEnemyRocketLauncher(element);
+	} else if (id == id_metal_fan) {
+		ExtractMetalFan(element);
+	} else if (id == id_sticky_wall) {
+		ExtractStickyWall(element);
+	} else if (id == id_slicer) {
+		ExtractSlicer(element);
+	} else if (id == id_npc_hinter) {
+		ExtractNpcHinter(element);
+	}
 }
 
 /*  Methods for extracting every object

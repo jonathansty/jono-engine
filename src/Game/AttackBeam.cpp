@@ -111,7 +111,7 @@ void AttackBeam::Tick(double deltaTime)
     {
         if (m_Color.alpha > 0)
         {
-            m_Color.alpha = (int)(255 - (m_AccuTime * 255 / (LIFETIME - 2)));
+            m_Color.alpha = (unsigned char)(255 - (m_AccuTime * 255 / (LIFETIME - 2)));
         }
         if (m_BmpGroundPtr->GetOpacity() > 0.01)
         {

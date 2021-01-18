@@ -12,6 +12,7 @@ namespace cli {
 
 using CommandLine = std::vector<std::string>;
 CommandLine parse(std::string cmdLine);
+CommandLine parse(const char** cmdLine, const int argc );
 
 bool has_arg(CommandLine const &cmd_args, std::string const &arg);
 

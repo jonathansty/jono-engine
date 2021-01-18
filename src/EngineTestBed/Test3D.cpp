@@ -53,9 +53,15 @@ struct DebugCB
 
 int g_DebugMode = 0;
 
+void Hello3D::configure_engine(EngineSettings &engineSettings) {
+	engineSettings.d2d_use = false;
+
+	engineSettings.d3d_use = true;
+	engineSettings.d3d_msaa_mode = MSAAMode::MSAA_4x;
+}
+
 void Hello3D::initialize(GameSettings& gameSettings)
 {
-	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableAA;
 	gameSettings.m_FullscreenMode = GameSettings::FullScreenMode::Windowed;
 	gameSettings.m_WindowWidth = 1800;
 	gameSettings.m_WindowHeight = 900;
@@ -161,7 +167,7 @@ void Hello3D::end()
 
 }
 
-void Hello3D::paint(RECT rect)
+void Hello3D::paint(graphics::D2DRenderContext const& ctx)
 {
 }
 

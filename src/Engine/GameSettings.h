@@ -31,7 +31,6 @@ public:
 			StartMaximized = 1,
 			EnableConsole = 2,
 			EnableVSync = 4,
-			EnableAA = 8
 		};
 	};
 

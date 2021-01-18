@@ -179,7 +179,7 @@ void ExecuteRttiTest_BasicTypes()
 
 	TypeInfo* fooType = rtti::Registry::get<Bar>();
 	{
-		rtti::Object obj = fooType->create_object();
+		rtti::Object _obj = fooType->create_object();
 	}
 	TypeInfo* barType = rtti::Registry::get<Bar>();
 	rtti::Object barObject = barType->create_object();

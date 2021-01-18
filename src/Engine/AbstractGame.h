@@ -3,6 +3,8 @@
 class PhysicsActor;
 class GameSettings;
 
+#include "graphics/2DRenderContext.h"
+
 class AbstractGame
 {
 public : 	
@@ -17,10 +19,12 @@ public :
 	AbstractGame(const AbstractGame&) = delete;
 	AbstractGame& operator=(const AbstractGame&) = delete;
 
+	virtual void configure_engine(EngineSettings &engineSettings){};
+
 	virtual void initialize(GameSettings &gameSettings) { 	UNREFERENCED_PARAMETER(gameSettings); }								// empty definition
 	virtual void start(void) {}																// empty definition
 	virtual void end(void) {}																// empty definition
-	virtual void paint(RECT rect) { UNREFERENCED_PARAMETER(rect); }														// empty definition
+	virtual void paint(graphics::D2DRenderContext const& ctx) { UNREFERENCED_PARAMETER(ctx); }														// empty definition
 	virtual void tick(double deltaTime) { UNREFERENCED_PARAMETER(deltaTime); }													// empty definition
 	virtual void debug_ui() {}
 	virtual void render_3d() {};

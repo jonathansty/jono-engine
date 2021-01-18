@@ -15,29 +15,22 @@
 #include "Core/logging.h"
 
 enki::TaskScheduler GameEngine::s_TaskScheduler;
-std::thread::id GameEngine::s_MainThread;
+std::thread::id GameEngine::s_main_thread;
 
-//-----------------------------------------------------------------
-// Windows Functions
-//-----------------------------------------------------------------
 LRESULT CALLBACK GameEngine::WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Route all Windows messages to the game engine
 	return GameEngine::instance()->handle_event(hWindow, msg, wParam, lParam);
 }
 
-//-----------------------------------------------------------------
-// OutputDebugString functions
-//-----------------------------------------------------------------
 void OutputDebugString(const String& text)
 {
 	OutputDebugString(text.C_str());
 }
 
+// #TODO: Remove this once full 2D graphics has been refactored into it's own context
+using graphics::bitmap_interpolation_mode;
 
-//-----------------------------------------------------------------
-// GameEngine Constructor(s)/Destructor
-//-----------------------------------------------------------------
 GameEngine::GameEngine() 
 	: _hinstance(0)
 	, _hwindow(NULL)
@@ -62,27 +55,31 @@ GameEngine::GameEngine()
 	, _game_timer(nullptr)
 	, _color_brush(nullptr)
 	, _aa_desc({ 1,0 })
-	, _hw_bitmap_interpolation_mode(D2D1_BITMAP_INTERPOLATION_MODE_LINEAR)
 	, _default_font(nullptr)
-	, _user_font(nullptr)
 	, _input_manager(nullptr)
 	, _xaudio_system(nullptr)
 	, _game_settings()
 	, _physics_step_enabled(true)
 	, _should_quit(false)
-	, _is_viewport_focused(false)
+	, _is_viewport_focused(true) // TODO: When implementing some kind of editor system this should be updating
 	, _recreate_swapchain(false)
 	, _recreate_game_texture(false)
 	, _debug_physics_rendering(false)
 	, _gravity(DOUBLE2(0, 9.81))
+	, _d3d_backbuffer_view(nullptr)
+	, _d3d_backbuffer_srv(nullptr)
+	, _d3d_output_depth(nullptr)
+	, _d3d_output_dsv(nullptr)
+	, _d3d_output_tex(nullptr)
+	, _d3d_output_rtv(nullptr)
 {
 
 	// Seed the random number generator
-	srand(GetTickCount());
+	srand(GetTickCount64());
 
 	// Initialize Direct2D system
-	CoInitialize(0);
-	CreateDeviceIndependentResources();
+	CoInitialize(NULL);
+	create_factories();
 
 	_overlay_manager = std::make_shared<OverlayManager>();
 	_metrics_overlay = new MetricsOverlay();
@@ -111,7 +108,7 @@ GameEngine::~GameEngine()
     delete _b2d_contact_filter;
 
 	//Direct2D Device dependent related stuff
-	DiscardDeviceResources();
+	d3d_deinit();
 
 	//Direct2D Device independent related stuff
 	_d3d_device_ctx->Release();
@@ -134,9 +131,6 @@ void GameEngine::set_game(AbstractGame* gamePtr)
 	_game = gamePtr;
 }
 
-//-----------------------------------------------------------------
-// Game Engine General Methods
-//-----------------------------------------------------------------
 void GameEngine::set_title(const String& titleRef)
 {
 	_title = titleRef;
@@ -145,7 +139,16 @@ void GameEngine::set_title(const String& titleRef)
 
 int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 {
-	s_MainThread = std::this_thread::get_id();
+	assert(_game);
+	_game->configure_engine(this->_engine_settings);
+
+	// Validate engine settings
+	{
+		// Currently the engine does not support rendering D2D to MSAA because DrawText will act up.
+		assert(!(_engine_settings.d2d_use && (_engine_settings.d3d_use && _engine_settings.d3d_msaa_mode != MSAAMode::Off)));
+	}
+
+	s_main_thread = std::this_thread::get_id();
 
 	// Initialize some windows stuff
 	HRESULT hr = CoInitializeEx(nullptr, COINITBASE_MULTITHREADED);
@@ -158,8 +161,25 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	this->set_instance(hInstance);
 
 	// Initialize enkiTS
-	// TODO: Hookup profiler callbacks
-	s_TaskScheduler.Initialize();
+	const uint32_t max_task_threads = 4;
+	s_TaskScheduler.Initialize(max_task_threads);
+
+	struct InitTask : enki::IPinnedTask {
+		InitTask(uint32_t threadNum) :
+				IPinnedTask(threadNum) {}
+
+		void Execute() override {
+			::CoInitialize(NULL);
+		}
+	};
+
+	std::vector<std::unique_ptr<InitTask>> tasks;
+	for(uint32_t i = 0; i < s_TaskScheduler.GetNumTaskThreads(); ++i) {
+		tasks.push_back(std::make_unique<InitTask>( i));
+		s_TaskScheduler.AddPinnedTask(tasks[i].get());
+	}
+	s_TaskScheduler.RunPinnedTasks();
+	s_TaskScheduler.WaitforAll();
 
 	//Initialize the high precision timers
 	_game_timer = new PrecisionTimer();
@@ -192,7 +212,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 
 	// Initialize the Graphics Engine
-	CreateDeviceResources();
+	d3d_init();
 
 	ImGui::CreateContext();
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
@@ -388,19 +408,22 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		//m_D3DDeviceContextPtr->ClearDepthStencilView(_game_output_dsv, D3D11_CLEAR_DEPTH, 0.0f, 0);
 		//m_D3DDeviceContextPtr->OMSetRenderTargets(1, &_game_output_rtv, _game_output_dsv);
 
-		_d3d_device_ctx->ClearRenderTargetView(_d3d_backbuffer_view, color);
-		_d3d_device_ctx->OMSetRenderTargets(1, &_d3d_backbuffer_view, nullptr);
+		_d3d_device_ctx->ClearRenderTargetView(_d3d_output_rtv, color);
+		_d3d_device_ctx->ClearDepthStencilView(_d3d_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0);
+		_d3d_device_ctx->OMSetRenderTargets(1, &_d3d_output_rtv, _d3d_output_dsv);
 
 
 		// Render 3D before 2D
+		if(_engine_settings.d3d_use)
 		{
 			GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Render3D");
 			_game->render_3d();
 		}
 
 		// Render Direct2D to the swapchain
+		if(_engine_settings.d2d_use)
 		{
-			ExecuteDirect2DPaint();
+			d2d_render();
 		}
 
 		// Render main viewport ImGui
@@ -408,6 +431,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"ImGui");
 			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 		}
+
+		ComPtr<ID3D11Texture2D> backBuffer;
+		_dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+		_d3d_device_ctx->ResolveSubresource(backBuffer.Get(), 0, _d3d_output_tex, 0, DXGI_FORMAT_B8G8R8A8_UNORM);
 
 		// Present
 		GPU_MARKER(_d3d_user_defined_annotation, L"DrawEnd");
@@ -445,18 +472,21 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	return 0;
 }
 
-void GameEngine::ExecuteDirect2DPaint()
+void GameEngine::d2d_render()
 {
 	GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Game2D");
 
-	d2d_begin_paint();
+	graphics::D2DRenderContext context{ _d2d_factory, _d2d_rt, _color_brush, _default_font };
+	context.begin_paint();
+	_d2d_ctx = &context;
+
 	auto size = this->get_viewport_size();
 	RECT usedClientRect = { 0, 0, (LONG)size.x, (LONG)size.y };
 
 	_can_paint = true;
 	// make sure the view matrix is taken in account
 	set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
-	_game->paint(usedClientRect);
+	_game->paint(context);
 
 	//Paint the buttons and textboxes
 	GUIPaint();
@@ -473,14 +503,17 @@ void GameEngine::ExecuteDirect2DPaint()
 		FillRect(0, 0, get_width(), get_height());
 		set_view_matrix(matView);
 
+		_b2d_debug_renderer.set_draw_ctx(&context);
 		_b2d_world->DebugDraw();
+		_b2d_debug_renderer.set_draw_ctx(nullptr);
 	}
 
 	// deactivate all gui objects
 	GUIConsumeEvents();
 
 	_can_paint = false;
-	bool result = d2d_end_paint();
+	bool result = context.end_paint();
+	_d2d_ctx = nullptr;
 
 	// if drawing failed, terminate the game
 	if (!result) PostMessage(GameEngine::get_window(), WM_DESTROY, 0, 0);
@@ -547,31 +580,129 @@ bool GameEngine::open_window(int iCmdShow)
 void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 {
 
-	// Resize the swapchain
-	if (_d3d_backbuffer_view) _d3d_backbuffer_view->Release();
-	if (_d3d_backbuffer_srv)  _d3d_backbuffer_srv->Release();
+	DXGI_FORMAT swapchain_format = DXGI_FORMAT_B8G8R8A8_UNORM;
 
+	// Create MSAA render target that resolves to non-msaa swapchain
+	DXGI_SAMPLE_DESC aa_desc{};
+	switch (_engine_settings.d3d_msaa_mode) {
+		case MSAAMode::Off:
+			aa_desc.Count = 1;
+			break;
+		case MSAAMode::MSAA_2x:
+			aa_desc.Count = 2;
+			break;
+		case MSAAMode::MSAA_4x:
+			aa_desc.Count = 4;
+			break;
+		default:
+			break;
+
+	}
+
+	UINT qualityLevels;
+	_d3d_device->CheckMultisampleQualityLevels(swapchain_format, _aa_desc.Count, &qualityLevels);
+	aa_desc.Quality = (_engine_settings.d3d_msaa_mode != MSAAMode::Off) ? qualityLevels - 1 : 0;
+
+	// Release the textures before re-creating the swapchain
+	if (_dxgi_swapchain) {
+		_d3d_output_tex->Release();
+		_d3d_output_tex = nullptr;
+
+		_d3d_output_rtv->Release();
+		_d3d_output_rtv = nullptr;
+
+		_d3d_output_depth->Release();
+		_d3d_output_depth = nullptr;
+
+		_d3d_output_dsv->Release();
+		_d3d_output_dsv = nullptr;
+
+		// Resize the swapchain
+		if (_d3d_backbuffer_view) {
+			_d3d_backbuffer_view->Release();
+			_d3d_backbuffer_view = nullptr;
+		}
+
+		if (_d3d_backbuffer_srv) {
+			_d3d_backbuffer_srv->Release();
+			_d3d_backbuffer_srv = nullptr;
+		}
+
+		if (_d2d_rt) {
+			_d2d_rt->Release();
+			_d2d_rt = nullptr;
+		}
+	}
+
+	// Create the 3D output target
+	auto output_desc = CD3D11_TEXTURE2D_DESC(
+		swapchain_format,
+		get_width(), 
+		get_height(), 
+		1, 
+		1,
+		D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+		D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality );
+	SUCCEEDED(_d3d_device->CreateTexture2D(&output_desc, nullptr, &_d3d_output_tex));
+	SUCCEEDED(_d3d_device->CreateRenderTargetView(_d3d_output_tex, nullptr, &_d3d_output_rtv));
+
+
+	// Create the 3D depth target
+	auto dsv_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_D24_UNORM_S8_UINT, get_width(), get_height(), 1, 1, D3D11_BIND_DEPTH_STENCIL, D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
+	SUCCEEDED(_d3d_device->CreateTexture2D(&dsv_desc, nullptr, &_d3d_output_depth));
+	SUCCEEDED(_d3d_device->CreateDepthStencilView(_d3d_output_depth, NULL, &_d3d_output_dsv));
+
+
+	// Either create the swapchain or retrieve the existing description
 	DXGI_SWAP_CHAIN_DESC desc;
-	_dxgi_swapchain->GetDesc(&desc);
-	_dxgi_swapchain->ResizeBuffers(desc.BufferCount, width, height, desc.BufferDesc.Format, desc.Flags);
+	if(_dxgi_swapchain) {
+		_dxgi_swapchain->GetDesc(&desc);
+		_dxgi_swapchain->ResizeBuffers(desc.BufferCount, width, height, desc.BufferDesc.Format, desc.Flags);
+	}
+	else {
+		DXGI_SWAP_CHAIN_DESC desc{};
+		desc.BufferDesc.Width = get_width();
+		desc.BufferDesc.Height = get_height();
+		desc.BufferDesc.Format = swapchain_format;
+		desc.BufferDesc.RefreshRate.Numerator = 60;
+		desc.BufferDesc.RefreshRate.Denominator = 1;
+		desc.SampleDesc.Count = 1;
+		desc.SampleDesc.Quality = 0;
+		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
+		desc.OutputWindow = get_window();
+		if (_game_settings.m_FullscreenMode == GameSettings::FullScreenMode::Windowed || _game_settings.m_FullscreenMode == GameSettings::FullScreenMode::BorderlessWindowed) {
+			desc.Windowed = TRUE;
+		} else {
+			desc.Windowed = false;
+		}
+		desc.BufferCount = 2;
+		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+		SUCCEEDED(_dxgi_factory->CreateSwapChain(_d3d_device, &desc, &_dxgi_swapchain));
+
+		set_debug_name(_dxgi_swapchain, "DXGISwapchain");
+		set_debug_name(_dxgi_factory, "DXGIFactory");	
+	}
 
 	// Recreate the views
-	ID3D11Texture2D* backBuffer;
+	ComPtr<ID3D11Texture2D> backBuffer;
 	_dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
 	assert(backBuffer);
-	SUCCEEDED(_d3d_device->CreateRenderTargetView(backBuffer, NULL, &_d3d_backbuffer_view));
-	SUCCEEDED(_d3d_device->CreateShaderResourceView(backBuffer, NULL, &_d3d_backbuffer_srv));
+	SUCCEEDED(_d3d_device->CreateRenderTargetView(backBuffer.Get(), NULL, &_d3d_backbuffer_view));
+	SUCCEEDED(_d3d_device->CreateShaderResourceView(backBuffer.Get(), NULL, &_d3d_backbuffer_srv));
 
+	set_debug_name(_d3d_output_tex, "Color Output");
+	set_debug_name(_d3d_output_depth, "Depth Output");
+	set_debug_name(backBuffer.Get(), "Swapchain::Output");
+
+	// Create the D2D target for 2D rendering
 	UINT dpi = GetDpiForWindow(get_window());
-	D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)dpi, (FLOAT)dpi);
+	D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(swapchain_format, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)dpi, (FLOAT)dpi);
 
-	IDXGISurface* surface;
-	backBuffer->QueryInterface(&surface);
+	ComPtr<IDXGISurface> surface;
+	_d3d_output_tex->QueryInterface(surface.GetAddressOf());
 
-	SUCCEEDED(_d2d_factory->CreateDxgiSurfaceRenderTarget(surface, rtp, &_d2d_rt));
-	surface->Release();
-
-	backBuffer->Release();
+	SUCCEEDED(_d2d_factory->CreateDxgiSurfaceRenderTarget(surface.Get(), rtp, &_d2d_rt));
+	set_debug_name(surface.Get(), "[D2D] Output");
 }
 
 void GameEngine::quit_game()
@@ -709,7 +840,7 @@ void GameEngine::set_window(HWND hWindow)
 
 bool GameEngine::is_paint_allowed() const
 {
-	if (_can_paint) return true;
+	if (_d2d_ctx ) return true;
 	else
 	{
 #ifdef _DEBUG
@@ -721,524 +852,213 @@ bool GameEngine::is_paint_allowed() const
 
 void GameEngine::set_color(COLOR color)
 {
-	_color_brush->SetColor(D2D1::ColorF((FLOAT)(color.red / 255.0), (FLOAT)(color.green / 255.0), (FLOAT)(color.blue / 255.0), (FLOAT)(color.alpha / 255.0)));
+	_d2d_ctx->set_color(color);
 }
 
 COLOR GameEngine::get_color()
 {
-	D2D1_COLOR_F dColor = _color_brush->GetColor();
-	return COLOR((unsigned char)(dColor.r * 255), (unsigned char)(dColor.g * 255), (unsigned char)(dColor.b * 255), (unsigned char)(dColor.a * 255));
+	return _d2d_ctx->get_color();
 }
 
 bool GameEngine::DrawSolidBackground(COLOR backgroundColor)
 {
-	if (!is_paint_allowed()) return false;
-
-	_d2d_rt->Clear(D2D1::ColorF((FLOAT)(backgroundColor.red / 255.0), (FLOAT)(backgroundColor.green / 255.0), (FLOAT)(backgroundColor.blue / 255.0), (FLOAT)(backgroundColor.alpha)));
-
-	return true;
+	return _d2d_ctx->draw_background(backgroundColor);
 }
 
 bool GameEngine::DrawLine(int x1, int y1, int x2, int y2)
 {
-	return DrawLine(DOUBLE2(x1, y1), DOUBLE2(x2, y2), 1.0);
+	return _d2d_ctx->draw_line(x1, y1, x2, y2);
 }
 
 bool GameEngine::DrawLine(DOUBLE2 p1, DOUBLE2 p2, double strokeWidth)
 {
-	if (!is_paint_allowed()) return false;
-	_d2d_rt->DrawLine(Point2F((FLOAT)p1.x, (FLOAT)p1.y), Point2F((FLOAT)p2.x, (FLOAT)p2.y), _color_brush, (FLOAT)strokeWidth);
-
-	return true;
+	return _d2d_ctx->draw_line(p1, p2, strokeWidth);
 }
 
-bool GameEngine::DrawPolygon(const std::vector<POINT>& ptsArr, unsigned int count, bool close)
-{
-	if (!is_paint_allowed()) return false;
-	//unsigned int count = ptsArr.size();
-	//do not draw an empty polygon
-	if (count<2)return false;
-
-	for (unsigned int countLoop = 0; countLoop < count - 1; ++countLoop)
-	{
-		DrawLine(ptsArr[countLoop].x, ptsArr[countLoop].y, ptsArr[countLoop + 1].x, ptsArr[countLoop + 1].y);
-	}
-	if (close)
-	{
-		DrawLine(ptsArr[0].x, ptsArr[0].y, ptsArr[count - 1].x, ptsArr[count - 1].y);
-	}
-
-	return true;
+bool GameEngine::DrawPolygon(const std::vector<POINT> &ptsArr, unsigned int count, bool close) {
+	return _d2d_ctx->draw_polygon(ptsArr, count, close);
 }
 
 bool GameEngine::DrawPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned int count, bool close, double strokeWidth)
 {
-	if (!is_paint_allowed()) return false;
-	//unsigned int count = ptsArr.size();
-
-	//do not draw an empty polygon
-	if (count<2)return false;
-
-	for (unsigned int countLoop = 0; countLoop < count - 1; ++countLoop)
-	{
-		DrawLine(ptsArr[countLoop], ptsArr[countLoop + 1], strokeWidth);
-	}
-	if (close)
-	{
-		DrawLine(ptsArr[0], ptsArr[count - 1], strokeWidth);
-	}
-
-	return true;
+	return _d2d_ctx->draw_polygon(ptsArr, count, close, strokeWidth);
 }
 
 bool GameEngine::FillPolygon(const std::vector<POINT>& ptsArr, unsigned int count)
 {
-	if (!is_paint_allowed()) return false;
-	//unsigned int count = ptsArr.size();
-
-	//do not fill an empty polygon
-	if (count<2)return false;
-
-	HRESULT hr;
-
-	// Create path geometry
-	ID2D1PathGeometry *geometryPtr;
-	hr = _d2d_factory->CreatePathGeometry(&geometryPtr);
-	if (FAILED(hr))
-	{
-		geometryPtr->Release();
-		this->message_box(String("Failed to create path geometry"));
-		return false;
-	}
-
-	// Write to the path geometry using the geometry sink.
-	ID2D1GeometrySink* geometrySinkPtr = nullptr;
-	hr = geometryPtr->Open(&geometrySinkPtr);
-	if (FAILED(hr))
-	{
-		geometrySinkPtr->Release();
-		geometryPtr->Release();
-		this->message_box(String("Failed to open path geometry"));
-		return false;
-	}
-	if (SUCCEEDED(hr))
-	{
-		geometrySinkPtr->BeginFigure(
-			D2D1::Point2F((FLOAT)ptsArr[0].x, (FLOAT)ptsArr[0].y),
-			D2D1_FIGURE_BEGIN_FILLED
-			);
-
-		for (unsigned int i = 0; i<count; ++i)
-		{
-			geometrySinkPtr->AddLine(D2D1::Point2F((FLOAT)ptsArr[i].x, (FLOAT)ptsArr[i].y));
-		}
-
-		geometrySinkPtr->EndFigure(D2D1_FIGURE_END_CLOSED);
-
-		hr = geometrySinkPtr->Close();
-		geometrySinkPtr->Release();
-	}
-	if (SUCCEEDED(hr))
-	{
-		_d2d_rt->FillGeometry(geometryPtr, _color_brush);
-		geometryPtr->Release();
-		return true;
-	}
-
-	geometryPtr->Release();
-	return false;
+	return _d2d_ctx->fill_polygon(ptsArr, count);
 }
 
 bool GameEngine::FillPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned int count)
 {
-	if (!is_paint_allowed())return false;
-	//unsigned int count = ptsArr.size();
-
-	//do not fill an empty polygon
-	if (count<2)return false;
-
-	HRESULT hr;
-
-	// Create path geometry
-	ID2D1PathGeometry *geometryPtr;
-	hr = _d2d_factory->CreatePathGeometry(&(geometryPtr));
-	if (FAILED(hr))
-	{
-		geometryPtr->Release();
-		this->message_box(String("Failed to create path geometry"));
-		return false;
-	}
-
-	// Write to the path geometry using the geometry sink.
-	ID2D1GeometrySink* geometrySinkPtr = nullptr;
-	hr = geometryPtr->Open(&geometrySinkPtr);
-	if (FAILED(hr))
-	{
-		geometrySinkPtr->Release();
-		geometryPtr->Release();
-		this->message_box(String("Failed to open path geometry"));
-		return false;
-	}
-
-	if (SUCCEEDED(hr))
-	{
-		geometrySinkPtr->BeginFigure(
-			D2D1::Point2F((FLOAT)ptsArr[0].x, (FLOAT)ptsArr[0].y),
-			D2D1_FIGURE_BEGIN_FILLED
-			);
-
-		for (unsigned int i = 0; i<count; ++i)
-		{
-			geometrySinkPtr->AddLine(D2D1::Point2F((FLOAT)ptsArr[i].x, (FLOAT)ptsArr[i].y));
-		}
-
-		geometrySinkPtr->EndFigure(D2D1_FIGURE_END_CLOSED);
-
-		hr = geometrySinkPtr->Close();
-	}
-
-	geometrySinkPtr->Release();
-
-	if (SUCCEEDED(hr))
-	{
-		_d2d_rt->FillGeometry(geometryPtr, _color_brush);
-		geometryPtr->Release();
-		return true;
-	}
-
-	geometryPtr->Release();
-	return false;
+	return _d2d_ctx->fill_polygon(ptsArr, count);
 }
 
 bool GameEngine::DrawRect(int left, int top, int right, int bottom)
 {
-	RECT2 rect2(left, top, right, bottom);
-	return DrawRect(rect2, 1.0);
+	return _d2d_ctx->draw_rect(left, top, right, bottom);
 }
 
 bool GameEngine::DrawRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, double strokeWidth)
 {
-	RECT2 rect2(topLeft.x, topLeft.y, rightbottom.x, rightbottom.y);
-	return DrawRect(rect2, strokeWidth);
+	return _d2d_ctx->draw_rect(topLeft, rightbottom, strokeWidth);
 }
 
 bool GameEngine::DrawRect(RECT rect)
 {
-	RECT2 rect2(rect.left, rect.top, rect.right, rect.bottom);
-	return DrawRect(rect2, 1.0);
+	return _d2d_ctx->draw_rect(rect);
 }
 
 bool GameEngine::DrawRect(RECT2 rect, double strokeWidth)
 {
-	if (!is_paint_allowed()) return false;
-	if ((rect.right < rect.left) || (rect.bottom < rect.top)) MessageBoxA(NULL, "GameEngine::DrawRect error: invalid dimensions!", "GameEngine says NO", MB_OK);
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
-	_d2d_rt->DrawRectangle(d2dRect, _color_brush, (FLOAT)strokeWidth);
-
-	return true;
+	return _d2d_ctx->draw_rect(rect, strokeWidth);
 }
 
 bool GameEngine::FillRect(int left, int top, int right, int bottom)
 {
-	RECT2 rect2(left, top, right, bottom);
-	return FillRect(rect2);
+	return _d2d_ctx->fill_rect(left, top, right, bottom);
 }
 
 bool GameEngine::FillRect(DOUBLE2 topLeft, DOUBLE2 rightbottom)
 {
-	RECT2 rect2(topLeft.x, topLeft.y, rightbottom.x, rightbottom.y);
-	return FillRect(rect2);
+	return _d2d_ctx->fill_rect(topLeft, rightbottom);
 }
 
 bool GameEngine::FillRect(RECT rect)
 {
-	RECT2 rect2(rect.left, rect.top, rect.right, rect.bottom);
-	return FillRect(rect2);
+	return _d2d_ctx->fill_rect(rect);
 }
 
 bool GameEngine::FillRect(RECT2 rect)
 {
-	if (!is_paint_allowed()) return false;
-	if ((rect.right < rect.left) || (rect.bottom < rect.top)) MessageBoxA(NULL, "GameEngine::DrawRect error: invalid dimensions!", "GameEngine says NO", MB_OK);
-
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
-	_d2d_rt->FillRectangle(d2dRect, _color_brush);
-
-	return true;
+	return _d2d_ctx->fill_rect(rect);
 }
 
 bool GameEngine::DrawRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY)
 {
-	if (!is_paint_allowed()) return false;
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)left, (FLOAT)top, (FLOAT)(right), (FLOAT)(bottom));
-	D2D1_ROUNDED_RECT  d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->DrawRoundedRectangle(d2dRoundedRect, _color_brush, 1.0);
-	return true;
+	return _d2d_ctx->draw_rounded_rect(left, top, right, bottom, radiusX, radiusY);
 }
 
 bool GameEngine::DrawRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY, double strokeWidth)
 {
-	if (!is_paint_allowed()) return false;
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(rightbottom.x), (FLOAT)(rightbottom.y));
-	D2D1_ROUNDED_RECT  d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->DrawRoundedRectangle(d2dRoundedRect, _color_brush, (FLOAT)strokeWidth);
-	return true;
+	return _d2d_ctx->draw_rounded_rect(topLeft, rightbottom, radiusX, radiusY, strokeWidth);
 }
 
 bool GameEngine::DrawRoundedRect(RECT rect, int radiusX, int radiusY)
 {
-	if (!is_paint_allowed()) return false;
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
-	D2D1_ROUNDED_RECT  d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->DrawRoundedRectangle(d2dRoundedRect, _color_brush, 1.0);
-	return true;
+	return _d2d_ctx->draw_rounded_rect(rect, radiusX, radiusY);
 }
 
 bool GameEngine::DrawRoundedRect(RECT2 rect, int radiusX, int radiusY, double strokeWidth)
 {
-	if (!is_paint_allowed()) return false;
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
-	D2D1_ROUNDED_RECT  d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->DrawRoundedRectangle(d2dRoundedRect, _color_brush, (FLOAT)strokeWidth);
-	return true;
+	return _d2d_ctx->draw_rounded_rect(rect, radiusX, radiusY, strokeWidth);
 }
 
 bool GameEngine::FillRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY)
 {
-	if (!is_paint_allowed()) return false;
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)left, (FLOAT)top, (FLOAT)(right), (FLOAT)(bottom));
-	D2D1_ROUNDED_RECT  d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->FillRoundedRectangle(d2dRoundedRect, _color_brush);
-	return true;
+	return _d2d_ctx->fill_rounded_rect(left, top, right, bottom, radiusX, radiusY);
 }
 
 bool GameEngine::FillRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY)
 {
-	if (!is_paint_allowed()) return false;
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(rightbottom.x), (FLOAT)(rightbottom.y));
-	D2D1_ROUNDED_RECT  d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->FillRoundedRectangle(d2dRoundedRect, _color_brush);
-	return true;
+	return _d2d_ctx->fill_rounded_rect(topLeft, rightbottom, radiusX, radiusY);
 }
 
 bool GameEngine::FillRoundedRect(RECT rect, int radiusX, int radiusY)
 {
-	if (!is_paint_allowed()) return false;
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
-	D2D1_ROUNDED_RECT  d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->FillRoundedRectangle(d2dRoundedRect, _color_brush);
-	return true;
+	return _d2d_ctx->fill_rounded_rect(rect, radiusX, radiusY);
 }
 
 bool GameEngine::FillRoundedRect(RECT2 rect, int radiusX, int radiusY)
 {
-	if (!is_paint_allowed()) return false;
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
-	D2D1_ROUNDED_RECT  d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->FillRoundedRectangle(d2dRoundedRect, _color_brush);
-	return true;
+	return _d2d_ctx->fill_rounded_rect(rect, radiusX, radiusY);
 }
 
 bool GameEngine::DrawEllipse(int centerX, int centerY, int radiusX, int radiusY)
 {
-	if (!is_paint_allowed()) return false;
-
-	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerX, (FLOAT)centerY), (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->DrawEllipse(ellipse, _color_brush, 1.0);
-
-	return true;
+	return _d2d_ctx->draw_ellipse(centerX, centerY, radiusX, radiusY);
 }
 
 bool GameEngine::DrawEllipse(DOUBLE2 centerPt, double radiusX, double radiusY, double strokeWidth)
 {
-	if (!is_paint_allowed()) return false;
-
-	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerPt.x, (FLOAT)centerPt.y), (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->DrawEllipse(ellipse, _color_brush, (FLOAT)strokeWidth);
-
-	return true;
+	return _d2d_ctx->draw_ellipse(centerPt, radiusX, radiusY, strokeWidth);
 }
 
 bool GameEngine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY)
 {
-	if (!is_paint_allowed()) return false;
-
-	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerX, (FLOAT)centerY), (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->FillEllipse(ellipse, _color_brush);
-
-	return true;
+	return _d2d_ctx->fill_ellipse(centerX, centerY, radiusX, radiusY);
 }
 
 bool GameEngine::FillEllipse(DOUBLE2 centerPt, double radiusX, double radiusY)
 {
-	if (!is_paint_allowed()) return false;
-
-	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerPt.x, (FLOAT)centerPt.y), (FLOAT)radiusX, (FLOAT)radiusY);
-	_d2d_rt->FillEllipse(ellipse, _color_brush);
-
-	return true;
+	return _d2d_ctx->fill_ellipse(centerPt, radiusX, radiusY);
 }
+
 bool GameEngine::DrawString(const String& text, RECT boundingRect)
 {
-	return DrawString(text, boundingRect.left, boundingRect.top, boundingRect.right, boundingRect.bottom);
+	return _d2d_ctx->draw_string(text, boundingRect);
 }
 
 bool GameEngine::DrawString(const String& text, RECT2 boundingRect)
 {
-	return DrawString(text, (int)boundingRect.left, (int)boundingRect.top, (int)boundingRect.right, (int)boundingRect.bottom);
+	return _d2d_ctx->draw_string(text, boundingRect);
 }
-
-//bool GameEngine::DrawString(string text, RECT boundingRect)
-//{
-//	return DrawString(text, boundingRect.left, boundingRect.top, boundingRect.right, boundingRect.bottom);
-//}
-//
-//bool GameEngine::DrawString(string text, RECT2 boundingRect)
-//{
-//	return DrawString(text, (int)boundingRect.left, (int)boundingRect.top, (int)boundingRect.right, (int)boundingRect.bottom);
-//}
 
 bool GameEngine::DrawString(const String& text, int left, int top, int right, int bottom)
 {
-	return DrawString(text, DOUBLE2(left, top), right, bottom);
+	return _d2d_ctx->draw_string(text, left, top, right, bottom);
 }
 
 bool GameEngine::DrawString(const String& text, DOUBLE2 topLeft, double right, double bottom)
 {
-	tstring stext(text.C_str(), text.C_str() + text.Length());
-	if (!is_paint_allowed()) return false;
-
-	D2D1_DRAW_TEXT_OPTIONS options = D2D1_DRAW_TEXT_OPTIONS_CLIP;
-	if (right == -1 || bottom == -1) //ignore the right and bottom edge to enable drawing in entire Level
-	{
-		options = D2D1_DRAW_TEXT_OPTIONS_NONE;
-		right = bottom = FLT_MAX;
-	}
-	D2D1_RECT_F layoutRect = (RectF)((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(right), (FLOAT)(bottom));
-
-	_d2d_rt->DrawText(stext.c_str(), UINT32(stext.length()), _user_font->GetTextFormat(), layoutRect, _color_brush, options);
-
-	return true;
+	return _d2d_ctx->draw_string(text, topLeft, right, bottom);
 }
 
-//bool GameEngine::DrawString(string text, int left, int top, int right, int bottom)
-//{
-//	return DrawString(text, DOUBLE2(left, top), right, bottom); 
-//}
-//
-//bool GameEngine::DrawString(string text, DOUBLE2 topLeft, double right, double bottom)
-//{
-//	if (!CanIPaint()) return false;
-//
-//	D2D1_SIZE_F dstSize_f = m_RenderTargetPtr->GetSize();
-//	D2D1_DRAW_TEXT_OPTIONS options = D2D1_DRAW_TEXT_OPTIONS_CLIP;
-//	if (right == -1 || bottom == -1) //ignore the right and bottom edge to enable drawing in entire Level
-//	{
-//		options = D2D1_DRAW_TEXT_OPTIONS_NONE;
-//		right = bottom = FLT_MAX;
-//	}
-//	D2D1_RECT_F layoutRect = (RectF) ((FLOAT) topLeft.x, (FLOAT) topLeft.y, (FLOAT) (right), (FLOAT) (bottom));
-//
-//	tstring wText(text.begin(), text.end());
-//	m_RenderTargetPtr->DrawText(wText.c_str(), wText.length(), m_UserFontPtr->GetTextFormat(), layoutRect, m_ColorBrushPtr, options);
-//
-//	return true;
-//}
+bool GameEngine::DrawString(std::string text, int left, int top, int right, int bottom)
+{
+	return _d2d_ctx->draw_string(text, left, top, right, bottom);
+}
+
+bool GameEngine::DrawString(std::string text, DOUBLE2 topLeft, double right, double bottom)
+{
+	return _d2d_ctx->draw_string(text, topLeft, right, bottom);
+}
 
 bool GameEngine::DrawBitmap(Bitmap* imagePtr)
 {
-	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
-	return DrawBitmap(imagePtr, DOUBLE2(0, 0), srcRect2);
+	return _d2d_ctx->draw_bitmap(imagePtr);
 }
 
 bool GameEngine::DrawBitmap(Bitmap* imagePtr, RECT srcRect)
 {
-	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-	RECT2 srcRect2(srcRect.left, srcRect.top, srcRect.right, srcRect.bottom);
-	return DrawBitmap(imagePtr, DOUBLE2(0, 0), srcRect2);
+	return _d2d_ctx->draw_bitmap(imagePtr, srcRect);
 }
 
 bool GameEngine::DrawBitmap(Bitmap* imagePtr, int x, int y)
 {
-	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
-	return DrawBitmap(imagePtr, DOUBLE2(x, y), srcRect2);
+	return _d2d_ctx->draw_bitmap(imagePtr, x, y);
 }
 
 bool GameEngine::DrawBitmap(Bitmap* imagePtr, int x, int y, RECT srcRect)
 {
-	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-	RECT2 srcRect2(srcRect.left, srcRect.top, srcRect.right, srcRect.bottom);
-	return DrawBitmap(imagePtr, DOUBLE2(x, y), srcRect2);
+	return _d2d_ctx->draw_bitmap(imagePtr, x, y, srcRect);
 }
 
 bool GameEngine::DrawBitmap(Bitmap* imagePtr, DOUBLE2 position)
 {
-	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
-	return DrawBitmap(imagePtr, position, srcRect2);
+	return _d2d_ctx->draw_bitmap(imagePtr, position);
 }
 
 bool GameEngine::DrawBitmap(Bitmap* imagePtr, DOUBLE2 position, RECT2 srcRect)
 {
-	if (!is_paint_allowed()) return false;
-	if (imagePtr == nullptr) MessageBoxA(NULL, "DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-	//The size and position, in device-independent pixels in the bitmap's coordinate space, of the area within the bitmap to draw.
-	D2D1_RECT_F srcRect_f;
-	srcRect_f.left = (FLOAT)srcRect.left;
-	srcRect_f.right = (FLOAT)srcRect.right;
-	srcRect_f.top = (FLOAT)srcRect.top;
-	srcRect_f.bottom = (FLOAT)srcRect.bottom;
-
-	//http://msdn.microsoft.com/en-us/library/dd371880(v=VS.85).aspx
-	//The size and position, in device-independent pixels in the render target's coordinate space, 
-	//of the area to which the bitmap is drawn. If the rectangle is not well-ordered, nothing is drawn, 
-	//but the render target does not enter an error state.
-	D2D1_RECT_F dstRect_f;
-	dstRect_f.left = (FLOAT)position.x;
-	dstRect_f.right = dstRect_f.left + (FLOAT)(srcRect.right - srcRect.left);
-	dstRect_f.top = (FLOAT)position.y;
-	dstRect_f.bottom = dstRect_f.top + (FLOAT)(srcRect.bottom - srcRect.top);
-
-	_d2d_rt->DrawBitmap(imagePtr->GetBitmapPtr(), dstRect_f, (FLOAT)imagePtr->GetOpacity(), _hw_bitmap_interpolation_mode, srcRect_f);
-
-	return true;
+	return _d2d_ctx->draw_bitmap(imagePtr, position, srcRect);
 }
-
-//bool GameEngine::DrawHitRegion(HitRegion* collisionMeshPtr)
-//{
-//	if (!CanIPaint()) return false;
-//	// Set view matrix
-//	m_RenderTargetPtr->SetTransform(m_MatView.ToMatrix3x2F());
-//	// Draw the hitregion
-//	m_RenderTargetPtr->DrawGeometry(collisionMeshPtr->GetTransformedGeometry(), m_ColorBrushPtr);
-//
-//	//restore the world matrix
-//	m_RenderTargetPtr->SetTransform((m_MatWorld * m_MatView).ToMatrix3x2F());
-//	return true;
-//}
-//
-//bool GameEngine::FillHitRegion(HitRegion* collisionMeshPtr)
-//{
-//	if (!CanIPaint()) return false;
-//	// Set view matrix
-//	m_RenderTargetPtr->SetTransform(m_MatView.ToMatrix3x2F());
-//
-//	// Draw the hitregion
-//	m_RenderTargetPtr->FillGeometry(collisionMeshPtr->GetTransformedGeometry(), m_ColorBrushPtr);
-//
-//	//restore the world matrix
-//	m_RenderTargetPtr->SetTransform((m_MatWorld * m_MatView).ToMatrix3x2F());
-//	return true;
-//}
 
 //world matrix operations
 void GameEngine::set_world_matrix(const MATRIX3X2& mat)
 {
 	_mat_world = mat;
-	D2D1::Matrix3x2F matDirect2D = (_mat_world * _mat_view).ToMatrix3x2F();
-	_d2d_rt->SetTransform(matDirect2D);
+	_d2d_ctx->set_world_matrix(mat);
 }
 
 MATRIX3X2 GameEngine::get_world_matrix()
@@ -1250,8 +1070,7 @@ MATRIX3X2 GameEngine::get_world_matrix()
 void GameEngine::set_view_matrix(const MATRIX3X2& mat)
 {
 	_mat_view = mat;
-	D2D1::Matrix3x2F matDirect2D = (_mat_world * _mat_view).ToMatrix3x2F();
-	_d2d_rt->SetTransform(matDirect2D);
+	_d2d_ctx->set_view_matrix(mat);
 }
 
 MATRIX3X2 GameEngine::get_view_matrix()
@@ -1261,32 +1080,15 @@ MATRIX3X2 GameEngine::get_view_matrix()
 
 void GameEngine::set_bitmap_interpolation_mode(bitmap_interpolation_mode mode)
 {
-	switch (mode)
-	{
-	case bitmap_interpolation_mode::linear:
-		_hw_bitmap_interpolation_mode = D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
-		break;
-	case bitmap_interpolation_mode::nearest_neighbor:
-		_hw_bitmap_interpolation_mode = D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
-		break;
-	default:
-		assert("Case not supported");
-		break;
-	}
-
-	_bitmap_interpolation_mode = mode;
+	_d2d_ctx->set_bitmap_interpolation_mode(mode);
 }
 
 void GameEngine::enable_aa(bool isEnabled)
 {
-	_aa_desc.Count = isEnabled ? 4 : 1;
-	_aa_desc.Quality = isEnabled ? D3D11_CENTER_MULTISAMPLE_PATTERN : 0;
-
-	//TODO: Request swapchain recreation
-
 	_d2d_aa_mode = isEnabled ? D2D1_ANTIALIAS_MODE_ALIASED : D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
-	if(_d2d_rt)
-	_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
+	if (_d2d_rt) {
+		_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
+	}
 }
 
 void GameEngine::enable_physics_debug_rendering(bool isEnabled)
@@ -1296,17 +1098,17 @@ void GameEngine::enable_physics_debug_rendering(bool isEnabled)
 
 void GameEngine::set_font(Font* fontPtr)
 {
-	_user_font = fontPtr;
+	_d2d_ctx->set_font(fontPtr);
 }
 
-Font* GameEngine::get_font()
+Font* GameEngine::get_font() const
 {
-	return _user_font;
+	return _d2d_ctx->get_font();
 }
 
 void GameEngine::set_default_font()
 {
-	_user_font = _default_font;
+	return _d2d_ctx->set_font(_default_font);
 }
 
 void GameEngine::register_gui(GUIBase *guiPtr)
@@ -1494,15 +1296,16 @@ void GameEngine::GUIConsumeEvents()
 
 }
 
-void GameEngine::apply_settings(GameSettings &gameSettings)
+void GameEngine::apply_settings(GameSettings &game_settings)
 {
-	set_width(gameSettings.m_WindowWidth);
-	set_height(gameSettings.m_WindowHeight);
-	set_title(gameSettings.m_WindowTitle);
-	enable_vsync(gameSettings.m_WindowFlags & GameSettings::WindowFlags::EnableVSync);
-	enable_aa(gameSettings.m_WindowFlags & GameSettings::WindowFlags::EnableAA);
+	enable_aa(_engine_settings.d2d_use_aa);
 
-	if (gameSettings.m_WindowFlags & GameSettings::WindowFlags::EnableConsole)
+	set_width(game_settings.m_WindowWidth);
+	set_height(game_settings.m_WindowHeight);
+	set_title(game_settings.m_WindowTitle);
+	enable_vsync(game_settings.m_WindowFlags & GameSettings::WindowFlags::EnableVSync);
+
+	if (game_settings.m_WindowFlags & GameSettings::WindowFlags::EnableConsole)
 	{
 		console_create();
 	}
@@ -1637,32 +1440,57 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 // duration of the app. These resources include the Direct2D and
 // DirectWrite factories,  and a DirectWrite Text Format object
 // (used for identifying particular font characteristics).
-void GameEngine::CreateDeviceIndependentResources()
+void GameEngine::create_factories()
 {
 	// Create Direct3D 11 factory
 	{
 		CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&_dxgi_factory);
 
-		D3D_FEATURE_LEVEL levels = D3D_FEATURE_LEVEL_11_0;
+		// Define the ordering of feature levels that Direct3D attempts to create.
+		D3D_FEATURE_LEVEL featureLevels[] = {
+			D3D_FEATURE_LEVEL_11_1,
+		};
 		D3D_FEATURE_LEVEL featureLevel;
-		SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT, &levels, 1, D3D11_SDK_VERSION, &_d3d_device, &featureLevel, &_d3d_device_ctx));
+
+		uint32_t creation_flag = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
+
+		bool debug_layer = cli::has_arg(_command_line, "-enable-d3d-debug");
+		if(debug_layer) {
+			creation_flag |= D3D11_CREATE_DEVICE_DEBUG;
+		}
+
+		SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT, featureLevels, std::size(featureLevels), D3D11_SDK_VERSION, &_d3d_device, &featureLevel, &_d3d_device_ctx));
+
+		if (debug_layer) {
+
+			if(cli::has_arg(_command_line, "-d3d-break")) {
+				ComPtr<ID3D11InfoQueue> info_queue;
+				_d3d_device->QueryInterface(IID_PPV_ARGS(&info_queue));
+				if (info_queue) {
+					info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
+					info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
+				}
+			}
+		}
 	}
 
-	CreateD2DFactory();
-	CreateWICFactory();
-	CreateWriteFactory();
+	d2d_create_factory();
+	WIC_create_factory();
+	write_create_factory();
 
 	_d3d_device_ctx->QueryInterface(IID_PPV_ARGS(&_d3d_user_defined_annotation));
 }
 
-void GameEngine::CreateD2DFactory()
+void GameEngine::d2d_create_factory()
 {
 	HRESULT hr;
 	// Create a Direct2D factory.
 	ID2D1Factory* localD2DFactoryPtr = nullptr;
 	if (!_d2d_factory)
 	{
-		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &localD2DFactoryPtr);
+		D2D1_FACTORY_OPTIONS options;
+		options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED,options, &localD2DFactoryPtr);
 		if (FAILED(hr))
 		{
 			message_box(String("Create D2D Factory Failed"));
@@ -1672,7 +1500,7 @@ void GameEngine::CreateD2DFactory()
 	}
 }
 
-void GameEngine::CreateWICFactory()
+void GameEngine::WIC_create_factory()
 {
 	HRESULT hr;
 	// Create a WIC factory if it does not exists
@@ -1689,7 +1517,7 @@ void GameEngine::CreateWICFactory()
 	}
 }
 
-void GameEngine::CreateWriteFactory()
+void GameEngine::write_create_factory()
 {
 	HRESULT hr;
 	// Create a DirectWrite factory.
@@ -1712,78 +1540,27 @@ void GameEngine::CreateWriteFactory()
 //  need to be recreated in case of Direct3D device loss (eg. display
 //  change, remoting, removal of video card, etc).
 //
-void GameEngine::CreateDeviceResources()
+void GameEngine::d3d_init()
 {
 	HRESULT hr = S_OK;
 
-	if (!_dxgi_swapchain)
-	{
-		DXGI_SWAP_CHAIN_DESC desc{};
-		desc.BufferDesc.Width = get_width();
-		desc.BufferDesc.Height = get_height();
-		desc.BufferDesc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
-		desc.BufferDesc.RefreshRate.Numerator = 60;
-		desc.BufferDesc.RefreshRate.Denominator = 1;
-		desc.SampleDesc.Count = 1;
-		desc.SampleDesc.Quality = 0;
-		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
-		desc.OutputWindow = get_window();
-		if (_game_settings.m_FullscreenMode == GameSettings::FullScreenMode::Windowed || _game_settings.m_FullscreenMode == GameSettings::FullScreenMode::BorderlessWindowed)
-		{
-			desc.Windowed = TRUE;
-		}
-		else
-		{
-			desc.Windowed = false;
-		}
-		desc.BufferCount = 2;
-		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-		SUCCEEDED(_dxgi_factory->CreateSwapChain(_d3d_device, &desc, &_dxgi_swapchain));
+	resize_swapchain(get_width(), get_height());
+	//set alias mode
+	_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
 
-		set_debug_name(_dxgi_swapchain, "DXGISwapchain");
-		set_debug_name(_dxgi_factory, "DXGIFactory");
+	// Create a brush.
+	_d2d_rt->CreateSolidColorBrush((D2D1::ColorF) D2D1::ColorF::Black, &_color_brush);
 
-		ID3D11Texture2D* backBuffer;
-		_dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-		set_debug_name(backBuffer, "DXGIBackBuffer");
-		assert(backBuffer);
-		SUCCEEDED(_d3d_device->CreateRenderTargetView(backBuffer, NULL, &_d3d_backbuffer_view));
-		SUCCEEDED(_d3d_device->CreateShaderResourceView(backBuffer, NULL, &_d3d_backbuffer_srv));
-		backBuffer->Release();
-
-		UINT dpi = GetDpiForWindow(get_window());
-		D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)dpi, (FLOAT)dpi);
-
-		IDXGISurface* surface;
-		backBuffer->QueryInterface(&surface);
-
-		hr = _d2d_factory->CreateDxgiSurfaceRenderTarget(surface, rtp, &_d2d_rt);
-		surface->Release();
-
-		if (FAILED(hr))
-		{
-			message_box(String("Create CreateDeviceResources Failed"));
-			exit(-1);
-		}
-
-		//set alias mode
-		_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
-
-		// Create a brush.
-		_d2d_rt->CreateSolidColorBrush((D2D1::ColorF) D2D1::ColorF::Black, &_color_brush);
-
-		//Create a Font
-		_default_font = new Font(String("Consolas"), 12);
-		_user_font = _default_font;
-		_initialized = true;
-	}
+	//Create a Font
+	_default_font = new Font(String("Consolas"), 12);
+	_initialized = true;
 }
 
 //
 //  Discard device-specific resources which need to be recreated
 //  when a Direct3D device is lost
 //
-void GameEngine::DiscardDeviceResources()
+void GameEngine::d3d_deinit()
 {
 	_initialized = false;
 	if (_color_brush)
@@ -1800,34 +1577,14 @@ void GameEngine::DiscardDeviceResources()
 	_d3d_backbuffer_view->Release();
 	_d3d_backbuffer_view = nullptr;
 
+	_d3d_output_tex->Release();
+	_d3d_output_rtv->Release();
+	
+
 	_dxgi_swapchain->Release();
 	_dxgi_swapchain = nullptr;
 }
 
-void GameEngine::d2d_begin_paint()
-{
-	if (_d2d_rt)
-	{
-		_d2d_rt->BeginDraw();
-		_d2d_rt->SetTransform(D2D1::Matrix3x2F::Identity());
-
-		// set black as initial brush color 
-		_color_brush->SetColor(D2D1::ColorF((FLOAT)(0.0), (FLOAT)(0.0), (FLOAT)(0.0), (FLOAT)(1.0)));
-	}
-}
-
-bool GameEngine::d2d_end_paint()
-{
-	HRESULT hr = S_OK;
-	hr = _d2d_rt->EndDraw();
-
-	if (hr == D2DERR_RECREATE_TARGET)
-	{
-		message_box(String(" Direct2D error: RenderTarget lost.\nThe GameEngine terminates the game.\n"));
-		return false; //app should close or re-initialize
-	}
-	return true;
-}
 
 // Box2D overloads
 void GameEngine::BeginContact(b2Contact* contactPtr)
@@ -2064,7 +1821,7 @@ void GameEngine::build_ui()
 int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, AbstractGame* game)
 {
 	//notify user if heap is corrupt
-	HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
+	//HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
 
 	// Enable run-time memory leak check for debug builds.
 #if defined(DEBUG) | defined(_DEBUG)

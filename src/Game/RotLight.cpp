@@ -40,8 +40,6 @@ RotLight::~RotLight()
 void RotLight::Paint()
 {
 
-    std::vector<DOUBLE2>tmpPointsArr;
-    //GameEngine::instance()->SetWorldMatrix(matWorldTransform);
     MATRIX3X2 matOrbitRadius, matOrbitCenter;
     matOrbitRadius.SetAsTranslate(DOUBLE2(20, 0));
     matOrbitCenter.SetAsTranslate(DOUBLE2(m_Position));
@@ -52,8 +50,7 @@ void RotLight::Paint()
         matRectOrbitRotate.SetAsRotate(angle + m_Angle);
         matWorldTransform = matOrbitRadius * matRectOrbitRotate * matOrbitCenter;
         GameEngine::instance()->set_world_matrix(matWorldTransform);
-        //GameEngine::instance()->DrawRect(0, -10, 100, 10);
-        std::vector<DOUBLE2>tmpPointsArr;
+		std::vector<DOUBLE2> tmpPointsArr{};
         tmpPointsArr.push_back(DOUBLE2(0,-10));
         tmpPointsArr.push_back(DOUBLE2(m_Radius,-m_Radius/4));
         tmpPointsArr.push_back(DOUBLE2(m_Radius + 10, -m_Radius / 6));

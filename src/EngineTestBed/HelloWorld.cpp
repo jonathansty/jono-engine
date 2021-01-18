@@ -102,7 +102,7 @@ void HelloWorldGame::end()
 
 }
 
-void HelloWorldGame::paint(RECT rect)
+void HelloWorldGame::paint(graphics::D2DRenderContext const& ctx)
 {
 	auto engine = GameEngine::instance();
 	engine->DrawSolidBackground(COLOR(0, 0, 0));

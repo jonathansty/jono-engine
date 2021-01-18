@@ -77,24 +77,25 @@ void NpcHinter::Paint()
     GameEngine::instance()->set_world_matrix(matPivot * matMirror*matTranslate);
     GameEngine::instance()->DrawBitmap(m_BmpBodyPtr, boundingBox);
     GameEngine::instance()->set_world_matrix(matNpcHitBoxTransform);
-    Font* fntTmpPtr = new Font(String(""), 16);
-    fntTmpPtr->SetAlignHCenter();
-    GameEngine::instance()->set_font(fntTmpPtr);
+	GameEngine::instance()->set_default_font();
     matPivot.SetAsTranslate(DOUBLE2(-(m_TipText.Length() * 16) / 2, -50));
 
-    matTextTranslate.SetAsTranslate(DOUBLE2(0, 0));
-    GameEngine::instance()->set_world_matrix(matPivot* matTextTranslate*matNpcHitBoxTransform);
     if (m_IsArmed)
     {
-        
+		matTextTranslate.SetAsTranslate(DOUBLE2(0, 0));
+		GameEngine::instance()->set_world_matrix(matPivot* matTextTranslate*matNpcHitBoxTransform);
         GameEngine::instance()->set_color(COLOR(255,255,255, m_Opacity));
+
+        // TODO: Fix validation error 
+		GameEngine::instance()->d2d_flush();
         GameEngine::instance()->DrawString(m_TipText, RECT2(0, 0, m_TipText.Length() * 16, 50));
+		GameEngine::instance()->d2d_flush();
+
+		GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     }
    
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     GameEngine::instance()->set_color(COLOR(0, 0, 0, 255));
     GameEngine::instance()->set_default_font();
-    delete fntTmpPtr;
 }
 void NpcHinter::Tick(double deltaTime)
 {

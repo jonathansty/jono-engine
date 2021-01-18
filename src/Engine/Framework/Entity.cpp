@@ -20,37 +20,31 @@ IMPL_REFLECT(Entity)
 	);
 }
 
-Entity::Entity(XMFLOAT2 pos)
+Entity::Entity(XMFLOAT3 pos)
 	: _parent(nullptr)
-	, _pos(pos.x, pos.y, 0.0)
+	, _pos(pos.x, pos.y, pos.z)
 	, _scale({ 1.0f, 1.0f, 1.0f })
 	, _rot(XMQuaternionIdentity())
 	, _rot_euler({0.0f,0.0f,0.0f})
 {
 }
 
-Entity::Entity()
-	: _pos(0.0,0.0,0.0)
-	, _scale({ 1.0f,1.0f,1.0f })
-	, _parent(nullptr)
+Entity::Entity() : Entity({ 0.0f, 0.0f })
 {
 
 }
 
-framework::Entity::Entity(XMFLOAT3 pos)
-	: _pos(pos)
-	, _scale({ 1.0f, 1.0f, 1.0f })
-	, _parent(nullptr) 
+Entity::Entity(XMFLOAT2 pos) : Entity({pos.x, pos.y, 0.0})
 {
 
 }
 
-void framework::Entity::set_local_position(XMFLOAT3 pos)
+void Entity::set_local_position(XMFLOAT3 pos)
 {
 	_pos = pos;
 }
 
-void framework::Entity::set_local_scale(XMFLOAT3 scale)
+void Entity::set_local_scale(XMFLOAT3 scale)
 {
 	_scale = scale;
 }

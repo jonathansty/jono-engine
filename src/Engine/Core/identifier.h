@@ -62,3 +62,4 @@ namespace std
 }
 
 using Identifier32 = Identifier<uint32_t>;
+using Identifier64 = Identifier<uint64_t>;

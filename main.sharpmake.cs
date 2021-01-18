@@ -80,6 +80,7 @@ public class EngineProject : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
+        conf.SolutionFolder = "engine";
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
@@ -111,7 +112,7 @@ public class EngineProject : JonaBaseProject
             "d3d11", 
             "d3dcompiler", 
             "Propsys",
-            "XAudio2", 
+            //"XAudio2", 
             "mfplat", 
             "mfreadwrite",
             "mfuuid", 
@@ -145,6 +146,7 @@ public class EngineTestProject : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
+        conf.SolutionFolder = "engine";
 
         // Private dependencies
         conf.AddPrivateDependency<EngineProject>(target);
@@ -176,6 +178,7 @@ public class GameProject : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
+        conf.SolutionFolder = "games";
 
         conf.AddPrivateDependency<EngineProject>(target);
 
@@ -187,7 +190,7 @@ public class GameProject : JonaBaseProject
             "4189"  // Unused local variables
         ));
 
-        conf.Options.Add(Options.Vc.Linker.SubSystem.Application);
+        conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
 
         conf.Output = Configuration.OutputType.Exe;
 
@@ -209,6 +212,7 @@ public class EngineTestBed : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
+        conf.SolutionFolder = "games";
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
@@ -234,19 +238,20 @@ public class EngineTestBed : JonaBaseProject
 
 
 [Generate]
-public class EnkiTS : JonaBaseProject
+public class EnkiTS : ExternalProject
 {
     public EnkiTS()
     {
         Name = "EnkiTS";
-        SourceRootPath = @"[project.SharpmakeCsPath]/external/enkiTS/src";
+        SourceRootPath = Path.Combine(externalDir, "enkiTS/");
+
     }
 
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
 
-        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/external/enkiTS/src");
+        conf.IncludePaths.Add(Path.Combine(externalDir, "enkiTS/src"));
         conf.Output = Configuration.OutputType.Lib;
     }
 }
@@ -302,6 +307,7 @@ public class VCPKG : Project
     public virtual void ConfigureAll(Configuration conf, Target target)
     {
         conf.Output = Configuration.OutputType.None;
+        conf.SolutionFolder = "libraries";
     }
 
     [Configure(Optimization.Debug), ConfigurePriority(2)]
@@ -390,6 +396,13 @@ public class Assimp : VCPKG
 public class ExternalProject : JonaBaseProject
 {
     protected string externalDir = @"[project.SharpmakeCsPath]/external";
+
+    override public void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        conf.SolutionFolder = "libraries";
+    }
 }
 
 

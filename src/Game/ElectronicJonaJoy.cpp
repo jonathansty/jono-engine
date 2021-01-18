@@ -38,7 +38,7 @@ void ElectronicJonaJoy::initialize(GameSettings &gameSettings)
 #ifdef _DEBUG
 	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableConsole;
 #endif
-	gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableAA;
+	//gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableAA;
 
 }
 
@@ -178,7 +178,7 @@ void ElectronicJonaJoy::tick(double deltaTime)
 	}
 }
 
-void ElectronicJonaJoy::paint(RECT rect)
+void ElectronicJonaJoy::paint(graphics::D2DRenderContext const& ctx)
 {
 	if (_current_state)
 	{
@@ -187,7 +187,7 @@ void ElectronicJonaJoy::paint(RECT rect)
 
 	ImVec2 vp_size = GameEngine::instance()->get_viewport_size();
 	GameEngine* engine = GameEngine::instance();
-	return;
+	engine->DrawString("Hello", 0, 0);
 }
 
 void ElectronicJonaJoy::debug_ui()
@@ -264,6 +264,13 @@ void ElectronicJonaJoy::HandleGameState()
 	}
 }
 
+void ElectronicJonaJoy::configure_engine(EngineSettings &engineSettings) {
+	engineSettings.d2d_use = true;
+	engineSettings.d2d_use_aa = true;
+
+	// No 3D rendering support needed
+	engineSettings.d3d_use = false;
+}
 
 
 MainMenuState::MainMenuState(ElectronicJonaJoy* owner)

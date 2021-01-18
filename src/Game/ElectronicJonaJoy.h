@@ -34,7 +34,7 @@ public:
 	virtual void start() override;				
 	virtual void end() override;
 	virtual void tick(double deltaTime) override;
-	virtual void paint(RECT rect) override;
+	virtual void paint(graphics::D2DRenderContext const& ctx) override;
     virtual void debug_ui() override;
 
     void HandleGameState();
@@ -52,6 +52,9 @@ public:
 
     int get_curr_level() const { return m_CurrentLevel; }
     LevelList* get_level_names() const { return m_LevelListPtr; }
+
+	virtual void configure_engine(EngineSettings &engineSettings) override;
+
 private:
     IGameState* _current_state = nullptr;
     DataManager* m_FileManagerPtr = nullptr;

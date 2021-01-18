@@ -6,13 +6,14 @@
 class Hello3D : public AbstractGame
 {
 public:
-	void initialize(GameSettings& gameSettings);
-	void start() override;
-	void end() override;
-	void paint(RECT rect) override;
-	void tick(double deltaTime) override;
-	void debug_ui() override;
-	void render_3d() override;
+	virtual void configure_engine(EngineSettings &engineSettings) override;
+	virtual void initialize(GameSettings& gameSettings);
+	virtual void start() override;
+	virtual void end() override;
+	virtual void paint(graphics::D2DRenderContext const& ctx) override;
+	virtual void tick(double deltaTime) override;
+	virtual void debug_ui() override;
+	virtual void render_3d() override;
 
 private:
 	std::shared_ptr<framework::World> _world;

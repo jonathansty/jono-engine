@@ -28,15 +28,32 @@ class PrecisionTimer;
 class b2World;
 class ContactListener;
 
+#include "graphics/2DRenderContext.h"
+
+using graphics::bitmap_interpolation_mode;
+
+enum class MSAAMode {
+	Off,
+	MSAA_2x,
+	MSAA_4x,
+};
+
+struct EngineSettings {
+	// Allow 2D rendering
+	bool d2d_use = false;
+	bool d2d_use_aa = false;
+
+	// Allow 3D rendering
+	bool d3d_use = true;
+	MSAAMode d3d_msaa_mode = MSAAMode::Off;
+	
+};
+
 template <typename T>
 HRESULT set_debug_name(T *obj, std::string const &n) {
 	return obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(n.size()), n.data());
 }
 
-enum class bitmap_interpolation_mode {
-	linear,
-	nearest_neighbor
-};
 
 void OutputDebugString(const String &textRef);
 
@@ -234,8 +251,9 @@ public:
 	// Commented to prevent that this would compile: DrawString("blah", 10, 10);
 	//bool			DrawString(std::string text, RECT boundingRect);
 	//bool			DrawString(std::string text, RECT2 boundingRect);
-	//bool			DrawString(std::string text, DOUBLE2 topLeft, double right = -1, double bottom = -1);
-	//bool			DrawString(std::string text, int xPos, int yPos, int right = -1, int bottom = -1);
+	bool			DrawString(std::string text, DOUBLE2 topLeft, double right = -1, double bottom = -1);
+	bool			DrawString(std::string text, int xPos, int yPos, int right = -1, int bottom = -1);
+
 
 	//! Draws text in the specified rectangle
 	bool DrawString(const String &textRef, RECT boundingRect);
@@ -272,6 +290,8 @@ public:
 	//! Draws an image on position x:0, and y:0. Assuming that matrices are used to define the position.
 	bool DrawBitmap(Bitmap *imagePtr);
 
+	void d2d_flush() { _d2d_rt->Flush(); }
+
 	//! Sets the matrix that defines world space
 	void set_world_matrix(const MATRIX3X2 &mat);
 
@@ -284,13 +304,13 @@ public:
 	//! Returns the matrix that defines view space
 	MATRIX3X2 get_view_matrix();
 
-	void set_bitmap_interpolation_mode(bitmap_interpolation_mode mode);
+	void set_bitmap_interpolation_mode(graphics::bitmap_interpolation_mode mode);
 
 	//! Set the font that is used to render text
 	void set_font(Font *fontPtr);
 
 	//! Returns the font that is used to render text
-	Font *get_font();
+	Font *get_font() const;
 
 	//! Set the built-in font asthe one to be used to render text
 	void set_default_font();
@@ -347,7 +367,7 @@ public:
 	}
 
 	static enki::TaskScheduler s_TaskScheduler;
-	static std::thread::id s_MainThread;
+	static std::thread::id s_main_thread;
 
 	// Enables/disables physics simulation stepping.
 	void set_physics_step(bool bEnabled);
@@ -357,21 +377,35 @@ public:
 	ID2D1RenderTarget *get_2d_draw_ctx() const { return _d2d_rt; }
 
 private:
+	// Internal run function called by GameEngine::run
+	int run(HINSTANCE hInstance, int iCmdShow);
+
+	// Sets the current game implementation
 	void set_game(AbstractGame *gamePtr);
+
+	// Sets the current command line
 	void set_command_line(cli::CommandLine const &cmdLine) { _command_line = cmdLine; }
 
-	int run(HINSTANCE hInstance, int iCmdShow);
+	// Registers our WND class using the Win32 API
 	bool register_wnd_class();
+
+	// Opens the registered window. Should be called after wnd class has been registered
 	bool open_window(int iCmdShow);
 
+	// resizes or creates the swapchain and game rtv/dsv outputs
 	void resize_swapchain(uint32_t width, uint32_t height);
 
 	LRESULT handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	void set_sleep(bool bSleep);
+
+	// Binds HINSTANCE from Win32 api
 	void set_instance(HINSTANCE hInstance);
+
+	// Binds HWND from Win32 api
 	void set_window(HWND hWindow);
+
 	void set_title(const String &titleRef);
 
 	void set_width(int iWidth);
@@ -383,15 +417,15 @@ private:
 	bool is_paint_allowed() const;
 
 	// Direct2D methods
-	void d2d_begin_paint();
-	bool d2d_end_paint();
-	void CreateDeviceIndependentResources();
-	void CreateD2DFactory();
-	void CreateWICFactory();
-	void CreateWriteFactory();
-	void CreateDeviceResources();
-	void DiscardDeviceResources();
-	void ExecuteDirect2DPaint();
+	void d2d_render();
+
+	void create_factories();
+	void d2d_create_factory();
+	void WIC_create_factory();
+	void write_create_factory();
+
+	void d3d_init();
+	void d3d_deinit();
 	void GUITick(double deltaTime);
 	void GUIPaint();
 	void GUIConsumeEvents();
@@ -430,6 +464,13 @@ private:
 	ID3D11ShaderResourceView *_d3d_backbuffer_srv;
 	ID3DUserDefinedAnnotation *_d3d_user_defined_annotation;
 
+	// Intermediate MSAA game output.
+	// these textures get resolved to the swapchain before presenting
+	ID3D11Texture2D *_d3d_output_tex;
+	ID3D11RenderTargetView *_d3d_output_rtv;
+	ID3D11Texture2D *_d3d_output_depth;
+	ID3D11DepthStencilView *_d3d_output_dsv;
+
 	bool _is_viewport_focused;
 	bool _recreate_game_texture;
 	bool _recreate_swapchain;
@@ -444,16 +485,15 @@ private:
 	ID2D1SolidColorBrush *_color_brush;
 	DXGI_SAMPLE_DESC _aa_desc;
 	D2D1_ANTIALIAS_MODE _d2d_aa_mode;
+
 	MATRIX3X2 _mat_world;
 	MATRIX3X2 _mat_view;
 
-	bitmap_interpolation_mode _bitmap_interpolation_mode;
-	D2D1_BITMAP_INTERPOLATION_MODE _hw_bitmap_interpolation_mode; // used when painting scaled bitmaps:
 
+	// Fonts used for text rendering
 	Font *_default_font; // Default Font --> deleted in destructor
-	Font *_user_font; // the pointer the user defines using SetFont() --> NOT deleted in destructor
 
-	// GUI array
+	// legacy UI is stored as GUI elements and are rendered each frame (not immediate mode)
 	std::vector<GUIBase *> _gui_elements;
 
 	// Input manager
@@ -477,6 +517,9 @@ private:
 	MetricsOverlay *_metrics_overlay;
 	std::shared_ptr<OverlayManager> _overlay_manager;
 	GameSettings _game_settings;
+	EngineSettings _engine_settings;
+
+	graphics::D2DRenderContext *_d2d_ctx;
 
 	bool _physics_step_enabled;
 	bool _should_quit;

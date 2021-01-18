@@ -1,6 +1,13 @@
 #include "stdafx.h"
 #include "CommandLine.h"
 
+cli::CommandLine cli::parse(const char **argvs, const int argc) {
+	std::string cmdLine = "";
+	for (int i = 0; i < argc; ++i)
+		cmdLine += (i > 0 ? " " : "") + std::string(argvs[i]);
+	return cli::parse(cmdLine);
+}
+
 cli::CommandLine cli::parse(std::string cmdLine) {
 	std::string delimiter = " ";
 

@@ -25,22 +25,11 @@
 // Windows Functions
 //-----------------------------------------------------------------
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
+//int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR szCmdLine, int iCmdShow)
+int main(const int argc, const char** argvs)
 {
-	auto cmd = cli::parse(szCmdLine);
-	//bool lvl_arg = cli::has_arg(cmd, "-level");
-	//if(lvl_arg) {
-	//	std::cout << "Booting custom level. \n";
-	//	std::string lvl_value;
-	//	cli::get_string(cmd, "-level", lvl_value);
-	//	std::cout << "Level: " << lvl_value << std::endl;
-	//}
 
-	//int max_fps = 0;
-	//if(cli::get_number(cmd, "-max-fps",max_fps)) {
-	//	std::cout << "Max FPS set to " << max_fps << std::endl;
-	//}
-
+	auto cmd = cli::parse(argvs, argc);
 	ElectronicJonaJoy *game = new ElectronicJonaJoy();
-	return GameEngine::run_game(hInstance,cmd,iCmdShow,game);
+	return GameEngine::run_game(NULL,cmd,1,game);
 }

@@ -132,6 +132,8 @@ namespace rtti
 	class MethodBase
 	{
 	public:
+		virtual ~MethodBase() {}
+
 		using Argument = rtti::Object;
 
 		virtual rtti::Object invoke(rtti::Object& obj) = 0;
