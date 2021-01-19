@@ -178,16 +178,14 @@ void ElectronicJonaJoy::tick(double deltaTime)
 	}
 }
 
-void ElectronicJonaJoy::paint(graphics::D2DRenderContext const& ctx)
+void ElectronicJonaJoy::paint(graphics::D2DRenderContext& ctx)
 {
 	if (_current_state)
 	{
-		_current_state->render_2d();
+		_current_state->render_2d(ctx);
 	}
 
-	ImVec2 vp_size = GameEngine::instance()->get_viewport_size();
-	GameEngine* engine = GameEngine::instance();
-	engine->DrawString("Hello", 0, 0);
+	ctx.draw_string("Hello", 0, 0);
 }
 
 void ElectronicJonaJoy::debug_ui()
@@ -303,9 +301,9 @@ void MainMenuState::update(double dt)
 	_menu->Tick(dt);
 }
 
-void MainMenuState::render_2d()
+void MainMenuState::render_2d(graphics::D2DRenderContext& ctx)
 {
-	_menu->Paint();
+	_menu->paint(ctx);
 }
 
 MainMenuState::~MainMenuState()
@@ -334,7 +332,7 @@ void LoadingScreenState::update(double dt)
 	}
 }
 
-void LoadingScreenState::render_2d()
+void LoadingScreenState::render_2d(graphics::D2DRenderContext& ctx)
 {
-	GameEngine::instance()->DrawBitmap(_loading_bitmap);
+	GameEngine::instance()->draw_bitmap(_loading_bitmap);
 }

@@ -51,8 +51,8 @@ public:
 	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
     
     //! Paint debug information
-    void PaintDebug();
-    void Paint();
+    void PaintDebug(graphics::D2DRenderContext& ctx);
+    void Paint(graphics::D2DRenderContext& ctx);
     void Tick(double deltaTime);
 
     //! Add coins to the avatar

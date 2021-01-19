@@ -65,7 +65,7 @@ void CheckPoint::Paint()
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-20, -m_BmpFlagPtr->GetHeight() / 2));
     GameEngine::instance()->set_world_matrix(matPivot * matTranslate);
-    GameEngine::instance()->DrawBitmap(m_BmpFlagPtr);
+    GameEngine::instance()->draw_bitmap(m_BmpFlagPtr);
 
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }

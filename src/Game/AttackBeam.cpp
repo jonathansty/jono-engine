@@ -56,7 +56,7 @@ void AttackBeam::Paint()
     GameEngine::instance()->set_color(m_Color);
     if (m_TopPosition.y < m_Position.y)
     {
-        GameEngine::instance()->FillRect((int)(-m_Width + m_Position.x), (int)m_TopPosition.y, (int)(m_Width + m_Position.x), (int)m_Position.y);
+        GameEngine::instance()->fill_rect((int)(-m_Width + m_Position.x), (int)m_TopPosition.y, (int)(m_Width + m_Position.x), (int)m_Position.y);
     }
     
     GameEngine::instance()->set_color(COLOR(0, 0, 0,255));
@@ -65,7 +65,7 @@ void AttackBeam::Paint()
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(-m_BmpGroundPtr->GetWidth() / 2, -m_BmpGroundPtr->GetHeight());
     GameEngine::instance()->set_world_matrix(matPivot * matTranslate);
-    GameEngine::instance()->DrawBitmap(m_BmpGroundPtr);
+    GameEngine::instance()->draw_bitmap(m_BmpGroundPtr);
    
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }

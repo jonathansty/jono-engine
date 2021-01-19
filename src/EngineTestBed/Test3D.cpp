@@ -167,7 +167,7 @@ void Hello3D::end()
 
 }
 
-void Hello3D::paint(graphics::D2DRenderContext const& ctx)
+void Hello3D::paint(graphics::D2DRenderContext& ctx)
 {
 }
 

@@ -66,7 +66,7 @@ void EnemyShooter::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 {
 
 }
-void EnemyShooter::Paint()
+void EnemyShooter::Paint(graphics::D2DRenderContext& ctx)
 {
     switch (m_State)
     {
@@ -97,10 +97,10 @@ void EnemyShooter::Paint()
     }
 
     matWorldTransform = matPivot* matScale * matRotate * matTransform;
-    m_AnimationListPtr->Paint();
+    m_AnimationListPtr->Paint(ctx);
     
     GameEngine::instance()->set_world_matrix(matWorldTransform);
-    GameEngine::instance()->DrawBitmap(m_BmpEnemyBodyPtr,m_BoundingBox);
+    GameEngine::instance()->draw_bitmap(m_BmpEnemyBodyPtr,m_BoundingBox);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 
     //Painting the bullet
@@ -110,7 +110,7 @@ void EnemyShooter::Paint()
         matRotate.SetAsRotate(m_ActBulletPtr->GetAngle());
         matPivot.SetAsTranslate(DOUBLE2(-5, -10));
         GameEngine::instance()->set_world_matrix(matPivot * matRotate * matTransform);
-        GameEngine::instance()->DrawRect(0, 0, 10, 20);
+        GameEngine::instance()->draw_rect(0, 0, 10, 20);
         GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     }
     

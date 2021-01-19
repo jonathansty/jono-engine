@@ -45,17 +45,17 @@ void EntityDestroy::Tick(double deltaTime)
 
     
 }
-void EntityDestroy::Paint()
+void EntityDestroy::Paint(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate,matScale, matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matScale.SetAsScale(m_Scale);
     matPivot.SetAsTranslate(DOUBLE2(0,0));
-    GameEngine::instance()->set_color(COLOR(255,255,255, m_Opacity * 255));
+    ctx.set_color(COLOR(255,255,255, m_Opacity * 255));
     GameEngine::instance()->set_world_matrix(matPivot * matScale * matTranslate);
-    GameEngine::instance()->FillEllipse(DOUBLE2(), m_Radius, m_Radius);
+    ctx.fill_ellipse(DOUBLE2(), m_Radius, m_Radius);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
-    GameEngine::instance()->set_color(COLOR(0, 0, 0,255));
+    ctx.set_color(COLOR(0, 0, 0,255));
 }
 double EntityDestroy::GetOpacity()
 {

@@ -40,7 +40,7 @@ public:
     };
 
     void Tick(double dTime);
-    void Paint();
+    void Paint(graphics::D2DRenderContext& ctx);
 
     //! Returns the viewmatrix of the camera.
     MATRIX3X2 GetViewMatrix();

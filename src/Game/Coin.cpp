@@ -72,7 +72,7 @@ void Coin::Paint()
     matPivot.SetAsTranslate(-m_BmpCoinPtr->GetWidth() / 2, -m_BmpCoinPtr->GetHeight() / 2);
     matTranslate.SetAsTranslate(m_Position);
     GameEngine::instance()->set_world_matrix(matPivot* matTranslate);
-    GameEngine::instance()->DrawBitmap(m_BmpCoinPtr);
+    GameEngine::instance()->draw_bitmap(m_BmpCoinPtr);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 bool Coin::IsHit()

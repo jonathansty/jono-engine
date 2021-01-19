@@ -43,11 +43,11 @@ private:
 	// Internal use only
 	virtual void ConsumeEvent();
 	// Internal use only
-	virtual void Paint();
+	virtual void Paint(graphics::D2DRenderContext& ctx);
 	// Internal use only
 	virtual void Tick(double deltaTime);
 	// Internal use only
-	void DrawCaret();
+	void DrawCaret(graphics::D2DRenderContext& ctx);
 	// Internal use only
 	virtual void HandleKeyInput(TCHAR character);
 

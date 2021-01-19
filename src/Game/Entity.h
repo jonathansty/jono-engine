@@ -31,7 +31,7 @@ public:
 	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse) = 0;
     virtual void SetLevel(Level* levelptr);
     virtual void SetAvatar(Avatar* avatar);
-    virtual void Paint() {}
+    virtual void Paint(graphics::D2DRenderContext& ctx) {}
     virtual void Tick(double deltaTime) {}
     virtual PhysicsActor* GetActor();
     virtual DOUBLE2 GetPosition();
@@ -42,7 +42,7 @@ public:
     virtual void SetName(String name);
     virtual String GetName();
     virtual bool GetIsDead();
-    virtual void PaintDebug();
+    virtual void PaintDebug(graphics::D2DRenderContext& ctx);
     int distance(Entity* otherEntityPtr);
     
 protected:

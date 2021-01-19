@@ -241,7 +241,7 @@ void Camera::ManualMode(double deltaTime, DOUBLE2 &oldPosition)
     }
 }
 
-void Camera::Paint()
+void Camera::Paint(graphics::D2DRenderContext& ctx)
 {
     auto engine = GameEngine::instance();
     if (m_ShakeMode == Shakemode::EPICEFFECT)
@@ -265,8 +265,8 @@ void Camera::Paint()
         int width = engine->get_width();
         int height = engine->get_height();
         engine->set_color(COLOR(0, 0, 0));
-        engine->FillRect(0, 0, width, static_cast<int>(m_EpicEffectBarsSize));
-        engine->FillRect(0, static_cast<int>(height - m_EpicEffectBarsSize), width, height);
+        engine->fill_rect(0, 0, width, static_cast<int>(m_EpicEffectBarsSize));
+        engine->fill_rect(0, static_cast<int>(height - m_EpicEffectBarsSize), width, height);
     }
     
 }

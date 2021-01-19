@@ -93,11 +93,11 @@ bool Entity::GetIsDead()
 {
     return m_IsDead;
 }
-void Entity::PaintDebug()
+void Entity::PaintDebug(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate;
     matTranslate.SetAsTranslate(m_Position);
     GameEngine::instance()->set_world_matrix(matTranslate);
-    GameEngine::instance()->DrawString(m_Name,DOUBLE2());
+    GameEngine::instance()->draw_string(m_Name,DOUBLE2());
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }

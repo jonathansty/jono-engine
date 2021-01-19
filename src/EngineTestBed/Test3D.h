@@ -10,7 +10,7 @@ public:
 	virtual void initialize(GameSettings& gameSettings);
 	virtual void start() override;
 	virtual void end() override;
-	virtual void paint(graphics::D2DRenderContext const& ctx) override;
+	virtual void paint(graphics::D2DRenderContext& ctx) override;
 	virtual void tick(double deltaTime) override;
 	virtual void debug_ui() override;
 	virtual void render_3d() override;

@@ -31,23 +31,23 @@ EntityList::~EntityList()
 //{
 //
 //}
-void EntityList::Paint()
+void EntityList::Paint(graphics::D2DRenderContext& ctx)
 {
     for (size_t i = 0; i < m_EntityPtrArr.size(); i++)
     {
         if (m_EntityPtrArr[i] != nullptr)
         {
-            m_EntityPtrArr[i]->Paint();
+            m_EntityPtrArr[i]->Paint(ctx);
         }
     }
 }
-void EntityList::PaintDebug()
+void EntityList::PaintDebug(graphics::D2DRenderContext& ctx)
 {
     for (size_t i = 0; i < m_EntityPtrArr.size(); i++)
     {
         if (m_EntityPtrArr[i] != nullptr)
         {
-            m_EntityPtrArr[i]->PaintDebug();
+            m_EntityPtrArr[i]->PaintDebug(ctx);
         }
     }
 }

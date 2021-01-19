@@ -41,7 +41,7 @@ void CoinList::Tick(double deltatime)
         }
     }
 }
-void CoinList::Paint()
+void CoinList::Paint(graphics::D2DRenderContext& ctx)
 {
     for (size_t i = 0; i < m_CoinsPtrArr.size(); i++)
     {
@@ -59,7 +59,7 @@ void CoinList::PaintDebug()
         {
             DOUBLE2 position = m_CoinsPtrArr[i]->GetPosition() - DOUBLE2(10,30);
             String name = m_CoinsPtrArr[i]->GetName();
-            GameEngine::instance()->DrawString(name,position);
+            GameEngine::instance()->draw_string(name,position);
         }
     }
 }

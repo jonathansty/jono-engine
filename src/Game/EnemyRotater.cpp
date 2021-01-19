@@ -47,7 +47,7 @@ void EnemyRotater::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 {
 
 }
-void EnemyRotater::Paint()
+void EnemyRotater::Paint(graphics::D2DRenderContext& ctx)
 {
     DOUBLE2 position = m_ActPtr->GetPosition();
     MATRIX3X2 matRotation, matOrbitRadius, matOrbitCenter, matCenter,matBitmapRotation;
@@ -57,7 +57,7 @@ void EnemyRotater::Paint()
     matOrbitCenter.SetAsTranslate(position);
     matBitmapRotation = matRotation.Inverse();
     GameEngine::instance()->set_world_matrix(matCenter *matBitmapRotation * matOrbitRadius*matRotation*matOrbitCenter);
-    GameEngine::instance()->DrawBitmap(m_BmpPtr);
+    GameEngine::instance()->draw_bitmap(m_BmpPtr);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void EnemyRotater::Tick(double deltaTime)

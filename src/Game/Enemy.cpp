@@ -79,14 +79,14 @@ void Enemy::setName(String name)
     m_Name = name;
 }
 
-void Enemy::PaintDebug()
+void Enemy::PaintDebug(graphics::D2DRenderContext& ctx)
 {
     auto engine = GameEngine::instance();
     if (m_ActPtr != nullptr)
     {
         DOUBLE2 position = m_ActPtr->GetPosition();
         engine->set_default_font();
-        engine->DrawString(String(m_Name), position);
+        engine->draw_string(String(m_Name), position);
     }
 }
 

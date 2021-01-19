@@ -55,11 +55,11 @@ public:
 
     void on_activate() override;
     void on_deactivate() override;
-	void render_2d() override;
+	void render_2d(graphics::D2DRenderContext& ctx) override;
 	void update(double deltaTime) override;
 
     // Legacy code
-    void paint();
+    void paint(graphics::D2DRenderContext& ctx);
     void tick(double deltaTime);
     void Pause();
     void UnPause();

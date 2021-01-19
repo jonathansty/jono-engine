@@ -100,11 +100,11 @@ void EnemyLaser::Tick(double deltaTime)
        
     }
 }
-void EnemyLaser::Paint()
+void EnemyLaser::Paint(graphics::D2DRenderContext& ctx)
 {
-    //GameEngine::instance()->DrawLine(m_RayStart, m_RayEnd);
-    GameEngine::instance()->DrawLine(m_IntersectionLeft, m_RayStart);
-    GameEngine::instance()->DrawLine(m_IntersectionRight, m_RayStart);
+    //ctx.DrawLine(m_RayStart, m_RayEnd);
+    ctx.draw_line(m_IntersectionLeft, m_RayStart);
+    ctx.draw_line(m_IntersectionRight, m_RayStart);
 
 
     double leftLength = (m_IntersectionLeft - m_Position).Length();
@@ -114,12 +114,12 @@ void EnemyLaser::Paint()
     matTranslate.SetAsTranslate(m_Position);
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
     GameEngine::instance()->set_world_matrix(matRotate * matTranslate);
-    GameEngine::instance()->set_color(COLOR(125, 125, 125));
-    GameEngine::instance()->FillEllipse(DOUBLE2(), 20, 20);
-    GameEngine::instance()->set_color(COLOR(255, 255, 255));
-    GameEngine::instance()->FillRect((int)-leftLength, -5, 0, 5);
-    GameEngine::instance()->FillRect(0, -5, (int)rightLength, 5);
-    GameEngine::instance()->set_color(COLOR(0, 0, 0));
+    ctx.set_color(COLOR(125, 125, 125));
+    ctx.fill_ellipse(DOUBLE2(), 20, 20);
+    ctx.set_color(COLOR(255, 255, 255));
+    ctx.fill_rect((int)-leftLength, -5, 0, 5);
+    ctx.fill_rect(0, -5, (int)rightLength, 5);
+    ctx.set_color(COLOR(0, 0, 0));
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 PhysicsActor* EnemyLaser::GetActor()

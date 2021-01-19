@@ -57,7 +57,7 @@ void Lever::Paint()
     }
     boundingBox.right = boundingBox.left + (LONG)m_ClipWidth;
     boundingBox.bottom = m_BmpPtr->GetHeight();
-    GameEngine::instance()->DrawBitmap(m_BmpPtr,boundingBox);
+    GameEngine::instance()->draw_bitmap(m_BmpPtr,boundingBox);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Lever::Tick(double deltaTime)

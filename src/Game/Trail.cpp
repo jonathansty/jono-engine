@@ -50,7 +50,7 @@ void Trail::Paint(DOUBLE2 position)
         if (size - (size / m_TrailLength)*(double)i > 0)
         {
 
-            GameEngine::instance()->FillEllipse(pos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
+            GameEngine::instance()->fill_ellipse(pos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
             DOUBLE2 vector = pos2 - pos;
             if (vector.Length() > 5)
             {
@@ -59,7 +59,7 @@ void Trail::Paint(DOUBLE2 position)
                     double spaceBetween = vector.Length() / m_AmountOfInterpolation;
                     DOUBLE2 normVector = vector.Normalized();
                     midPos = normVector*j*spaceBetween;
-                    GameEngine::instance()->FillEllipse(pos + midPos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
+                    GameEngine::instance()->fill_ellipse(pos + midPos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
                 }
             }
         }

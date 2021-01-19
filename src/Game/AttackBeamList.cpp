@@ -35,7 +35,7 @@ AttackBeamList::~AttackBeamList()
 //{
 //
 //}
-void AttackBeamList::Paint()
+void AttackBeamList::Paint(graphics::D2DRenderContext& ctx)
 {
     for (size_t i = 0; i < m_AttackBeamsPtrArr.size(); i++)
     {

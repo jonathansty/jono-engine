@@ -66,21 +66,21 @@ void Slicer::Tick(double deltaTime)
     DOUBLE2 direction = m_ActBarPoint->GetPosition() - m_ActPtr->GetPosition();
     m_Position = m_ActPtr->GetPosition();
 }
-void Slicer::Paint()
+void Slicer::Paint(graphics::D2DRenderContext& ctx)
 {
-    GameEngine::instance()->DrawLine(m_ActBarPoint->GetPosition(), m_ActPtr->GetPosition());
+    ctx.draw_line(m_ActBarPoint->GetPosition(), m_ActPtr->GetPosition());
 
     MATRIX3X2 matTranlate, matRotate, matPivot;
     matTranlate.SetAsTranslate(m_Position);
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
     matPivot.SetAsTranslate(DOUBLE2(-BLADEWIDTH / 2, -BLADEHEIGHT / 2));
     GameEngine::instance()->set_world_matrix(matPivot * matRotate * matTranlate);
-    GameEngine::instance()->set_color(COLOR(0, 0, 0));
-    GameEngine::instance()->FillRect(0, 0, BLADEWIDTH, BLADEHEIGHT);
+    ctx.set_color(COLOR(0, 0, 0));
+    ctx.fill_rect(0, 0, BLADEWIDTH, BLADEHEIGHT);
 
     matRotate.SetAsRotate(m_ActPtr->GetAngle() + M_PI_2);
     GameEngine::instance()->set_world_matrix(matPivot * matRotate * matTranlate);
-    GameEngine::instance()->FillRect(0, 0, BLADEWIDTH, BLADEHEIGHT);
+    ctx.fill_rect(0, 0, BLADEWIDTH, BLADEHEIGHT);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 PhysicsActor* Slicer::GetActor()

@@ -53,10 +53,10 @@ void StickyWall::Paint()
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
     GameEngine::instance()->set_world_matrix(matPivot*matTranslate);
-    GameEngine::instance()->FillRect(0, 0, (int)m_Width, (int)m_Height);
+    GameEngine::instance()->fill_rect(0, 0, (int)m_Width, (int)m_Height);
     GameEngine::instance()->set_color(COLOR(0, 125, 50));
-    GameEngine::instance()->FillRect(0, 0, (int)(m_Width * 0.2), (int)(m_Height));
-    GameEngine::instance()->FillRect((int)(m_Width - (m_Width*0.2)), 0, (int)m_Width, (int)m_Height);
+    GameEngine::instance()->fill_rect(0, 0, (int)(m_Width * 0.2), (int)(m_Height));
+    GameEngine::instance()->fill_rect((int)(m_Width - (m_Width*0.2)), 0, (int)m_Width, (int)m_Height);
     GameEngine::instance()->set_color(COLOR(0, 0, 0));
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }

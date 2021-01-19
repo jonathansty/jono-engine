@@ -34,7 +34,7 @@ void Sprite::Paint(int rowNumber)
     boundingBox.top = rowNumber * clipHeight;
     boundingBox.right = boundingBox.left + clipWidth;
     boundingBox.bottom = boundingBox.top + clipHeight;
-    GameEngine::instance()->DrawBitmap(m_BmpSpriteSheetPtr,boundingBox);
+    GameEngine::instance()->draw_bitmap(m_BmpSpriteSheetPtr,boundingBox);
 }
 void Sprite::Paint(int rowNumber, int maxFrame)
 {
@@ -45,7 +45,7 @@ void Sprite::Paint(int rowNumber, int maxFrame)
     boundingBox.top = rowNumber * clipHeight;
     boundingBox.right = boundingBox.left + clipWidth;
     boundingBox.bottom = boundingBox.top + clipHeight;
-    GameEngine::instance()->DrawBitmap(m_BmpSpriteSheetPtr, boundingBox);
+    GameEngine::instance()->draw_bitmap(m_BmpSpriteSheetPtr, boundingBox);
 }
 void Sprite::SetFrameRate(double frameRate)
 {

@@ -4,3 +4,6 @@
 [submodule "ThirdParty/imgui"]
 	path = ThirdParty/imgui
 	url = https://github.com/ocornut/imgui.git
+[submodule "external/hlslpp"]
+	path = external/hlslpp
+	url = https://github.com/redorav/hlslpp.git

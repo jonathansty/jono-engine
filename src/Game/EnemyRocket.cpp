@@ -114,7 +114,7 @@ void EnemyRocket::Tick(double deltaTime)
     m_ActPtr->SetAngle(m_Angle);
     m_ActPtr->SetLinearVelocity(m_Speed*m_AdjustedVelocity);
 }
-void EnemyRocket::Paint()
+void EnemyRocket::Paint(graphics::D2DRenderContext& ctx)
 {
 
     m_TrailPtr->Paint(m_ActPtr->GetPosition());
@@ -128,7 +128,7 @@ void EnemyRocket::Paint()
     trianglePointsArr.push_back(DOUBLE2(0,0));
     trianglePointsArr.push_back(DOUBLE2(WIDTH,HEIGHT/2));
     trianglePointsArr.push_back(DOUBLE2(0,HEIGHT));
-    GameEngine::instance()->FillPolygon(trianglePointsArr, 3);
+    GameEngine::instance()->fill_polygon(trianglePointsArr, 3);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     
     /*GameEngine::instance()->DrawLine(m_Position.x, m_Position.y, m_AvatarPtr->GetPosition().x, m_AvatarPtr->GetPosition().y);

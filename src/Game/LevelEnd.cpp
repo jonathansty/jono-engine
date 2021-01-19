@@ -68,7 +68,7 @@ void LevelEnd::Tick(double deltaTime)
         m_AreAllLeversHit = true;
     }
 }
-void LevelEnd::Paint()
+void LevelEnd::Paint(graphics::D2DRenderContext& ctx)
 {
     if (m_AreAllLeversHit == true)
     {
@@ -77,7 +77,7 @@ void LevelEnd::Paint()
         matRotate.SetAsRotate(m_Angle);
         matPivot.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
         GameEngine::instance()->set_world_matrix(matPivot*matRotate* matTranslate);
-        GameEngine::instance()->DrawBitmap(m_BmpPtr);
+        GameEngine::instance()->draw_bitmap(m_BmpPtr);
         GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     }
     

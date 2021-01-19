@@ -147,148 +147,139 @@ public:
 	void print_string(std::string const &msg);
 	void print_string(const String &textRef, int column, int row);
 
-	// Draw Methods
-
-	//! Fills the client area of the window using the provided color, alpha is ignored
-	bool DrawSolidBackground(COLOR backgroundColor);
-	//! Draws a line from p1 to p2 using the strokewidth
-	bool DrawLine(DOUBLE2 p1, DOUBLE2 p2, double strokeWidth = 1.0);
-	//! Draws a line from the coordinate defined by x1 and y1 to the coordinate define by x2 and y2
-	bool DrawLine(int x1, int y1, int x2, int y2);
+	//! Draws a polygon defined by the coordinates in ptsArr
+	//! count is the number of points that must be drawn
+	//! If close is true then it will connect the start and end coordinate
+	bool draw_polygon(const std::vector<DOUBLE2> &ptsArr, unsigned int count, bool close = true, double strokeWidth = 1.0);
 
 	//! Draws a polygon defined by the coordinates in ptsArr
 	//! count is the number of points that must be drawn
 	//! If close is true then it will connect the start and end coordinate
-	bool DrawPolygon(const std::vector<DOUBLE2> &ptsArr, unsigned int count, bool close = true, double strokeWidth = 1.0);
-
-	//! Draws a polygon defined by the coordinates in ptsArr
-	//! count is the number of points that must be drawn
-	//! If close is true then it will connect the start and end coordinate
-	bool DrawPolygon(const std::vector<POINT> &ptsArr, unsigned int count, bool close = true);
+	bool draw_polygon(const std::vector<POINT> &ptsArr, unsigned int count, bool close = true);
 
 	//! Fills the interior of a polygon defined by the coordinates in ptsArr
 	//! count is the number of points that must be drawn
 	//! If close is true then it will connect the start and end coordinate
-	bool FillPolygon(const std::vector<DOUBLE2> &ptsArr, unsigned int count);
+	bool fill_polygon(const std::vector<DOUBLE2> &ptsArr, unsigned int count);
 
 	//! Fills the interior of a polygon defined by the coordinates in ptsArr
 	//! count is the number of points that must be drawn
 	//! If close is true then it will connect the start and end coordinate
-	bool FillPolygon(const std::vector<POINT> &ptsArr, unsigned int count);
+	bool fill_polygon(const std::vector<POINT> &ptsArr, unsigned int count);
 
 	//! Draws a rectangle defined by a RECT2 struct
-	bool DrawRect(RECT2 rect, double strokeWidth = 1);
+	bool draw_rect(RECT2 rect, double strokeWidth = 1);
 	//! Draws a rectangle defined by two coordinates: topleft and rightbottom
-	bool DrawRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, double strokeWidth = 1.0);
+	bool draw_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom, double strokeWidth = 1.0);
 	//! Draws a rectangle defined by a RECT struct
-	bool DrawRect(RECT rect);
+	bool draw_rect(RECT rect);
 	//! Draws a rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
-	bool DrawRect(int left, int top, int right, int bottom);
+	bool draw_rect(int left, int top, int right, int bottom);
 
 	//! Fills the interior of a rectangle defined by a RECT2 struct
-	bool FillRect(RECT2 rect);
+	bool fill_rect(RECT2 rect);
 	//! Fills the interior of a rectangle defined by two coordinates: topleft and rightbottom
-	bool FillRect(DOUBLE2 topLeft, DOUBLE2 rightbottom);
+	bool fill_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom);
 	//! Fills the interior of a rectangle defined by a RECT struct
-	bool FillRect(RECT rect);
+	bool fill_rect(RECT rect);
 	//! Fills the interior of a rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
-	bool FillRect(int left, int top, int right, int bottom);
+	bool fill_rect(int left, int top, int right, int bottom);
 
 	//! Draws a rounded rectangle defined by a RECT2 struct,
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool DrawRoundedRect(RECT2 rect, int radiusX, int radiusY, double strokeWidth = 1.0);
+	bool draw_rounded_rect(RECT2 rect, int radiusX, int radiusY, double strokeWidth = 1.0);
 
 	//! Draws a rounded rectangle defined by two coordinates: topleft and rightbottom,
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool DrawRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY, double strokeWidth = 1.0);
+	bool draw_rounded_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY, double strokeWidth = 1.0);
 
 	//! Draws a rounded rectangle defined by a RECT struct
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool DrawRoundedRect(RECT rect, int radiusX, int radiusY);
+	bool draw_rounded_rect(RECT rect, int radiusX, int radiusY);
 
 	//! Draws a rounded rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool DrawRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY);
+	bool draw_rounded_rect(int left, int top, int right, int bottom, int radiusX, int radiusY);
 
 	//! Fills the interior of a rounded rectangle defined by a RECT2 struct,
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool FillRoundedRect(RECT2 rect, int radiusX, int radiusY);
+	bool fill_rounded_rect(RECT2 rect, int radiusX, int radiusY);
 
 	//! Fills the interior of a rounded rectangle defined by two coordinates: topleft and rightbottom,
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool FillRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY);
+	bool fill_rounded_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY);
 
 	//! Fills the interior of a rounded rectangle defined by a RECT struct
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool FillRoundedRect(RECT rect, int radiusX, int radiusY);
+	bool fill_rounded_rect(RECT rect, int radiusX, int radiusY);
 
 	//! Fills the interior of a rounded rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool FillRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY);
+	bool fill_rounded_rect(int left, int top, int right, int bottom, int radiusX, int radiusY);
 
 	//! Draws the outline of the specified ellipse using the specified position and radius
 	//! strokeWidth: The width of the stroke, in device-independent pixels. The value must be greater than or equal to 0.0f.
 	//! If this parameter isn't specified, it defaults to 1.0f. The stroke is centered on the line.
-	bool DrawEllipse(DOUBLE2 centerPt, double radiusX, double radiusY, double strokeWidth = 1.0);
+	bool draw_ellipse(DOUBLE2 centerPt, double radiusX, double radiusY, double strokeWidth = 1.0);
 
 	//! Draws the outline of the specified ellipse using the specified position and radius
-	bool DrawEllipse(int centerX, int centerY, int radiusX, int radiusY);
+	bool draw_ellipse(int centerX, int centerY, int radiusX, int radiusY);
 
 	//! Paints the interior of the specified ellipse using the specified position and radius
-	bool FillEllipse(DOUBLE2 centerPt, double radiusX, double radiusY);
+	bool fill_ellipse(DOUBLE2 centerPt, double radiusX, double radiusY);
 
 	//! Paints the interior of the specified ellipse using the specified position and radius
-	bool FillEllipse(int centerX, int centerY, int radiusX, int radiusY);
+	bool fill_ellipse(int centerX, int centerY, int radiusX, int radiusY);
 
 	// Commented to prevent that this would compile: DrawString("blah", 10, 10);
 	//bool			DrawString(std::string text, RECT boundingRect);
 	//bool			DrawString(std::string text, RECT2 boundingRect);
-	bool			DrawString(std::string text, DOUBLE2 topLeft, double right = -1, double bottom = -1);
-	bool			DrawString(std::string text, int xPos, int yPos, int right = -1, int bottom = -1);
+	bool			draw_string(std::string text, DOUBLE2 topLeft, double right = -1, double bottom = -1);
+	bool			draw_string(std::string text, int xPos, int yPos, int right = -1, int bottom = -1);
 
 
 	//! Draws text in the specified rectangle
-	bool DrawString(const String &textRef, RECT boundingRect);
+	bool draw_string(const String &textRef, RECT boundingRect);
 
 	//! Draws text in the specified rectangle
-	bool DrawString(const String &textRef, RECT2 boundingRect);
+	bool draw_string(const String &textRef, RECT2 boundingRect);
 
 	//! Draws text in the specified rectangle the topleft corner of the rectange is defined by the param topLeft
 	//! The params right and bottom are optional, if left out they are set to the max value of an float type
-	bool DrawString(const String &textRef, DOUBLE2 topLeft, double right = -1, double bottom = -1);
+	bool draw_string(const String &textRef, DOUBLE2 topLeft, double right = -1, double bottom = -1);
 
 	//! Draws text in the specified rectangle; the topleft corner of the rectange is defined by the params xPos and yPos
 	//! The params right and bottom are optional, if left out they are set to the max value of an float type
-	bool DrawString(const String &textRef, int xPos, int yPos, int right = -1, int bottom = -1);
+	bool draw_string(const String &textRef, int xPos, int yPos, int right = -1, int bottom = -1);
 
 	//! Draws an image on the position
 	//! srcRect: defines the cliprect on the source image. Allows to draw a part of an image
-	bool DrawBitmap(Bitmap *imagePtr, DOUBLE2 position, RECT2 srcRect);
+	bool draw_bitmap(Bitmap *imagePtr, DOUBLE2 position, RECT2 srcRect);
 
 	//! Draws an image on the position
-	bool DrawBitmap(Bitmap *imagePtr, DOUBLE2 position);
+	bool draw_bitmap(Bitmap *imagePtr, DOUBLE2 position);
 
 	//! Draws an image on the position defined by x and y
 	//! srcRect: defines the cliprect on the source image. Allows to draw a part of an image
-	bool DrawBitmap(Bitmap *imagePtr, int x, int y, RECT srcRect);
+	bool draw_bitmap(Bitmap *imagePtr, int x, int y, RECT srcRect);
 
 	//! Draws an image on the position defined by x and y
-	bool DrawBitmap(Bitmap *imagePtr, int x, int y);
+	bool draw_bitmap(Bitmap *imagePtr, int x, int y);
 
 	//! Draws an image on position x:0, and y:0. Assuming that matrices are used to define the position.
 	//! srcRect: defines the cliprect on the source image. Allows to draw a part of an image
-	bool DrawBitmap(Bitmap *imagePtr, RECT srcRect);
+	bool draw_bitmap(Bitmap *imagePtr, RECT srcRect);
 
 	//! Draws an image on position x:0, and y:0. Assuming that matrices are used to define the position.
-	bool DrawBitmap(Bitmap *imagePtr);
+	bool draw_bitmap(Bitmap *imagePtr);
 
 	void d2d_flush() { _d2d_rt->Flush(); }
 
@@ -427,7 +418,7 @@ private:
 	void d3d_init();
 	void d3d_deinit();
 	void GUITick(double deltaTime);
-	void GUIPaint();
+	void GUIPaint(graphics::D2DRenderContext& ctx);
 	void GUIConsumeEvents();
 
 	// Trigger Contacts are stored as pairs in a std::vector.

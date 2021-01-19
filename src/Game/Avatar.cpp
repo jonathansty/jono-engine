@@ -200,7 +200,7 @@ void Avatar::Tick(double deltaTime)
     m_ActTriggerPtr->SetPosition(m_ActPtr->GetPosition() + DOUBLE2(0, CLIP_HEIGHT / 2));
 
 }
-void Avatar::PaintDebug()
+void Avatar::PaintDebug(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate;
     matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
@@ -208,44 +208,44 @@ void Avatar::PaintDebug()
     switch (m_moveState)
     {
     case Avatar::moveState::RUNNING:
-        GameEngine::instance()->DrawString(String("Running"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("Running"), DOUBLE2());
         break;
     case Avatar::moveState::STANDING:
-        GameEngine::instance()->DrawString(String("Standing"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("Standing"), DOUBLE2());
         break;
     case Avatar::moveState::JUMPING:
-        GameEngine::instance()->DrawString(String("Jumping"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("Jumping"), DOUBLE2());
         break;
     case Avatar::moveState::HANGING:
-        GameEngine::instance()->DrawString(String("Hanging"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("Hanging"), DOUBLE2());
         break;
     case Avatar::moveState::ATTACK:
-        GameEngine::instance()->DrawString(String("Attack"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("Attack"), DOUBLE2());
         break;
     case Avatar::moveState::DIE:
-        GameEngine::instance()->DrawString(String("DEAD"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("DEAD"), DOUBLE2());
         break;
     case Avatar::moveState::DYING:
-        GameEngine::instance()->DrawString(String("Dying"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("Dying"), DOUBLE2());
         break;
     case Avatar::moveState::SLIDINGSTANDING:
-        GameEngine::instance()->DrawString(String("SlidingStanding"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("SlidingStanding"), DOUBLE2());
         break;
     case Avatar::moveState::SLIDINGWALKING:
-        GameEngine::instance()->DrawString(String("SlidingWalking"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("SlidingWalking"), DOUBLE2());
         break;
     case Avatar::moveState::SLIDINGJUMPING:
-        GameEngine::instance()->DrawString(String("SlidingJumping"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("SlidingJumping"), DOUBLE2());
         break;
     case Avatar::moveState::GOD:
-        GameEngine::instance()->DrawString(String("God"), DOUBLE2());
+        GameEngine::instance()->draw_string(String("God"), DOUBLE2());
         break;
     default:
         break;
     }
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
-void Avatar::Paint()
+void Avatar::Paint(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matWorldTransform, matScale, matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
@@ -271,10 +271,10 @@ void Avatar::Paint()
     
     
     
-    GameEngine::instance()->DrawBitmap(m_BmpPtr, boundingBox);
+    GameEngine::instance()->draw_bitmap(m_BmpPtr, boundingBox);
     if (m_IsEpicModeOn)
     {
-        GameEngine::instance()->DrawBitmap(m_BmpEpicModePtr, boundingBox);
+        GameEngine::instance()->draw_bitmap(m_BmpEpicModePtr, boundingBox);
     }
     
     
@@ -301,7 +301,7 @@ void Avatar::PaintTrail()
         if (size - (size / MAX_TRAIL)*i > 0)
         {
             
-            GameEngine::instance()->FillEllipse(pos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
+            GameEngine::instance()->fill_ellipse(pos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
             DOUBLE2 vector = pos2 - pos;
             int numberOfCircles = 4;
             if (vector.Length() > 5)
@@ -311,7 +311,7 @@ void Avatar::PaintTrail()
                     double spaceBetween = vector.Length() / numberOfCircles;
                     DOUBLE2 normVector = vector.Normalized();
                     midPos = normVector*j*spaceBetween;
-                    GameEngine::instance()->FillEllipse(pos + midPos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
+                    GameEngine::instance()->fill_ellipse(pos + midPos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
                 }
             }
         }

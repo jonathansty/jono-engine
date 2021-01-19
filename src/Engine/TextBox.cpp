@@ -84,7 +84,7 @@ void TextBox::Tick(double deltaTime)
 	}
 }
 
-void TextBox::Paint()
+void TextBox::Paint(graphics::D2DRenderContext& ctx)
 {
 	if (m_BoundingRect.bottom - m_BoundingRect.top <= 0 ||
 		m_BoundingRect.right - m_BoundingRect.left <= 0)
@@ -94,7 +94,7 @@ void TextBox::Paint()
 	}
 
 	//Store font
-	Font *originalFont = GameEngine::instance()->get_font();
+	Font *originalFont = ctx.get_font();
 	// make sure that the text is left aligned
 	m_FontPtr->SetAlignHLeft();
 	// working copy of the bounds
@@ -103,39 +103,39 @@ void TextBox::Paint()
 	//border color depends on armed state: filling is faster than line drawing
 	if (!m_bArmed)
 	{
-		GameEngine::instance()->set_color(COLOR(201, 201, 201));
-		GameEngine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
+		ctx.set_color(COLOR(201, 201, 201));
+		ctx.fill_rect(r.left, r.top, r.right, r.bottom);
 	}
 	else
 	{
-		GameEngine::instance()->set_color(COLOR(101, 101, 101));
-		GameEngine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
+		ctx.set_color(COLOR(101, 101, 101));
+		ctx.fill_rect(r.left, r.top, r.right, r.bottom);
 	}
 
 	// fill interior
 	++r.left; ++r.top; --r.right; --r.bottom;
-	GameEngine::instance()->set_color(m_BackColor);
-	GameEngine::instance()->FillRect(r.left, r.top, r.right, r.bottom);
+	ctx.set_color(m_BackColor);
+	ctx.fill_rect(r.left, r.top, r.right, r.bottom);
 
-	GameEngine::instance()->set_font(m_FontPtr);
+	ctx.set_font(m_FontPtr);
 
 	// Draw forecolor when this is enabled
-	if (m_bEnabled)GameEngine::instance()->set_color(m_ForeColor);
+	if (m_bEnabled)ctx.set_color(m_ForeColor);
 
 	// GRAY when disabled
-	else GameEngine::instance()->set_color(COLOR(127, 127, 127));
+	else ctx.set_color(COLOR(127, 127, 127));
 
 	// Draw the text
-	GameEngine::instance()->DrawString(m_Text, m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
+	ctx.draw_string(m_Text, m_BoundingRect.left + 2, m_BoundingRect.top + 2, m_BoundingRect.right - 2, m_BoundingRect.bottom - 2);
 
 	// draw caret
-	if (m_bArmed) DrawCaret();
+	if (m_bArmed) DrawCaret(ctx);
 
 	//restore font
-	GameEngine::instance()->set_font(originalFont);
+	ctx.set_font(originalFont);
 }
 
-void TextBox::DrawCaret()
+void TextBox::DrawCaret(graphics::D2DRenderContext& ctx)
 {
 	// only if blinking state is "on"
 	if (m_bCaretBlinkState)
@@ -153,7 +153,7 @@ void TextBox::DrawCaret()
 		textLayoutPtr->HitTestTextPosition(m_Text.Length() - 1, true, &caretX, &caretY, &hitTestMetrics);
 
 		// draw the caret
-		GameEngine::instance()->DrawLine(
+		ctx.draw_line(
 			DOUBLE2(m_BoundingRect.left + 2 + caretX, m_BoundingRect.top + caretY),
 			DOUBLE2(m_BoundingRect.left + 2 + caretX, m_BoundingRect.top + caretY + hitTestMetrics.height)
 			);

@@ -58,12 +58,12 @@ void ModelResource::load()
 			void operator()(aiMatrix4x4 parent, aiNode* node, std::map<int, aiMatrix4x4>& result)
 			{
 				aiMatrix4x4 t = node->mTransformation* parent;
-				for (int i = 0; i < node->mNumMeshes; ++i)
+				for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 				{
 					result[node->mMeshes[i]] = t;
 				}
 
-				for (int i = 0; i < node->mNumChildren; ++i)
+				for (unsigned int i = 0; i < node->mNumChildren; ++i)
 				{
 					operator()(t, node->mChildren[i], result);
 				}
@@ -75,7 +75,7 @@ void ModelResource::load()
 		fn(aiMatrix4x4(), root, transforms);
 
 		//TODO: Implement transforms from assimp
-		for (std::size_t i = 0; i < scene->mNumMeshes; ++i)
+		for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
 		{
 			aiMesh const* mesh = scene->mMeshes[i];
 			aiMatrix4x4 const& transform = transforms[i];
@@ -102,9 +102,9 @@ void ModelResource::load()
 			vertices.reserve(mesh->mNumVertices);
 			indices.reserve(int(mesh->mNumFaces) * 3);
 
-			for (unsigned int i = 0; i < mesh->mNumVertices; ++i)
+			for (unsigned int j = 0; j < mesh->mNumVertices; ++j)
 			{
-				aiVector3D pos = positions[i];
+				aiVector3D pos = positions[j];
 				pos *= transform;
 
 				VertexType v{};
@@ -115,22 +115,22 @@ void ModelResource::load()
 
 				if (mesh->HasVertexColors(0))
 				{
-					v.color.x = colors[0][i].r;
-					v.color.y = colors[0][i].g;
-					v.color.z = colors[0][i].b;
-					v.color.w = colors[0][i].a;
+					v.color.x = colors[0][j].r;
+					v.color.y = colors[0][j].g;
+					v.color.z = colors[0][j].b;
+					v.color.w = colors[0][j].a;
 				}
 
 				if (mesh->GetNumUVChannels() > 0)
 				{
-					aiVector3D p = uv[0][i];
+					aiVector3D p = uv[0][j];
 					v.uv.x = p.x;
 					v.uv.y = p.y;
 				}
 
 				if (mesh->HasNormals())
 				{
-					aiVector3D normal = mesh->mNormals[i];
+					aiVector3D normal = mesh->mNormals[j];
 					normal *= normalTransform;
 
 					v.normal.x = normal.x;
@@ -140,10 +140,10 @@ void ModelResource::load()
 
 				if (mesh->HasTangentsAndBitangents())
 				{
-					aiVector3D tangent = mesh->mTangents[i];
+					aiVector3D tangent = mesh->mTangents[j];
 					tangent *= normalTransform;
 
-					aiVector3D bitangent = mesh->mBitangents[i];
+					aiVector3D bitangent = mesh->mBitangents[j];
 					bitangent *= normalTransform;
 
 					v.tangent.x = tangent.x;
@@ -161,12 +161,12 @@ void ModelResource::load()
 
 			}
 
-			for (unsigned int i = 0; i < mesh->mNumFaces; ++i)
+			for (unsigned int k = 0; k < mesh->mNumFaces; ++k)
 			{
-				aiFace const& f = faces[i];
-				for (unsigned int j = 0; j < f.mNumIndices; ++j)
+				aiFace const& f = faces[k];
+				for (unsigned int idx = 0; idx < f.mNumIndices; ++idx)
 				{
-					indices.push_back(f.mIndices[j]);
+					indices.push_back(f.mIndices[idx]);
 				}
 			}
 		}
@@ -198,32 +198,32 @@ void ModelResource::load()
 
 	if (scene->HasMaterials())
 	{
-		for (int i = 0; i < scene->mNumMaterials; ++i)
+		for (unsigned int i = 0; i < scene->mNumMaterials; ++i)
 		{
 			aiMaterial* material = scene->mMaterials[i];
 			aiString name = material->GetName();
 
-			aiString path;
+			aiString materialPath{};
 			MaterialInitParameters parameters{};
 			parameters.load_type = MaterialInitParameters::LoadType_FromMemory;
 
 			parameters.vs_shader_bytecode = (const char*)Shaders::cso_simple_vx;
-			parameters.vs_shader_bytecode_size = std::size(Shaders::cso_simple_vx);
+			parameters.vs_shader_bytecode_size = uint32_t(std::size(Shaders::cso_simple_vx));
 
 			parameters.ps_shader_bytecode = (const char*)Shaders::cso_simple_px;
-			parameters.ps_shader_bytecode_size = std::size(Shaders::cso_simple_px);
+			parameters.ps_shader_bytecode_size = uint32_t(std::size(Shaders::cso_simple_px));
 
-			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &path) == aiReturn_SUCCESS)
+			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &materialPath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path + std::string(path.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path + std::string(materialPath.C_Str());
 			}
-			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &path) == aiReturn_SUCCESS)
+			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &materialPath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path + std::string(path.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path + std::string(materialPath.C_Str());
 			}
-			if (material->Get(AI_MATKEY_TEXTURE_NORMALS(0), path) == aiReturn_SUCCESS)
+			if (material->Get(AI_MATKEY_TEXTURE_NORMALS(0), materialPath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path + std::string(path.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path + std::string(materialPath.C_Str());
 			}
 
 

@@ -51,9 +51,9 @@ Level::~Level()
 //{
 //
 //}
-void Level::Paint()
+void Level::Paint(graphics::D2DRenderContext& ctx)
 {
-    GameEngine::instance()->DrawBitmap(m_BmpLevelPtr);
+    GameEngine::instance()->draw_bitmap(m_BmpLevelPtr);
 
 }
 int Level::GetHeight()

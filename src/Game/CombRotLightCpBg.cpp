@@ -53,10 +53,10 @@ void CombRotLightCpBg::Tick(double deltaTime)
     m_CheckPointBgPtr->Tick(deltaTime);
     m_RotLightPtr->Tick(deltaTime);
 }
-void CombRotLightCpBg::Paint()
+void CombRotLightCpBg::Paint(graphics::D2DRenderContext& ctx)
 {
-    m_RotLightPtr->Paint();
-    m_CheckPointBgPtr->Paint();
+    m_RotLightPtr->Paint(ctx);
+    m_CheckPointBgPtr->Paint(ctx);
 }
 
 

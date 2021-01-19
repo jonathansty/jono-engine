@@ -26,9 +26,9 @@ public:
 	EnemyList& operator=( const EnemyList& ) = delete;
 
     void Tick(double deltaTime);
-    void Paint();
-    void PaintRockets();
-    void PaintDebug();
+    void Paint(graphics::D2DRenderContext& ctx);
+    void PaintRockets(graphics::D2DRenderContext& ctx);
+    void PaintDebug(graphics::D2DRenderContext& ctx);
 
     void Add(Enemy* tmpEnemyPtr);
     void Remove(Enemy* tmpEnemyPtr);

@@ -30,14 +30,13 @@ AnimationList::~AnimationList()
 //{
 //
 //}
-void AnimationList::Paint()
+void AnimationList::Paint(graphics::D2DRenderContext& ctx)
 {
     for (size_t i = 0, n = m_AnimationsPtrArr.size(); i <n; i++)
     {
         if (m_AnimationsPtrArr[i] != nullptr)
         {
-            m_AnimationsPtrArr[i]->Paint();
-            
+            m_AnimationsPtrArr[i]->Paint(ctx);
         }
     }
 }

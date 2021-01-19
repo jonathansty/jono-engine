@@ -26,13 +26,7 @@ public:
 	CombRotLightCpBg( const CombRotLightCpBg& ) = delete;
 	CombRotLightCpBg& operator=( const CombRotLightCpBg& ) = delete;
 
-	//--------------------------------------------------------
-	// ContactListener overloaded member function declarations
-	//--------------------------------------------------------
-	//virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr); 
-	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
-	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
-    virtual void Paint();
+	virtual void Paint(graphics::D2DRenderContext &ctx);
     virtual void Tick(double deltaTime);
 
 private: 

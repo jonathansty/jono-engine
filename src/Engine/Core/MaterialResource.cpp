@@ -20,8 +20,8 @@ void MaterialResource::load()
 
 	using VertexType = ModelVertex;
 
-	_resource = Material::create((const char*)Shaders::cso_simple_vx, std::size(Shaders::cso_simple_vx), (const char*)Shaders::cso_simple_px, std::size(Shaders::cso_simple_px));
-	_resource->_debug_pixel_shader = Shader::create(ShaderType::Pixel, (const char*)Shaders::cso_debug_px, std::size(Shaders::cso_debug_px));
+	_resource = Material::create((const char*)Shaders::cso_simple_vx, uint32_t(std::size(Shaders::cso_simple_vx)), (const char*)Shaders::cso_simple_px, uint32_t(std::size(Shaders::cso_simple_px)));
+	_resource->_debug_pixel_shader = Shader::create(ShaderType::Pixel, (const char*)Shaders::cso_debug_px, uint32_t(std::size(Shaders::cso_debug_px)));
 
 	// Initiate texture loads
 	for (std::string const& path : get_init_parameters().m_texture_paths)

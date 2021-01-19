@@ -35,7 +35,7 @@ public:
     virtual PhysicsActor* GetActor();
     virtual void Reset();
     void Tick(double deltaTime);
-    void Paint();
+    void Paint(graphics::D2DRenderContext& ctx);
 
     bool GetAttackByAvatar();
     void SetSpeed(double speed);

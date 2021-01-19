@@ -26,8 +26,8 @@ public:
 	Enemy( const Enemy& ) = delete;
 	Enemy& operator=( const Enemy& ) = delete;
 
-    virtual void Paint() = 0;
-    virtual void PaintDebug();
+    virtual void Paint(graphics::D2DRenderContext& ctx) = 0;
+    virtual void PaintDebug(graphics::D2DRenderContext& ctx);
     virtual void Tick(double deltaTime) = 0;
 
     virtual void setName(String name);

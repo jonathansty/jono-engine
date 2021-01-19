@@ -34,8 +34,8 @@ public:
     virtual void SetSpawnPosition(DOUBLE2 respawnPosition);
     virtual void Reset();
 
-    void Tick(double deltaTime);
-    void Paint();
+    virtual void Tick(double deltaTime) override;
+    virtual void Paint(graphics::D2DRenderContext& ctx) override;
     
 
 private: 

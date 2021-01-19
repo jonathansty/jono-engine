@@ -38,16 +38,15 @@ void NpcHinter::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 }
 
 //CREATE A SPRITE AND TEST IT
-void NpcHinter::PaintDebug()
+void NpcHinter::PaintDebug(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matPosition;
     matPosition.SetAsTranslate(m_Position);
     GameEngine::instance()->set_world_matrix(matPosition);
-    GameEngine::instance()->DrawEllipse(DOUBLE2(), TALKRADIUS, TALKRADIUS);
+    GameEngine::instance()->draw_ellipse(DOUBLE2(), TALKRADIUS, TALKRADIUS);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
-void NpcHinter::Paint()
-{
+void NpcHinter::Paint(graphics::D2DRenderContext &ctx) {
     MATRIX3X2 matTranslate, matTextTranslate;
    
     matTranslate.SetAsTranslate(m_Position);
@@ -75,7 +74,7 @@ void NpcHinter::Paint()
     }
     
     GameEngine::instance()->set_world_matrix(matPivot * matMirror*matTranslate);
-    GameEngine::instance()->DrawBitmap(m_BmpBodyPtr, boundingBox);
+    GameEngine::instance()->draw_bitmap(m_BmpBodyPtr, boundingBox);
     GameEngine::instance()->set_world_matrix(matNpcHitBoxTransform);
 	GameEngine::instance()->set_default_font();
     matPivot.SetAsTranslate(DOUBLE2(-(m_TipText.Length() * 16) / 2, -50));
@@ -88,7 +87,7 @@ void NpcHinter::Paint()
 
         // TODO: Fix validation error 
 		GameEngine::instance()->d2d_flush();
-        GameEngine::instance()->DrawString(m_TipText, RECT2(0, 0, m_TipText.Length() * 16, 50));
+        GameEngine::instance()->draw_string(m_TipText, RECT2(0, 0, m_TipText.Length() * 16, 50));
 		GameEngine::instance()->d2d_flush();
 
 		GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());

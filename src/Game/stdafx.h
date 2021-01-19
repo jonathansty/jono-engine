@@ -68,7 +68,6 @@ using Microsoft::WRL::ComPtr;
 #endif
 
 #include <imgui.h>
-#include <TaskScheduler.h>
 
 #include "Engine/tinyxml2/tinyxml2.h"
 

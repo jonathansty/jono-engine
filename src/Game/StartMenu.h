@@ -25,7 +25,7 @@ public:
 	StartMenu( const StartMenu& ) = delete;
 	StartMenu& operator=( const StartMenu& ) = delete;
 
-    void Paint();
+    void paint(graphics::D2DRenderContext& ctx);
     void Tick(double deltaTime);
     void EnableButtons();
     void Remove();

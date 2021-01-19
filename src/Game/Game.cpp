@@ -91,9 +91,9 @@ void Game::on_deactivate()
 
 }
 
-void Game::render_2d()
+void Game::render_2d(graphics::D2DRenderContext& ctx)
 {
-	paint();
+	paint(ctx);
 }
 
 void Game::update(double deltaTime)
@@ -361,7 +361,7 @@ void Game::UpdateDrawMode()
         }
     }
 }
-void Game::paint()
+void Game::paint(graphics::D2DRenderContext& ctx)
 {
 	auto engine = GameEngine::instance();
 
@@ -375,30 +375,30 @@ void Game::paint()
         drawBackgroundGradient(15);
         engine->set_view_matrix(matView);
 
-        m_CheckPointRotLightPtr->Paint();
-        m_CheckPointBgPtr->Paint();
+        m_CheckPointRotLightPtr->Paint(ctx);
+		m_CheckPointBgPtr->Paint(ctx);
         
-        m_AnimationListPtr->Paint();
-        m_AttackBeamListPtr->Paint();
+        m_AnimationListPtr->Paint(ctx);
+        m_AttackBeamListPtr->Paint(ctx);
         
-        m_AvatarPtr->Paint();
-        m_LevelEndPtr->Paint();
-        m_EntityListPtr->Paint();
-        m_EnemyListPtr->Paint();
-        m_CoinListPtr->Paint();
-        m_LevelPtr->Paint();
-        m_EnemyListPtr->PaintRockets();
+        m_AvatarPtr->Paint(ctx);
+        m_LevelEndPtr->Paint(ctx);
+        m_EntityListPtr->Paint(ctx);
+        m_EnemyListPtr->Paint(ctx);
+        m_CoinListPtr->Paint(ctx);
+        m_LevelPtr->Paint(ctx);
+        m_EnemyListPtr->PaintRockets(ctx);
         engine->set_world_matrix(matView.Inverse());
-        m_CameraPtr->Paint();
+        m_CameraPtr->Paint(ctx);
         engine->set_color(COLOR(0, 0, 0));
     }
 
     if(m_DrawMode & DrawMode::Physics)
     {
-        m_EnemyListPtr->PaintDebug();
+        m_EnemyListPtr->PaintDebug(ctx);
         m_CoinListPtr->PaintDebug();
-        m_EntityListPtr->PaintDebug();
-        m_AvatarPtr->PaintDebug();
+        m_EntityListPtr->PaintDebug(ctx);
+        m_AvatarPtr->PaintDebug(ctx);
         engine->set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
         engine->set_view_matrix(matView);
         engine->set_world_matrix(matView.Inverse());
@@ -499,7 +499,7 @@ void Game::drawBackgroundGradient(int levels)
     {
         COLOR tmpColor = COLOR(255 - (255 / levels)*i, 0, 255 - (255 / levels)*i);
         GameEngine::instance()->set_color(tmpColor);
-        GameEngine::instance()->FillRect(0, - 1 + i*GameEngine::instance()->get_height() / levels, GameEngine::instance()->get_width(), 1 + GameEngine::instance()->get_height() / levels + i * GameEngine::instance()->get_height() / levels);
+        GameEngine::instance()->fill_rect(0, - 1 + i*GameEngine::instance()->get_height() / levels, GameEngine::instance()->get_width(), 1 + GameEngine::instance()->get_height() / levels + i * GameEngine::instance()->get_height() / levels);
         GameEngine::instance()->set_color(COLOR(0, 0, 0));
     }
 }

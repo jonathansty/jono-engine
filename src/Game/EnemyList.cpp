@@ -33,24 +33,24 @@ EnemyList::~EnemyList()
 //{
 //
 //}
-void EnemyList::Paint()
+void EnemyList::Paint(graphics::D2DRenderContext& ctx)
 {
     for (size_t i = 0; i < m_EnemiesPtrArr.size(); i++)
     {
         if (m_EnemiesPtrArr[i] != nullptr)
         {
-            m_EnemiesPtrArr[i]->Paint();
+            m_EnemiesPtrArr[i]->Paint(ctx);
         }
     }
 }
-void EnemyList::PaintRockets()
+void EnemyList::PaintRockets(graphics::D2DRenderContext& ctx)
 {
     for (size_t i = 0; i < m_EnemiesPtrArr.size(); i++)
     {
         if (m_EnemiesPtrArr[i] != nullptr && m_EnemiesPtrArr[i]->GetActor() != nullptr && m_EnemiesPtrArr[i]->GetActor()->GetName() == String("EnemyRocketLauncher"))
         {
             EnemyRocketLauncher* tmpRocketLauncher = reinterpret_cast<EnemyRocketLauncher*>(m_EnemiesPtrArr[i]);
-            tmpRocketLauncher->PaintRockets();
+            tmpRocketLauncher->PaintRockets(ctx);
         }
     }
 }
@@ -178,13 +178,13 @@ int EnemyList::GetSize() const
 {
     return m_NumberOfEnemies;
 }
-void EnemyList::PaintDebug()
+void EnemyList::PaintDebug(graphics::D2DRenderContext& ctx)
 {
     for (size_t i = 0; i < m_EnemiesPtrArr.size(); i++)
     {
         if (m_EnemiesPtrArr[i] != nullptr)
         {
-            m_EnemiesPtrArr[i]->PaintDebug();
+            m_EnemiesPtrArr[i]->PaintDebug(ctx);
         }
     }
 }

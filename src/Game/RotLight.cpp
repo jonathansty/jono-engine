@@ -37,7 +37,7 @@ RotLight::~RotLight()
 //{
 //
 //}
-void RotLight::Paint()
+void RotLight::Paint(graphics::D2DRenderContext& ctx)
 {
 
     MATRIX3X2 matOrbitRadius, matOrbitCenter;
@@ -58,7 +58,7 @@ void RotLight::Paint()
         tmpPointsArr.push_back(DOUBLE2(m_Radius + 10, m_Radius / 6));
         tmpPointsArr.push_back(DOUBLE2(m_Radius,m_Radius/4));
         tmpPointsArr.push_back(DOUBLE2(0,10));
-        GameEngine::instance()->FillPolygon(tmpPointsArr, 7);
+        GameEngine::instance()->fill_polygon(tmpPointsArr, 7);
     }
 
    

@@ -18,7 +18,7 @@ interface IGameState
     virtual void on_deactivate() {}
 
     virtual void update(double dt) {}
-    virtual void render_2d() {}
+    virtual void render_2d(graphics::D2DRenderContext& ctx) {}
 };
 
 class ElectronicJonaJoy final : public AbstractGame
@@ -34,7 +34,7 @@ public:
 	virtual void start() override;				
 	virtual void end() override;
 	virtual void tick(double deltaTime) override;
-	virtual void paint(graphics::D2DRenderContext const& ctx) override;
+	virtual void paint(graphics::D2DRenderContext& ctx) override;
     virtual void debug_ui() override;
 
     void HandleGameState();
@@ -99,7 +99,7 @@ public:
 
     void update(double dt) override;
 
-    void render_2d() override;
+    void render_2d(graphics::D2DRenderContext& ctx) override;
 private:
     StartMenu* _menu;
 	ElectronicJonaJoy* _owner;
@@ -115,7 +115,7 @@ public:
 
     virtual void update(double dt) override;
 
-    virtual void render_2d() override;
+    virtual void render_2d(graphics::D2DRenderContext& ctx) override;
 
 private:
     Bitmap* _loading_bitmap;

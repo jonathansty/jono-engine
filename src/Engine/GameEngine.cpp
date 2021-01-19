@@ -489,7 +489,7 @@ void GameEngine::d2d_render()
 	_game->paint(context);
 
 	//Paint the buttons and textboxes
-	GUIPaint();
+	GUIPaint(context);
 
 	// draw Box2D debug rendering
 	// http://www.iforce2d.net/b2dtut/debug-draw
@@ -500,7 +500,7 @@ void GameEngine::d2d_render()
 		MATRIX3X2 matView = get_view_matrix();
 		set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
 		set_color(COLOR(0, 0, 0, 127));
-		FillRect(0, 0, get_width(), get_height());
+		fill_rect(0, 0, get_width(), get_height());
 		set_view_matrix(matView);
 
 		_b2d_debug_renderer.set_draw_ctx(&context);
@@ -860,196 +860,181 @@ COLOR GameEngine::get_color()
 	return _d2d_ctx->get_color();
 }
 
-bool GameEngine::DrawSolidBackground(COLOR backgroundColor)
-{
-	return _d2d_ctx->draw_background(backgroundColor);
-}
-
-bool GameEngine::DrawLine(int x1, int y1, int x2, int y2)
-{
-	return _d2d_ctx->draw_line(x1, y1, x2, y2);
-}
-
-bool GameEngine::DrawLine(DOUBLE2 p1, DOUBLE2 p2, double strokeWidth)
-{
-	return _d2d_ctx->draw_line(p1, p2, strokeWidth);
-}
-
-bool GameEngine::DrawPolygon(const std::vector<POINT> &ptsArr, unsigned int count, bool close) {
+bool GameEngine::draw_polygon(const std::vector<POINT> &ptsArr, unsigned int count, bool close) {
 	return _d2d_ctx->draw_polygon(ptsArr, count, close);
 }
 
-bool GameEngine::DrawPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned int count, bool close, double strokeWidth)
+bool GameEngine::draw_polygon(const std::vector<DOUBLE2>& ptsArr, unsigned int count, bool close, double strokeWidth)
 {
 	return _d2d_ctx->draw_polygon(ptsArr, count, close, strokeWidth);
 }
 
-bool GameEngine::FillPolygon(const std::vector<POINT>& ptsArr, unsigned int count)
+bool GameEngine::fill_polygon(const std::vector<POINT>& ptsArr, unsigned int count)
 {
 	return _d2d_ctx->fill_polygon(ptsArr, count);
 }
 
-bool GameEngine::FillPolygon(const std::vector<DOUBLE2>& ptsArr, unsigned int count)
+bool GameEngine::fill_polygon(const std::vector<DOUBLE2>& ptsArr, unsigned int count)
 {
 	return _d2d_ctx->fill_polygon(ptsArr, count);
 }
 
-bool GameEngine::DrawRect(int left, int top, int right, int bottom)
+bool GameEngine::draw_rect(int left, int top, int right, int bottom)
 {
 	return _d2d_ctx->draw_rect(left, top, right, bottom);
 }
 
-bool GameEngine::DrawRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, double strokeWidth)
+bool GameEngine::draw_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom, double strokeWidth)
 {
 	return _d2d_ctx->draw_rect(topLeft, rightbottom, strokeWidth);
 }
 
-bool GameEngine::DrawRect(RECT rect)
+bool GameEngine::draw_rect(RECT rect)
 {
 	return _d2d_ctx->draw_rect(rect);
 }
 
-bool GameEngine::DrawRect(RECT2 rect, double strokeWidth)
+bool GameEngine::draw_rect(RECT2 rect, double strokeWidth)
 {
 	return _d2d_ctx->draw_rect(rect, strokeWidth);
 }
 
-bool GameEngine::FillRect(int left, int top, int right, int bottom)
+bool GameEngine::fill_rect(int left, int top, int right, int bottom)
 {
 	return _d2d_ctx->fill_rect(left, top, right, bottom);
 }
 
-bool GameEngine::FillRect(DOUBLE2 topLeft, DOUBLE2 rightbottom)
+bool GameEngine::fill_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom)
 {
 	return _d2d_ctx->fill_rect(topLeft, rightbottom);
 }
 
-bool GameEngine::FillRect(RECT rect)
+bool GameEngine::fill_rect(RECT rect)
 {
 	return _d2d_ctx->fill_rect(rect);
 }
 
-bool GameEngine::FillRect(RECT2 rect)
+bool GameEngine::fill_rect(RECT2 rect)
 {
 	return _d2d_ctx->fill_rect(rect);
 }
 
-bool GameEngine::DrawRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY)
+bool GameEngine::draw_rounded_rect(int left, int top, int right, int bottom, int radiusX, int radiusY)
 {
 	return _d2d_ctx->draw_rounded_rect(left, top, right, bottom, radiusX, radiusY);
 }
 
-bool GameEngine::DrawRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY, double strokeWidth)
+bool GameEngine::draw_rounded_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY, double strokeWidth)
 {
 	return _d2d_ctx->draw_rounded_rect(topLeft, rightbottom, radiusX, radiusY, strokeWidth);
 }
 
-bool GameEngine::DrawRoundedRect(RECT rect, int radiusX, int radiusY)
+bool GameEngine::draw_rounded_rect(RECT rect, int radiusX, int radiusY)
 {
 	return _d2d_ctx->draw_rounded_rect(rect, radiusX, radiusY);
 }
 
-bool GameEngine::DrawRoundedRect(RECT2 rect, int radiusX, int radiusY, double strokeWidth)
+bool GameEngine::draw_rounded_rect(RECT2 rect, int radiusX, int radiusY, double strokeWidth)
 {
 	return _d2d_ctx->draw_rounded_rect(rect, radiusX, radiusY, strokeWidth);
 }
 
-bool GameEngine::FillRoundedRect(int left, int top, int right, int bottom, int radiusX, int radiusY)
+bool GameEngine::fill_rounded_rect(int left, int top, int right, int bottom, int radiusX, int radiusY)
 {
 	return _d2d_ctx->fill_rounded_rect(left, top, right, bottom, radiusX, radiusY);
 }
 
-bool GameEngine::FillRoundedRect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY)
+bool GameEngine::fill_rounded_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY)
 {
 	return _d2d_ctx->fill_rounded_rect(topLeft, rightbottom, radiusX, radiusY);
 }
 
-bool GameEngine::FillRoundedRect(RECT rect, int radiusX, int radiusY)
+bool GameEngine::fill_rounded_rect(RECT rect, int radiusX, int radiusY)
 {
 	return _d2d_ctx->fill_rounded_rect(rect, radiusX, radiusY);
 }
 
-bool GameEngine::FillRoundedRect(RECT2 rect, int radiusX, int radiusY)
+bool GameEngine::fill_rounded_rect(RECT2 rect, int radiusX, int radiusY)
 {
 	return _d2d_ctx->fill_rounded_rect(rect, radiusX, radiusY);
 }
 
-bool GameEngine::DrawEllipse(int centerX, int centerY, int radiusX, int radiusY)
+bool GameEngine::draw_ellipse(int centerX, int centerY, int radiusX, int radiusY)
 {
 	return _d2d_ctx->draw_ellipse(centerX, centerY, radiusX, radiusY);
 }
 
-bool GameEngine::DrawEllipse(DOUBLE2 centerPt, double radiusX, double radiusY, double strokeWidth)
+bool GameEngine::draw_ellipse(DOUBLE2 centerPt, double radiusX, double radiusY, double strokeWidth)
 {
 	return _d2d_ctx->draw_ellipse(centerPt, radiusX, radiusY, strokeWidth);
 }
 
-bool GameEngine::FillEllipse(int centerX, int centerY, int radiusX, int radiusY)
+bool GameEngine::fill_ellipse(int centerX, int centerY, int radiusX, int radiusY)
 {
 	return _d2d_ctx->fill_ellipse(centerX, centerY, radiusX, radiusY);
 }
 
-bool GameEngine::FillEllipse(DOUBLE2 centerPt, double radiusX, double radiusY)
+bool GameEngine::fill_ellipse(DOUBLE2 centerPt, double radiusX, double radiusY)
 {
 	return _d2d_ctx->fill_ellipse(centerPt, radiusX, radiusY);
 }
 
-bool GameEngine::DrawString(const String& text, RECT boundingRect)
+bool GameEngine::draw_string(const String& text, RECT boundingRect)
 {
 	return _d2d_ctx->draw_string(text, boundingRect);
 }
 
-bool GameEngine::DrawString(const String& text, RECT2 boundingRect)
+bool GameEngine::draw_string(const String& text, RECT2 boundingRect)
 {
 	return _d2d_ctx->draw_string(text, boundingRect);
 }
 
-bool GameEngine::DrawString(const String& text, int left, int top, int right, int bottom)
+bool GameEngine::draw_string(const String& text, int left, int top, int right, int bottom)
 {
 	return _d2d_ctx->draw_string(text, left, top, right, bottom);
 }
 
-bool GameEngine::DrawString(const String& text, DOUBLE2 topLeft, double right, double bottom)
+bool GameEngine::draw_string(const String& text, DOUBLE2 topLeft, double right, double bottom)
 {
 	return _d2d_ctx->draw_string(text, topLeft, right, bottom);
 }
 
-bool GameEngine::DrawString(std::string text, int left, int top, int right, int bottom)
+bool GameEngine::draw_string(std::string text, int left, int top, int right, int bottom)
 {
 	return _d2d_ctx->draw_string(text, left, top, right, bottom);
 }
 
-bool GameEngine::DrawString(std::string text, DOUBLE2 topLeft, double right, double bottom)
+bool GameEngine::draw_string(std::string text, DOUBLE2 topLeft, double right, double bottom)
 {
 	return _d2d_ctx->draw_string(text, topLeft, right, bottom);
 }
 
-bool GameEngine::DrawBitmap(Bitmap* imagePtr)
+bool GameEngine::draw_bitmap(Bitmap* imagePtr)
 {
 	return _d2d_ctx->draw_bitmap(imagePtr);
 }
 
-bool GameEngine::DrawBitmap(Bitmap* imagePtr, RECT srcRect)
+bool GameEngine::draw_bitmap(Bitmap* imagePtr, RECT srcRect)
 {
 	return _d2d_ctx->draw_bitmap(imagePtr, srcRect);
 }
 
-bool GameEngine::DrawBitmap(Bitmap* imagePtr, int x, int y)
+bool GameEngine::draw_bitmap(Bitmap* imagePtr, int x, int y)
 {
 	return _d2d_ctx->draw_bitmap(imagePtr, x, y);
 }
 
-bool GameEngine::DrawBitmap(Bitmap* imagePtr, int x, int y, RECT srcRect)
+bool GameEngine::draw_bitmap(Bitmap* imagePtr, int x, int y, RECT srcRect)
 {
 	return _d2d_ctx->draw_bitmap(imagePtr, x, y, srcRect);
 }
 
-bool GameEngine::DrawBitmap(Bitmap* imagePtr, DOUBLE2 position)
+bool GameEngine::draw_bitmap(Bitmap* imagePtr, DOUBLE2 position)
 {
 	return _d2d_ctx->draw_bitmap(imagePtr, position);
 }
 
-bool GameEngine::DrawBitmap(Bitmap* imagePtr, DOUBLE2 position, RECT2 srcRect)
+bool GameEngine::draw_bitmap(Bitmap* imagePtr, DOUBLE2 position, RECT2 srcRect)
 {
 	return _d2d_ctx->draw_bitmap(imagePtr, position, srcRect);
 }
@@ -1279,11 +1264,10 @@ void GameEngine::GUITick(double deltaTime)
 	}
 }
 
-void GameEngine::GUIPaint()
-{
+void GameEngine::GUIPaint(graphics::D2DRenderContext &ctx) {
 	for (GUIBase* guiPtr : _gui_elements)
 	{
-		guiPtr->Paint();
+		guiPtr->Paint(ctx);
 	}
 }
 

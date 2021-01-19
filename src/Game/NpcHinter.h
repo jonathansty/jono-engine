@@ -31,17 +31,15 @@ public:
 	virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
 	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
 
-    void PaintDebug();
-    void Paint();
+    virtual void PaintDebug(graphics::D2DRenderContext& ctx) override;
+	virtual void Paint(graphics::D2DRenderContext &ctx) override;
+
     void Tick(double deltaTime);
     void Reset();
 
     void SetFacingDirection(String facingDirection);
 
 private: 
-	//-------------------------------------------------
-	// Datamembers								
-	//-------------------------------------------------
     static const int MAXFRAMES = 10;
     static const int FRAMESPERSECOND = 4;
     static const int TALKRADIUS = 250;

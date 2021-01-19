@@ -31,7 +31,7 @@ public:
 	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
 	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
     void Tick(double deltaTime);
-    void Paint();
+    void Paint(graphics::D2DRenderContext& ctx);
     void PaintDebug();
 
     void Add(Coin* coinPtr);

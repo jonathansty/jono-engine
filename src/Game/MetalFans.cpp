@@ -80,9 +80,9 @@ void MetalFans::Paint()
     matWorldTransform = matPivot * matRotate * matTranslate;
     GameEngine::instance()->set_world_matrix(matWorldTransform);
     
-    GameEngine::instance()->FillRect(0, 0, WIDTH, HEIGHT);
+    GameEngine::instance()->fill_rect(0, 0, WIDTH, HEIGHT);
     GameEngine::instance()->set_color(COLOR(0, 0, 120));
-    GameEngine::instance()->FillRect(0, 0, WIDTH, HEIGHT / 2);
+    GameEngine::instance()->fill_rect(0, 0, WIDTH, HEIGHT / 2);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     
 }

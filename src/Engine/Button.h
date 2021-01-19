@@ -54,10 +54,10 @@ protected:
 private:
 	// Internal use only
 	virtual void ConsumeEvent();
-	virtual void Paint();
+	virtual void Paint(graphics::D2DRenderContext& ctx);
 	virtual void Tick(double deltaTime);
-	void DrawClassicButton();
-	void DrawImageButton();
+	void DrawClassicButton(graphics::D2DRenderContext& ctx);
+	void DrawImageButton(graphics::D2DRenderContext& ctx);
 
 	//-------------------------------------------------
 	// Datamembers								

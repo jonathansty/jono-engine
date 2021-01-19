@@ -86,7 +86,7 @@ protected:
 	COLOR m_DefaultForeColor, m_DefaultBackColor;
 
 private:
-	virtual void Paint() = 0;
+	virtual void Paint(graphics::D2DRenderContext& ctx) = 0;
 	virtual void Tick(double deltaTime) = 0;
 	// initializes members for all constructors 
 	virtual void HandleKeyInput(TCHAR character){};

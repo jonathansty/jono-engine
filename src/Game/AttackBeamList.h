@@ -34,7 +34,7 @@ public:
     void Add(AttackBeam* attackBeamPtr);
     void Remove();
 
-    void Paint();
+    void Paint(graphics::D2DRenderContext& ctx);
     void Tick(double deltaTime);
 private: 
 	//-------------------------------------------------

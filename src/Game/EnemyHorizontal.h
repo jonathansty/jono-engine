@@ -33,7 +33,7 @@ public:
     virtual PhysicsActor* GetActor();
     virtual void Reset();
     void Tick(double deltatime);
-    void Paint();
+    void Paint(graphics::D2DRenderContext& ctx);
 
     void SetVelocity(DOUBLE2 velocity);
     void SetOffSet(DOUBLE2 offset);

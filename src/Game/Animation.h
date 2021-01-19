@@ -30,7 +30,7 @@ public:
 	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
 	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
     virtual void Tick(double deltaTime) = 0;
-    virtual void Paint() = 0;
+    virtual void Paint(graphics::D2DRenderContext& ctx) = 0;
     virtual bool IsEnded();
 protected:
     DOUBLE2 m_Position;

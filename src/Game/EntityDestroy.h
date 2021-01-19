@@ -24,14 +24,9 @@ public:
 	EntityDestroy( const EntityDestroy& ) = delete;
 	EntityDestroy& operator=( const EntityDestroy& ) = delete;
 
-	//--------------------------------------------------------
-	// ContactListener overloaded member function declarations
-	//--------------------------------------------------------
-	//virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr); 
-	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
-	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
-    void Tick(double deltaTime);
-    void Paint();
+    virtual void Tick(double deltaTime);
+	virtual void Paint(graphics::D2DRenderContext &ctx);
+
     double GetOpacity();
     void SetRadius(int radius);
 private: 

@@ -37,8 +37,8 @@ public:
 	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
 
     void Tick(double deltaTime);
-    void Paint();
-    void PaintRockets();
+    void Paint(graphics::D2DRenderContext& ctx);
+    void PaintRockets(graphics::D2DRenderContext& ctx);
 
     enum class actionState
     {
@@ -55,7 +55,7 @@ public:
 
     virtual bool GetAttackByAvatar();
     
-    virtual void PaintDebug();
+    virtual void PaintDebug(graphics::D2DRenderContext& ctx);
 
 
 private: 

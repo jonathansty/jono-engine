@@ -77,12 +77,12 @@ void Teleport::Paint()
     matPivot.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
     matWorldTransform = matPivot * matRotate * matTranslate;
     GameEngine::instance()->set_world_matrix(matWorldTransform);
-    GameEngine::instance()->DrawBitmap(m_BmpPtr);
+    GameEngine::instance()->draw_bitmap(m_BmpPtr);
     matTranslate.SetAsTranslate(m_TeleExit);
     matRotate.SetAsRotate(m_Angle + 1.5);
     matWorldTransform = matPivot * matRotate * matTranslate;
     GameEngine::instance()->set_world_matrix(matWorldTransform);
-    GameEngine::instance()->DrawBitmap(m_BmpPtr);
+    GameEngine::instance()->draw_bitmap(m_BmpPtr);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Teleport::Reset()

@@ -186,9 +186,9 @@ void StartMenu::Tick(double deltaTime)
     }
 }
 
-void StartMenu::Paint()
+void StartMenu::paint(graphics::D2DRenderContext& ctx)
 {
-    GameEngine::instance()->DrawSolidBackground(COLOR(116, 202, 141));
+    ctx.draw_background(COLOR(116, 202, 141));
     switch (m_MenuState)
     {
     case StartMenu::menuState::HIGHSCORES:
@@ -199,21 +199,21 @@ void StartMenu::Paint()
             {
                 if (m_HighScoreOffsetCounter < m_SessionStatsArr.size() - MAXELEMENTSONSCREEN)
                 {
-                    GameEngine::instance()->DrawString(String("v"), DOUBLE2(100, 430));
+                    GameEngine::instance()->draw_string(String("v"), DOUBLE2(100, 430));
                 }
                 if (m_HighScoreOffsetCounter >0)
                 {
-                    GameEngine::instance()->DrawString(String("^"), DOUBLE2(100, 120));
+                    GameEngine::instance()->draw_string(String("^"), DOUBLE2(100, 120));
                 }
                 Font* tmpFntPtr = new Font(String("KenVector Future"), (float)KEYLISTFNTSIZE - 8);
                 GameEngine::instance()->set_font(tmpFntPtr);
-                GameEngine::instance()->DrawString(String("id"), DOUBLE2(INDEXSTARTXPOS, TABLELEGENDYPOS));
-                GameEngine::instance()->DrawString(String("Start Session"), DOUBLE2(DATESTARTPOS + 75, TABLELEGENDYPOS));
-                GameEngine::instance()->DrawString(String("End Session"),DOUBLE2(DATEENDPOS+75, TABLELEGENDYPOS));
-                GameEngine::instance()->DrawString(String("Deaths"), DOUBLE2(DEATHPOS, TABLELEGENDYPOS));
-                GameEngine::instance()->DrawString(String("Money"), DOUBLE2(MONEYPOS, TABLELEGENDYPOS));
-                GameEngine::instance()->DrawString(String("Lifetime"), DOUBLE2(LIFETIMEPOS, TABLELEGENDYPOS));
-                GameEngine::instance()->DrawString(String("Last level"), DOUBLE2(LASTLEVELPOS, TABLELEGENDYPOS));
+                GameEngine::instance()->draw_string(String("id"), DOUBLE2(INDEXSTARTXPOS, TABLELEGENDYPOS));
+                GameEngine::instance()->draw_string(String("Start Session"), DOUBLE2(DATESTARTPOS + 75, TABLELEGENDYPOS));
+                GameEngine::instance()->draw_string(String("End Session"),DOUBLE2(DATEENDPOS+75, TABLELEGENDYPOS));
+                GameEngine::instance()->draw_string(String("Deaths"), DOUBLE2(DEATHPOS, TABLELEGENDYPOS));
+                GameEngine::instance()->draw_string(String("Money"), DOUBLE2(MONEYPOS, TABLELEGENDYPOS));
+                GameEngine::instance()->draw_string(String("Lifetime"), DOUBLE2(LIFETIMEPOS, TABLELEGENDYPOS));
+                GameEngine::instance()->draw_string(String("Last level"), DOUBLE2(LASTLEVELPOS, TABLELEGENDYPOS));
 
                 
                 int halfScreenWidth = GameEngine::instance()->get_width() / 2;
@@ -228,21 +228,21 @@ void StartMenu::Paint()
 
                 std::wstringstream compoundString;
                 compoundString << index << L".";
-                GameEngine::instance()->DrawString(String(compoundString.str().c_str()),DOUBLE2(INDEXSTARTXPOS,INDEXSTARTYPOS + double(i*gap)));
+                GameEngine::instance()->draw_string(String(compoundString.str().c_str()),DOUBLE2(INDEXSTARTXPOS,INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
                 
                 compoundString << L"\t" << beginTime.tm_mday << L"/" << beginTime.tm_mon << L"\t" << beginTime.tm_hour << ":" << beginTime.tm_min << ":" << beginTime.tm_sec;
-                GameEngine::instance()->DrawString(String(compoundString.str().c_str()), DOUBLE2(DATESTARTPOS, INDEXSTARTYPOS + double(i*gap)));
+                GameEngine::instance()->draw_string(String(compoundString.str().c_str()), DOUBLE2(DATESTARTPOS, INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
 
                 compoundString << L"\t" << endTime.tm_mday << L"/" << endTime.tm_mon << L"\t" << endTime.tm_hour << ":" << endTime.tm_min << ":" << endTime.tm_sec;
-                GameEngine::instance()->DrawString(String(compoundString.str().c_str()), DOUBLE2(DATEENDPOS, INDEXSTARTYPOS + double(i*gap)));
+                GameEngine::instance()->draw_string(String(compoundString.str().c_str()), DOUBLE2(DATEENDPOS, INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
 
-                GameEngine::instance()->DrawString(String(deaths),DOUBLE2(DEATHPOS,INDEXSTARTYPOS + double(i)*gap));
-                GameEngine::instance()->DrawString(String(amountOfMoney), DOUBLE2(MONEYPOS, INDEXSTARTYPOS + double(i)*gap));
-                GameEngine::instance()->DrawString(String(lifeTime), DOUBLE2(LIFETIMEPOS, INDEXSTARTYPOS + double(i)*gap));
-                GameEngine::instance()->DrawString(String(lastLevel), DOUBLE2(LASTLEVELPOS, INDEXSTARTYPOS + double(i)*gap));
+                GameEngine::instance()->draw_string(String(deaths),DOUBLE2(DEATHPOS,INDEXSTARTYPOS + double(i)*gap));
+                GameEngine::instance()->draw_string(String(amountOfMoney), DOUBLE2(MONEYPOS, INDEXSTARTYPOS + double(i)*gap));
+                GameEngine::instance()->draw_string(String(lifeTime), DOUBLE2(LIFETIMEPOS, INDEXSTARTYPOS + double(i)*gap));
+                GameEngine::instance()->draw_string(String(lastLevel), DOUBLE2(LASTLEVELPOS, INDEXSTARTYPOS + double(i)*gap));
                 GameEngine::instance()->set_default_font();
                 delete tmpFntPtr;
             }
@@ -256,7 +256,7 @@ void StartMenu::Paint()
             MATRIX3X2 matTranslateControl;
             matTranslateControl.SetAsTranslate(100, CONTROLLISTYPOS - (float)KEYLISTFNTSIZE);
             GameEngine::instance()->set_world_matrix(matTranslateControl);
-            GameEngine::instance()->DrawString(String("Controls: "), DOUBLE2());
+            GameEngine::instance()->draw_string(String("Controls: "), DOUBLE2());
             GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
             int i = 0;
             for(auto& keybind : m_KeybindsArr)
@@ -277,7 +277,7 @@ void StartMenu::Paint()
                     String(TCHAR(keybind.second));
                     break;
                 }
-                GameEngine::instance()->DrawString(String(keybind.first.c_str()) + String(": ") + KeyBind, DOUBLE2());
+                GameEngine::instance()->draw_string(String(keybind.first.c_str()) + String(": ") + KeyBind, DOUBLE2());
                 GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 
                 ++i;

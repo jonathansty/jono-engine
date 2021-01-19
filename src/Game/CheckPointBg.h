@@ -34,7 +34,7 @@ public:
         SPAWNING,
         MAXRADIUS
     };
-    void Paint();
+    void Paint(graphics::D2DRenderContext& ctx);
     void Tick(double deltaTime);
     void SetPosition(DOUBLE2 position);
     void SetDrawState(drawState drawState);

@@ -111,23 +111,23 @@ void EnemyRocketLauncher::Tick(double deltaTime)
     
     
 }
-void EnemyRocketLauncher::Paint()
+void EnemyRocketLauncher::Paint(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate, matPivot, matWorldTransform, matRotate;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-WIDTH / 2, -HEIGHT / 2));
     matRotate.SetAsRotate(m_Angle);
     matWorldTransform = matPivot * matRotate * matTranslate;
-    m_AnimationListPtr->Paint();
+    m_AnimationListPtr->Paint(ctx);
 
     GameEngine::instance()->set_world_matrix(matWorldTransform);
     RECT boundingBox = updateFrameDisplay(m_FrameNr);
-    GameEngine::instance()->DrawBitmap(m_BmpPtr, boundingBox);
+    GameEngine::instance()->draw_bitmap(m_BmpPtr, boundingBox);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
-void EnemyRocketLauncher::PaintRockets()
+void EnemyRocketLauncher::PaintRockets(graphics::D2DRenderContext& ctx)
 {
-    m_EnemyListPtr->Paint();
+    m_EnemyListPtr->Paint(ctx);
 }
 RECT EnemyRocketLauncher::updateFrameDisplay(int frameNr)
 {
@@ -153,13 +153,13 @@ RECT EnemyRocketLauncher::updateFrameDisplay(int frameNr)
     boundingBox.bottom = boundingBox.top + HEIGHT;
     return boundingBox;
 }
-void EnemyRocketLauncher::PaintDebug()
+void EnemyRocketLauncher::PaintDebug(graphics::D2DRenderContext& ctx)
 {
-    Enemy::PaintDebug();
-    m_EnemyListPtr->PaintDebug();
+    Enemy::PaintDebug(ctx);
+    m_EnemyListPtr->PaintDebug(ctx);
 
     
-    GameEngine::instance()->DrawEllipse((int)m_Position.x, (int)m_Position.y, DETECTIONZONE, DETECTIONZONE);
+    GameEngine::instance()->draw_ellipse((int)m_Position.x, (int)m_Position.y, DETECTIONZONE, DETECTIONZONE);
 
 }
 void EnemyRocketLauncher::Reset()

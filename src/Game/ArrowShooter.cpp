@@ -81,9 +81,9 @@ void ArrowShooter::Paint()
     matPivot.SetAsTranslate(DOUBLE2(-WIDTH/2,-HEIGHT/2));
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
     GameEngine::instance()->set_world_matrix(matPivot * matRotate * matTranslate);
-    GameEngine::instance()->FillRect(0, 0, WIDTH, HEIGHT);
-    GameEngine::instance()->FillRect(-10, HEIGHT, 0, HEIGHT + 10);
-    GameEngine::instance()->FillRect(WIDTH, HEIGHT, WIDTH + 10, HEIGHT + 10);
+    GameEngine::instance()->fill_rect(0, 0, WIDTH, HEIGHT);
+    GameEngine::instance()->fill_rect(-10, HEIGHT, 0, HEIGHT + 10);
+    GameEngine::instance()->fill_rect(WIDTH, HEIGHT, WIDTH + 10, HEIGHT + 10);
     GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     for (int i = 0; i < m_AmountOfArrows; i++)
     {

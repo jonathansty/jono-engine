@@ -7,7 +7,7 @@ public:
 	TextLabel(std::string const& text);
 	virtual ~TextLabel();
 
-	virtual void Paint();
+	virtual void Paint(graphics::D2DRenderContext& ctx);
 	virtual void Tick(double deltaTime) {}
 	// initializes members for all constructors 
 	virtual void HandleKeyInput(TCHAR character) {};
