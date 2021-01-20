@@ -91,7 +91,7 @@ private:
     void UpdateKeyChecks(double deltaTime);
     void UpdateDrawMode();
 
-    void drawBackgroundGradient(int levels);
+    void drawBackgroundGradient(graphics::D2DRenderContext& ctx, int levels);
 
     double m_TimeMultiplier = 1;
     std::string m_Level;

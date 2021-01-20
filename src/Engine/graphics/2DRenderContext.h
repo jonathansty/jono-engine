@@ -169,7 +169,12 @@ public:
 
 	void set_bitmap_interpolation_mode(bitmap_interpolation_mode mode);
 
-	void set_font(Font *font) { _font = font; }
+	void set_default_font() { _font = _default_font; }
+	void set_font(Font *font) {
+		_font = font;
+		if (!_font)
+			_font = _default_font;
+	}
 	Font *get_font() const { return _font; }
 
 	private:

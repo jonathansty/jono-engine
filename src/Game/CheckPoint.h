@@ -34,8 +34,9 @@ public:
     virtual PhysicsActor* GetActor();
     virtual void Reset();
     virtual void SetSpawnPosition(DOUBLE2 respawnPosition);
-    void Paint();
-    void Tick(double dTime);
+
+    virtual void Paint(graphics::D2DRenderContext& ctx) override;
+    virtual void Tick(double dTime) override;
     bool isHit();
     double GetCameraAngle();
     void SetCameraAngle(double angle);

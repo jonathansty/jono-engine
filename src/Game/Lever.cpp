@@ -39,13 +39,13 @@ void Lever::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 {
 
 }
-void Lever::Paint()
+void Lever::Paint(graphics::D2DRenderContext& ctx)
 {
     m_Position = m_ActPtr->GetPosition();
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-(m_BmpPtr->GetWidth()/AMOUNTOFFRAMES) / 2, -m_BmpPtr->GetHeight() / 2));
-    GameEngine::instance()->set_world_matrix(matPivot * matTranslate);
+    ctx.set_world_matrix(matPivot * matTranslate);
     RECT boundingBox;
     boundingBox.left = 0;
     boundingBox.top = 0;
@@ -57,8 +57,8 @@ void Lever::Paint()
     }
     boundingBox.right = boundingBox.left + (LONG)m_ClipWidth;
     boundingBox.bottom = m_BmpPtr->GetHeight();
-    GameEngine::instance()->draw_bitmap(m_BmpPtr,boundingBox);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.draw_bitmap(m_BmpPtr,boundingBox);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Lever::Tick(double deltaTime)
 {

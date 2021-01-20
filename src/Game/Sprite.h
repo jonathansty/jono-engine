@@ -14,8 +14,8 @@ public:
 	Sprite( const Sprite& ) = delete;
 	Sprite& operator=( const Sprite& ) = delete;
 
-    void Paint(int rowNumber);
-    void Paint(int rowNumber, int maxFrame);
+    void Paint(graphics::D2DRenderContext& ctx, int rowNumber);
+    void Paint(graphics::D2DRenderContext& ctx, int rowNumber, int maxFrame);
     void Tick(double deltaTime);
     void SetFrameRate(double frameRate);
 

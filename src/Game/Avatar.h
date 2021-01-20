@@ -108,7 +108,7 @@ private:
     //! Handles the normalMoveState
     void NormalMoveState(double dTime);
     
-    void PaintTrail();
+    void PaintTrail(graphics::D2DRenderContext& ctx);
 
     RECT updateFrameDisplay(int frameNr);
 	//-------------------------------------------------

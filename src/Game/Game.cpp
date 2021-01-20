@@ -371,9 +371,9 @@ void Game::paint(graphics::D2DRenderContext& ctx)
     //TODO: Refactor these lists into an actual systems (entity system or actors)
     if (m_DrawMode & DrawMode::Bitmap)
     {
-        engine->set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
-        drawBackgroundGradient(15);
-        engine->set_view_matrix(matView);
+        ctx.set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
+        drawBackgroundGradient(ctx,15);
+        ctx.set_view_matrix(matView);
 
         m_CheckPointRotLightPtr->Paint(ctx);
 		m_CheckPointBgPtr->Paint(ctx);
@@ -388,23 +388,23 @@ void Game::paint(graphics::D2DRenderContext& ctx)
         m_CoinListPtr->Paint(ctx);
         m_LevelPtr->Paint(ctx);
         m_EnemyListPtr->PaintRockets(ctx);
-        engine->set_world_matrix(matView.Inverse());
+        ctx.set_world_matrix(matView.Inverse());
         m_CameraPtr->Paint(ctx);
-        engine->set_color(COLOR(0, 0, 0));
+        ctx.set_color(COLOR(0, 0, 0));
     }
 
     if(m_DrawMode & DrawMode::Physics)
     {
         m_EnemyListPtr->PaintDebug(ctx);
-        m_CoinListPtr->PaintDebug();
+        m_CoinListPtr->PaintDebug(ctx);
         m_EntityListPtr->PaintDebug(ctx);
         m_AvatarPtr->PaintDebug(ctx);
-        engine->set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
-        engine->set_view_matrix(matView);
-        engine->set_world_matrix(matView.Inverse());
+        ctx.set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
+        ctx.set_view_matrix(matView);
+        ctx.set_world_matrix(matView.Inverse());
     }
 
-    m_HudPtr->Paint();
+    m_HudPtr->Paint(ctx);
 }
 
 void Game::Initializeall(const std::string& fileName)
@@ -488,7 +488,7 @@ void Game::Unload()
 * draw Methods are used in the Paint;
 */
 
-void Game::drawBackgroundGradient(int levels)
+void Game::drawBackgroundGradient(graphics::D2DRenderContext& ctx, int levels)
 {
     if (levels > 255)
     {
@@ -498,9 +498,9 @@ void Game::drawBackgroundGradient(int levels)
     for (int i = 0; i < 255; i++)
     {
         COLOR tmpColor = COLOR(255 - (255 / levels)*i, 0, 255 - (255 / levels)*i);
-        GameEngine::instance()->set_color(tmpColor);
-        GameEngine::instance()->fill_rect(0, - 1 + i*GameEngine::instance()->get_height() / levels, GameEngine::instance()->get_width(), 1 + GameEngine::instance()->get_height() / levels + i * GameEngine::instance()->get_height() / levels);
-        GameEngine::instance()->set_color(COLOR(0, 0, 0));
+        ctx.set_color(tmpColor);
+        ctx.fill_rect(0, - 1 + i*GameEngine::instance()->get_height() / levels, GameEngine::instance()->get_width(), 1 + GameEngine::instance()->get_height() / levels + i * GameEngine::instance()->get_height() / levels);
+        ctx.set_color(COLOR(0, 0, 0));
     }
 }
 

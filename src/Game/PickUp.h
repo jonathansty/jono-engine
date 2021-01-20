@@ -28,7 +28,7 @@ public:
 	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse) override{};
 
     virtual void Tick(double deltaTime) = 0;
-    virtual void Paint() = 0;
+    virtual void Paint(graphics::D2DRenderContext& ctx) = 0;
     virtual bool IsHit();
 
     virtual PhysicsActor* GetActor();

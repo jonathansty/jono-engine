@@ -50,24 +50,23 @@ AttackBeam::~AttackBeam()
 //{
 //
 //}
-void AttackBeam::Paint()
+void AttackBeam::Paint(graphics::D2DRenderContext& ctx)
 {
-    
-    GameEngine::instance()->set_color(m_Color);
+    ctx.set_color(m_Color);
     if (m_TopPosition.y < m_Position.y)
     {
-        GameEngine::instance()->fill_rect((int)(-m_Width + m_Position.x), (int)m_TopPosition.y, (int)(m_Width + m_Position.x), (int)m_Position.y);
+        ctx.fill_rect((int)(-m_Width + m_Position.x), (int)m_TopPosition.y, (int)(m_Width + m_Position.x), (int)m_Position.y);
     }
     
-    GameEngine::instance()->set_color(COLOR(0, 0, 0,255));
-    //GameEngine::instance()->DrawLine(m_RayStart, m_RayEnd);
+    ctx.set_color(COLOR(0, 0, 0,255));
+    //ctx.DrawLine(m_RayStart, m_RayEnd);
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(-m_BmpGroundPtr->GetWidth() / 2, -m_BmpGroundPtr->GetHeight());
-    GameEngine::instance()->set_world_matrix(matPivot * matTranslate);
-    GameEngine::instance()->draw_bitmap(m_BmpGroundPtr);
+    ctx.set_world_matrix(matPivot * matTranslate);
+    ctx.draw_bitmap(m_BmpGroundPtr);
    
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void AttackBeam::Tick(double deltaTime)
 {

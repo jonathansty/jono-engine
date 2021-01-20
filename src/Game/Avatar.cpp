@@ -204,46 +204,46 @@ void Avatar::PaintDebug(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate;
     matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
-    GameEngine::instance()->set_world_matrix(matTranslate);
+    ctx.set_world_matrix(matTranslate);
     switch (m_moveState)
     {
     case Avatar::moveState::RUNNING:
-        GameEngine::instance()->draw_string(String("Running"), DOUBLE2());
+        ctx.draw_string(String("Running"), DOUBLE2());
         break;
     case Avatar::moveState::STANDING:
-        GameEngine::instance()->draw_string(String("Standing"), DOUBLE2());
+        ctx.draw_string(String("Standing"), DOUBLE2());
         break;
     case Avatar::moveState::JUMPING:
-        GameEngine::instance()->draw_string(String("Jumping"), DOUBLE2());
+        ctx.draw_string(String("Jumping"), DOUBLE2());
         break;
     case Avatar::moveState::HANGING:
-        GameEngine::instance()->draw_string(String("Hanging"), DOUBLE2());
+        ctx.draw_string(String("Hanging"), DOUBLE2());
         break;
     case Avatar::moveState::ATTACK:
-        GameEngine::instance()->draw_string(String("Attack"), DOUBLE2());
+        ctx.draw_string(String("Attack"), DOUBLE2());
         break;
     case Avatar::moveState::DIE:
-        GameEngine::instance()->draw_string(String("DEAD"), DOUBLE2());
+        ctx.draw_string(String("DEAD"), DOUBLE2());
         break;
     case Avatar::moveState::DYING:
-        GameEngine::instance()->draw_string(String("Dying"), DOUBLE2());
+        ctx.draw_string(String("Dying"), DOUBLE2());
         break;
     case Avatar::moveState::SLIDINGSTANDING:
-        GameEngine::instance()->draw_string(String("SlidingStanding"), DOUBLE2());
+        ctx.draw_string(String("SlidingStanding"), DOUBLE2());
         break;
     case Avatar::moveState::SLIDINGWALKING:
-        GameEngine::instance()->draw_string(String("SlidingWalking"), DOUBLE2());
+        ctx.draw_string(String("SlidingWalking"), DOUBLE2());
         break;
     case Avatar::moveState::SLIDINGJUMPING:
-        GameEngine::instance()->draw_string(String("SlidingJumping"), DOUBLE2());
+        ctx.draw_string(String("SlidingJumping"), DOUBLE2());
         break;
     case Avatar::moveState::GOD:
-        GameEngine::instance()->draw_string(String("God"), DOUBLE2());
+        ctx.draw_string(String("God"), DOUBLE2());
         break;
     default:
         break;
     }
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Avatar::Paint(graphics::D2DRenderContext& ctx)
 {
@@ -266,24 +266,24 @@ void Avatar::Paint(graphics::D2DRenderContext& ctx)
     }
     
     RECT boundingBox = updateFrameDisplay(m_FrameNr);
-    PaintTrail();
-    GameEngine::instance()->set_world_matrix(matWorldTransform);
+    PaintTrail(ctx);
+    ctx.set_world_matrix(matWorldTransform);
     
     
     
-    GameEngine::instance()->draw_bitmap(m_BmpPtr, boundingBox);
+    ctx.draw_bitmap(m_BmpPtr, boundingBox);
     if (m_IsEpicModeOn)
     {
-        GameEngine::instance()->draw_bitmap(m_BmpEpicModePtr, boundingBox);
+        ctx.draw_bitmap(m_BmpEpicModePtr, boundingBox);
     }
     
     
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     matTranslate.SetAsTranslate(DOUBLE2(m_ActPtr->GetPosition().x, 0));
-    GameEngine::instance()->set_world_matrix(matTranslate);
-    GameEngine::instance()->set_color(COLOR(0, 0, 0));
+    ctx.set_world_matrix(matTranslate);
+    ctx.set_color(COLOR(0, 0, 0));
 }
-void Avatar::PaintTrail()
+void Avatar::PaintTrail(graphics::D2DRenderContext& ctx)
 {
     m_deqTrail.push_front(m_ActPtr->GetPosition());
 
@@ -291,7 +291,7 @@ void Avatar::PaintTrail()
     {
         m_deqTrail.pop_back();
     }
-    GameEngine::instance()->set_color(COLOR(255, 255, 255, 10));
+    ctx.set_color(COLOR(255, 255, 255, 10));
     for (int i = 0, n = int(m_deqTrail.size()); i < n - 1; i++)
     {
         DOUBLE2 pos = m_deqTrail[i];
@@ -301,7 +301,7 @@ void Avatar::PaintTrail()
         if (size - (size / MAX_TRAIL)*i > 0)
         {
             
-            GameEngine::instance()->fill_ellipse(pos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
+            ctx.fill_ellipse(pos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
             DOUBLE2 vector = pos2 - pos;
             int numberOfCircles = 4;
             if (vector.Length() > 5)
@@ -311,7 +311,7 @@ void Avatar::PaintTrail()
                     double spaceBetween = vector.Length() / numberOfCircles;
                     DOUBLE2 normVector = vector.Normalized();
                     midPos = normVector*j*spaceBetween;
-                    GameEngine::instance()->fill_ellipse(pos + midPos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
+                    ctx.fill_ellipse(pos + midPos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
                 }
             }
         }

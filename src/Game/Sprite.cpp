@@ -25,7 +25,7 @@ Sprite::~Sprite()
     }
 }
 
-void Sprite::Paint(int rowNumber)
+void Sprite::Paint(graphics::D2DRenderContext& ctx, int rowNumber)
 {
     int clipWidth = m_BmpSpriteSheetPtr->GetWidth() / m_Cols;
     int clipHeight = m_BmpSpriteSheetPtr->GetHeight() / m_Rows;
@@ -34,10 +34,9 @@ void Sprite::Paint(int rowNumber)
     boundingBox.top = rowNumber * clipHeight;
     boundingBox.right = boundingBox.left + clipWidth;
     boundingBox.bottom = boundingBox.top + clipHeight;
-    GameEngine::instance()->draw_bitmap(m_BmpSpriteSheetPtr,boundingBox);
+    ctx.draw_bitmap(m_BmpSpriteSheetPtr,boundingBox);
 }
-void Sprite::Paint(int rowNumber, int maxFrame)
-{
+void Sprite::Paint(graphics::D2DRenderContext &ctx,  int rowNumber, int maxFrame) {
     int clipWidth = m_BmpSpriteSheetPtr->GetWidth() / m_Cols;
     int clipHeight = m_BmpSpriteSheetPtr->GetHeight() / m_Rows;
     RECT boundingBox;
@@ -45,7 +44,7 @@ void Sprite::Paint(int rowNumber, int maxFrame)
     boundingBox.top = rowNumber * clipHeight;
     boundingBox.right = boundingBox.left + clipWidth;
     boundingBox.bottom = boundingBox.top + clipHeight;
-    GameEngine::instance()->draw_bitmap(m_BmpSpriteSheetPtr, boundingBox);
+    ctx.draw_bitmap(m_BmpSpriteSheetPtr, boundingBox);
 }
 void Sprite::SetFrameRate(double frameRate)
 {

@@ -66,14 +66,14 @@ void Coin::Tick(double deltaTime)
 {
 
 }
-void Coin::Paint()
+void Coin::Paint(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate,matPivot;
     matPivot.SetAsTranslate(-m_BmpCoinPtr->GetWidth() / 2, -m_BmpCoinPtr->GetHeight() / 2);
     matTranslate.SetAsTranslate(m_Position);
-    GameEngine::instance()->set_world_matrix(matPivot* matTranslate);
-    GameEngine::instance()->draw_bitmap(m_BmpCoinPtr);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matPivot* matTranslate);
+    ctx.draw_bitmap(m_BmpCoinPtr);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 bool Coin::IsHit()
 {

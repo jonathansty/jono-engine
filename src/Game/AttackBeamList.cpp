@@ -41,7 +41,7 @@ void AttackBeamList::Paint(graphics::D2DRenderContext& ctx)
     {
         if (m_AttackBeamsPtrArr[i] != nullptr)
         {
-            m_AttackBeamsPtrArr[i]->Paint();
+            m_AttackBeamsPtrArr[i]->Paint(ctx);
         }
         
     }

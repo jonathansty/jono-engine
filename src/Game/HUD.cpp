@@ -33,18 +33,17 @@ HUD::~HUD()
 
 }
 
-void HUD::Paint()
+void HUD::Paint(graphics::D2DRenderContext& ctx)
 {
-    GameEngine::instance()->set_font(m_FntPtr);
-    PaintMoneyWindow(DOUBLE2(10, 10));
-    PaintDeathCounterWindow(DOUBLE2(GameEngine::instance()->get_width() - 100, 50));
+    ctx.set_font(m_FntPtr);
+    PaintMoneyWindow(ctx,DOUBLE2(10, 10));
+    PaintDeathCounterWindow(ctx,DOUBLE2(GameEngine::instance()->get_width() - 100, 50));
     
-    GameEngine::instance()->set_world_matrix(GameEngine::instance()->get_view_matrix().Inverse());
-    GameEngine::instance()->draw_string(String(m_AccuTime, 2), GameEngine::instance()->get_width() / 2, 10);
-    GameEngine::instance()->set_default_font(); 
+    ctx.set_world_matrix(ctx.get_view_matrix().Inverse());
+    ctx.draw_string(String(m_AccuTime, 2), GameEngine::instance()->get_width() / 2, 10);
+    ctx.set_font(nullptr); 
     
-    PaintLeverInfo();
-    GameEngine::instance()->set_view_matrix(GameEngine::instance()->get_view_matrix());
+    PaintLeverInfo(ctx);
     
 }
 void HUD::Tick(double deltaTime)
@@ -90,8 +89,7 @@ void HUD::Tick(double deltaTime)
     
     
 }
-void HUD::PaintMoneyWindow(DOUBLE2 position)
-{
+void HUD::PaintMoneyWindow(graphics::D2DRenderContext &ctx, DOUBLE2 position) {
     GameEngine::instance()->set_default_font();
     int amountOfMoney = 0;
     if (m_AvatarPtr != nullptr)
@@ -117,34 +115,33 @@ void HUD::PaintMoneyWindow(DOUBLE2 position)
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(position);
 
-    GameEngine* eng = GameEngine::instance();
-    eng->set_world_matrix(matTranslate * GameEngine::instance()->get_view_matrix().Inverse());
-    eng->draw_bitmap(m_BmpMoneyDisplayPtr);
-    eng->set_color(COLOR(255, 255, 255));
-    eng->draw_string(String(amountOfGold), (int)(bitmapWidth - 30), (int)(5 ));
-    eng->draw_string(String(amountOfSilver), (int)(bitmapWidth - 70), (int)(5 ));
-    eng->draw_string(String(amountOfCopper), (int)(bitmapWidth - 110), (int)( 5 ));
-    eng->set_color(COLOR(0, 0, 0));
-    eng->set_font(m_FntPtr);
-    eng->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matTranslate * ctx.get_view_matrix().Inverse());
+    ctx.draw_bitmap(m_BmpMoneyDisplayPtr);
+    ctx.set_color(COLOR(255, 255, 255));
+    ctx.draw_string(String(amountOfGold), (int)(bitmapWidth - 30), (int)(5 ));
+    ctx.draw_string(String(amountOfSilver), (int)(bitmapWidth - 70), (int)(5 ));
+    ctx.draw_string(String(amountOfCopper), (int)(bitmapWidth - 110), (int)( 5 ));
+    ctx.set_color(COLOR(0, 0, 0));
+    ctx.set_font(m_FntPtr);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 
 }
 
-void HUD::PaintDeathCounterWindow(DOUBLE2 position)
+void HUD::PaintDeathCounterWindow(graphics::D2DRenderContext& ctx, DOUBLE2 position)
 {
     MATRIX3X2 matTranslate, matPivot;
     DOUBLE2 positionIcon = DOUBLE2(-m_BmpDeathIconPtr->GetWidth() / 2, -m_BmpDeathIconPtr->GetHeight() / 2);
     matTranslate.SetAsTranslate(position);
     matPivot.SetAsTranslate(positionIcon);
 
-    GameEngine* eng = GameEngine::instance();
-    eng->set_world_matrix(matPivot * matTranslate * GameEngine::instance()->get_view_matrix().Inverse());
-    eng->draw_bitmap(m_BmpDeathIconPtr);
+    auto invView = ctx.get_view_matrix().Inverse();
+    ctx.set_world_matrix(matPivot * matTranslate * invView);
+    ctx.draw_bitmap(m_BmpDeathIconPtr);
 
     matPivot.SetAsTranslate(DOUBLE2(20 + m_BmpDeathIconPtr->GetWidth() / 2, -m_BmpDeathIconPtr->GetHeight() / 2));
-    eng->set_world_matrix(matPivot * matTranslate * GameEngine::instance()->get_view_matrix().Inverse());
-    eng->draw_string(String(m_AvatarPtr->GetDeaths()),DOUBLE2());
-    eng->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matPivot * matTranslate * invView);
+    ctx.draw_string(String(m_AvatarPtr->GetDeaths()),DOUBLE2());
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void HUD::CreatePauseMenu()
 {
@@ -169,16 +166,16 @@ void HUD::RemovePauseMenu()
     m_BtnQuitToMenuPtr = nullptr;
 }
 
-void HUD::PaintGameOverWindow(DOUBLE2 position)
+void HUD::PaintGameOverWindow(graphics::D2DRenderContext& ctx, DOUBLE2 position)
 {
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(position);
     matPivot.SetAsTranslate(DOUBLE2(-m_BmpGameOverPtr->GetWidth() / 2, -m_BmpGameOverPtr->GetHeight() / 2));
-    GameEngine::instance()->set_world_matrix(matPivot*matTranslate * GameEngine::instance()->get_view_matrix().Inverse());
-    GameEngine::instance()->set_color(COLOR(0, 0, 0, m_GameOverOpacity));
-    GameEngine::instance()->draw_bitmap(m_BmpGameOverPtr);
+    ctx.set_world_matrix(matPivot*matTranslate * ctx.get_view_matrix().Inverse());
+    ctx.set_color(COLOR(0, 0, 0, m_GameOverOpacity));
+    ctx.draw_bitmap(m_BmpGameOverPtr);
     m_IsGameOverDrawn = true;
-    GameEngine::instance()->set_world_matrix(GameEngine::instance()->get_view_matrix().Inverse());
+    ctx.set_world_matrix(ctx.get_view_matrix().Inverse());
 }
 bool HUD::IsGoToStartMenu()
 {
@@ -224,18 +221,18 @@ void HUD::LinkLevers(std::vector<Lever*>tmpArray)
     m_AreThereLevers = true;
     m_LeversPtrArr = tmpArray;
 }
-void HUD::PaintLeverInfo()
+void HUD::PaintLeverInfo(graphics::D2DRenderContext& ctx)
 {
 
     for (size_t i = 0; i < m_LeversPtrArr.size(); i++)
     {
         if (m_LeversPtrArr[i]->isHit())
         {
-            GameEngine::instance()->draw_string(String("Lever ") + String(i) + String(" is hit!"), 10, 150 + (int)i * 15);
+            ctx.draw_string(String("Lever ") + String(i) + String(" is hit!"), 10, 150 + (int)i * 15);
         }
         else
         {
-            GameEngine::instance()->draw_string(String("Lever ") + String(i) + String(" is not hit!"), 10, 150 + (int)i * 15);
+            ctx.draw_string(String("Lever ") + String(i) + String(" is not hit!"), 10, 150 + (int)i * 15);
         }
     }
 }

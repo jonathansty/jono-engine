@@ -264,9 +264,9 @@ void Camera::Paint(graphics::D2DRenderContext& ctx)
     {
         int width = engine->get_width();
         int height = engine->get_height();
-        engine->set_color(COLOR(0, 0, 0));
-        engine->fill_rect(0, 0, width, static_cast<int>(m_EpicEffectBarsSize));
-        engine->fill_rect(0, static_cast<int>(height - m_EpicEffectBarsSize), width, height);
+        ctx.set_color(COLOR(0, 0, 0));
+        ctx.fill_rect(0, 0, width, static_cast<int>(m_EpicEffectBarsSize));
+        ctx.fill_rect(0, static_cast<int>(height - m_EpicEffectBarsSize), width, height);
     }
     
 }

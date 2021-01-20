@@ -334,5 +334,5 @@ void LoadingScreenState::update(double dt)
 
 void LoadingScreenState::render_2d(graphics::D2DRenderContext& ctx)
 {
-	GameEngine::instance()->draw_bitmap(_loading_bitmap);
+	ctx.draw_bitmap(_loading_bitmap);
 }

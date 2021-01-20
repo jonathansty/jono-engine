@@ -31,8 +31,9 @@ public:
 	virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
 	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
     
-    void Paint();
-    void Tick(double deltaTime);
+    virtual void Paint(graphics::D2DRenderContext& ctx) override;
+    virtual void Tick(double deltaTime) override;
+
     PhysicsActor* GetActor();
     void SetSpawnPosition(DOUBLE2 respawnPosition){};
     void Reset(){};

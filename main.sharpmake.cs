@@ -59,11 +59,14 @@ public class EngineProject : JonaBaseProject
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
-        // Private dependencies
         conf.AddPublicDependency<DirectXTK>(target);
-        conf.AddPublicDependency<EnkiTS>(target);
-        conf.AddPublicDependency<Box2D>(target);
         conf.AddPublicDependency<ImGui>(target);
+        conf.AddPublicDependency<HLSLPP>(target);
+        conf.AddPublicDependency<EnkiTS>(target);
+
+        // Private dependencies
+        // Only visible to the engine layer
+        conf.AddPrivateDependency<Box2D>(target);
         conf.AddPrivateDependency<Assimp>(target);
 
         conf.PrecompHeader = "stdafx.h";
@@ -353,6 +356,25 @@ public class ImGui : ExternalProject
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]");
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]/examples");
     }
+}
+
+[Export]
+public class HLSLPP : ExternalProject
+{
+    public HLSLPP() : base()
+    {
+        Name = "hlslpp";
+    }
+
+    override public void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        conf.Output = Configuration.OutputType.None;
+        conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]/include");
+    }
+
+
 }
 
 public static class Main

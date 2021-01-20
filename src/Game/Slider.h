@@ -27,7 +27,7 @@ public:
 	// Methods - Member functions							
 	//-------------------------------------------------
 	void Tick(double deltaTime);
-	void Paint();
+	void Paint(graphics::D2DRenderContext& ctx);
 
 	void SetText(const String & textRef);
 	void SetBounds(int posX, int posY, int width, int height);

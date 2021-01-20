@@ -52,9 +52,9 @@ void EntityDestroy::Paint(graphics::D2DRenderContext& ctx)
     matScale.SetAsScale(m_Scale);
     matPivot.SetAsTranslate(DOUBLE2(0,0));
     ctx.set_color(COLOR(255,255,255, m_Opacity * 255));
-    GameEngine::instance()->set_world_matrix(matPivot * matScale * matTranslate);
+    ctx.set_world_matrix(matPivot * matScale * matTranslate);
     ctx.fill_ellipse(DOUBLE2(), m_Radius, m_Radius);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     ctx.set_color(COLOR(0, 0, 0,255));
 }
 double EntityDestroy::GetOpacity()

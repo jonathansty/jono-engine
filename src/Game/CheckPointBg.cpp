@@ -44,9 +44,9 @@ void CheckPointBg::Paint(graphics::D2DRenderContext& ctx)
     matScale.SetAsScale(m_Scale);
     matRotate.SetAsRotate(m_Angle);
     matWorldTransform = matPivot * matScale * matRotate * matTranslate;
-    GameEngine::instance()->set_world_matrix(matWorldTransform);
-    GameEngine::instance()->draw_bitmap(m_BmpPtr);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matWorldTransform);
+    ctx.draw_bitmap(m_BmpPtr);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void CheckPointBg::Tick(double deltaTime)
 {

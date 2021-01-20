@@ -76,14 +76,14 @@ void LevelEnd::Paint(graphics::D2DRenderContext& ctx)
         matTranslate.SetAsTranslate(m_Position);
         matRotate.SetAsRotate(m_Angle);
         matPivot.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
-        GameEngine::instance()->set_world_matrix(matPivot*matRotate* matTranslate);
-        GameEngine::instance()->draw_bitmap(m_BmpPtr);
-        GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+        ctx.set_world_matrix(matPivot*matRotate* matTranslate);
+        ctx.draw_bitmap(m_BmpPtr);
+        ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     }
     
     for (size_t i = 0; i < m_LeversPtrArr.size(); i++)
     {
-        m_LeversPtrArr[i]->Paint();
+        m_LeversPtrArr[i]->Paint(ctx);
     }
 }
 

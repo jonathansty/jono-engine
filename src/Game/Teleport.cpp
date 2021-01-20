@@ -69,21 +69,21 @@ void Teleport::Tick(double deltaTime)
 {
     m_Angle += 25*deltaTime;
 }
-void Teleport::Paint()
+void Teleport::Paint(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate, matRotate, matPivot, matWorldTransform;
     matTranslate.SetAsTranslate(m_TeleEntrance);
     matRotate.SetAsRotate(m_Angle);
     matPivot.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
     matWorldTransform = matPivot * matRotate * matTranslate;
-    GameEngine::instance()->set_world_matrix(matWorldTransform);
-    GameEngine::instance()->draw_bitmap(m_BmpPtr);
+    ctx.set_world_matrix(matWorldTransform);
+    ctx.draw_bitmap(m_BmpPtr);
     matTranslate.SetAsTranslate(m_TeleExit);
     matRotate.SetAsRotate(m_Angle + 1.5);
     matWorldTransform = matPivot * matRotate * matTranslate;
-    GameEngine::instance()->set_world_matrix(matWorldTransform);
-    GameEngine::instance()->draw_bitmap(m_BmpPtr);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matWorldTransform);
+    ctx.draw_bitmap(m_BmpPtr);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Teleport::Reset()
 {

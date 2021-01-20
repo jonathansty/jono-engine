@@ -40,7 +40,7 @@ public:
 	//virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr); 
 	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
 	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
-    void Paint();
+    void Paint(graphics::D2DRenderContext& ctx);
     void Tick(double deltaTime);
     void ResetTimer();
     double GetTime();
@@ -49,9 +49,9 @@ public:
     void CreateSoundMuteBtn();
     void RemoveSoundMuteBtn();
 
-    void PaintGameOverWindow(DOUBLE2 position);
-    void PaintMoneyWindow(DOUBLE2 position);
-    void PaintDeathCounterWindow(DOUBLE2 position);
+    void PaintGameOverWindow(graphics::D2DRenderContext& ctx, DOUBLE2 position);
+    void PaintMoneyWindow(graphics::D2DRenderContext&ctx, DOUBLE2 position);
+    void PaintDeathCounterWindow(graphics::D2DRenderContext& ctx, DOUBLE2 position);
     void PaintMuteSound();
     void CreatePauseMenu();
     void RemovePauseMenu();
@@ -61,7 +61,7 @@ public:
     bool IsGoToStartMenu();
 
     void LinkLevers(std::vector<Lever*>tmpArray);
-    void PaintLeverInfo();
+    void PaintLeverInfo(graphics::D2DRenderContext& ctx);
 
     void ResetIsInMenu();
 

@@ -46,19 +46,19 @@ void StickyWall::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 {
 
 }
-void StickyWall::Paint()
+void StickyWall::Paint(graphics::D2DRenderContext& ctx)
 {
-    GameEngine::instance()->set_color(COLOR(0, 0, 0));
+    ctx.set_color(COLOR(0, 0, 0));
     MATRIX3X2 matTranslate, matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
-    GameEngine::instance()->set_world_matrix(matPivot*matTranslate);
-    GameEngine::instance()->fill_rect(0, 0, (int)m_Width, (int)m_Height);
-    GameEngine::instance()->set_color(COLOR(0, 125, 50));
-    GameEngine::instance()->fill_rect(0, 0, (int)(m_Width * 0.2), (int)(m_Height));
-    GameEngine::instance()->fill_rect((int)(m_Width - (m_Width*0.2)), 0, (int)m_Width, (int)m_Height);
-    GameEngine::instance()->set_color(COLOR(0, 0, 0));
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matPivot*matTranslate);
+    ctx.fill_rect(0, 0, (int)m_Width, (int)m_Height);
+    ctx.set_color(COLOR(0, 125, 50));
+    ctx.fill_rect(0, 0, (int)(m_Width * 0.2), (int)(m_Height));
+    ctx.fill_rect((int)(m_Width - (m_Width*0.2)), 0, (int)m_Width, (int)m_Height);
+    ctx.set_color(COLOR(0, 0, 0));
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void StickyWall::Tick(double deltaTime)
 {

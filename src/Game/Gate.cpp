@@ -65,16 +65,16 @@ void Gate::Tick(double deltaTime)
 {
 
 }
-void Gate::Paint()
+void Gate::Paint(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate, matPivot;
     DOUBLE2 position = m_ActGatePtr->GetPosition();
     matTranslate.SetAsTranslate(position);
     matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
-    GameEngine::instance()->set_world_matrix(matPivot * matTranslate);
-    GameEngine::instance()->set_color(COLOR(0, 0, 0, 255));
-    GameEngine::instance()->fill_rect(0, 0, m_Width, m_Height);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matPivot * matTranslate);
+    ctx.set_color(COLOR(0, 0, 0, 255));
+    ctx.fill_rect(0, 0, m_Width, m_Height);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Gate::Reset()
 {

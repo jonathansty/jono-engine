@@ -67,22 +67,23 @@ void Slider::Tick(double deltaTime)
 	
 	
 }
-void Slider::Paint(){
-	GameEngine::instance()->set_color(m_BackgroundColor);
-	GameEngine::instance()->fill_rect(m_PosX, m_PosY, m_PosX + m_Width, m_PosY + m_Height);
+void Slider::Paint(graphics::D2DRenderContext& ctx)
+{
+	ctx.set_color(m_BackgroundColor);
+	ctx.fill_rect(m_PosX, m_PosY, m_PosX + m_Width, m_PosY + m_Height);
 
-	GameEngine::instance()->set_color(m_ValueColor);
-	GameEngine::instance()->fill_rect(m_PosX, m_PosY, int(m_PosX + (m_Value - m_MinValue) * m_Width / (m_MaxValue - m_MinValue) + 1), m_PosY + m_Height - 1); // See this. value to pixels
+	ctx.set_color(m_ValueColor);
+	ctx.fill_rect(m_PosX, m_PosY, int(m_PosX + (m_Value - m_MinValue) * m_Width / (m_MaxValue - m_MinValue) + 1), m_PosY + m_Height - 1); // See this. value to pixels
 
-	GameEngine::instance()->set_color(COLOR(0, 0, 0));
-	GameEngine::instance()->draw_rect(m_PosX, m_PosY, m_PosX + m_Width, m_PosY + m_Height);
+	ctx.set_color(COLOR(0, 0, 0));
+	ctx.draw_rect(m_PosX, m_PosY, m_PosX + m_Width, m_PosY + m_Height);
 	
 
-	GameEngine::instance()->set_color(COLOR(0, 0, 0));
-    GameEngine::instance()->set_color(m_ValueColor);
-	GameEngine::instance()->draw_string(String(m_MinValue), m_PosX, m_PosY + m_Height + 2);
-	GameEngine::instance()->draw_string(String(m_MaxValue), m_PosX + m_Width, m_PosY + m_Height + 2);
-	GameEngine::instance()->draw_string(String(m_String) + String(": ") + String(m_Value) , m_PosX, m_PosY - m_Height);
+	ctx.set_color(COLOR(0, 0, 0));
+    ctx.set_color(m_ValueColor);
+	ctx.draw_string(String(m_MinValue), m_PosX, m_PosY + m_Height + 2);
+	ctx.draw_string(String(m_MaxValue), m_PosX + m_Width, m_PosY + m_Height + 2);
+	ctx.draw_string(String(m_String) + String(": ") + String(m_Value) , m_PosX, m_PosY - m_Height);
 }
 bool Slider::IsPressed()
 {

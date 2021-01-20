@@ -85,13 +85,13 @@ void Arrow::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 {
 
 }
-void Arrow::Paint()
+void Arrow::Paint(graphics::D2DRenderContext& ctx) 
 {
     MATRIX3X2 matWorldTransform;
     matWorldTransform = { DOUBLE2(1, 0), DOUBLE2(0, 1), m_Position - DOUBLE2(m_BmpPtr->GetWidth()/2,m_BmpPtr->GetHeight()/2) };
-    GameEngine::instance()->set_world_matrix(matWorldTransform);
-    GameEngine::instance()->draw_bitmap(m_BmpPtr);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matWorldTransform);
+    ctx.draw_bitmap(m_BmpPtr);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void Arrow::Tick(double deltaTime)
 {

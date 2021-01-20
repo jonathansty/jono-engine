@@ -31,8 +31,8 @@ public:
 	virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
 	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
 
-    virtual void Paint();
-    virtual void Tick(double deltaTime);
+    virtual void Paint(graphics::D2DRenderContext& ctx) override;
+    virtual void Tick(double deltaTime) override;
     virtual void Reset();
 
     void SetEntrancePos(DOUBLE2 position);

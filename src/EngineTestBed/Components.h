@@ -3,6 +3,8 @@
 #include "RTTI/rtti.h"
 #include "Framework/framework.h"
 
+#include "graphics/2DRenderContext.h"
+
 class ModelResource;
 
 class SimpleMovement final : public framework::Component
@@ -49,7 +51,7 @@ public:
 	void render()
 	{
 		XMFLOAT3 pos = get_entity()->get_world_position();
-		GameEngine::instance()->draw_bitmap(_bmp, (int)pos.x, (int)pos.y);
+		GameEngine::instance()->_d2d_ctx->draw_bitmap(_bmp, (int)pos.x, (int)pos.y);
 	}
 
 

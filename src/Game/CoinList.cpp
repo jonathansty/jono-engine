@@ -47,11 +47,11 @@ void CoinList::Paint(graphics::D2DRenderContext& ctx)
     {
         if (m_CoinsPtrArr[i] != nullptr)
         {
-            m_CoinsPtrArr[i]->Paint();
+            m_CoinsPtrArr[i]->Paint(ctx);
         }
     }
 }
-void CoinList::PaintDebug()
+void CoinList::PaintDebug(graphics::D2DRenderContext& ctx)
 {
     for (size_t i = 0, n = m_CoinsPtrArr.size(); i < n; i++)
     {
@@ -59,7 +59,7 @@ void CoinList::PaintDebug()
         {
             DOUBLE2 position = m_CoinsPtrArr[i]->GetPosition() - DOUBLE2(10,30);
             String name = m_CoinsPtrArr[i]->GetName();
-            GameEngine::instance()->draw_string(name,position);
+            ctx.draw_string(name,position);
         }
     }
 }

@@ -32,7 +32,7 @@ public:
 	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
     void Tick(double deltaTime);
     void Paint(graphics::D2DRenderContext& ctx);
-    void PaintDebug();
+    void PaintDebug(graphics::D2DRenderContext& ctx);
 
     void Add(Coin* coinPtr);
     void Remove(Coin* coinPtr);

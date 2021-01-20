@@ -31,7 +31,7 @@ public:
 	//virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr); 
 	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
 	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
-    void Paint(DOUBLE2 position);
+    void Paint(graphics::D2DRenderContext& ctx, DOUBLE2 position);
 
     void SetSize(double size);
     void SetTrailLength(double length);

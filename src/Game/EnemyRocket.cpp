@@ -117,19 +117,19 @@ void EnemyRocket::Tick(double deltaTime)
 void EnemyRocket::Paint(graphics::D2DRenderContext& ctx)
 {
 
-    m_TrailPtr->Paint(m_ActPtr->GetPosition());
+    m_TrailPtr->Paint(ctx,m_ActPtr->GetPosition());
     MATRIX3X2 matTranslate, matRotate, matPivot, matWorldTransform;
     matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
     matPivot.SetAsTranslate(DOUBLE2(- WIDTH /2,-HEIGHT/2));
     matWorldTransform = matPivot * matRotate * matTranslate;
-    GameEngine::instance()->set_world_matrix(matWorldTransform);
+    ctx.set_world_matrix(matWorldTransform);
     std::vector<DOUBLE2>trianglePointsArr;
     trianglePointsArr.push_back(DOUBLE2(0,0));
     trianglePointsArr.push_back(DOUBLE2(WIDTH,HEIGHT/2));
     trianglePointsArr.push_back(DOUBLE2(0,HEIGHT));
-    GameEngine::instance()->fill_polygon(trianglePointsArr, 3);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.fill_polygon(trianglePointsArr, 3);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     
     /*GameEngine::instance()->DrawLine(m_Position.x, m_Position.y, m_AvatarPtr->GetPosition().x, m_AvatarPtr->GetPosition().y);
     GameEngine::instance()->DrawLine(m_Position.x, m_Position.y, m_Position.x + 10*m_AdjustedVelocity.x, m_Position.y + 10*m_AdjustedVelocity.y);*/

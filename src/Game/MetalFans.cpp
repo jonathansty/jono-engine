@@ -71,19 +71,19 @@ void MetalFans::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 {
 
 }
-void MetalFans::Paint()
+void MetalFans::Paint(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate, matRotate, matPivot,matWorldTransform;
     matPivot.SetAsTranslate(DOUBLE2(-WIDTH / 2, -HEIGHT / 2));
     matTranslate.SetAsTranslate(m_Position);
     matRotate.SetAsRotate(m_Angle);
     matWorldTransform = matPivot * matRotate * matTranslate;
-    GameEngine::instance()->set_world_matrix(matWorldTransform);
+    ctx.set_world_matrix(matWorldTransform);
     
-    GameEngine::instance()->fill_rect(0, 0, WIDTH, HEIGHT);
-    GameEngine::instance()->set_color(COLOR(0, 0, 120));
-    GameEngine::instance()->fill_rect(0, 0, WIDTH, HEIGHT / 2);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.fill_rect(0, 0, WIDTH, HEIGHT);
+    ctx.set_color(COLOR(0, 0, 120));
+    ctx.fill_rect(0, 0, WIDTH, HEIGHT / 2);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     
 }
 void MetalFans::Tick(double deltaTime)

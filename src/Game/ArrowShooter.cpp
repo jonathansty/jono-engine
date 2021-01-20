@@ -74,22 +74,22 @@ void ArrowShooter::Tick(double deltaTime)
         }
     }
 }
-void ArrowShooter::Paint()
+void ArrowShooter::Paint(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate, matPivot, matRotate;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-WIDTH/2,-HEIGHT/2));
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
-    GameEngine::instance()->set_world_matrix(matPivot * matRotate * matTranslate);
-    GameEngine::instance()->fill_rect(0, 0, WIDTH, HEIGHT);
-    GameEngine::instance()->fill_rect(-10, HEIGHT, 0, HEIGHT + 10);
-    GameEngine::instance()->fill_rect(WIDTH, HEIGHT, WIDTH + 10, HEIGHT + 10);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matPivot * matRotate * matTranslate);
+    ctx.fill_rect(0, 0, WIDTH, HEIGHT);
+    ctx.fill_rect(-10, HEIGHT, 0, HEIGHT + 10);
+    ctx.fill_rect(WIDTH, HEIGHT, WIDTH + 10, HEIGHT + 10);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     for (int i = 0; i < m_AmountOfArrows; i++)
     {
         if (m_ArrowsPtrArr[i] != nullptr)
         {
-            m_ArrowsPtrArr[i]->Paint();
+            m_ArrowsPtrArr[i]->Paint(ctx);
         }
     }
 }

@@ -8,7 +8,7 @@ namespace framework
 	{
 		REFLECT(Component);
 	public:
-		Component();;
+		Component();
 
 		virtual ~Component();
 

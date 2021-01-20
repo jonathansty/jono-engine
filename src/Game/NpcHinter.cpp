@@ -42,9 +42,9 @@ void NpcHinter::PaintDebug(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matPosition;
     matPosition.SetAsTranslate(m_Position);
-    GameEngine::instance()->set_world_matrix(matPosition);
-    GameEngine::instance()->draw_ellipse(DOUBLE2(), TALKRADIUS, TALKRADIUS);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matPosition);
+    ctx.draw_ellipse(DOUBLE2(), TALKRADIUS, TALKRADIUS);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void NpcHinter::Paint(graphics::D2DRenderContext &ctx) {
     MATRIX3X2 matTranslate, matTextTranslate;
@@ -73,28 +73,26 @@ void NpcHinter::Paint(graphics::D2DRenderContext &ctx) {
         matMirror.SetAsScale(1, 1);
     }
     
-    GameEngine::instance()->set_world_matrix(matPivot * matMirror*matTranslate);
-    GameEngine::instance()->draw_bitmap(m_BmpBodyPtr, boundingBox);
-    GameEngine::instance()->set_world_matrix(matNpcHitBoxTransform);
-	GameEngine::instance()->set_default_font();
+    ctx.set_world_matrix(matPivot * matMirror*matTranslate);
+    ctx.draw_bitmap(m_BmpBodyPtr, boundingBox);
+    ctx.set_world_matrix(matNpcHitBoxTransform);
+	ctx.set_font(nullptr);
     matPivot.SetAsTranslate(DOUBLE2(-(m_TipText.Length() * 16) / 2, -50));
 
     if (m_IsArmed)
     {
 		matTextTranslate.SetAsTranslate(DOUBLE2(0, 0));
-		GameEngine::instance()->set_world_matrix(matPivot* matTextTranslate*matNpcHitBoxTransform);
-        GameEngine::instance()->set_color(COLOR(255,255,255, m_Opacity));
+		ctx.set_world_matrix(matPivot* matTextTranslate*matNpcHitBoxTransform);
+        ctx.set_color(COLOR(255,255,255, m_Opacity));
 
         // TODO: Fix validation error 
-		GameEngine::instance()->d2d_flush();
-        GameEngine::instance()->draw_string(m_TipText, RECT2(0, 0, m_TipText.Length() * 16, 50));
-		GameEngine::instance()->d2d_flush();
+        ctx.draw_string(m_TipText, RECT2(0, 0, m_TipText.Length() * 16, 50));
 
-		GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+		ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
     }
    
-    GameEngine::instance()->set_color(COLOR(0, 0, 0, 255));
-    GameEngine::instance()->set_default_font();
+    ctx.set_color(COLOR(0, 0, 0, 255));
+    ctx.set_font(nullptr);
 }
 void NpcHinter::Tick(double deltaTime)
 {

@@ -64,10 +64,9 @@ void TextBox::Tick(double deltaTime)
 	//RMB in button rect armes the button and paint will draw the pressed button
 	if (GameEngine::instance()->is_mouse_button_down(VK_LBUTTON))
 	{
-		MATRIX3X2 matInverse = (GameEngine::instance()->get_world_matrix() * GameEngine::instance()->get_view_matrix()).Inverse();
 
 		DOUBLE2 mouseScreenSpace(GameEngine::instance()->get_mouse_pos_in_viewport().x, GameEngine::instance()->get_mouse_pos_in_viewport().y);
-		DOUBLE2 mouseViewSpace = matInverse.TransformPoint(mouseScreenSpace);
+		DOUBLE2 mouseViewSpace = mouseScreenSpace;
 		if (PointInRect(m_BoundingRect, mouseViewSpace))
 		{
 			m_bArmed = true;

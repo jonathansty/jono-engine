@@ -59,15 +59,14 @@ void CheckPoint::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 {
 
 }
-void CheckPoint::Paint()
+void CheckPoint::Paint(graphics::D2DRenderContext& ctx)
 {
     MATRIX3X2 matTranslate,matPivot;
     matTranslate.SetAsTranslate(m_Position);
     matPivot.SetAsTranslate(DOUBLE2(-20, -m_BmpFlagPtr->GetHeight() / 2));
-    GameEngine::instance()->set_world_matrix(matPivot * matTranslate);
-    GameEngine::instance()->draw_bitmap(m_BmpFlagPtr);
-
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(matPivot * matTranslate);
+    ctx.draw_bitmap(m_BmpFlagPtr);
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 void CheckPoint::Tick(double deltaTime)
 {

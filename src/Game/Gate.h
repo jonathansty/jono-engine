@@ -31,7 +31,7 @@ public:
 	virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
 	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
     virtual void Tick(double deltaTime);
-    virtual void Paint();
+    virtual void Paint(graphics::D2DRenderContext& ctx);
     virtual void Reset();
 
 private: 

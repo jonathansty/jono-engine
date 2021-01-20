@@ -74,14 +74,14 @@ void Slicer::Paint(graphics::D2DRenderContext& ctx)
     matTranlate.SetAsTranslate(m_Position);
     matRotate.SetAsRotate(m_ActPtr->GetAngle());
     matPivot.SetAsTranslate(DOUBLE2(-BLADEWIDTH / 2, -BLADEHEIGHT / 2));
-    GameEngine::instance()->set_world_matrix(matPivot * matRotate * matTranlate);
+    ctx.set_world_matrix(matPivot * matRotate * matTranlate);
     ctx.set_color(COLOR(0, 0, 0));
     ctx.fill_rect(0, 0, BLADEWIDTH, BLADEHEIGHT);
 
     matRotate.SetAsRotate(m_ActPtr->GetAngle() + M_PI_2);
-    GameEngine::instance()->set_world_matrix(matPivot * matRotate * matTranlate);
+    ctx.set_world_matrix(matPivot * matRotate * matTranlate);
     ctx.fill_rect(0, 0, BLADEWIDTH, BLADEHEIGHT);
-    GameEngine::instance()->set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
 }
 PhysicsActor* Slicer::GetActor()
 {
