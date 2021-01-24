@@ -16,7 +16,7 @@
 class Bullet : ContactListener
 {
 public:
-	Bullet(DOUBLE2 startPosition, DOUBLE2 direction );
+	Bullet(float2 startPosition, float2 direction );
 	virtual ~Bullet( );
 
 	// C++11 make the class non-copyable
@@ -36,8 +36,8 @@ private:
 	// Datamembers								
 	//-------------------------------------------------
     bool m_IsHit = false;
-    DOUBLE2 m_startPosition;
-    DOUBLE2 m_Direction;
+    float2 m_startPosition;
+    float2 m_Direction;
 
     PhysicsActor* m_ActPtr = nullptr;
     std::vector<PhysicsActor*>m_FriendActorPtr;

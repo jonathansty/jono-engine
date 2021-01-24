@@ -147,8 +147,8 @@ void Button::Tick(double)
 		return;
 	}
 
-	DOUBLE2 mouseScreenSpace(GameEngine::instance()->get_mouse_pos_in_viewport().x, GameEngine::instance()->get_mouse_pos_in_viewport().y);
-	DOUBLE2 mouseViewSpace = mouseScreenSpace;
+	float2 mouseScreenSpace(GameEngine::instance()->get_mouse_pos_in_viewport().x, GameEngine::instance()->get_mouse_pos_in_viewport().y);
+	float2 mouseViewSpace = mouseScreenSpace;
 
 	//RMB in button rect armes the button and paint will draw the pressed button
 	if (GameEngine::instance()->is_mouse_button_down(VK_LBUTTON) && PointInRect(m_BoundingRect, mouseViewSpace))

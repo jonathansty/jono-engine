@@ -240,14 +240,14 @@ void DataManager::ExtractAvatar(tinyxml2::XMLElement* element)
     XMLAttribute const*  jumpheightAttr = element->FindAttribute("jumpheight");
     assert(jumpheightAttr);
 
-    DOUBLE2 respawnPosition = StringToDouble2(respawnPosAttribute->Value());
+    float2 respawnPosition = StringToDouble2(respawnPosAttribute->Value());
     //double coins = m_AvatarPtr->GetAmountOfCoins();
     if (m_AvatarPtr != nullptr)
     {
-        DOUBLE2 oldRespawn = m_AvatarPtr->GetRespawnPosition();
+        float2 oldRespawn = m_AvatarPtr->GetRespawnPosition();
         //respawnPosition = oldRespawn;
     }
-    DOUBLE2 position = StringToDouble2(posAttribute->Value());
+    float2 position = StringToDouble2(posAttribute->Value());
     String bitmapName = String(bitmapAttribute->Value());
     String bitmapEpicMode = String(bitmapEpicModeAttr->Value());
     double gravityScale = gravityScaleAttr->DoubleValue();
@@ -304,7 +304,7 @@ void DataManager::ExtractLevelEnd(tinyxml2::XMLElement* element)
 {
     XMLAttribute const* attribute = element->FindAttribute("position");
     assert(attribute);
-    DOUBLE2 position = StringToDouble2(attribute->Value());
+    float2 position = StringToDouble2(attribute->Value());
 
     LevelEnd* tmpLevelEnd = new LevelEnd(position, String("Resources/test.txt"));
 
@@ -331,7 +331,7 @@ void DataManager::ExtractLevelEnd(tinyxml2::XMLElement* element)
         attr = element->FindAttribute(attrName.c_str());
         if (attr)
 		{
-            DOUBLE2 leverPosition = StringToDouble2(attr->Value());
+            float2 leverPosition = StringToDouble2(attr->Value());
 			Lever* tmpLeverPtr = nullptr;
 			int color = rand() & 3;
 			tmpLeverPtr = new Lever(leverPosition, BitmapManager::instance()->load_image(String(paths[color].c_str())));
@@ -350,7 +350,7 @@ void DataManager::ExtractCamera(tinyxml2::XMLElement* element)
     std::string name = element->Name();
     if (name.compare("CameraTriggerRotate") == 0)
     {
-        DOUBLE2 position = StringToDouble2(element->FindAttribute("position")->Value());
+        float2 position = StringToDouble2(element->FindAttribute("position")->Value());
 
         int width = element->FindAttribute("width")->IntValue();
         int height = element->FindAttribute("height")->IntValue();
@@ -366,8 +366,8 @@ void DataManager::ExtractCamera(tinyxml2::XMLElement* element)
     }
     else if (name.compare("Camera") == 0)
     {
-		DOUBLE2 position = StringToDouble2(element->FindAttribute("position")->Value());
-		DOUBLE2 startPosition = StringToDouble2(element->FindAttribute("startPosition")->Value());
+		float2 position = StringToDouble2(element->FindAttribute("position")->Value());
+		float2 startPosition = StringToDouble2(element->FindAttribute("startPosition")->Value());
         double speed = element->FindAttribute("speed")->DoubleValue();
         double scale = 1;
         if (XMLAttribute const* attr = element->FindAttribute("scale"); attr)
@@ -410,7 +410,7 @@ void DataManager::ExtractCamera(tinyxml2::XMLElement* element)
 void DataManager::ExtractBlockSlide(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     int width = String(GetValue("width", element).c_str()).ToInteger();
     int height = String(GetValue("height", element).c_str()).ToInteger();
     BlockSlide* tmpBlockSlide = new BlockSlide(position, width, height);
@@ -422,8 +422,8 @@ void DataManager::ExtractBlockSlide(tinyxml2::XMLElement* element)
 void DataManager::ExtractGate(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 triggerPosition = StringToDouble2(GetValue("triggerPosition", element));
-    DOUBLE2 GatePosition = StringToDouble2(GetValue("gatePosition", element));
+    float2 triggerPosition = StringToDouble2(GetValue("triggerPosition", element));
+    float2 GatePosition = StringToDouble2(GetValue("gatePosition", element));
 
     Gate* tmpGate = new Gate(GatePosition, triggerPosition);
     tmpGate->SetAvatar(m_AvatarPtr);
@@ -433,7 +433,7 @@ void DataManager::ExtractGate(tinyxml2::XMLElement* element)
 }
 void DataManager::ExtractLaser(tinyxml2::XMLElement* element)
 {
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     String name = String(GetValue("name", element).c_str());
     double angularVelocity = String(GetValue("angularVelocity", element).c_str()).ToDouble();
     EnemyLaser* tmpLaser = new EnemyLaser(position);
@@ -445,7 +445,7 @@ void DataManager::ExtractLaser(tinyxml2::XMLElement* element)
 }
 void DataManager::ExtractArrow(tinyxml2::XMLElement* element)
 {
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     String name = String(GetValue("name", element).c_str());
     String bitmapName = String(GetValue("bitmap", element).c_str());
     double pushpower = String(GetValue("pushpower", element).c_str()).ToDouble();
@@ -458,8 +458,8 @@ void DataManager::ExtractArrow(tinyxml2::XMLElement* element)
 }
 void DataManager::ExtractArrowShooter(tinyxml2::XMLElement* element)
 {
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
-    DOUBLE2 direction = StringToDouble2(GetValue("direction", element));
+    float2 position = StringToDouble2(GetValue("position", element));
+    float2 direction = StringToDouble2(GetValue("direction", element));
     String name = String(GetValue("name", element).c_str());
     int pushpower = String(GetValue("pushpower", element).c_str()).ToInteger();
     double intervalTime = String(GetValue("intervalTime", element).c_str()).ToDouble();
@@ -473,7 +473,7 @@ void DataManager::ExtractEnemyShooter(tinyxml2::XMLElement* element)
 {
     String bitmapName = String(GetValue("bitmap", element).c_str());
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     double angle = String(GetValue("angle", element).c_str()).ToDouble();
     bool mirror = element->FindAttribute("mirror")->BoolValue();
     double gravityScale = String(GetValue("gravityScale", element).c_str()).ToDouble();
@@ -494,8 +494,8 @@ void DataManager::ExtractCheckPoint(tinyxml2::XMLElement* element)
     {
         angle = String(GetValue("cameraAngle", element).c_str()).ToDouble();
     }
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
-    DOUBLE2 cameraPosition = position;
+    float2 position = StringToDouble2(GetValue("position", element));
+    float2 cameraPosition = position;
     if (element->FindAttribute("cameraPosition") )
     {
         cameraPosition = StringToDouble2(GetValue("cameraPosition", element));
@@ -511,7 +511,7 @@ void DataManager::ExtractCheckPoint(tinyxml2::XMLElement* element)
 void DataManager::ExtractEnemyRotater(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     String bitmapName = String(GetValue("bitmap", element).c_str());
     EnemyRotater* tmpEnemyRotater = new EnemyRotater(position, BitmapManager::instance()->load_image(bitmapName));
     tmpEnemyRotater->SetLevel(m_LevelPtr);
@@ -522,11 +522,11 @@ void DataManager::ExtractEnemyRotater(tinyxml2::XMLElement* element)
 }
 void DataManager::ExtractEnemyHorizontal(tinyxml2::XMLElement* element)
 {
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     String name = String(GetValue("name", element).c_str());
     String bitmapname = String(GetValue("bitmap", element).c_str());
-    DOUBLE2 velocity = StringToDouble2(GetValue("velocity", element));
-    DOUBLE2 offset = StringToDouble2(GetValue("offset", element));
+    float2 velocity = StringToDouble2(GetValue("velocity", element));
+    float2 offset = StringToDouble2(GetValue("offset", element));
     int lifes = 1;
     if (element->FindAttribute("lifes"))
     {
@@ -544,7 +544,7 @@ void DataManager::ExtractEnemyHorizontal(tinyxml2::XMLElement* element)
 void DataManager::ExtractCoin(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     String bitmapname = String(GetValue("bitmap", element).c_str());
     int coinValue = String(GetValue("value", element).c_str()).ToInteger();
     Coin* tmpCoin = new Coin(position, BitmapManager::instance()->load_image(bitmapname));
@@ -556,8 +556,8 @@ void DataManager::ExtractCoin(tinyxml2::XMLElement* element)
 void DataManager::ExtractTeleport(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 entrancePos = StringToDouble2(GetValue("entrancePos", element));
-    DOUBLE2 exitPos = StringToDouble2(GetValue("exitPos", element));
+    float2 entrancePos = StringToDouble2(GetValue("entrancePos", element));
+    float2 exitPos = StringToDouble2(GetValue("exitPos", element));
     String bitmapname = String(GetValue("bitmap", element).c_str());
     Teleport* tmpTeleport = new Teleport(entrancePos, exitPos, BitmapManager::instance()->load_image(bitmapname));
     tmpTeleport->SetAvatar(m_AvatarPtr);
@@ -569,7 +569,7 @@ void DataManager::ExtractTeleport(tinyxml2::XMLElement* element)
 void DataManager::ExtractEnemyRocketLauncher(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     double angle = String(GetValue("angle", element).c_str()).ToDouble();
     EnemyRocketLauncher* tmpEnemyRocketLauncher = new EnemyRocketLauncher(position, angle);
     tmpEnemyRocketLauncher->SetAvatar(m_AvatarPtr);
@@ -580,7 +580,7 @@ void DataManager::ExtractEnemyRocketLauncher(tinyxml2::XMLElement* element)
 void DataManager::ExtractMetalFan(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     double angle = String(GetValue("angle", element).c_str()).ToDouble();
     double repulsionForce = String(GetValue("repulsionForce", element).c_str()).ToDouble();
     double frictionForce = String(GetValue("frictionForce", element).c_str()).ToDouble();
@@ -593,7 +593,7 @@ void DataManager::ExtractMetalFan(tinyxml2::XMLElement* element)
 void DataManager::ExtractStickyWall(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     int width = String(GetValue("width", element).c_str()).ToInteger();
     int height = String(GetValue("height", element).c_str()).ToInteger();
     StickyWall* tmpStickyWall = new StickyWall(position, width, height);
@@ -605,8 +605,8 @@ void DataManager::ExtractSlicer(tinyxml2::XMLElement* element)
 {
     Slicer* tmpSlicerPtr = nullptr;
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
-    DOUBLE2 barPosition = StringToDouble2(GetValue("barPosition", element));
+    float2 position = StringToDouble2(GetValue("position", element));
+    float2 barPosition = StringToDouble2(GetValue("barPosition", element));
     int radius = String(GetValue("radius", element).c_str()).ToInteger();
     tmpSlicerPtr = new Slicer(position, barPosition,radius);
     tmpSlicerPtr->SetAvatar(m_AvatarPtr);
@@ -616,7 +616,7 @@ void DataManager::ExtractSlicer(tinyxml2::XMLElement* element)
 void DataManager::ExtractNpcHinter(tinyxml2::XMLElement* element)
 {
     String name = String(GetValue("name", element).c_str());
-    DOUBLE2 position = StringToDouble2(GetValue("position", element));
+    float2 position = StringToDouble2(GetValue("position", element));
     String tipText = String(GetValue("tipText", element).c_str());
     String facing = String(GetValue("facing", element).c_str());
     NpcHinter* tmpNpcHinterPtr = new NpcHinter(position, tipText);
@@ -662,7 +662,7 @@ void DataManager::CreateSpecificObject(const std::wstring& expressionStringRef, 
     assert("RELOADING not supported anymore");
     //if (objectName == String("Arrow") && expressionStringRef.find(L"<Arrow") != std::string::npos)
     //{
-    //    DOUBLE2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
+    //    float2 position = StringToDouble2(GetValue(L"position", expressionStringRef));
     //    String name = String(GetValue(L"name", expressionStringRef).c_str());
     //    String bitmapName = String(GetValue(L"bitmap", expressionStringRef).c_str());
     //    double pushpower = String(GetValue(L"pushpower", expressionStringRef).c_str()).ToDouble();
@@ -691,22 +691,22 @@ std::wstring DataManager::GetValue(const std::wstring& nameRef, const std::wstri
 }
 
 //! Converts a string to double2
-DOUBLE2 DataManager::StringToDouble2(const std::wstring& valueRef)
+float2 DataManager::StringToDouble2(const std::wstring& valueRef)
 {
     int idSeperator = int(valueRef.find(L","));
     int length = int(valueRef.size());
     String firstNumber = String(valueRef.substr(0, idSeperator).c_str());
     String secondNumber = String(valueRef.substr(idSeperator + 1, 1 + length - idSeperator).c_str());
-    return DOUBLE2(firstNumber.ToInteger(), secondNumber.ToInteger());
+    return float2(firstNumber.ToInteger(), secondNumber.ToInteger());
 }
 
-DOUBLE2 DataManager::StringToDouble2(const std::string& valueRef)
+float2 DataManager::StringToDouble2(const std::string& valueRef)
 {
 	int idSeperator = int(valueRef.find(","));
 	int length = int(valueRef.size());
 	String firstNumber = String(valueRef.substr(0, idSeperator).c_str());
 	String secondNumber = String(valueRef.substr(idSeperator + 1, 1 + length - idSeperator).c_str());
-	return DOUBLE2(firstNumber.ToInteger(), secondNumber.ToInteger());
+	return float2(firstNumber.ToInteger(), secondNumber.ToInteger());
 }
 
 //! Returns the triggerList

@@ -20,7 +20,7 @@ class EnemyList;
 class Avatar : public Entity
 {
 public:
-    Avatar(DOUBLE2 position, Bitmap* BmpPtr, Bitmap* bmpEpicModePtr);
+    Avatar(float2 position, Bitmap* BmpPtr, Bitmap* bmpEpicModePtr);
 	virtual ~Avatar( );
 
 	// C++11 make the class non-copyable
@@ -60,10 +60,8 @@ public:
 
     //! Gets the avatar BoundingBox
     PhysicsActor* GetActor();
-    //! Gets the avatar Position
-    DOUBLE2 GetPosition();
     //! Gets the avatarRespawnPosition
-    DOUBLE2 GetRespawnPosition();
+    float2 GetRespawnPosition();
     //! Gets amount of lifes the avatar currently has
     int GetLifes();
     //! Gets amount of deaths the avatar has experienced.
@@ -77,13 +75,13 @@ public:
     //! DIE,DYING,SLIDINGSTANDING,SLIDINGWALKING,SLIDINGJUMPING,GOD
     void SetMoveState(moveState state);
     //! Sets the respawn Position for the avatar
-    void SetSpawnPosition(DOUBLE2 respawnPosition);
+    void SetSpawnPosition(float2 respawnPosition);
     //! Resets the avatar back to original
     void Reset();
     //! Sets the jumpHeight of the avatar.
     void SetJumpHeight(double height);
     //! Directly sets the avatarPosition
-    void SetPosition(DOUBLE2 position);
+    void SetPosition(float2 position);
     //! Set amount of lifes
     void SetLifes(int lifes);
     //! Sets amount of deaths 
@@ -157,7 +155,7 @@ private:
     int m_NumberOfContactPointsWithLevel = 0;
 
     
-    std::deque<DOUBLE2> m_deqTrail;
+    std::deque<float2> m_deqTrail;
     moveState m_moveState = moveState::STANDING;
 };
 

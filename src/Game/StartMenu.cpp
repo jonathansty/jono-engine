@@ -199,21 +199,21 @@ void StartMenu::paint(graphics::D2DRenderContext& ctx)
             {
                 if (m_HighScoreOffsetCounter < m_SessionStatsArr.size() - MAXELEMENTSONSCREEN)
                 {
-                    ctx.draw_string(String("v"), DOUBLE2(100, 430));
+                    ctx.draw_string(String("v"), float2(100, 430));
                 }
                 if (m_HighScoreOffsetCounter >0)
                 {
-                    ctx.draw_string(String("^"), DOUBLE2(100, 120));
+                    ctx.draw_string(String("^"), float2(100, 120));
                 }
                 Font* tmpFntPtr = new Font(String("KenVector Future"), (float)KEYLISTFNTSIZE - 8);
                 ctx.set_font(tmpFntPtr);
-                ctx.draw_string(String("id"), DOUBLE2(INDEXSTARTXPOS, TABLELEGENDYPOS));
-                ctx.draw_string(String("Start Session"), DOUBLE2(DATESTARTPOS + 75, TABLELEGENDYPOS));
-                ctx.draw_string(String("End Session"),DOUBLE2(DATEENDPOS+75, TABLELEGENDYPOS));
-                ctx.draw_string(String("Deaths"), DOUBLE2(DEATHPOS, TABLELEGENDYPOS));
-                ctx.draw_string(String("Money"), DOUBLE2(MONEYPOS, TABLELEGENDYPOS));
-                ctx.draw_string(String("Lifetime"), DOUBLE2(LIFETIMEPOS, TABLELEGENDYPOS));
-                ctx.draw_string(String("Last level"), DOUBLE2(LASTLEVELPOS, TABLELEGENDYPOS));
+                ctx.draw_string(String("id"), float2(INDEXSTARTXPOS, TABLELEGENDYPOS));
+                ctx.draw_string(String("Start Session"), float2(DATESTARTPOS + 75, TABLELEGENDYPOS));
+                ctx.draw_string(String("End Session"),float2(DATEENDPOS+75, TABLELEGENDYPOS));
+                ctx.draw_string(String("Deaths"), float2(DEATHPOS, TABLELEGENDYPOS));
+                ctx.draw_string(String("Money"), float2(MONEYPOS, TABLELEGENDYPOS));
+                ctx.draw_string(String("Lifetime"), float2(LIFETIMEPOS, TABLELEGENDYPOS));
+                ctx.draw_string(String("Last level"), float2(LASTLEVELPOS, TABLELEGENDYPOS));
 
                 
                 int halfScreenWidth = GameEngine::instance()->get_width() / 2;
@@ -228,21 +228,21 @@ void StartMenu::paint(graphics::D2DRenderContext& ctx)
 
                 std::wstringstream compoundString;
                 compoundString << index << L".";
-                ctx.draw_string(String(compoundString.str().c_str()),DOUBLE2(INDEXSTARTXPOS,INDEXSTARTYPOS + double(i*gap)));
+                ctx.draw_string(String(compoundString.str().c_str()),float2(INDEXSTARTXPOS,INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
                 
                 compoundString << L"\t" << beginTime.tm_mday << L"/" << beginTime.tm_mon << L"\t" << beginTime.tm_hour << ":" << beginTime.tm_min << ":" << beginTime.tm_sec;
-                ctx.draw_string(String(compoundString.str().c_str()), DOUBLE2(DATESTARTPOS, INDEXSTARTYPOS + double(i*gap)));
+                ctx.draw_string(String(compoundString.str().c_str()), float2(DATESTARTPOS, INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
 
                 compoundString << L"\t" << endTime.tm_mday << L"/" << endTime.tm_mon << L"\t" << endTime.tm_hour << ":" << endTime.tm_min << ":" << endTime.tm_sec;
-                ctx.draw_string(String(compoundString.str().c_str()), DOUBLE2(DATEENDPOS, INDEXSTARTYPOS + double(i*gap)));
+                ctx.draw_string(String(compoundString.str().c_str()), float2(DATEENDPOS, INDEXSTARTYPOS + double(i*gap)));
                 compoundString.str(L"");
 
-                ctx.draw_string(String(deaths),DOUBLE2(DEATHPOS,INDEXSTARTYPOS + double(i)*gap));
-                ctx.draw_string(String(amountOfMoney), DOUBLE2(MONEYPOS, INDEXSTARTYPOS + double(i)*gap));
-                ctx.draw_string(String(lifeTime), DOUBLE2(LIFETIMEPOS, INDEXSTARTYPOS + double(i)*gap));
-                ctx.draw_string(String(lastLevel), DOUBLE2(LASTLEVELPOS, INDEXSTARTYPOS + double(i)*gap));
+                ctx.draw_string(String(deaths),float2(DEATHPOS,INDEXSTARTYPOS + double(i)*gap));
+                ctx.draw_string(String(amountOfMoney), float2(MONEYPOS, INDEXSTARTYPOS + double(i)*gap));
+                ctx.draw_string(String(lifeTime), float2(LIFETIMEPOS, INDEXSTARTYPOS + double(i)*gap));
+                ctx.draw_string(String(lastLevel), float2(LASTLEVELPOS, INDEXSTARTYPOS + double(i)*gap));
                 ctx.set_default_font();
                 delete tmpFntPtr;
             }
@@ -253,16 +253,16 @@ void StartMenu::paint(graphics::D2DRenderContext& ctx)
         if (m_BmpPtr != nullptr)
         {
             ctx.set_font(m_ComicSansPtr.get());
-            MATRIX3X2 matTranslateControl;
-            matTranslateControl.SetAsTranslate(100, CONTROLLISTYPOS - (float)KEYLISTFNTSIZE);
+            float3x3 matTranslateControl;
+            matTranslateControl= float3x3::translation(100, CONTROLLISTYPOS - (float)KEYLISTFNTSIZE);
             ctx.set_world_matrix(matTranslateControl);
-            ctx.draw_string(String("Controls: "), DOUBLE2());
-            ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+            ctx.draw_string(String("Controls: "), float2());
+            ctx.set_world_matrix(float3x3::identity());
             int i = 0;
             for(auto& keybind : m_KeybindsArr)
             {
-                MATRIX3X2 matTranslate;
-                matTranslate.SetAsTranslate(DOUBLE2(150, CONTROLLISTYPOS + KEYLISTFNTSIZE + i*(float)KEYLISTFNTSIZE));
+                float3x3 matTranslate;
+                matTranslate= float3x3::translation(float2(150, CONTROLLISTYPOS + KEYLISTFNTSIZE + i*(float)KEYLISTFNTSIZE));
                 ctx.set_world_matrix(matTranslate);
                 String KeyBind = String(keybind.second);
                 switch (keybind.second)
@@ -277,8 +277,8 @@ void StartMenu::paint(graphics::D2DRenderContext& ctx)
                     String(TCHAR(keybind.second));
                     break;
                 }
-                ctx.draw_string(String(keybind.first.c_str()) + String(": ") + KeyBind, DOUBLE2());
-                ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+                ctx.draw_string(String(keybind.first.c_str()) + String(": ") + KeyBind, float2());
+                ctx.set_world_matrix(float3x3::identity());
 
                 ++i;
             }

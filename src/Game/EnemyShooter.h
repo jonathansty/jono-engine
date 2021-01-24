@@ -20,7 +20,7 @@ class AnimationList;
 class EnemyShooter : public Enemy
 {
 public:
-    EnemyShooter(DOUBLE2 position, Bitmap* bmpPtr, double angle);
+    EnemyShooter(float2 position, Bitmap* bmpPtr, double angle);
 	virtual ~EnemyShooter( );
 
 	// C++11 make the class non-copyable
@@ -38,10 +38,10 @@ public:
     void Tick(double deltaTime);
 
     PhysicsActor* GetActor();
-    DOUBLE2 GetPosition();
+    float2 GetPosition();
 
     virtual void RemoveContactListener();
-    void SetSpawnPosition(DOUBLE2 respawnPosition);
+    void SetSpawnPosition(float2 respawnPosition);
     void Reset();
     void SetMirror(bool mirror);
     

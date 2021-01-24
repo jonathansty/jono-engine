@@ -2,13 +2,13 @@
 #include "EnemyHorizontal.h"
 #include "Avatar.h"
 
-EnemyHorizontal::EnemyHorizontal(DOUBLE2 position,Bitmap* bmpEnemyPtr, Avatar* avatarPtr) 
+EnemyHorizontal::EnemyHorizontal(float2 position,Bitmap* bmpEnemyPtr, Avatar* avatarPtr) 
     : Enemy(position)
     , m_StartPosition(position)
     , m_AvatarPtr(avatarPtr)
     , m_BmpPtr(bmpEnemyPtr)
 {
-    m_Velocity = DOUBLE2(50, 0);
+    m_Velocity = float2(50, 0);
     m_ActPtr = new PhysicsActor(position, 0, BodyType::KINEMATIC);
     m_ActPtr->AddBoxShape(bmpEnemyPtr->GetWidth(), bmpEnemyPtr->GetHeight(),0.5);
     m_ActPtr->SetGravityScale(0);
@@ -97,12 +97,12 @@ void EnemyHorizontal::Tick(double deltatime)
 }
 void EnemyHorizontal::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate, matCenter;
-    matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
-    matCenter.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
+    float3x3 matTranslate, matCenter;
+    matTranslate = float3x3::translation(m_ActPtr->GetPosition());
+    matCenter = float3x3::translation(float2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
     ctx.set_world_matrix(matCenter * matTranslate);
     ctx.draw_bitmap(m_BmpPtr);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 PhysicsActor* EnemyHorizontal::GetActor()
 {
@@ -112,7 +112,7 @@ void EnemyHorizontal::Reset()
 {
 
 }
-void EnemyHorizontal::SetOffSet(DOUBLE2 offset)
+void EnemyHorizontal::SetOffSet(float2 offset)
 {
     m_OffSet = offset;
 }
@@ -124,7 +124,7 @@ bool EnemyHorizontal::GetAttackByAvatar()
 {
     return m_boolAttackContact;
 }
-void EnemyHorizontal::SetVelocity(DOUBLE2 velocity)
+void EnemyHorizontal::SetVelocity(float2 velocity)
 {
     m_Velocity = velocity;
 }

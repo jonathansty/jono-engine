@@ -16,7 +16,7 @@
 class PickUp : public ContactListener
 {
 public:
-	PickUp(DOUBLE2 position);
+	PickUp(float2 position);
 	virtual ~PickUp( );
 
 	// C++11 make the class non-copyable
@@ -38,7 +38,7 @@ public:
 protected:
     String m_Name = String("NaN");
     PhysicsActor* m_ActPtr = nullptr;
-    DOUBLE2 m_Position;
+    float2 m_Position;
     bool m_IsHit = false;
     
     sound* m_SndHitPtr = nullptr;

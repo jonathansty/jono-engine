@@ -18,7 +18,7 @@ class Arrow;
 class ArrowShooter : public Entity
 {
 public:
-	ArrowShooter(DOUBLE2 position, DOUBLE2 direction,double m_IntervalTime);
+	ArrowShooter(float2 position, float2 direction,double m_IntervalTime);
 	virtual ~ArrowShooter( );
 
 	// C++11 make the class non-copyable
@@ -37,20 +37,20 @@ public:
     virtual void Reset();
     void SetPushPower(int pushPower);
 private: 
-	//-------------------------------------------------
-	// Datamembers								
-	//-------------------------------------------------
     static const int SPEED = 100;
-    void Add(Arrow* tmpArrowPtr);
-    int m_AmountOfArrows = 0;
-    int m_PushPower = 0;
-    double m_AccuTime = 0;
-    double m_Angle = 0;
     static const int WIDTH = 15;
     static const int HEIGHT = 50;
+
+    void Add(Arrow* tmpArrowPtr);
+
+    int _n_arrows = 0;
+    int _push_power = 0;
+    double _timer = 0;
+    double _angle = 0;
+    double _interval_time = 1;
+    float2 _direction;
+
     std::vector<Arrow*>m_ArrowsPtrArr;
-    DOUBLE2 m_direction;
-    double m_IntervalTime = 1;
 };
 
  

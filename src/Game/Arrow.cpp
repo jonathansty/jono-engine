@@ -6,13 +6,13 @@
 #include "Level.h"
 
 int Arrow::m_InstanceCounter = 0;
-Arrow::Arrow(DOUBLE2 position, Bitmap* bmpPtr):
+Arrow::Arrow(float2 position, Bitmap* bmpPtr):
 Entity(position),
 m_BmpPtr(bmpPtr)
 {
     m_InstanceCounter++;
 
-    m_ActPtr = new PhysicsActor(position+ DOUBLE2(0,10), 0, BodyType::DYNAMIC);
+    m_ActPtr = new PhysicsActor(position+ float2(0,10), 0, BodyType::DYNAMIC);
     b2Filter collisionFilter;
     collisionFilter.groupIndex = -5;
     m_ActPtr->AddBoxShape(m_BmpPtr->GetWidth() - 20,m_BmpPtr->GetHeight() - 15);
@@ -23,9 +23,9 @@ m_BmpPtr(bmpPtr)
     m_ActPtr->SetCollisionFilter(collisionFilter);
     //GameEngine::instance()->ConsolePrintString(m_Position.ToString());
 
-    m_ActBottomTriggerPtr = new PhysicsActor(position + DOUBLE2(0, 40), 0, BodyType::DYNAMIC);
+    m_ActBottomTriggerPtr = new PhysicsActor(position + float2(0, 40), 0, BodyType::DYNAMIC);
     //m_ActBottomTriggerPtr->AddBoxShape(m_BmpPtr->GetWidth() / 2, 20);
-    std::vector<DOUBLE2>tmpPointArr;
+    std::vector<float2>tmpPointArr;
     double halfBmpWidth = m_BmpPtr->GetWidth() / 2;
     double halfBmpHeight = m_BmpPtr->GetHeight() / 2;
     
@@ -61,10 +61,10 @@ void Arrow::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
     {
         m_IsHit = true;
         m_IsDead = true;
-        DOUBLE2 velocity = actOtherPtr->GetLinearVelocity();
+        float2 velocity = actOtherPtr->GetLinearVelocity();
         double mass = actOtherPtr->GetMass();
 
-        actOtherPtr->ApplyLinearImpulse(DOUBLE2(0, ( (- m_PushPower -velocity.y) * mass / PhysicsActor::SCALE)));
+        actOtherPtr->ApplyLinearImpulse(float2(0, ( (- m_PushPower -velocity.y) * mass / PhysicsActor::SCALE)));
     }
 
     if (actThisPtr == m_ActBottomTriggerPtr)
@@ -87,11 +87,10 @@ void Arrow::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 }
 void Arrow::Paint(graphics::D2DRenderContext& ctx) 
 {
-    MATRIX3X2 matWorldTransform;
-    matWorldTransform = { DOUBLE2(1, 0), DOUBLE2(0, 1), m_Position - DOUBLE2(m_BmpPtr->GetWidth()/2,m_BmpPtr->GetHeight()/2) };
+    float3x3 matWorldTransform = float3x3( float3(1,0, 0), float3(0, 1, 0), float3(m_Position - float2(m_BmpPtr->GetWidth()/2,m_BmpPtr->GetHeight()/2), 1.0f) );
     ctx.set_world_matrix(matWorldTransform);
     ctx.draw_bitmap(m_BmpPtr);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void Arrow::Tick(double deltaTime)
 {
@@ -101,7 +100,7 @@ void Arrow::Tick(double deltaTime)
         m_ActBottomTriggerPtr->RemoveContactListener(this);
     }
     m_Position = m_ActPtr->GetPosition();
-    m_ActBottomTriggerPtr->SetPosition(m_Position + DOUBLE2(0, 40));
+    m_ActBottomTriggerPtr->SetPosition(m_Position + float2(0, 40));
 }
 PhysicsActor* Arrow::GetActor()
 {

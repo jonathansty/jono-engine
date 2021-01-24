@@ -18,7 +18,7 @@ class Camera;
 class CameraTrigger : public ContactListener
 {
 public:
-	CameraTrigger(DOUBLE2 position,int width, int height);
+	CameraTrigger(float2 position,int width, int height);
 	virtual ~CameraTrigger( );
 
 	// C++11 make the class non-copyable
@@ -37,7 +37,7 @@ public:
     virtual void Reset();
 protected:
     bool m_IsHit = false;
-    DOUBLE2 m_Position;
+    float2 m_Position;
     int m_Width;
     int m_Height;
 

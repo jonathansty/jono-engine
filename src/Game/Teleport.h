@@ -17,7 +17,7 @@
 class Teleport : public Entity
 {
 public:
-	Teleport(DOUBLE2 teleportEntrance,DOUBLE2 teleportExit, Bitmap* bmpPtr);
+	Teleport(float2 teleportEntrance,float2 teleportExit, Bitmap* bmpPtr);
 	virtual ~Teleport( );
 
 	// C++11 make the class non-copyable
@@ -35,13 +35,13 @@ public:
     virtual void Tick(double deltaTime) override;
     virtual void Reset();
 
-    void SetEntrancePos(DOUBLE2 position);
-    void SetExitPos(DOUBLE2 position);
+    void SetEntrancePos(float2 position);
+    void SetExitPos(float2 position);
 private: 
 	//-------------------------------------------------
 	// Datamembers								
 	//-------------------------------------------------
-    DOUBLE2 m_TeleEntrance, m_TeleExit;
+    float2 m_TeleEntrance, m_TeleExit;
     Bitmap* m_BmpPtr = nullptr;
     double m_Angle = 0;
     bool m_TeleportedToExit = false;

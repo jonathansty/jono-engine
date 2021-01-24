@@ -43,16 +43,16 @@ public:
     void Paint(graphics::D2DRenderContext& ctx);
 
     //! Returns the viewmatrix of the camera.
-    MATRIX3X2 GetViewMatrix();
+    hlslpp::float3x3 GetViewMatrix();
 
     //! Gets the camera Dimensions
-    DOUBLE2 GetCameraDimension() const;
+    float2 GetCameraDimension() const;
 
     //! Sets the current cameraPosition
-    void SetCameraPosition(DOUBLE2 position);
+    void SetCameraPosition(float2 position);
 
     //! Sets the cameraStartPosition
-    void SetCameraStartPosition(DOUBLE2 position);
+    void SetCameraStartPosition(float2 position);
 
     //! Returns the current speed of the camera.
     double GetCameraSpeed() const;
@@ -61,20 +61,20 @@ public:
     void SetCameraSpeed(double speed);
 
     //! Returns the cameraPosition
-    DOUBLE2 GetCameraPosition() const;
+    float2 GetCameraPosition() const;
 
     //! Gets the startPosition of the camera in the level.
-    DOUBLE2 GetCameraStartPosition() const;
+    float2 GetCameraStartPosition() const;
 
     //! Gets the current Camere Direction
-    DOUBLE2 GetCameraDirection() const;
+    float2 GetCameraDirection() const;
 
     //! Resets the camera
     //! Resets Speed
     //! Resets angle
     //! Set CameraPosition
     //! Reset CameraControlState to default state
-    void Reset(DOUBLE2 position);
+    void Reset(float2 position);
 
     //! Gets the current camera Angle
     double GetAngle() const;
@@ -112,9 +112,9 @@ private:
     // ------------------------------------------------
     //! Updates the screen shaking modes for use with buttons certain actions etc
     void HandleScreenShaking(double deltaTime);
-    void FollowAvatar(double deltaTime, DOUBLE2 &oldPosition);
-    void AutomaticMode(double deltaTime, DOUBLE2 &oldPosition);
-    void ManualMode(double deltaTime, DOUBLE2 &oldPosition);
+    void FollowAvatar(double deltaTime, float2 &oldPosition);
+    void AutomaticMode(double deltaTime, float2 &oldPosition);
+    void ManualMode(double deltaTime, float2 &oldPosition);
 	//-------------------------------------------------
 	// Datamembers								
 	//-------------------------------------------------
@@ -133,12 +133,12 @@ private:
     PhysicsActor* m_ActPtr = nullptr;
     PhysicsActor* m_ActBoundsPtr = nullptr;
 
-    DOUBLE2 m_CameraPosition;
-    DOUBLE2 m_CameraPositionWithoutShaking;
-    DOUBLE2 m_OldCameraPosition;
-    DOUBLE2 m_StartPosition;
-    DOUBLE2 m_CameraDimension;
-    DOUBLE2 m_Direction;
+    float2 m_CameraPosition;
+    float2 m_CameraPositionWithoutShaking;
+    float2 m_OldCameraPosition;
+    float2 m_StartPosition;
+    float2 m_CameraDimension;
+    float2 m_Direction;
 
     double m_MaxSpeed = 250;
     double m_AccuTime = 0;

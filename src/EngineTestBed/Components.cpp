@@ -73,14 +73,17 @@ IMPL_REFLECT(SimpleMeshComponent)
 SimpleMovement::SimpleMovement(XMFLOAT2 pos, float speed) : Component()
 , _speed(speed)
 , _elapsed(0.0)
-, _offset({ pos.x, pos.y, 0.0f })
+, _offset(float4{ pos.x, pos.y, 0.0f, 1.0f })
 
 {
 
 }
 
-SimpleMovement::SimpleMovement() : Component()
-{
+SimpleMovement::SimpleMovement()
+		: Component()
+		, _speed(0.0)
+		, _elapsed(0.0)
+		, _offset(float4{0.0f,0.0f,0.0f,1.0f}) {
 
 }
 
@@ -100,8 +103,10 @@ void SimpleMovement::update(float dt)
 {
 	_elapsed += dt * _speed;
 	framework::Entity* ent = get_entity();
-	XMFLOAT3 up { 0.0f,1.0f,0.0f };
-	XMVECTOR rot = XMQuaternionRotationAxis(XMLoadFloat3(&up), XMConvertToRadians(_elapsed));
+	float3 up { 0.0f,0.0f,1.0f };
+	double e = _elapsed;
+
+	quaternion rot = hlslpp::axisangle(up, hlslpp::radians(_elapsed));
 	ent->set_rotation(rot);
 	//ent->set_local_position(_offset.x + cos(_elapsed) * 100.0, _offset.y + sin(_elapsed) * 100.0);
 }
@@ -174,7 +179,7 @@ CameraComponent::CameraComponent()
 	, _fov(DEFAULT_FOV)
 	, _near_plane(0.5f)
 	, _far_plane(1200.0f)
-	, _prev_position({ 0.0,0.0 })
+	, _prev_position(float2{ 0.0,0.0 })
 	, _x_angle(0.0f)
 	, _y_angle(0.0f)
 	, _fly_speed(100.0f)
@@ -187,22 +192,18 @@ CameraComponent::~CameraComponent()
 
 }
 
-void CameraComponent::look_at(XMFLOAT3 eye, XMFLOAT3 target, XMFLOAT3 up /*= { 0.0,0.0f,1.0f }*/)
+void CameraComponent::look_at(float3 eye, float3 target, float3 up /*= { 0.0,0.0f,1.0f }*/)
 {
 	// forward 
-	XMVECTOR t_forward = XMVector3Normalize(XMLoadFloat3(&target) - XMLoadFloat3(&eye));
-	XMVECTOR t_right = XMVector3Cross(t_forward, XMLoadFloat3(&up));
-	XMVECTOR t_up = XMVector3Cross(t_right, t_forward);
+	float3 t_forward = hlslpp::normalize(target - eye);
+	float3 t_right = hlslpp::cross(t_forward, up);
+	float3 t_up = hlslpp::cross(t_right, t_forward);
 
-	XMFLOAT4X4 matrix{};
-	XMStoreFloat4((XMFLOAT4*)&matrix._11, t_right);
-	XMStoreFloat4((XMFLOAT4*)&matrix._21, t_up);
-	XMStoreFloat4((XMFLOAT4*)&matrix._31, t_forward);
-	matrix._44 = 1.0f;
+	float4x4 matrix = hlslpp::float4x4(float4(t_right, 0.0f), float4(t_up, 0.0f), float4(t_right, 0.0f), float4(0.0f));
 
 	this->get_entity()->set_local_position(eye);
 
-	XMVECTOR quat = XMQuaternionRotationRollPitchYaw(0, 0, 0);
+	quaternion quat = hlslpp::euler(float3{ 0.0f, 0.0f, 0.0f});
 	this->get_entity()->set_rotation(quat);
 	//XMVECTOR quat = XMQuaternionRotationMatrix(XMLoadFloat4x4(&matrix));
 	//this->get_entity()->set_rotation(quat);
@@ -217,23 +218,23 @@ void CameraComponent::update(float dt)
 		return;
 	}
 
-	XMFLOAT4 fwd = { 0.0f,0.0f, 1.0f, 0.0f };
-	XMFLOAT4 right = { 1.0f,0.0f, 0.0f,0.0f };
-	XMFLOAT4 v_up{ 0.0f,1.0f,0.0, 0.0f };
+	float4 fwd = { 0.0f,0.0f, 1.0f, 0.0f };
+	float4 right = { 1.0f,0.0f, 0.0f,0.0f };
+	float4 v_up{ 0.0f,1.0f,0.0, 0.0f };
 
-	XMVECTOR forward = XMLoadFloat4(&fwd);
-	XMVECTOR rght = XMLoadFloat4(&right);
-	XMVECTOR up = XMLoadFloat4(&v_up);
+	float4 forward = fwd;
+	float4 rght = right;
+	float4 up = v_up;
 
-	XMMATRIX world = get_entity()->get_local_transform();
+	float4x4 world = get_entity()->get_local_transform();
 
-	forward = XMVector4Transform(forward, world);
-	rght = XMVector4Transform(rght, world);
+	forward = hlslpp::mul(forward, world);
+	rght = hlslpp::mul(rght, world);
 
 
 
 	Entity* ent = get_entity();
-	XMVECTOR movement = XMVectorZero();
+	float4 movement = float4(0.0f);
 	float fly_speed = _fly_speed;
 
 	if (GameEngine::instance()->is_key_down(VK_LSHIFT))
@@ -272,16 +273,13 @@ void CameraComponent::update(float dt)
 	}
 
 
-	auto ent_pos = ent->get_local_position();
-	XMVECTOR pos = XMLoadFloat3(&ent_pos);
+	float4 pos = ent->get_local_position();
 	pos += movement;
-	XMFLOAT3 result{};
-	XMStoreFloat3(&result, pos);
-	ent->set_local_position(result);
+	ent->set_local_position(pos);
 
 	// Handle rotation
 	{
-		XMFLOAT2 current = GameEngine::instance()->get_mouse_pos_in_viewport();
+		float2 current = GameEngine::instance()->get_mouse_pos_in_viewport();
 		double x = current.x - _prev_position.x;
 		double y = current.y - _prev_position.y;
 		_prev_position = current;
@@ -293,13 +291,13 @@ void CameraComponent::update(float dt)
 		float x_angle = XMConvertToRadians(25.0f) * dt * _x_angle;
 		float y_angle = XMConvertToRadians(25.0f) * dt * _y_angle;
 
-		XMVECTOR x_quat = XMQuaternionRotationAxis(up, x_angle);
+		quaternion x_quat = hlslpp::axisangle(up.xyz, x_angle);
 
-		XMVECTOR rght0 = XMLoadFloat4(&right);
-		rght0 = XMVector4Transform(rght0, XMMatrixRotationQuaternion(x_quat));
+		float4 rght0 = right;
+		rght0 = hlslpp::mul(rght0, float4x4(x_quat));
 
-		XMVECTOR y_quat = XMQuaternionRotationAxis(rght0, y_angle);
-		XMVECTOR transform_result = XMQuaternionMultiply(x_quat, y_quat);
+		quaternion y_quat = hlslpp::axisangle(rght0.xyz, y_angle);
+		quaternion transform_result = x_quat* y_quat;
 		ent->set_rotation(transform_result);
 	}
 

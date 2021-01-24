@@ -3,7 +3,7 @@
 #include "PhysicsDistanceJoint.h"
 #include "PhysicsActor.h"
 
-PhysicsDistanceJoint::PhysicsDistanceJoint(PhysicsActor *actAPtr, DOUBLE2 anchorA, PhysicsActor *actBPtr, DOUBLE2 anchorB, double length, double dampingRatio)
+PhysicsDistanceJoint::PhysicsDistanceJoint(PhysicsActor *actAPtr, float2 anchorA, PhysicsActor *actBPtr, float2 anchorB, double length, double dampingRatio)
 {
 	b2DistanceJointDef DistanceJointDef;
 	DistanceJointDef.bodyA = actAPtr->m_BodyPtr;
@@ -49,10 +49,10 @@ void PhysicsDistanceJoint::SetDampingRatio(double dampingRatio)
 	m_DistanceJointPtr->SetDamping((float)dampingRatio);
 }
 
-DOUBLE2 PhysicsDistanceJoint::GetReactionForce(double deltaTime) const
+float2 PhysicsDistanceJoint::GetReactionForce(double deltaTime) const
 {
 	b2Vec2 vec2 = m_DistanceJointPtr->GetReactionForce(1/(float)deltaTime);
-	return DOUBLE2(vec2.x, vec2.y);
+	return float2(vec2.x, vec2.y);
 }
 
 double PhysicsDistanceJoint::GetReactionTorque(double deltaTime) const

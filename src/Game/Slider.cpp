@@ -48,7 +48,7 @@ float Slider::GetValue()
 
 void Slider::Tick(double deltaTime) 
 {
-	XMFLOAT2 p = GameEngine::instance()->get_mouse_pos_in_viewport();
+	float2 p = GameEngine::instance()->get_mouse_pos_in_viewport();
 	if (p.x > m_PosX &&
 		p.x < m_PosX + m_Width &&
 		p.y > m_PosY &&

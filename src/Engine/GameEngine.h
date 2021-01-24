@@ -57,13 +57,19 @@ HRESULT set_debug_name(T *obj, std::string const &n) {
 
 void OutputDebugString(const String &textRef);
 
+namespace framework {
+class Entity;
+}
+
 class GameEngine : public TSingleton<GameEngine>, public b2ContactListener {
+
 private:
 	GameEngine();
 	friend class TSingleton<GameEngine>;
 
 	// #TODO: Generalise render interface into 2D and 3D
 	friend class BitmapComponent;
+	friend class framework::Entity;
 
 public:
 	virtual ~GameEngine();
@@ -193,7 +199,7 @@ public:
 	// Returns a POINT containing the window coordinates of the mouse offset in the viewport
 	// Usage example:
 	// POINT mousePos = GameEngine::instance()->GetMousePosition();
-	XMFLOAT2 get_mouse_pos_in_viewport() const;
+	float2 get_mouse_pos_in_viewport() const;
 
 	//! returns pointer to the Audio object
 	AudioSystem *GetXAudio() const;
@@ -332,8 +338,8 @@ private:
 	DXGI_SAMPLE_DESC _aa_desc;
 	D2D1_ANTIALIAS_MODE _d2d_aa_mode;
 
-	MATRIX3X2 _mat_world;
-	MATRIX3X2 _mat_view;
+	float3x3 _mat_world;
+	float3x3 _mat_view;
 
 
 	// Fonts used for text rendering
@@ -355,7 +361,7 @@ private:
 	std::vector<ContactData> _b2d_end_contact_data;
 	std::vector<ImpulseData> _b2d_impulse_data;
 	double _physics_timestep = 1 / 60.0f;
-	DOUBLE2 _gravity;
+	float2 _gravity;
 	unsigned long _frame_cnt = 0;
 
 	AudioSystem *_xaudio_system = nullptr;

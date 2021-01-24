@@ -63,7 +63,7 @@ public:
 
 protected:
 	bool PointInRect(RECT r, POINT pt) const;
-	bool PointInRect(RECT r, DOUBLE2 pt) const;
+	bool PointInRect(RECT r, float2 pt) const;
 	void LimitTextLengthToClientArea();
 	//-------------------------------------------------
 	// Datamembers								

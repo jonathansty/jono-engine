@@ -17,7 +17,7 @@
 class CameraTriggerRotate : public CameraTrigger
 {
 public:
-	CameraTriggerRotate(DOUBLE2 position, int width, int height);
+	CameraTriggerRotate(float2 position, int width, int height);
 	virtual ~CameraTriggerRotate( );
 
 	// C++11 make the class non-copyable

@@ -8,7 +8,7 @@
 
 #include "DataManager.h"
 
-Avatar::Avatar(DOUBLE2 position, Bitmap* BmpPtr, Bitmap* bmpEpicModePtr) :
+Avatar::Avatar(float2 position, Bitmap* BmpPtr, Bitmap* bmpEpicModePtr) :
 Entity(position), 
 m_BmpPtr(BmpPtr),
 m_BmpEpicModePtr(bmpEpicModePtr)
@@ -22,7 +22,7 @@ m_BmpEpicModePtr(bmpEpicModePtr)
     m_ActPtr->AddContactListener(this);
     
     m_ActPtr->SetGravityScale(m_GravityScale);
-    m_ActTriggerPtr = new PhysicsActor(position + DOUBLE2(0, 20 + CLIP_HEIGHT / 2), 0, BodyType::DYNAMIC);
+    m_ActTriggerPtr = new PhysicsActor(position + float2(0, 20 + CLIP_HEIGHT / 2), 0, BodyType::DYNAMIC);
     m_ActTriggerPtr->SetName(String("AvatarGroundTrigger"));
     m_ActTriggerPtr->AddBoxShape(CLIP_WIDTH - 30, 10, 0, 0);
     m_ActTriggerPtr->SetTrigger(true);
@@ -105,7 +105,7 @@ void Avatar::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
     if (actOtherPtr != nullptr && actOtherPtr->GetName() == String("BlockSlide"))
     {
         m_moveState = moveState::SLIDINGSTANDING;
-        m_ActPtr->SetLinearVelocity(DOUBLE2(m_ActPtr->GetLinearVelocity().x, 0));
+        m_ActPtr->SetLinearVelocity(float2(m_ActPtr->GetLinearVelocity().x, 0));
     }
     if (actOtherPtr != nullptr && actOtherPtr->GetName() == String("MetalFansTrigger"))
     {
@@ -194,68 +194,69 @@ void Avatar::Tick(double deltaTime)
     else
     {
         m_ActPtr->SetGhost(true);
-        m_ActPtr->SetLinearVelocity(DOUBLE2(0, -350));
+        m_ActPtr->SetLinearVelocity(float2(0, -350));
     }
     m_Position = m_ActPtr->GetPosition();
-    m_ActTriggerPtr->SetPosition(m_ActPtr->GetPosition() + DOUBLE2(0, CLIP_HEIGHT / 2));
+    m_ActTriggerPtr->SetPosition(m_ActPtr->GetPosition() + float2(0, CLIP_HEIGHT / 2));
 
 }
 void Avatar::PaintDebug(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate;
-    matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
+    float3x3 matTranslate;
+    matTranslate = float3x3::translation(m_ActPtr->GetPosition());
     ctx.set_world_matrix(matTranslate);
     switch (m_moveState)
     {
     case Avatar::moveState::RUNNING:
-        ctx.draw_string(String("Running"), DOUBLE2());
+        ctx.draw_string(String("Running"), float2());
         break;
     case Avatar::moveState::STANDING:
-        ctx.draw_string(String("Standing"), DOUBLE2());
+        ctx.draw_string(String("Standing"), float2());
         break;
     case Avatar::moveState::JUMPING:
-        ctx.draw_string(String("Jumping"), DOUBLE2());
+        ctx.draw_string(String("Jumping"), float2());
         break;
     case Avatar::moveState::HANGING:
-        ctx.draw_string(String("Hanging"), DOUBLE2());
+        ctx.draw_string(String("Hanging"), float2());
         break;
     case Avatar::moveState::ATTACK:
-        ctx.draw_string(String("Attack"), DOUBLE2());
+        ctx.draw_string(String("Attack"), float2());
         break;
     case Avatar::moveState::DIE:
-        ctx.draw_string(String("DEAD"), DOUBLE2());
+        ctx.draw_string(String("DEAD"), float2());
         break;
     case Avatar::moveState::DYING:
-        ctx.draw_string(String("Dying"), DOUBLE2());
+        ctx.draw_string(String("Dying"), float2());
         break;
     case Avatar::moveState::SLIDINGSTANDING:
-        ctx.draw_string(String("SlidingStanding"), DOUBLE2());
+        ctx.draw_string(String("SlidingStanding"), float2());
         break;
     case Avatar::moveState::SLIDINGWALKING:
-        ctx.draw_string(String("SlidingWalking"), DOUBLE2());
+        ctx.draw_string(String("SlidingWalking"), float2());
         break;
     case Avatar::moveState::SLIDINGJUMPING:
-        ctx.draw_string(String("SlidingJumping"), DOUBLE2());
+        ctx.draw_string(String("SlidingJumping"), float2());
         break;
     case Avatar::moveState::GOD:
-        ctx.draw_string(String("God"), DOUBLE2());
+        ctx.draw_string(String("God"), float2());
         break;
     default:
         break;
     }
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void Avatar::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matWorldTransform, matScale, matTranslate, matPivot;
-    matTranslate.SetAsTranslate(m_ActPtr->GetPosition());
-    matPivot.SetAsTranslate(DOUBLE2(-CLIP_WIDTH / 2, -CLIP_HEIGHT / 2));
-    matScale.SetAsScale(1);
+    float3x3 matWorldTransform, matScale, matTranslate, matPivot;
+    matTranslate = float3x3::translation(m_ActPtr->GetPosition());
+    matPivot = float3x3::translation(float2(-CLIP_WIDTH / 2, -CLIP_HEIGHT / 2));
+    matScale = float3x3::scale(1);
     if (m_Mirror)
     {
-        matScale.SetAsScale(-1,1);
+        matScale = float3x3::scale(-1,1);
     }
-    matWorldTransform = (matPivot * matScale * matTranslate);
+    // #TODO: Fix avatar mirroring
+    matWorldTransform = hlslpp::mul(matPivot , matTranslate);
     if (GameEngine::instance()->is_key_down(VK_LEFT))
     {     
         m_Mirror = true;
@@ -268,9 +269,6 @@ void Avatar::Paint(graphics::D2DRenderContext& ctx)
     RECT boundingBox = updateFrameDisplay(m_FrameNr);
     PaintTrail(ctx);
     ctx.set_world_matrix(matWorldTransform);
-    
-    
-    
     ctx.draw_bitmap(m_BmpPtr, boundingBox);
     if (m_IsEpicModeOn)
     {
@@ -278,8 +276,8 @@ void Avatar::Paint(graphics::D2DRenderContext& ctx)
     }
     
     
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
-    matTranslate.SetAsTranslate(DOUBLE2(m_ActPtr->GetPosition().x, 0));
+    ctx.set_world_matrix(float3x3::identity());
+    matTranslate = float3x3::translation(float2(m_ActPtr->GetPosition().x, 0));
     ctx.set_world_matrix(matTranslate);
     ctx.set_color(COLOR(0, 0, 0));
 }
@@ -294,22 +292,22 @@ void Avatar::PaintTrail(graphics::D2DRenderContext& ctx)
     ctx.set_color(COLOR(255, 255, 255, 10));
     for (int i = 0, n = int(m_deqTrail.size()); i < n - 1; i++)
     {
-        DOUBLE2 pos = m_deqTrail[i];
-        DOUBLE2 pos2 = m_deqTrail[i + 1];
-        DOUBLE2 midPos = (pos2 + pos) / 2;
+        float2 pos = m_deqTrail[i];
+        float2 pos2 = m_deqTrail[i + 1];
+        float2 midPos = (pos2 + pos) / 2;
         double size = CLIP_WIDTH - 40;
         if (size - (size / MAX_TRAIL)*i > 0)
         {
             
             ctx.fill_ellipse(pos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
-            DOUBLE2 vector = pos2 - pos;
+            float2 vector = pos2 - pos;
             int numberOfCircles = 4;
-            if (vector.Length() > 5)
+			if (float(hlslpp::length(vector)) > 5.0f)
             {
                 for (int j = 0; j < numberOfCircles; j++)
                 {
-                    double spaceBetween = vector.Length() / numberOfCircles;
-                    DOUBLE2 normVector = vector.Normalized();
+                    double spaceBetween = hlslpp::length(vector) / numberOfCircles;
+					float2 normVector = hlslpp::normalize(vector);
                     midPos = normVector*j*spaceBetween;
                     ctx.fill_ellipse(pos + midPos, size - (size / MAX_TRAIL)*i, size - (size / MAX_TRAIL)*i);
                 }
@@ -360,9 +358,9 @@ void Avatar::checkKeys(double dTime)
 }
 void Avatar::GodMoveState(double dTime)
 {
-    DOUBLE2 position = m_ActPtr->GetPosition();
-    m_ActPtr->SetLinearVelocity(DOUBLE2());
-    DOUBLE2 desiredPosition = DOUBLE2();
+    float2 position = m_ActPtr->GetPosition();
+    m_ActPtr->SetLinearVelocity(float2());
+    float2 desiredPosition = float2();
     if (GameEngine::instance()->is_key_down(VK_RIGHT))    desiredPosition.x = GODMODE_SPEED   * dTime;
     if (GameEngine::instance()->is_key_down(VK_LEFT))    desiredPosition.x = -GODMODE_SPEED  * dTime;
     if (GameEngine::instance()->is_key_down(VK_UP))    desiredPosition.y = -GODMODE_SPEED  * dTime;
@@ -373,25 +371,25 @@ void Avatar::SlidingMoveState(double dTime)
 {
     if (GameEngine::instance()->is_key_down(m_Right))
     {
-        m_ActPtr->ApplyLinearImpulse(DOUBLE2(1, 0) * m_Speed);
+        m_ActPtr->ApplyLinearImpulse(float2(1, 0) * m_Speed);
     }
     if (GameEngine::instance()->is_key_down(m_Left))
     {
-        m_ActPtr->ApplyLinearImpulse(DOUBLE2(-1, 0) * m_Speed);
+        m_ActPtr->ApplyLinearImpulse(float2(-1, 0) * m_Speed);
     }
-    DOUBLE2 actVelocity = m_ActPtr->GetLinearVelocity();
+    float2 actVelocity = m_ActPtr->GetLinearVelocity();
     if (GameEngine::instance()->is_key_pressed(m_Jump) && (m_moveState == moveState::SLIDINGSTANDING || m_moveState == moveState::SLIDINGWALKING))
     {
         m_moveState = moveState::SLIDINGJUMPING;
         m_SndJumpPtr->play();
-        m_ActPtr->ApplyLinearImpulse(-DOUBLE2(0, m_JumpHeight) * m_ActPtr->GetMass() / PhysicsActor::SCALE);
+        m_ActPtr->ApplyLinearImpulse(-float2(0, m_JumpHeight) * m_ActPtr->GetMass() / PhysicsActor::SCALE);
         m_NumberOfContactPointsWithLevel = 0;
 
         m_JumpCounter++;
     }
     if (m_moveState == moveState::SLIDINGJUMPING)
     {
-        m_ActPtr->ApplyLinearImpulse(DOUBLE2(-actVelocity.x * dTime * 10, 0));
+        m_ActPtr->ApplyLinearImpulse(float2(-actVelocity.x * dTime * 10, 0));
     }
     // Updating the moveState
     if (m_moveState == moveState::SLIDINGSTANDING || m_moveState == moveState::SLIDINGWALKING)
@@ -403,9 +401,9 @@ void Avatar::SlidingMoveState(double dTime)
 }
 void Avatar::NormalMoveState(double dTime)
 {
-    DOUBLE2 oldVelocity = m_ActPtr->GetLinearVelocity();
-    DOUBLE2 desiredVelocity = DOUBLE2();
-    DOUBLE2 dVelocity;
+    float2 oldVelocity = m_ActPtr->GetLinearVelocity();
+    float2 desiredVelocity = float2();
+    float2 dVelocity;
 
     if (GameEngine::instance()->is_key_down(m_Right))
     {
@@ -418,12 +416,12 @@ void Avatar::NormalMoveState(double dTime)
     
     if (GameEngine::instance()->is_key_pressed(m_Attack) && m_NumberOfContactPointsWithLevel == 0)
     {
-        m_ActPtr->SetLinearVelocity(DOUBLE2(oldVelocity.x, 0));
-        m_ActPtr->ApplyLinearImpulse(2 * m_JumpHeight*m_ActPtr->GetMass() / PhysicsActor::SCALE*DOUBLE2(0, 1));
+        m_ActPtr->SetLinearVelocity(float2(oldVelocity.x, 0));
+        m_ActPtr->ApplyLinearImpulse(2 * m_JumpHeight*m_ActPtr->GetMass() / PhysicsActor::SCALE*float2(0, 1));
         m_moveState = moveState::ATTACK;
         m_SndAttackPtr->play();
     }
-    DOUBLE2 actVelocity = m_ActPtr->GetLinearVelocity();
+    float2 actVelocity = m_ActPtr->GetLinearVelocity();
 	if (GameEngine::instance()->is_key_pressed(m_Jump) && m_JumpCounter < MAX_JUMPS && m_moveState != moveState::JUMPING)
     {
         //m_moveState = moveState::JUMPING;
@@ -537,14 +535,8 @@ PhysicsActor* Avatar::GetActor()
     return m_ActPtr;
 }
 
-//! Gets the avatar Position
-DOUBLE2 Avatar::GetPosition()
-{
-    return m_ActPtr->GetPosition();
-}
-
 //! Gets the avatarRespawnPosition
-DOUBLE2 Avatar::GetRespawnPosition()
+float2 Avatar::GetRespawnPosition()
 {
     return m_RespawnPosition;
 }
@@ -583,10 +575,10 @@ void Avatar::SetMoveState(Avatar::moveState state)
 }
 
 //! Sets the respawn Position for the avatar
-void Avatar::SetSpawnPosition(DOUBLE2 spawnPosition)
+void Avatar::SetSpawnPosition(float2 spawnPosition)
 {
     m_RespawnPosition = spawnPosition;
-    GameEngine::instance()->print_string(String("spawn position set to ") + String(spawnPosition.ToString()));
+    //GameEngine::instance()->print_string(String("spawn position set to ") + String(spawnPosition.ToString()));
 }
 
 //! Resets the avatar back to original
@@ -599,7 +591,7 @@ void Avatar::Reset()
     m_Deaths++;
     m_Lifes = MAX_LIFES;
     m_moveState = moveState::STANDING;
-    m_ActPtr->SetPosition(m_RespawnPosition + DOUBLE2(0,-10));
+    m_ActPtr->SetPosition(m_RespawnPosition + float2(0,-10));
     m_ActPtr->SetGhost(false);
 }
 
@@ -610,7 +602,7 @@ void Avatar::SetJumpHeight(double height)
 }
 
 //! Directly sets the avatarPosition
-void Avatar::SetPosition(DOUBLE2 position)
+void Avatar::SetPosition(float2 position)
 {
     m_Position = position;
     m_ActPtr->SetPosition(position);

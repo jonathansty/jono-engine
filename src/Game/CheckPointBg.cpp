@@ -3,7 +3,7 @@
 
 const double CheckPointBg::SCALESPEED = 0.5;
 
-CheckPointBg::CheckPointBg(DOUBLE2 position, Bitmap* bmpPtr)
+CheckPointBg::CheckPointBg(float2 position, Bitmap* bmpPtr)
     : Animation(position)
     , m_BmpPtr(bmpPtr)
 {
@@ -38,15 +38,15 @@ CheckPointBg::~CheckPointBg()
 //}
 void CheckPointBg::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate,matRotate,matPivot, matScale, matWorldTransform;
-    matTranslate.SetAsTranslate(m_Position);
-    matPivot.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
-    matScale.SetAsScale(m_Scale);
-    matRotate.SetAsRotate(m_Angle);
+    float3x3 matTranslate,matRotate,matPivot, matScale, matWorldTransform;
+    matTranslate = float3x3::translation(m_Position);
+    matPivot = float3x3::translation(float2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
+    matScale = float3x3::scale(m_Scale);
+    matRotate = float3x3::rotation_z(m_Angle);
     matWorldTransform = matPivot * matScale * matRotate * matTranslate;
     ctx.set_world_matrix(matWorldTransform);
     ctx.draw_bitmap(m_BmpPtr);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+	ctx.set_world_matrix(float3x3::identity());
 }
 void CheckPointBg::Tick(double deltaTime)
 {
@@ -75,7 +75,7 @@ void CheckPointBg::Tick(double deltaTime)
     
     
 }
-void CheckPointBg::SetPosition(DOUBLE2 position)
+void CheckPointBg::SetPosition(float2 position)
 {
     m_Scale = 0.01;
     m_ScaleSpeed = SCALESPEED;
@@ -85,7 +85,7 @@ void CheckPointBg::SetPosition(DOUBLE2 position)
 void CheckPointBg::SetDrawState(drawState drawstate)
 {
 }
-DOUBLE2 CheckPointBg::GetPosition()
+float2 CheckPointBg::GetPosition()
 {
     return m_Position;
 }

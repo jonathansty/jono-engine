@@ -1,7 +1,7 @@
 #include "stdafx.h"		
 #include "Coin.h"
 
-Coin::Coin(DOUBLE2 position, Bitmap* bmpPtr)
+Coin::Coin(float2 position, Bitmap* bmpPtr)
     : PickUp(position)
     , m_BmpCoinPtr(bmpPtr)
 {
@@ -68,12 +68,12 @@ void Coin::Tick(double deltaTime)
 }
 void Coin::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate,matPivot;
-    matPivot.SetAsTranslate(-m_BmpCoinPtr->GetWidth() / 2, -m_BmpCoinPtr->GetHeight() / 2);
-    matTranslate.SetAsTranslate(m_Position);
+    float3x3 matTranslate,matPivot;
+    matPivot = float3x3::translation(-m_BmpCoinPtr->GetWidth() / 2, -m_BmpCoinPtr->GetHeight() / 2);
+    matTranslate = float3x3::translation(m_Position);
     ctx.set_world_matrix(matPivot* matTranslate);
     ctx.draw_bitmap(m_BmpCoinPtr);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 bool Coin::IsHit()
 {
@@ -99,7 +99,7 @@ String Coin::GetName()
 {
     return PickUp::GetName();
 }
-DOUBLE2 Coin::GetPosition()
+float2 Coin::GetPosition()
 {
     return m_ActPtr->GetPosition();
 }

@@ -1,7 +1,7 @@
 #include "stdafx.h"		
 #include "CameraTrigger.h"
 
-CameraTrigger::CameraTrigger(DOUBLE2 position, int width, int height):
+CameraTrigger::CameraTrigger(float2 position, int width, int height):
 m_Position(position),
 m_Width(width),
 m_Height(height)

@@ -17,7 +17,7 @@
 class StickyWall : public Entity
 {
 public:
-	StickyWall(DOUBLE2 position, int width, int height);
+	StickyWall(float2 position, int width, int height);
 	virtual ~StickyWall( );
 
 	// C++11 make the class non-copyable

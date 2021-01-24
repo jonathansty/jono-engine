@@ -6,7 +6,7 @@
 #include "Lever.h"
 
 
-LevelEnd::LevelEnd(DOUBLE2 position, String nextLevel) :
+LevelEnd::LevelEnd(float2 position, String nextLevel) :
 Entity(position),
 m_NextLevelPath(nextLevel)
 {
@@ -72,13 +72,13 @@ void LevelEnd::Paint(graphics::D2DRenderContext& ctx)
 {
     if (m_AreAllLeversHit == true)
     {
-        MATRIX3X2 matTranslate, matPivot, matRotate;
-        matTranslate.SetAsTranslate(m_Position);
-        matRotate.SetAsRotate(m_Angle);
-        matPivot.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
+        float3x3 matTranslate, matPivot, matRotate;
+        matTranslate= float3x3::translation(m_Position);
+        matRotate = float3x3::rotation_z(m_Angle);
+        matPivot= float3x3::translation(float2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
         ctx.set_world_matrix(matPivot*matRotate* matTranslate);
         ctx.draw_bitmap(m_BmpPtr);
-        ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+        ctx.set_world_matrix(float3x3::identity());
     }
     
     for (size_t i = 0; i < m_LeversPtrArr.size(); i++)

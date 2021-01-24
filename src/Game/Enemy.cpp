@@ -10,13 +10,13 @@
 #include "Avatar.h"
 
 const double Enemy::GRAVITYCOEFF = 1;
-Enemy::Enemy(DOUBLE2 position)
+Enemy::Enemy(float2 position)
 {
     m_Position = position;
     m_Name = String("NaN");
     OutputDebugString(String("Enemy constructor called.\n"));
 }
-Enemy::Enemy(DOUBLE2 position, Level* levelPtr):
+Enemy::Enemy(float2 position, Level* levelPtr):
 m_Position(position),
 m_LevelPtr(levelPtr)
 {
@@ -43,22 +43,22 @@ void Enemy::SetAvatar(Avatar* avatarPtr)
 {
     m_AvatarPtr = avatarPtr;
 }
-DOUBLE2 Enemy::GetPosition()
+float2 Enemy::GetPosition() const
 {
     return m_Position;
 }
 int Enemy::distance(Enemy* otherEntityPtr)
 {
-    DOUBLE2 pos1 = m_ActPtr->GetPosition();
-    DOUBLE2 pos2 = otherEntityPtr->GetPosition();
-    DOUBLE2 vector = pos2 - pos1;
-    return (int)(vector.Length());
+    float2 pos1 = m_ActPtr->GetPosition();
+    float2 pos2 = otherEntityPtr->GetPosition();
+    float2 vector = pos2 - pos1;
+	return hlslpp::length(vector);
 }
 void Enemy::setGravityScale(double number)
 {
     m_GravityScale = number;
 }
-void Enemy::SetSpawnPosition(DOUBLE2 respawnPosition)
+void Enemy::SetSpawnPosition(float2 respawnPosition)
 {
     m_RespawnPosition = respawnPosition;
 }
@@ -84,18 +84,18 @@ void Enemy::PaintDebug(graphics::D2DRenderContext& ctx)
     auto engine = GameEngine::instance();
     if (m_ActPtr != nullptr)
     {
-        DOUBLE2 position = m_ActPtr->GetPosition();
+        float2 position = m_ActPtr->GetPosition();
         ctx.set_font(nullptr);
         ctx.draw_string(String(m_Name), position);
     }
 }
 
-String Enemy::GetName()
+String Enemy::GetName() const
 {
     return m_Name;
 }
 
-bool Enemy::IsHit()
+bool Enemy::IsHit() const
 {
     return m_IsHit;
 }

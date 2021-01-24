@@ -70,7 +70,7 @@ void HelloWorldGame::start()
 	_world = std::make_shared<framework::World>();
 	GameEngine::instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
 
-	_parentEntity = _world->create_entity(XMFLOAT2(100, 0));
+	_parentEntity = _world->create_entity(float2(100, 100));
 	_parentEntity->create_component<BitmapComponent>(ResourcePaths::bmp_coin_silver);
 	_parentEntity->create_component<SimpleMovement>();
 	_parentEntity->set_name("Center");
@@ -78,8 +78,8 @@ void HelloWorldGame::start()
 	for (int i =0; i < 10; ++i)
 	{
 		float d = 360.0f * i / 10.0f;
-		float x = cos(XMConvertToRadians(d)) * 100.0f;
-		float y = sin(XMConvertToRadians(d)) * 100.0f;
+		float x = cos(hlslpp::radians(d)) * 100.0f;
+		float y = sin(hlslpp::radians(d)) * 100.0f;
 
 		EntityHandle ent = _world->create_entity();
 		ent->set_local_position(x, y);
@@ -89,8 +89,8 @@ void HelloWorldGame::start()
 		std::string name = "Coin_" + std::to_string(i);
 		ent->set_name(name);
 
-		XMFLOAT3 pos = ent->get_world_position();
-		printf("%.2f - %.2f - %.2f\n", pos.x, pos.y, pos.z);
+		float4 pos = ent->get_world_position();
+		printf("%.2f - %.2f - %.2f\n", float(pos.x), float(pos.y), float(pos.z));
 	}
 
 

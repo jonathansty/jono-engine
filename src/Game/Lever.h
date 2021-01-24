@@ -17,7 +17,7 @@
 class Lever : public Entity
 {
 public:
-	Lever(DOUBLE2 position, Bitmap* bmpPtr);
+	Lever(float2 position, Bitmap* bmpPtr);
 	virtual ~Lever( );
 
 	// C++11 make the class non-copyable
@@ -34,7 +34,7 @@ public:
     virtual void Paint(graphics::D2DRenderContext& ctx) override;
     virtual void Tick(double deltaTime) override;
     void Reset();
-    void SetPosition(DOUBLE2 position);
+    void SetPosition(float2 position);
 
 private: 
 	//-------------------------------------------------

@@ -6,14 +6,14 @@
 
 const double Entity::GRAVITYCOEFF = 1;
 
-Entity::Entity(DOUBLE2 position)
+Entity::Entity(float2 position)
     : m_Position(position)
 {
 	// nothing to create
 	// m_ActCirclePtr->AddContactListener(this);
     OutputDebugString(String("Entity constructor called.\n"));
 }
-Entity::Entity(DOUBLE2 position, Level* levelPtr):
+Entity::Entity(float2 position, Level* levelPtr):
 m_Position(position),
 m_LevelPtr(levelPtr)
 {
@@ -42,7 +42,7 @@ void Entity::SetLevel(Level* levelPtr)
 {
     m_LevelPtr = levelPtr;
 }
-DOUBLE2 Entity::GetPosition()
+float2 Entity::GetPosition() const
 {
     if (m_ActPtr != nullptr)
     {
@@ -56,16 +56,16 @@ DOUBLE2 Entity::GetPosition()
 }
 int Entity::distance(Entity* otherEntityPtr)
 {
-    DOUBLE2 pos1 = m_ActPtr->GetPosition();
-    DOUBLE2 pos2 = otherEntityPtr->GetPosition();
-    DOUBLE2 vector = pos2 - pos1;
-    return (int)(vector.Length());
+    float2 pos1 = m_ActPtr->GetPosition();
+    float2 pos2 = otherEntityPtr->GetPosition();
+    float2 vector = pos2 - pos1;
+	return hlslpp::length(vector);
 }
 void Entity::SetGravityScale(double number)
 {
     m_GravityScale = number;
 }
-void Entity::SetSpawnPosition(DOUBLE2 respawnPosition)
+void Entity::SetSpawnPosition(float2 respawnPosition)
 {
     m_RespawnPosition = respawnPosition;
 }
@@ -95,9 +95,9 @@ bool Entity::GetIsDead()
 }
 void Entity::PaintDebug(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate;
-    matTranslate.SetAsTranslate(m_Position);
+    float3x3 matTranslate;
+    matTranslate= float3x3::translation(m_Position);
     ctx.set_world_matrix(matTranslate);
-    ctx.draw_string(m_Name,DOUBLE2());
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.draw_string(m_Name,float2());
+    ctx.set_world_matrix(float3x3::identity());
 }

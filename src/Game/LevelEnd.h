@@ -19,7 +19,7 @@ class Lever;
 class LevelEnd : public Entity
 {
 public:
-	LevelEnd(DOUBLE2 position,String nextLevel);
+	LevelEnd(float2 position,String nextLevel);
 	virtual ~LevelEnd( );
 
 	// C++11 make the class non-copyable

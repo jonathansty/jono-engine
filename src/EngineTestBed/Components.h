@@ -7,6 +7,11 @@
 
 class ModelResource;
 
+using hlslpp::float3;
+using hlslpp::float4;
+using hlslpp::float4x4;
+using hlslpp::quaternion;
+
 class SimpleMovement final : public framework::Component
 {
 	REFLECT(SimpleMovement)
@@ -22,7 +27,7 @@ public:
 
 	void set_speed(float speed) { _speed = speed; }
 
-	XMFLOAT3 _offset;
+	float4 _offset;
 	float _elapsed = 0.0;
 	float _speed;
 
@@ -50,8 +55,7 @@ public:
 
 	void render()
 	{
-		XMFLOAT3 pos = get_entity()->get_world_position();
-		GameEngine::instance()->_d2d_ctx->draw_bitmap(_bmp, (int)pos.x, (int)pos.y);
+		GameEngine::instance()->_d2d_ctx->draw_bitmap(_bmp, -_bmp->GetWidth()/2.0, -_bmp->GetHeight() / 2.0);
 	}
 
 
@@ -109,7 +113,7 @@ public:
 
 	void update(float dt) override;
 
-	void look_at(XMFLOAT3 eye, XMFLOAT3 target, XMFLOAT3 up = { 0.0,0.0f,1.0f });
+	void look_at(float3 eye, float3 target, float3 up = { 0.0,0.0f,1.0f });
 
 	float get_fov() const { return _fov; }
 	float get_near_plane() const { return _near_plane; }
@@ -130,7 +134,7 @@ private:
 	float _x_angle;
 	float _y_angle;
 	
-	XMFLOAT2 _prev_position;
+	hlslpp::float2 _prev_position;
 
 };
 

@@ -3,7 +3,7 @@
 #include "PhysicsPrismaticJoint.h"
 #include "PhysicsActor.h"
 
-PhysicsPrismaticJoint::PhysicsPrismaticJoint(PhysicsActor *actAPtr, DOUBLE2 anchorA, PhysicsActor *actBPtr, DOUBLE2 anchorB, DOUBLE2 jointAxis, bool collide)
+PhysicsPrismaticJoint::PhysicsPrismaticJoint(PhysicsActor *actAPtr, float2 anchorA, PhysicsActor *actBPtr, float2 anchorB, float2 jointAxis, bool collide)
 {
 	b2PrismaticJointDef prismaticJointDef;
 	prismaticJointDef.bodyA = actAPtr->m_BodyPtr;

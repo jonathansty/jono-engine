@@ -4,12 +4,12 @@
 #include "Avatar.h"
 #include "BitmapManager.h"
 
-NpcHinter::NpcHinter(DOUBLE2 position, String tipText, Bitmap* bmpCharacterBmp):
+NpcHinter::NpcHinter(float2 position, String tipText, Bitmap* bmpCharacterBmp):
 Entity(position), m_TipText(tipText), m_BmpBodyPtr(bmpCharacterBmp)
 {
 
 }
-NpcHinter::NpcHinter(DOUBLE2 position, String tipText):
+NpcHinter::NpcHinter(float2 position, String tipText):
 Entity(position), m_TipText(tipText)
 {
     m_BmpBodyPtr = BitmapManager::instance()->load_image(String("Resources/Entity/NpcIdle.png"));
@@ -40,16 +40,16 @@ void NpcHinter::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 //CREATE A SPRITE AND TEST IT
 void NpcHinter::PaintDebug(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matPosition;
-    matPosition.SetAsTranslate(m_Position);
+    float3x3 matPosition;
+    matPosition= float3x3::translation(m_Position);
     ctx.set_world_matrix(matPosition);
-    ctx.draw_ellipse(DOUBLE2(), TALKRADIUS, TALKRADIUS);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.draw_ellipse(float2(), TALKRADIUS, TALKRADIUS);
+    ctx.set_world_matrix(float3x3::identity());
 }
 void NpcHinter::Paint(graphics::D2DRenderContext &ctx) {
-    MATRIX3X2 matTranslate, matTextTranslate;
+    float3x3 matTranslate, matTextTranslate;
    
-    matTranslate.SetAsTranslate(m_Position);
+    matTranslate= float3x3::translation(m_Position);
     
     RECT boundingBox;
     int clipWidth = m_BmpBodyPtr->GetWidth()/MAXFRAMES;
@@ -61,34 +61,34 @@ void NpcHinter::Paint(graphics::D2DRenderContext &ctx) {
 
     
     
-    MATRIX3X2 matPivot, matNpcHitBoxTransform,matMirror;
-    matPivot.SetAsTranslate(DOUBLE2(-clipWidth/2, -clipHeight/2));
-    matNpcHitBoxTransform = matPivot * matTranslate;
+    float3x3 matPivot, matNpcHitBoxTransform,matMirror;
+    matPivot= float3x3::translation(float2(-clipWidth/2, -clipHeight/2));
+    matNpcHitBoxTransform = hlslpp::mul(matPivot, matTranslate);
     if (m_FacingDirection == String("LEFT"))
     {
-        matMirror.SetAsScale(-1, 1);
+        matMirror = float3x3::scale(-1, 1);
     }
     else
     {
-        matMirror.SetAsScale(1, 1);
+        matMirror = float3x3::scale(1, 1);
     }
     
-    ctx.set_world_matrix(matPivot * matMirror*matTranslate);
+    ctx.set_world_matrix(hlslpp::mul(matPivot, hlslpp::mul(matMirror,matTranslate)));
     ctx.draw_bitmap(m_BmpBodyPtr, boundingBox);
     ctx.set_world_matrix(matNpcHitBoxTransform);
 	ctx.set_font(nullptr);
-    matPivot.SetAsTranslate(DOUBLE2(-(m_TipText.Length() * 16) / 2, -50));
+    matPivot= float3x3::translation(float2(-(m_TipText.Length() * 16) / 2, -50));
 
     if (m_IsArmed)
     {
-		matTextTranslate.SetAsTranslate(DOUBLE2(0, 0));
-		ctx.set_world_matrix(matPivot* matTextTranslate*matNpcHitBoxTransform);
+		matTextTranslate= float3x3::translation(float2(0, 0));
+		ctx.set_world_matrix(hlslpp::mul(matPivot, hlslpp::mul(matTextTranslate, matNpcHitBoxTransform)));
         ctx.set_color(COLOR(255,255,255, m_Opacity));
 
         // TODO: Fix validation error 
         ctx.draw_string(m_TipText, RECT2(0, 0, m_TipText.Length() * 16, 50));
 
-		ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+		ctx.set_world_matrix(float3x3::identity());
     }
    
     ctx.set_color(COLOR(0, 0, 0, 255));
@@ -107,11 +107,8 @@ void NpcHinter::Tick(double deltaTime)
     {
         m_TipDisplayTime += deltaTime;
     }
-    if (DOUBLE2(m_AvatarPtr->GetPosition() - m_Position).Length() < TALKRADIUS)
+    if (float(hlslpp::length(float2(m_AvatarPtr->GetPosition() - m_Position))) < float(TALKRADIUS))
     {
-        
-        
-
         if (m_IsArmed == false)
         {
             m_IsArmed = true;

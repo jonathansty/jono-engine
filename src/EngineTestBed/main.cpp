@@ -5,5 +5,6 @@
 
 int main(const int argcs, const char** argvs)
 {
-	return GameEngine::run_game(NULL, cli::parse(argvs, argcs), 1, new Hello3D());
+	return GameEngine::run_game(NULL, cli::parse(argvs, argcs), 1, new HelloWorldGame());
+	//return GameEngine::run_game(NULL, cli::parse(argvs, argcs), 1, new Hello3D());
 }

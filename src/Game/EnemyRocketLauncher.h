@@ -22,7 +22,7 @@ class EntityDestroy;
 class EnemyRocketLauncher : public Enemy
 {
 public:
-	EnemyRocketLauncher(DOUBLE2 position, double angle);
+	EnemyRocketLauncher(float2 position, double angle);
 	virtual ~EnemyRocketLauncher( );
 
 	// C++11 make the class non-copyable
@@ -76,7 +76,7 @@ private:
     double m_AccuShootTime = 2;
     double m_AccuTime = 0;
     double m_IntervalTime = 2;
-    DOUBLE2 m_Direction;
+    float2 m_Direction;
     EnemyList* m_EnemyListPtr = nullptr;
     AnimationList* m_AnimationListPtr = nullptr;
     bool m_IsReset = false;

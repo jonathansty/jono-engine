@@ -15,8 +15,8 @@ class Entity : public ContactListener
 {
 public:
 
-	Entity(DOUBLE2 position);
-    Entity(DOUBLE2 position, Level* levelPtr);
+	Entity(float2 position);
+    Entity(float2 position, Level* levelPtr);
 	virtual ~Entity( );
 
 	// C++11 make the class non-copyable
@@ -34,9 +34,9 @@ public:
     virtual void Paint(graphics::D2DRenderContext& ctx) {}
     virtual void Tick(double deltaTime) {}
     virtual PhysicsActor* GetActor();
-    virtual DOUBLE2 GetPosition();
-    virtual void SetSpawnPosition(DOUBLE2 respawnPosition);
-    virtual void Reset() = 0;
+    virtual float2 GetPosition() const;
+    virtual void SetSpawnPosition(float2 respawnPosition);
+	virtual void Reset(){}
     virtual void SetGravityScale(double number);
     virtual bool isHit();
     virtual void SetName(String name);
@@ -50,8 +50,8 @@ protected:
 
     String m_Name;
     Level* m_LevelPtr = nullptr;
-    DOUBLE2 m_Position;
-    DOUBLE2 m_RespawnPosition;
+    float2 m_Position;
+    float2 m_RespawnPosition;
     double m_GravityScale = 1;
     Avatar* m_AvatarPtr = nullptr;
     PhysicsActor* m_ActPtr = nullptr;

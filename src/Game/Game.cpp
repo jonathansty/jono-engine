@@ -57,8 +57,8 @@ Game::Game(ElectronicJonaJoy* owner)
     m_FileManagerPtr = _owner->GetFileManager();
 
 
-    m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-6000, 0),BitmapManager::instance()->load_image(String("Resources/Animations/CheckPointBg.png")));
-    m_CheckPointRotLightPtr = new RotLight(DOUBLE2(-6000, 0));
+    m_CheckPointBgPtr = new CheckPointBg(float2(-6000, 0),BitmapManager::instance()->load_image(String("Resources/Animations/CheckPointBg.png")));
+    m_CheckPointRotLightPtr = new RotLight(float2(-6000, 0));
     m_CheckPointRotLightPtr->SetColor(COLOR(255, 255, 255));
     m_CheckPointRotLightPtr->SetRadius(150);
     m_AttackBeamListPtr = new AttackBeamList(); 
@@ -168,15 +168,13 @@ void Game::UpdateObjects(double deltaTime)
                 m_EntityLastHitCheckpointPtr = nullptr;
             }
             m_EntityLastHitCheckpointPtr = (CheckPoint*)tmpHitEntity;
-            if (m_AvatarPtr->GetRespawnPosition() != tmpHitEntity->GetPosition())
+            if (hlslpp::any(m_AvatarPtr->GetRespawnPosition() != tmpHitEntity->GetPosition()))
             {
                 m_AvatarPtr->SetSpawnPosition(tmpHitEntity->GetPosition());
             }
             
-            if (m_CheckPointBgPtr->GetPosition() != tmpHitEntity->GetPosition())
+            if (hlslpp::any(m_CheckPointBgPtr->GetPosition() != tmpHitEntity->GetPosition()))
             {
-
-                
                 m_CheckPointBgPtr->SetPosition(tmpHitEntity->GetPosition());
                 m_CheckPointRotLightPtr->SetPosition(tmpHitEntity->GetPosition());
                 m_CheckPointRotLightPtr->SetDrawState(RotLight::drawState::SPAWNING);
@@ -234,9 +232,9 @@ void Game::UpdateGameChecks(double deltaTime)
         
     }
 
-    DOUBLE2 dimension = m_CameraPtr->GetCameraDimension();
-    DOUBLE2 position = m_CameraPtr->GetCameraPosition();
-    DOUBLE2 direction = m_CameraPtr->GetCameraDirection();
+    float2 dimension = m_CameraPtr->GetCameraDimension();
+    float2 position = m_CameraPtr->GetCameraPosition();
+    float2 direction = m_CameraPtr->GetCameraDirection();
     if (m_GameOver == true && m_AvatarPtr->GetPosition().y < position.y - dimension.y/2)
     {
         Restart();
@@ -280,8 +278,8 @@ void Game::UpdateKeyChecks(double deltaTime)
         }
         if (engine->is_key_pressed(VK_F5))
         {
-            DOUBLE2 avatarPosition = m_AvatarPtr->GetPosition();
-            DOUBLE2 avatarRespawnPosition = m_AvatarPtr->GetRespawnPosition();
+            float2 avatarPosition = m_AvatarPtr->GetPosition();
+            float2 avatarRespawnPosition = m_AvatarPtr->GetRespawnPosition();
             LoadLevel(m_Level);
             m_AvatarPtr->SetPosition(avatarPosition);
             m_AvatarPtr->SetSpawnPosition(avatarRespawnPosition);
@@ -321,17 +319,21 @@ void Game::UpdateKeyChecks(double deltaTime)
 	}
 	if (engine->is_key_pressed(VK_F6))
 	{
-		XMFLOAT2 mousePosition = engine->get_mouse_pos_in_viewport();
-		DOUBLE2 pos = m_CameraPtr->GetViewMatrix().Inverse().TransformPoint(DOUBLE2(mousePosition.x, mousePosition.y));
-		mousePosition = XMFLOAT2{ (float)pos.x, (float)pos.y };
+		auto cameraMatrix = hlslpp::inverse(m_CameraPtr->GetViewMatrix());
+
+        // Transform mouse position into world coordinates
+		float2 mousePosition = engine->get_mouse_pos_in_viewport();
+		mousePosition = hlslpp::mul(cameraMatrix,float3(mousePosition.x, mousePosition.y, 1.0)).xy;
+
         engine->print_string(String("[") +
 			String(mousePosition.x) +
 			String(", ") +
 			String(mousePosition.y) + String("]"));
+
 		if (m_EntityLastHitCheckpointPtr != nullptr)
 		{
             engine->print_string(String("The camera position is: "));
-            engine->print_string(m_CameraPtr->GetCameraPosition().ToString());
+            //engine->print_string(m_CameraPtr->GetCameraPosition().ToString());
 		}
 
 	}
@@ -366,12 +368,12 @@ void Game::paint(graphics::D2DRenderContext& ctx)
 	auto engine = GameEngine::instance();
 
     assert(m_CameraPtr);
-    MATRIX3X2 matView = m_CameraPtr->GetViewMatrix();
+    float3x3 matView = m_CameraPtr->GetViewMatrix();
    
     //TODO: Refactor these lists into an actual systems (entity system or actors)
     if (m_DrawMode & DrawMode::Bitmap)
     {
-        ctx.set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
+        ctx.set_view_matrix(float3x3::identity());
         drawBackgroundGradient(ctx,15);
         ctx.set_view_matrix(matView);
 
@@ -388,7 +390,7 @@ void Game::paint(graphics::D2DRenderContext& ctx)
         m_CoinListPtr->Paint(ctx);
         m_LevelPtr->Paint(ctx);
         m_EnemyListPtr->PaintRockets(ctx);
-        ctx.set_world_matrix(matView.Inverse());
+        ctx.set_world_matrix(hlslpp::inverse(matView));
         m_CameraPtr->Paint(ctx);
         ctx.set_color(COLOR(0, 0, 0));
     }
@@ -399,9 +401,9 @@ void Game::paint(graphics::D2DRenderContext& ctx)
         m_CoinListPtr->PaintDebug(ctx);
         m_EntityListPtr->PaintDebug(ctx);
         m_AvatarPtr->PaintDebug(ctx);
-        ctx.set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
+        ctx.set_view_matrix(float3x3::identity());
         ctx.set_view_matrix(matView);
-        ctx.set_world_matrix(matView.Inverse());
+        ctx.set_world_matrix(hlslpp::inverse(matView));
     }
 
     m_HudPtr->Paint(ctx);
@@ -409,8 +411,8 @@ void Game::paint(graphics::D2DRenderContext& ctx)
 
 void Game::Initializeall(const std::string& fileName)
 {
-    m_CheckPointBgPtr->SetPosition(DOUBLE2(-650, -300));
-    m_CheckPointRotLightPtr->SetPosition(DOUBLE2(-650, -300));
+    m_CheckPointBgPtr->SetPosition(float2(-650, -300));
+    m_CheckPointRotLightPtr->SetPosition(float2(-650, -300));
     m_FileManagerPtr->ClearLists();
 
 
@@ -457,7 +459,7 @@ void Game::LoadLevel(const std::string& filePath)
 
     if (m_CheckPointBgPtr == nullptr)
     {
-        m_CheckPointBgPtr = new CheckPointBg(DOUBLE2(-300, 0),BitmapManager::instance()->load_image(String("Resources/Animations/CheckPointBg.png")));
+        m_CheckPointBgPtr = new CheckPointBg(float2(-300, 0),BitmapManager::instance()->load_image(String("Resources/Animations/CheckPointBg.png")));
     }
     Initializeall(filePath);
     m_AvatarPtr->SetKeyBinds(m_FileManagerPtr->GetKeyBinds());
@@ -476,7 +478,7 @@ void Game::LoadLevel(const std::string& filePath)
 void Game::Unload()
 {
     m_SndBgMusicPtr->stop();
-    m_CheckPointBgPtr->SetPosition(DOUBLE2(-650, -300));
+    m_CheckPointBgPtr->SetPosition(float2(-650, -300));
     m_AttackBeamListPtr->Remove();
     m_SndEpicModePtr->stop();
     m_FileManagerPtr->ClearLists();
@@ -525,7 +527,7 @@ void Game::Reset(const std::string& fileName)
     m_GameState = GameState::Running;
     m_GameOver = false;
     Initializeall(fileName);
-    //m_CameraPtr->Reset(DOUBLE2(m_AvatarPtr->GetPosition().x, m_CameraPtr->GetCameraPosition().y));
+    //m_CameraPtr->Reset(float2(m_AvatarPtr->GetPosition().x, m_CameraPtr->GetCameraPosition().y));
     
 }
 void Game::Restart()
@@ -557,7 +559,7 @@ void Game::Restart()
     }
     else
     {
-        DOUBLE2 startPosition = m_CameraPtr->GetCameraStartPosition();
+        float2 startPosition = m_CameraPtr->GetCameraStartPosition();
         m_CameraPtr->Reset(m_CameraPtr->GetCameraStartPosition());
     }
     

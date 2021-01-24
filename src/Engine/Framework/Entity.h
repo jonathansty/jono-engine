@@ -11,8 +11,8 @@ namespace framework
 
 	public:
 		Entity();
-		explicit Entity(XMFLOAT2 pos);
-		explicit Entity(XMFLOAT3 pos);
+		explicit Entity(float2 pos);
+		explicit Entity(float3 pos);
 
 		virtual ~Entity();
 
@@ -28,14 +28,15 @@ namespace framework
 		template<typename T>
 		T* get_component();
 
-		void set_local_position(XMFLOAT3 pos);
-		void set_local_position(XMFLOAT2 pos);
+		void set_local_position(float4 pos);
+		void set_local_position(float3 pos);
+		void set_local_position(float2 pos);
 		void set_local_position(float x, float y);
 
-		void set_local_scale(XMFLOAT3 scale);
+		void set_local_scale(float3 scale);
 
 		void set_rotation(float angle);
-		void set_rotation(XMVECTOR quat);
+		void set_rotation(hlslpp::quaternion quat);
 
 		void attach_to(Entity* parent) 
 		{ 
@@ -47,10 +48,10 @@ namespace framework
 			_parent->_children.push_back(this);
 		}
 
-		XMFLOAT3 get_local_position() const;
-		XMFLOAT3 get_world_position() const;
-		XMMATRIX get_local_transform() const;
-		XMMATRIX get_world_transform() const;
+		hlslpp::float4 get_local_position() const;
+		hlslpp::float4 get_world_position() const;
+		hlslpp::float4x4 get_local_transform() const;
+		hlslpp::float4x4 get_world_transform() const;
 
 		void set_name(std::string const& name)
 		{
@@ -69,12 +70,11 @@ namespace framework
 		std::vector<Entity*> _children;
 		std::vector<Component*> _components;
 
-		XMVECTOR _rot;
+		hlslpp::quaternion _rot;
 
-		XMFLOAT3 _pos;
-		XMFLOAT3 _scale;
-		XMFLOAT3 _rot_euler;
-
+		hlslpp::float4 _pos;
+		hlslpp::float3 _scale;
+		hlslpp::float3 _rot_euler;
 
 		friend EntityDebugOverlay;
 	};

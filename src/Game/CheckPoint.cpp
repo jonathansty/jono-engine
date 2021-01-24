@@ -14,7 +14,7 @@
 #include "Avatar.h"
 #include "SoundManager.h"
 
-CheckPoint::CheckPoint(DOUBLE2 position, Bitmap* bmpFlagPtr)
+CheckPoint::CheckPoint(float2 position, Bitmap* bmpFlagPtr)
 	: Entity(position)
     , m_BmpFlagPtr(bmpFlagPtr)
 {
@@ -61,12 +61,13 @@ void CheckPoint::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 }
 void CheckPoint::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate,matPivot;
-    matTranslate.SetAsTranslate(m_Position);
-    matPivot.SetAsTranslate(DOUBLE2(-20, -m_BmpFlagPtr->GetHeight() / 2));
+    using hlslpp::float3x3;
+    float3x3 matTranslate, matPivot;
+    matTranslate = float3x3::translation(m_Position);
+    matPivot = float3x3::translation(float2(-20, -m_BmpFlagPtr->GetHeight() / 2));
     ctx.set_world_matrix(matPivot * matTranslate);
     ctx.draw_bitmap(m_BmpFlagPtr);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void CheckPoint::Tick(double deltaTime)
 {
@@ -80,7 +81,7 @@ void CheckPoint::Reset()
 {
     m_IsHit = false;
 }
-void CheckPoint::SetSpawnPosition(DOUBLE2 respawnPosition)
+void CheckPoint::SetSpawnPosition(float2 respawnPosition)
 {
 
 }
@@ -96,11 +97,11 @@ void CheckPoint::SetCameraAngle(double angle)
 {
     m_CameraAngle = angle;
 }
-void CheckPoint::SetCameraPosition(DOUBLE2 position)
+void CheckPoint::SetCameraPosition(float2 position)
 {
     m_CameraPosition = position;
 }
-DOUBLE2 CheckPoint::GetCameraPosition()
+float2 CheckPoint::GetCameraPosition()
 {
     return m_CameraPosition;
 }

@@ -8,7 +8,7 @@
 #include "AnimationList.h"
 #include "EntityDestroy.h"
 
-EnemyShooter::EnemyShooter(DOUBLE2 position, Bitmap* bmpPtr, double angle) :
+EnemyShooter::EnemyShooter(float2 position, Bitmap* bmpPtr, double angle) :
 Enemy(position),
 m_BmpEnemyBodyPtr(bmpPtr),
 m_Angle(angle)
@@ -83,17 +83,17 @@ void EnemyShooter::Paint(graphics::D2DRenderContext& ctx)
     }
     m_BoundingBox.right = m_BoundingBox.left + CLIPWIDTH;
     m_BoundingBox.top = m_BoundingBox.top + CLIPHEIGHT;
-    MATRIX3X2 matTransform,matPivot, matRotate, matWorldTransform,matScale;
-    matTransform.SetAsTranslate(m_Position);
-    matRotate.SetAsRotate(m_ActPtr->GetAngle() + M_PI/2);
-    matPivot.SetAsTranslate(DOUBLE2(-60 / 2, 62 / 2));
+    float3x3 matTransform,matPivot, matRotate, matWorldTransform,matScale;
+    matTransform = float3x3::translation(m_Position);
+    matRotate = float3x3::rotation_z(m_ActPtr->GetAngle() + M_PI/2);
+    matPivot = float3x3::translation(float2(-60 / 2, 62 / 2));
     if (m_Mirror)
     {
-        matScale.SetAsScale(1, -1);
+        matScale = float3x3::scale(1, -1);
     }
     else
     {
-        matScale.SetAsScale(1, 1);
+        matScale = float3x3::scale(1, 1);
     }
 
     matWorldTransform = matPivot* matScale * matRotate * matTransform;
@@ -101,17 +101,17 @@ void EnemyShooter::Paint(graphics::D2DRenderContext& ctx)
     
     ctx.set_world_matrix(matWorldTransform);
     ctx.draw_bitmap(m_BmpEnemyBodyPtr,m_BoundingBox);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 
     //Painting the bullet
     if (m_ActBulletPtr != nullptr)
     {
-        matTransform.SetAsTranslate(m_ActBulletPtr->GetPosition());
-        matRotate.SetAsRotate(m_ActBulletPtr->GetAngle());
-        matPivot.SetAsTranslate(DOUBLE2(-5, -10));
+        matTransform = float3x3::translation(m_ActBulletPtr->GetPosition());
+        matRotate = float3x3::rotation_z(m_ActBulletPtr->GetAngle());
+        matPivot = float3x3::translation(float2(-5, -10));
         ctx.set_world_matrix(matPivot * matRotate * matTransform);
         ctx.draw_rect(0, 0, 10, 20);
-        ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+        ctx.set_world_matrix(float3x3::identity());
     }
     
 }
@@ -134,7 +134,7 @@ void EnemyShooter::Tick(double deltaTime)
 
     if (m_IsHit)
     {
-        DOUBLE2 position = m_ActBulletPtr->GetPosition();
+        float2 position = m_ActBulletPtr->GetPosition();
         m_ActBulletPtr->RemoveContactListener(this);
         delete m_ActBulletPtr;
         m_ActBulletPtr = nullptr;
@@ -144,10 +144,10 @@ void EnemyShooter::Tick(double deltaTime)
         m_IsHit = false;
     }
     
-    DOUBLE2 position = m_ActPtr->GetPosition();
+    float2 position = m_ActPtr->GetPosition();
     DOUBLE angle = m_ActPtr->GetAngle();
     int speed = 120 * 100 ;
-    DOUBLE2 velocity = DOUBLE2(speed * cos(angle + M_PI_2), speed * sin(angle + M_PI_2));
+    float2 velocity = float2(speed * cos(angle + M_PI_2), speed * sin(angle + M_PI_2));
     velocity *= deltaTime;
 
     m_AnimationListPtr->Tick(deltaTime);
@@ -182,11 +182,11 @@ PhysicsActor* EnemyShooter::GetActor()
 
     return m_ActBulletPtr;
 }
-DOUBLE2 EnemyShooter::GetPosition()
+float2 EnemyShooter::GetPosition()
 {
     return m_Position;
 }
-void EnemyShooter::SetSpawnPosition(DOUBLE2 position)
+void EnemyShooter::SetSpawnPosition(float2 position)
 {
     m_Position = position;
 }

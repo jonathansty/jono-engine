@@ -5,7 +5,7 @@ Level::Level(Bitmap* bmpPtr, String svgPath)
 {
 	// nothing to create
 	// m_ActCirclePtr->AddContactListener(this);
-    m_ActPtr = new PhysicsActor(DOUBLE2(), 0, BodyType::STATIC);
+    m_ActPtr = new PhysicsActor(float2(), 0, BodyType::STATIC);
     m_ActPtr->AddSVGShape(svgPath,0,0);
 
     m_ActPtr->SetName(String("Level"));
@@ -16,7 +16,7 @@ Level::Level(Bitmap* bmpPtr, String svgPath)
 Level::Level(Bitmap* bmpPtr, String svgPath, String svgBoundsPath):
 Level(bmpPtr,svgPath)
 {
-    m_ActBoundsPtr = new PhysicsActor(DOUBLE2(), 0, BodyType::STATIC);
+    m_ActBoundsPtr = new PhysicsActor(float2(), 0, BodyType::STATIC);
     m_ActBoundsPtr->AddSVGShape(svgBoundsPath,0);
     m_ActBoundsPtr->SetName(String("LevelBounds"));
 

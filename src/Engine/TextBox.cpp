@@ -65,8 +65,8 @@ void TextBox::Tick(double deltaTime)
 	if (GameEngine::instance()->is_mouse_button_down(VK_LBUTTON))
 	{
 
-		DOUBLE2 mouseScreenSpace(GameEngine::instance()->get_mouse_pos_in_viewport().x, GameEngine::instance()->get_mouse_pos_in_viewport().y);
-		DOUBLE2 mouseViewSpace = mouseScreenSpace;
+		float2 mouseScreenSpace(GameEngine::instance()->get_mouse_pos_in_viewport().x, GameEngine::instance()->get_mouse_pos_in_viewport().y);
+		float2 mouseViewSpace = mouseScreenSpace;
 		if (PointInRect(m_BoundingRect, mouseViewSpace))
 		{
 			m_bArmed = true;
@@ -153,8 +153,8 @@ void TextBox::DrawCaret(graphics::D2DRenderContext& ctx)
 
 		// draw the caret
 		ctx.draw_line(
-			DOUBLE2(m_BoundingRect.left + 2 + caretX, m_BoundingRect.top + caretY),
-			DOUBLE2(m_BoundingRect.left + 2 + caretX, m_BoundingRect.top + caretY + hitTestMetrics.height)
+			float2(m_BoundingRect.left + 2 + caretX, m_BoundingRect.top + caretY),
+			float2(m_BoundingRect.left + 2 + caretX, m_BoundingRect.top + caretY + hitTestMetrics.height)
 			);
 		textLayoutPtr->Release();
 	}

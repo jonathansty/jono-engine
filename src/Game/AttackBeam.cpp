@@ -16,9 +16,8 @@
 //---------------------------
 // Constructor & Destructor
 //---------------------------
-AttackBeam::AttackBeam(DOUBLE2 position) :
-m_Position(position)
-{
+AttackBeam::AttackBeam(float2 position)
+		: m_Position(position) {
     m_Position = position;
     m_Color = COLOR(255, 255, 255, 255);
     m_ActPtr = new PhysicsActor(position, 0, BodyType::STATIC);
@@ -53,20 +52,20 @@ AttackBeam::~AttackBeam()
 void AttackBeam::Paint(graphics::D2DRenderContext& ctx)
 {
     ctx.set_color(m_Color);
-    if (m_TopPosition.y < m_Position.y)
+    if (float(m_TopPosition.y) < float(m_Position.y))
     {
         ctx.fill_rect((int)(-m_Width + m_Position.x), (int)m_TopPosition.y, (int)(m_Width + m_Position.x), (int)m_Position.y);
     }
     
     ctx.set_color(COLOR(0, 0, 0,255));
-    //ctx.DrawLine(m_RayStart, m_RayEnd);
-    MATRIX3X2 matTranslate, matPivot;
-    matTranslate.SetAsTranslate(m_Position);
-    matPivot.SetAsTranslate(-m_BmpGroundPtr->GetWidth() / 2, -m_BmpGroundPtr->GetHeight());
+
+    float3x3 matTranslate, matPivot;
+    matTranslate = float3x3::translation(m_Position);
+    matPivot = float3x3::translation(-m_BmpGroundPtr->GetWidth() / 2, -m_BmpGroundPtr->GetHeight());
     ctx.set_world_matrix(matPivot * matTranslate);
     ctx.draw_bitmap(m_BmpGroundPtr);
    
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void AttackBeam::Tick(double deltaTime)
 {
@@ -77,17 +76,17 @@ void AttackBeam::Tick(double deltaTime)
         m_Width += 2;
     }
     m_RayStart = m_Position;
-    m_RayEnd = m_Position + DOUBLE2(0, 600);
+    m_RayEnd = m_Position + float2(0, 600);
 
-    DOUBLE2 intersection, normal,intersectionTop;
+    float2 intersection, normal,intersectionTop;
     double levelFraction = 0, levelTopFraction = 0;
     bool isLevelHit = false;
     bool isLevelHitTop = false;
     if (m_LevelPtr != nullptr)
     {
-        isLevelHit = m_LevelPtr->GetActor()->Raycast(m_RayStart - DOUBLE2(0,5), m_RayEnd, intersection, normal, levelFraction);
-        m_RayEnd = m_Position + DOUBLE2(0, -600);
-        isLevelHitTop = m_LevelPtr->GetActor()->Raycast(m_RayStart - DOUBLE2(0,10), m_RayEnd, intersectionTop, normal, levelTopFraction);
+		isLevelHit = m_LevelPtr->GetActor()->Raycast(m_RayStart - float2(0, 5), m_RayEnd, intersection, normal, levelFraction);
+        m_RayEnd = m_Position + float2(0, -600);
+		isLevelHitTop = m_LevelPtr->GetActor()->Raycast(m_RayStart - float2(0, 10), m_RayEnd, intersectionTop, normal, levelTopFraction);
     }
     if (isLevelHit)
     {
@@ -120,7 +119,7 @@ void AttackBeam::Tick(double deltaTime)
         
     }
 }
-void AttackBeam::SetPosition(DOUBLE2 position)
+void AttackBeam::SetPosition(float2 position)
 {
     m_Position = position;
 }

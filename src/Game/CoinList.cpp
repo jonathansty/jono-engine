@@ -57,7 +57,7 @@ void CoinList::PaintDebug(graphics::D2DRenderContext& ctx)
     {
         if (m_CoinsPtrArr[i] != nullptr)
         {
-            DOUBLE2 position = m_CoinsPtrArr[i]->GetPosition() - DOUBLE2(10,30);
+            float2 position = m_CoinsPtrArr[i]->GetPosition() - float2(10,30);
             String name = m_CoinsPtrArr[i]->GetName();
             ctx.draw_string(name,position);
         }

@@ -7,7 +7,7 @@
 //---------------------------
 // Constructor & Destructor
 //---------------------------
-PickUp::PickUp(DOUBLE2 position):
+PickUp::PickUp(float2 position):
 m_Position(position)
 {
 	// nothing to create

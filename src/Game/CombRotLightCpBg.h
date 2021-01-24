@@ -19,7 +19,7 @@ class CheckPointBg;
 class CombRotLightCpBg : public Animation
 {
 public:
-	CombRotLightCpBg(DOUBLE2 position,int radius,Bitmap* bitmap, COLOR color);
+	CombRotLightCpBg(float2 position,int radius,Bitmap* bitmap, COLOR color);
 	virtual ~CombRotLightCpBg( );
 
 	// C++11 make the class non-copyable

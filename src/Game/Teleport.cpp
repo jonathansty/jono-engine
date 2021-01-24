@@ -3,7 +3,7 @@
 #include "Teleport.h"
 #include "Avatar.h"
 
-Teleport::Teleport(DOUBLE2 teleportEntrance, DOUBLE2 teleportExit, Bitmap* bmpPtr) :
+Teleport::Teleport(float2 teleportEntrance, float2 teleportExit, Bitmap* bmpPtr) :
 Entity((teleportExit - teleportEntrance)/2),
 m_TeleEntrance(teleportEntrance),
 m_TeleExit(teleportExit),
@@ -38,13 +38,13 @@ void Teleport::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
     if (!m_TeleportedToEntrance && !m_TeleportedToExit && actThisPtr == m_ActEntrancePtr && actOtherPtr == m_AvatarPtr->GetActor())
     {
         m_AvatarPtr->GetActor()->SetPosition(m_TeleExit);
-        m_AvatarPtr->GetActor()->SetLinearVelocity(DOUBLE2(0, 0));
+        m_AvatarPtr->GetActor()->SetLinearVelocity(float2(0, 0));
         m_TeleportedToExit = true;
     }
     /*if (!m_TeleportedToExit && !m_TeleportedToEntrance && actThisPtr == m_ActExitPtr && actOtherPtr == m_AvatarPtr->GetActor())
     {
         m_AvatarPtr->GetActor()->SetPosition(m_TeleEntrance);
-        m_AvatarPtr->GetActor()->SetLinearVelocity(DOUBLE2(0, 0));
+        m_AvatarPtr->GetActor()->SetLinearVelocity(float2(0, 0));
         m_TeleportedToEntrance = true;
     }*/
 }
@@ -71,19 +71,19 @@ void Teleport::Tick(double deltaTime)
 }
 void Teleport::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate, matRotate, matPivot, matWorldTransform;
-    matTranslate.SetAsTranslate(m_TeleEntrance);
-    matRotate.SetAsRotate(m_Angle);
-    matPivot.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
+    float3x3 matTranslate, matRotate, matPivot, matWorldTransform;
+    matTranslate= float3x3::translation(m_TeleEntrance);
+    matRotate = float3x3::rotation_z(m_Angle);
+    matPivot= float3x3::translation(float2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
     matWorldTransform = matPivot * matRotate * matTranslate;
     ctx.set_world_matrix(matWorldTransform);
     ctx.draw_bitmap(m_BmpPtr);
-    matTranslate.SetAsTranslate(m_TeleExit);
-    matRotate.SetAsRotate(m_Angle + 1.5);
+    matTranslate= float3x3::translation(m_TeleExit);
+    matRotate = float3x3::rotation_z(m_Angle + 1.5);
     matWorldTransform = matPivot * matRotate * matTranslate;
     ctx.set_world_matrix(matWorldTransform);
     ctx.draw_bitmap(m_BmpPtr);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void Teleport::Reset()
 {

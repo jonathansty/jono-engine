@@ -44,7 +44,7 @@ AllowShortFunctionsOnASingleLine: Inline
 # BreakBeforeInheritanceComma: false
 BreakBeforeTernaryOperators: false
 # BreakConstructorInitializersBeforeComma: false
-BreakConstructorInitializers: AfterColon
+BreakConstructorInitializers: BeforeComma
 # BreakStringLiterals: true
 ColumnLimit:     0
 # CommentPragmas:  '^ IWYU pragma:'
@@ -88,7 +88,7 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 # PenaltyBreakString: 1000
 # PenaltyExcessCharacter: 1000000
 # PenaltyReturnTypeOnItsOwnLine: 60
-# PointerAlignment: Right
+PointerAlignment: Left
 # RawStringFormats:
 #   - Delimiter:       pb
 #     Language:        TextProto

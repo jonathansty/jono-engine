@@ -16,7 +16,7 @@
 class BlockSlide : public Entity
 {
 public:
-	BlockSlide(DOUBLE2 position,int width, int height );
+	BlockSlide(float2 position,int width, int height );
 	virtual ~BlockSlide( );
 
 	// C++11 make the class non-copyable

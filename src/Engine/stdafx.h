@@ -60,6 +60,16 @@ using Microsoft::WRL::ComPtr;
 
 #include "tinyxml2/tinyxml2.h"
 
+#include <hlsl++.h>
+using hlslpp::double2;
+using hlslpp::float2;
+using hlslpp::float3;
+using hlslpp::float3x3;
+using hlslpp::float4;
+using hlslpp::float3x3;
+using hlslpp::double2;
+
+
 #include "EString.h"
 #include "Structs.h"
 #include "Box2DDebugRenderer.h"
@@ -85,5 +95,6 @@ using std::shared_ptr;
 using std::weak_ptr;
 
 #include "rtti/rtti.h"
+
 
 

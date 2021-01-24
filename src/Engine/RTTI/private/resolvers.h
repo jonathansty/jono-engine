@@ -24,6 +24,11 @@ struct PrimitiveTypeResolver
 	DECLARE_PRIMITIVE_TYPE(double);
 	DECLARE_PRIMITIVE_TYPE(short);
 	DECLARE_PRIMITIVE_TYPE(std::string);
+
+	// HLSLPP
+	DECLARE_PRIMITIVE_TYPE(hlslpp::float3);
+	DECLARE_PRIMITIVE_TYPE(hlslpp::float4);
+
 #undef DECLARE_PRIMITIVE_TYPE
 
 	// Other non-built in types that need custom logic

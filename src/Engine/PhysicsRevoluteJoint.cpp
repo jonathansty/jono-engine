@@ -3,7 +3,7 @@
 #include "PhysicsRevoluteJoint.h"
 #include "PhysicsActor.h"
 
-PhysicsRevoluteJoint::PhysicsRevoluteJoint(PhysicsActor *actAPtr, DOUBLE2 anchorA, PhysicsActor *actBPtr, DOUBLE2 anchorB, bool collide, double referenceAngle)
+PhysicsRevoluteJoint::PhysicsRevoluteJoint(PhysicsActor *actAPtr, float2 anchorA, PhysicsActor *actBPtr, float2 anchorB, bool collide, double referenceAngle)
 {
 	b2RevoluteJointDef revoluteJointDef;
 	revoluteJointDef.bodyA = actAPtr->m_BodyPtr;

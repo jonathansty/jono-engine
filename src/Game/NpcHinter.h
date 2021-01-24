@@ -16,8 +16,8 @@
 class NpcHinter : public Entity
 {
 public:
-    NpcHinter(DOUBLE2 position, String tipText);
-	NpcHinter(DOUBLE2 position, String tipText, Bitmap* bmpCharacterPtr);
+    NpcHinter(float2 position, String tipText);
+	NpcHinter(float2 position, String tipText, Bitmap* bmpCharacterPtr);
 	virtual ~NpcHinter( );
 
 	// C++11 make the class non-copyable

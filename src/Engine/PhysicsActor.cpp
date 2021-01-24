@@ -6,11 +6,13 @@
 // http://www.iforce2d.net/b2dtut
 // http://box2d.org/manual.pdf
 
-PhysicsActor::PhysicsActor(DOUBLE2 pos, double angle, BodyType bodyType)
+PhysicsActor::PhysicsActor(float2 pos, double angle, BodyType bodyType)
 	: m_BodyPtr(nullptr)
 {
 	SetBody(pos, angle, bodyType);
 }
+
+
 
 PhysicsActor::~PhysicsActor()
 {
@@ -35,7 +37,8 @@ String PhysicsActor::GetName()
 	return String(m_Name.c_str());
 }
 
-bool PhysicsActor::SetBody(DOUBLE2 pos, double angle, BodyType bodyType)
+
+bool PhysicsActor::SetBody(float2 pos, double angle, BodyType bodyType)
 {
 	b2BodyDef bodyDef;
 	// Define the dynamic body. We set its position and call the body factory.
@@ -95,7 +98,7 @@ bool PhysicsActor::AddBoxShape(double width, double height, double restitution, 
 	ApplyTrigger(fixturePtr);
 	return true;
 }
-bool PhysicsActor::AddBoxShapeWithOffset(double width, double height, DOUBLE2 offset, double restitution, double friction, double density)
+bool PhysicsActor::AddBoxShapeWithOffset(double width, double height, float2 offset, double restitution, double friction, double density)
 {
     b2FixtureDef fixtureDef;
     width /= SCALE; height /= SCALE;
@@ -126,7 +129,7 @@ bool PhysicsActor::AddBoxShapeWithOffset(double width, double height, DOUBLE2 of
     return true;
 }
 
-bool PhysicsActor::AddCircleShape(double radius, DOUBLE2 offset, double restitution, double friction, double density)
+bool PhysicsActor::AddCircleShape(double radius, float2 offset, double restitution, double friction, double density)
 {
 	b2FixtureDef fixtureDef;
 	radius /= SCALE;
@@ -159,7 +162,7 @@ bool PhysicsActor::AddCircleShape(double radius, DOUBLE2 offset, double restitut
 	return true;
 }
 
-bool PhysicsActor::AddPolygonShape(const std::vector<DOUBLE2>& vertexArrRef, double restitution, double friction, double density)
+bool PhysicsActor::AddPolygonShape(const std::vector<float2>& vertexArrRef, double restitution, double friction, double density)
 {
 	b2FixtureDef fixtureDef;
 	std::vector<b2Vec2> vecArr;
@@ -195,7 +198,7 @@ bool PhysicsActor::AddPolygonShape(const std::vector<DOUBLE2>& vertexArrRef, dou
 	return true;
 }
 
-bool PhysicsActor::AddChainShape(const std::vector<DOUBLE2>& vertexArrRef, bool closed, double restitution, double friction, double density)
+bool PhysicsActor::AddChainShape(const std::vector<float2>& vertexArrRef, bool closed, double restitution, double friction, double density)
 {
 	b2FixtureDef fixtureDef;
 	std::vector<b2Vec2> vecArr;
@@ -204,12 +207,13 @@ bool PhysicsActor::AddChainShape(const std::vector<DOUBLE2>& vertexArrRef, bool 
 	// causing a crash in Box2D -> remove the last element
 	// check the distance between begin and end points, omit the end point
 	int omitLastVertex = 0;
-	if ((vertexArrRef[0] - vertexArrRef[vertexArrRef.size() - 1]).SquaredLength() < 0.1)
+	float2 v = vertexArrRef[0] - vertexArrRef[vertexArrRef.size() - 1];
+	if ( float(hlslpp::sqrt(hlslpp::dot(v,v))) < 0.1)
 	{
 		omitLastVertex = 1;
 	}
 
-	for (size_t i = 0; i < vertexArrRef.size() - omitLastVertex; i++)
+	for (size_t i = 0; i < (vertexArrRef.size() - omitLastVertex); i++)
 	{
 		vecArr.push_back(b2Vec2((float)vertexArrRef[i].x / SCALE, (float)vertexArrRef[i].y / SCALE));
 	}
@@ -252,7 +256,7 @@ bool PhysicsActor::AddChainShape(const std::vector<DOUBLE2>& vertexArrRef, bool 
 bool PhysicsActor::AddSVGShape(const String & svgFilePathRef, double restitution, double friction, double density)
 {
 	// a vector containing chains
-	std::vector<std::vector<DOUBLE2>> verticesArr;
+	std::vector<std::vector<float2>> verticesArr;
 
 	//parse the svg file
 	SVGParser svgParser(svgFilePathRef, verticesArr);
@@ -261,21 +265,20 @@ bool PhysicsActor::AddSVGShape(const String & svgFilePathRef, double restitution
 	// process the chains
 	for (size_t i = 0; i < verticesArr.size(); i++)
 	{
-		std::vector<DOUBLE2> &chain = verticesArr[i];
+		std::vector<float2> &chain = verticesArr[i];
 		bool result = AddChainShape(chain, true, restitution, friction, density);
 		if (!result) OutputDebugStringA("svg Chain creation failed");
 	}
 	return true;
 }
 
-DOUBLE2 PhysicsActor::GetPosition()
-{
+float2 PhysicsActor::GetPosition() {
 	b2Vec2 position = m_BodyPtr->GetPosition();
-	return DOUBLE2(position.x, position.y) * SCALE;
+	return float2(position.x, position.y) * SCALE;
 }
 
-void PhysicsActor::SetPosition(const DOUBLE2& positionRef)
-{
+
+void PhysicsActor::SetPosition(float2 const& positionRef) {
 	m_BodyPtr->SetTransform(b2Vec2((float)(positionRef.x / SCALE), (float)(positionRef.y / SCALE)), m_BodyPtr->GetAngle());
 	m_BodyPtr->SetAwake(true);
 }
@@ -292,17 +295,17 @@ void PhysicsActor::SetAngle(double angle)
 	m_BodyPtr->SetAwake(true);
 }
 
-void PhysicsActor::SetLinearVelocity(DOUBLE2 velocity)
-{
-	velocity /= SCALE;
+void PhysicsActor::SetLinearVelocity(float2 const& velocity) {
+	float2 vel = velocity / SCALE;
 	m_BodyPtr->SetLinearVelocity(b2Vec2((float)velocity.x, (float)velocity.y));
 	m_BodyPtr->SetAwake(true);
 }
 
-DOUBLE2  PhysicsActor::GetLinearVelocity()
+
+float2  PhysicsActor::GetLinearVelocity()
 {
 	b2Vec2 v = m_BodyPtr->GetLinearVelocity();
-	return DOUBLE2(v.x, v.y) * SCALE;
+	return float2(v.x, v.y) * SCALE;
 }
 
 void PhysicsActor::SetAngularVelocity(double velocity)
@@ -346,8 +349,7 @@ void PhysicsActor::SetGravityScale(double scale)
 	m_BodyPtr->SetGravityScale((float)scale);
 }
 
-bool PhysicsActor::Raycast(DOUBLE2 point1, DOUBLE2 point2, DOUBLE2 &intersectionRef, DOUBLE2 &normalRef, double &fractionRef)
-{
+bool PhysicsActor::Raycast(float2 point1, float2 point2, float2& intersectionRef, float2& normalRef, double& fractionRef) {
 	point1 /= SCALE;
 	point2 /= SCALE;
 	b2Transform transform;
@@ -376,8 +378,8 @@ bool PhysicsActor::Raycast(DOUBLE2 point1, DOUBLE2 point2, DOUBLE2 &intersection
 	if (closestOutput.fraction < 1)
 	{
 		b2Vec2 hitPoint = input.p1 + closestOutput.fraction * (input.p2 - input.p1);
-		intersectionRef = DOUBLE2(hitPoint.x, hitPoint.y) * SCALE;
-		normalRef = DOUBLE2(output.normal.x, output.normal.y);
+		intersectionRef = float2(hitPoint.x, hitPoint.y) * SCALE;
+		normalRef = float2(output.normal.x, output.normal.y);
 		fractionRef = output.fraction;
 		return true;
 	}
@@ -385,7 +387,7 @@ bool PhysicsActor::Raycast(DOUBLE2 point1, DOUBLE2 point2, DOUBLE2 &intersection
 	return false;
 }
 
-void PhysicsActor::ApplyForce(DOUBLE2 force, DOUBLE2 offsetPoint)
+void PhysicsActor::ApplyForce(float2 force, float2 offsetPoint)
 {
 	force /= (SCALE * SCALE);
 	if (offsetPoint.x == 0 && offsetPoint.y == 0)
@@ -405,7 +407,7 @@ void PhysicsActor::ApplyTorque(double torque)
 	m_BodyPtr->ApplyTorque((float)torque, true);
 }
 
-void PhysicsActor::ApplyLinearImpulse(DOUBLE2 impulse, DOUBLE2 offsetPoint)
+void PhysicsActor::ApplyLinearImpulse(float2 impulse, float2 offsetPoint)
 {
 	impulse /= (SCALE * SCALE);
 	b2Vec2 p = m_BodyPtr->GetWorldPoint(b2Vec2((float)offsetPoint.x / SCALE, (float)offsetPoint.y / SCALE));
@@ -480,7 +482,7 @@ void PhysicsActor::ApplyGhost(b2Fixture * fixturePtr)
 	}
 }
 
-bool PhysicsActor::IsPointInActor(const DOUBLE2 &pointRef)
+bool PhysicsActor::IsPointInActor(const float2 &pointRef)
 {
 	bool hit = false;
 	for (b2Fixture* fixturePtr = m_BodyPtr->GetFixtureList(); fixturePtr != nullptr && !hit; fixturePtr = fixturePtr->GetNext())
@@ -528,9 +530,9 @@ bool PhysicsActor::IsOverlapping(PhysicsActor* otherActor)
 	return false;
 }
 
-std::vector<DOUBLE2> PhysicsActor::GetContactList()
+std::vector<float2> PhysicsActor::GetContactList()
 {
-	std :: vector<DOUBLE2> contactPoints;
+	std :: vector<float2> contactPoints;
 	for (b2ContactEdge* edgePtr = m_BodyPtr->GetContactList(); edgePtr; edgePtr = edgePtr->next)
 	{
 		if (edgePtr->contact->IsTouching())
@@ -543,7 +545,7 @@ std::vector<DOUBLE2> PhysicsActor::GetContactList()
 
 			for (int i = 0; i < numPoints; i++)
 			{
-				contactPoints.push_back(DOUBLE2(worldManifold.points[i].x * SCALE, worldManifold.points[i].y * SCALE));
+				contactPoints.push_back(float2(worldManifold.points[i].x * SCALE, worldManifold.points[i].y * SCALE));
 			}
 		}
 	}

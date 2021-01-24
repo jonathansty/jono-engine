@@ -8,7 +8,7 @@
 #include "RotLight.h"
 
 
-RotLight::RotLight(DOUBLE2 position):
+RotLight::RotLight(float2 position):
 Animation(position)
 {
 	// nothing to create
@@ -40,30 +40,30 @@ RotLight::~RotLight()
 void RotLight::Paint(graphics::D2DRenderContext& ctx)
 {
 
-    MATRIX3X2 matOrbitRadius, matOrbitCenter;
-    matOrbitRadius.SetAsTranslate(DOUBLE2(20, 0));
-    matOrbitCenter.SetAsTranslate(DOUBLE2(m_Position));
+    float3x3 matOrbitRadius, matOrbitCenter;
+    matOrbitRadius= float3x3::translation(float2(20, 0));
+    matOrbitCenter= float3x3::translation(float2(m_Position));
     ctx.set_color(m_Color);
     for (double angle = 0; angle < 2 * M_PI; angle += (2*M_PI)/6)
     {
-        MATRIX3X2 matRectOrbitRotate, matWorldTransform;
-        matRectOrbitRotate.SetAsRotate(angle + m_Angle);
-        matWorldTransform = matOrbitRadius * matRectOrbitRotate * matOrbitCenter;
+        float3x3 matRectOrbitRotate, matWorldTransform;
+        //matRectOrbitRotate = float3x3::rotation_z(angle + m_Angle);
+        matWorldTransform = hlslpp::mul(hlslpp::mul(matOrbitRadius , matRectOrbitRotate) , matOrbitCenter);
         ctx.set_world_matrix(matWorldTransform);
-		std::vector<DOUBLE2> tmpPointsArr{};
-        tmpPointsArr.push_back(DOUBLE2(0,-10));
-        tmpPointsArr.push_back(DOUBLE2(m_Radius,-m_Radius/4));
-        tmpPointsArr.push_back(DOUBLE2(m_Radius + 10, -m_Radius / 6));
-        tmpPointsArr.push_back(DOUBLE2(m_Radius + 15, 0));
-        tmpPointsArr.push_back(DOUBLE2(m_Radius + 10, m_Radius / 6));
-        tmpPointsArr.push_back(DOUBLE2(m_Radius,m_Radius/4));
-        tmpPointsArr.push_back(DOUBLE2(0,10));
+		std::vector<float2> tmpPointsArr{};
+        tmpPointsArr.push_back(float2(0,-10));
+        tmpPointsArr.push_back(float2(m_Radius,-m_Radius/4));
+        tmpPointsArr.push_back(float2(m_Radius + 10, -m_Radius / 6));
+        tmpPointsArr.push_back(float2(m_Radius + 15, 0));
+        tmpPointsArr.push_back(float2(m_Radius + 10, m_Radius / 6));
+        tmpPointsArr.push_back(float2(m_Radius,m_Radius/4));
+        tmpPointsArr.push_back(float2(0,10));
         ctx.fill_polygon(tmpPointsArr, 7);
     }
 
    
     ctx.set_color(COLOR(0, 0, 0));
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void RotLight::Tick(double deltaTime)
 {
@@ -90,7 +90,7 @@ void RotLight::SetRadius(double radius)
 {
     m_MaxRadius = radius;
 }
-void RotLight::SetPosition(DOUBLE2 position)
+void RotLight::SetPosition(float2 position)
 {
     m_Position= position;
 }
@@ -105,7 +105,7 @@ void RotLight::SetDrawState(drawState drawstate)
     }
     m_DrawState = drawstate;
 }
-DOUBLE2 RotLight::GetPosition()
+float2 RotLight::GetPosition()
 {
     return m_Position;
 }

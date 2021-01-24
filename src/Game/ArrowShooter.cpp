@@ -5,13 +5,13 @@
 #include "Arrow.h"
 #include "Avatar.h"
 
-ArrowShooter::ArrowShooter(DOUBLE2 position, DOUBLE2 direction,double intervalTime)
+ArrowShooter::ArrowShooter(float2 position, float2 direction,double intervalTime)
     : Entity(position)
-    , m_direction(direction.Normalized())
-    , m_IntervalTime(intervalTime)
+    , _direction(hlslpp::normalize(direction))
+    , _interval_time(intervalTime)
 {
-    double angle = DOUBLE2(1, 0).AngleWith(direction);
-    m_Angle = angle;
+    double angle = hlslpp::acos(hlslpp::dot(float2(1, 0),hlslpp::normalize(direction)));
+    _angle = angle;
     m_ActPtr = new PhysicsActor(position,angle - M_PI_2,BodyType::STATIC);
     m_ActPtr->AddBoxShape(WIDTH, HEIGHT);
 }
@@ -49,19 +49,19 @@ void ArrowShooter::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 }
 void ArrowShooter::Tick(double deltaTime)
 {
-    m_AccuTime += deltaTime;
+    _timer += deltaTime;
 
-    if (m_AccuTime > m_IntervalTime)
+    if (_timer > _interval_time)
     {
-        Arrow* tmpArrowPtr = new Arrow(m_Position + m_direction*30,BitmapManager::instance()->load_image(String("Resources/Interactions/arrowUp.png")));
-        tmpArrowPtr->GetActor()->SetLinearVelocity(m_direction * SPEED);
-        tmpArrowPtr->GetActor()->SetAngle(m_Angle);
-        tmpArrowPtr->SetPushPower(m_PushPower);
+        Arrow* tmpArrowPtr = new Arrow(m_Position + _direction*30,BitmapManager::instance()->load_image(String("Resources/Interactions/arrowUp.png")));
+        tmpArrowPtr->GetActor()->SetLinearVelocity(_direction * SPEED);
+        tmpArrowPtr->GetActor()->SetAngle(_angle);
+        tmpArrowPtr->SetPushPower(_push_power);
         Add(tmpArrowPtr);
-        m_AccuTime -= m_IntervalTime;
+        _timer -= _interval_time;
     }
 
-    for (int i = 0; i < m_AmountOfArrows; i++)
+    for (int i = 0; i < _n_arrows; i++)
     {
         if (m_ArrowsPtrArr[i] != nullptr)
         {
@@ -76,16 +76,16 @@ void ArrowShooter::Tick(double deltaTime)
 }
 void ArrowShooter::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate, matPivot, matRotate;
-    matTranslate.SetAsTranslate(m_Position);
-    matPivot.SetAsTranslate(DOUBLE2(-WIDTH/2,-HEIGHT/2));
-    matRotate.SetAsRotate(m_ActPtr->GetAngle());
+    float3x3 matTranslate, matPivot, matRotate;
+    matTranslate= float3x3::translation(m_Position);
+    matPivot= float3x3::translation(float2(-WIDTH/2,-HEIGHT/2));
+    matRotate = float3x3::rotation_z(m_ActPtr->GetAngle());
     ctx.set_world_matrix(matPivot * matRotate * matTranslate);
     ctx.fill_rect(0, 0, WIDTH, HEIGHT);
     ctx.fill_rect(-10, HEIGHT, 0, HEIGHT + 10);
     ctx.fill_rect(WIDTH, HEIGHT, WIDTH + 10, HEIGHT + 10);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
-    for (int i = 0; i < m_AmountOfArrows; i++)
+    ctx.set_world_matrix(float3x3::identity());
+    for (int i = 0; i < _n_arrows; i++)
     {
         if (m_ArrowsPtrArr[i] != nullptr)
         {
@@ -99,7 +99,7 @@ void ArrowShooter::Reset()
 }
 void ArrowShooter::Add(Arrow* tmpArrowPtr)
 {
-    for (int i = 0; i < m_AmountOfArrows; i++)
+    for (int i = 0; i < _n_arrows; i++)
     {
         if (m_ArrowsPtrArr[i] == nullptr)
         {
@@ -108,9 +108,9 @@ void ArrowShooter::Add(Arrow* tmpArrowPtr)
         }
     }
     m_ArrowsPtrArr.push_back(tmpArrowPtr);
-    m_AmountOfArrows++;
+    _n_arrows++;
 }
 void ArrowShooter::SetPushPower(int pushPower)
 {
-    m_PushPower = pushPower;
+    _push_power = pushPower;
 }

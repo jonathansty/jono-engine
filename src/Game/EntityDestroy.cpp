@@ -1,7 +1,7 @@
 #include "stdafx.h"		
 #include "EntityDestroy.h"
 
-EntityDestroy::EntityDestroy(DOUBLE2 position) 
+EntityDestroy::EntityDestroy(float2 position) 
     : Animation(position)
 {
 	// nothing to create
@@ -47,14 +47,14 @@ void EntityDestroy::Tick(double deltaTime)
 }
 void EntityDestroy::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate,matScale, matPivot;
-    matTranslate.SetAsTranslate(m_Position);
-    matScale.SetAsScale(m_Scale);
-    matPivot.SetAsTranslate(DOUBLE2(0,0));
+    float3x3 matTranslate,matScale, matPivot;
+    matTranslate= float3x3::translation(m_Position);
+    matScale = float3x3::scale(m_Scale);
+    matPivot= float3x3::translation(float2(0,0));
     ctx.set_color(COLOR(255,255,255, m_Opacity * 255));
     ctx.set_world_matrix(matPivot * matScale * matTranslate);
-    ctx.fill_ellipse(DOUBLE2(), m_Radius, m_Radius);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.fill_ellipse(float2(), m_Radius, m_Radius);
+    ctx.set_world_matrix(float3x3::identity());
     ctx.set_color(COLOR(0, 0, 0,255));
 }
 double EntityDestroy::GetOpacity()

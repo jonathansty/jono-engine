@@ -49,9 +49,9 @@ public:
     void CreateSoundMuteBtn();
     void RemoveSoundMuteBtn();
 
-    void PaintGameOverWindow(graphics::D2DRenderContext& ctx, DOUBLE2 position);
-    void PaintMoneyWindow(graphics::D2DRenderContext&ctx, DOUBLE2 position);
-    void PaintDeathCounterWindow(graphics::D2DRenderContext& ctx, DOUBLE2 position);
+    void PaintGameOverWindow(graphics::D2DRenderContext& ctx, float2 position);
+    void PaintMoneyWindow(graphics::D2DRenderContext&ctx, float2 position);
+    void PaintDeathCounterWindow(graphics::D2DRenderContext& ctx, float2 position);
     void PaintMuteSound();
     void CreatePauseMenu();
     void RemovePauseMenu();

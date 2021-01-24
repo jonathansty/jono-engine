@@ -2,7 +2,7 @@
 	
 #include "Trail.h"
 
-Trail::Trail(DOUBLE2 position) :
+Trail::Trail(float2 position) :
 m_Position(position)
 {
 	// nothing to create
@@ -31,7 +31,7 @@ Trail::~Trail()
 //{
 //
 //}
-void Trail::Paint(graphics::D2DRenderContext& ctx, DOUBLE2 position)
+void Trail::Paint(graphics::D2DRenderContext& ctx, float2 position)
 {
     m_Position = position;
     m_deqTrailPtrArr.push_front(m_Position);
@@ -43,21 +43,21 @@ void Trail::Paint(graphics::D2DRenderContext& ctx, DOUBLE2 position)
     ctx.set_color(COLOR(255, 255, 255, m_Opacity));
     for (std::size_t i = 0, n = m_deqTrailPtrArr.size(); i < n - 1; i++)
     {
-        DOUBLE2 pos = m_deqTrailPtrArr[i];
-        DOUBLE2 pos2 = m_deqTrailPtrArr[i + 1];
-        DOUBLE2 midPos = (pos2 + pos) / 2;
+        float2 pos = m_deqTrailPtrArr[i];
+        float2 pos2 = m_deqTrailPtrArr[i + 1];
+        float2 midPos = (pos2 + pos) / 2;
         double size = m_Size;
         if (size - (size / m_TrailLength)*(double)i > 0)
         {
 
             ctx.fill_ellipse(pos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
-            DOUBLE2 vector = pos2 - pos;
-            if (vector.Length() > 5)
+            float2 vector = pos2 - pos;
+            if (float(hlslpp::length(vector)) > 5.0f)
             {
                 for (int j = 0; j < m_AmountOfInterpolation; j++)
                 {
-                    double spaceBetween = vector.Length() / m_AmountOfInterpolation;
-                    DOUBLE2 normVector = vector.Normalized();
+                    double spaceBetween = hlslpp::length(vector) / m_AmountOfInterpolation;
+                    float2 normVector = hlslpp::normalize(vector);
                     midPos = normVector*j*spaceBetween;
                     ctx.fill_ellipse(pos + midPos, size - (size / m_TrailLength)*i, size - (size / m_TrailLength)*i);
                 }

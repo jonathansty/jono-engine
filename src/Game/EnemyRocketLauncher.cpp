@@ -15,14 +15,14 @@
 #include "BitmapManager.h"
 
 
-EnemyRocketLauncher::EnemyRocketLauncher(DOUBLE2 position, double angle):
+EnemyRocketLauncher::EnemyRocketLauncher(float2 position, double angle):
 Enemy(position)
 {
     m_EnemyListPtr = new EnemyList();
     m_AnimationListPtr = new AnimationList();
     m_ActPtr = new PhysicsActor(position, angle, BodyType::STATIC);
     m_Angle = angle;
-    m_Direction = DOUBLE2(cos(angle - M_PI_2), sin(angle - M_PI_2));
+    m_Direction = float2(cos(angle - M_PI_2), sin(angle - M_PI_2));
     m_ActPtr->AddBoxShape(WIDTH, HEIGHT,0,0);
     m_ActPtr->SetName(String("EnemyRocketLauncher"));
     m_BmpPtr = BitmapManager::instance()->load_image(String("Resources/Enemy/RocketLauncher.png"));
@@ -77,7 +77,7 @@ void EnemyRocketLauncher::Tick(double deltaTime)
         m_FrameNr = m_FrameNr % MAXFRAMES;
         m_AccuTime -= 1.0 / FRAMERATE;
     }
-    int distance = (int)((m_Position - m_AvatarPtr->GetPosition()).Length());
+    int distance = hlslpp::length(m_Position - m_AvatarPtr->GetPosition());
 
     if (distance < DETECTIONZONE)
     {
@@ -97,7 +97,7 @@ void EnemyRocketLauncher::Tick(double deltaTime)
     {
         m_AccuShootTime -= m_IntervalTime;
         m_AmountOfRockets++;
-        //m_Direction = DOUBLE2(1, 0);
+        //m_Direction = float2(1, 0);
         EnemyRocket* tmpRocket = new EnemyRocket(m_Position + m_Direction*30, m_Direction);
         tmpRocket->SetAvatar(m_AvatarPtr);
         tmpRocket->SetSpeed(rand() % 100 + 300);
@@ -113,17 +113,17 @@ void EnemyRocketLauncher::Tick(double deltaTime)
 }
 void EnemyRocketLauncher::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate, matPivot, matWorldTransform, matRotate;
-    matTranslate.SetAsTranslate(m_Position);
-    matPivot.SetAsTranslate(DOUBLE2(-WIDTH / 2, -HEIGHT / 2));
-    matRotate.SetAsRotate(m_Angle);
+    float3x3 matTranslate, matPivot, matWorldTransform, matRotate;
+    matTranslate = float3x3::translation(m_Position);
+    matPivot = float3x3::translation(float2(-WIDTH / 2, -HEIGHT / 2));
+    matRotate = float3x3::rotation_z(m_Angle);
     matWorldTransform = matPivot * matRotate * matTranslate;
     m_AnimationListPtr->Paint(ctx);
 
     ctx.set_world_matrix(matWorldTransform);
     RECT boundingBox = updateFrameDisplay(m_FrameNr);
     ctx.draw_bitmap(m_BmpPtr, boundingBox);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void EnemyRocketLauncher::PaintRockets(graphics::D2DRenderContext& ctx)
 {

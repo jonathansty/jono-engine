@@ -2,9 +2,10 @@
 #include "RTTI/rtti.h"
 #include "Overlays.h"
 
-EntityDebugOverlay::EntityDebugOverlay(framework::World* world) : DebugOverlay(false, "EntityDebugOverlay")
-, _world(world)
-{
+EntityDebugOverlay::EntityDebugOverlay(framework::World* world)
+		: DebugOverlay(false, "EntityDebugOverlay")
+		, _world(world)
+		, _selected(nullptr) {
 
 }
 
@@ -62,17 +63,17 @@ void EntityDebugOverlay::render_object(rtti::Object& obj)
 			ImGui::PushID(&prop);
 
 			rtti::Property const& p = prop.second;
-			if (p.type == rtti::Registry::get<XMFLOAT3>())
+			if (p.type == rtti::Registry::get<float3>())
 			{
-				XMFLOAT3 pos = obj.get_property<XMFLOAT3>(p.name);
+				float3 pos = obj.get_property<float3>(p.name);
 				if (ImGui::InputFloat3(p.name.c_str(), (float*)&pos, 2))
 				{
 					obj.set_property(p.name, pos);
 				}
 			}
-			else if (p.type == rtti::Registry::get<XMVECTOR>())
+			else if (p.type == rtti::Registry::get<float4>())
 			{
-				XMVECTOR rot = obj.get_property<XMVECTOR>(p.name);
+				float4 rot = obj.get_property<float4>(p.name);
 				if (ImGui::InputFloat4(p.name.c_str(), (float*)&rot, 2))
 				{
 					obj.set_property(p.name, rot);

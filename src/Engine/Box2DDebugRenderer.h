@@ -40,5 +40,5 @@ public:
 private:
 	class graphics::D2DRenderContext *_context;
 	COLOR m_Color;
-	MATRIX3X2 m_MatScale;
+	float3x3 _mat_scale;
 };

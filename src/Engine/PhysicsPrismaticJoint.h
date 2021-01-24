@@ -15,7 +15,7 @@ public:
 	//! @param anchorB: The local anchor point relative to actB's origin.
 	//! @param jointAxis: The axis along which the physics actors will move according to each other. This axis is fixed in the two bodies and follows their motion.
 	//! @param collide: if true the actors attached to this joint will collide
-	PhysicsPrismaticJoint(PhysicsActor *actAPtr, DOUBLE2 anchorA, PhysicsActor *actBPtr, DOUBLE2 anchorB, DOUBLE2 jointAxis, bool collide = false);
+	PhysicsPrismaticJoint(PhysicsActor *actAPtr, float2 anchorA, PhysicsActor *actBPtr, float2 anchorB, float2 jointAxis, bool collide = false);
 	virtual ~PhysicsPrismaticJoint();
 
 	// C++11 make the class non-copyable

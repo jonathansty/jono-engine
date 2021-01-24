@@ -65,7 +65,7 @@ GameEngine::GameEngine()
 	, _recreate_swapchain(false)
 	, _recreate_game_texture(false)
 	, _debug_physics_rendering(false)
-	, _gravity(DOUBLE2(0, 9.81))
+	, _gravity(float2(0, 9.81))
 	, _d3d_backbuffer_view(nullptr)
 	, _d3d_backbuffer_srv(nullptr)
 	, _d3d_output_depth(nullptr)
@@ -485,7 +485,7 @@ void GameEngine::d2d_render()
 
 	_can_paint = true;
 	// make sure the view matrix is taken in account
-	context.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+	context.set_world_matrix(float3x3::identity());
 	_game->paint(context);
 
 	//Paint the buttons and textboxes
@@ -496,9 +496,9 @@ void GameEngine::d2d_render()
 	if (_debug_physics_rendering)
 	{
 		// dimming rect in screenspace
-		context.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
-		MATRIX3X2 matView = context.get_view_matrix();
-		context.set_view_matrix(MATRIX3X2::CreateIdentityMatrix());
+		context.set_world_matrix(float3x3::identity());
+		float3x3 matView = context.get_view_matrix();
+		context.set_view_matrix(float3x3::identity());
 		set_color(COLOR(0, 0, 0, 127));
 		context.fill_rect(0, 0, get_width(), get_height());
 		context.set_view_matrix(matView);
@@ -997,9 +997,9 @@ IDWriteFactory* GameEngine::GetDWriteFactory() const
 	return _dwrite_factory;
 }
 
-XMFLOAT2 GameEngine::get_mouse_pos_in_viewport()const
+float2 GameEngine::get_mouse_pos_in_viewport() const
 {
-	return XMFLOAT2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y};
+	return float2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y};
 }
 
 AudioSystem * GameEngine::GetXAudio() const

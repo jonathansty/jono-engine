@@ -68,6 +68,16 @@ using namespace D2D1;
 
 #include "tinyxml2/tinyxml2.h"
 
+#include <hlsl++.h>
+using hlslpp::double2;
+using hlslpp::float2;
+using hlslpp::float3;
+using hlslpp::float4;
+using hlslpp::float4x4;
+using hlslpp::float3x3;
+using hlslpp::double2;
+
+
 #include "Engine/EString.h"
 #include "Engine/Structs.h"
 #include "Engine/Box2DDebugRenderer.h"

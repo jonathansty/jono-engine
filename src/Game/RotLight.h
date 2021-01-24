@@ -17,7 +17,7 @@
 class RotLight : public Animation
 {
 public:
-	RotLight(DOUBLE2 position);
+	RotLight(float2 position);
 	virtual ~RotLight( );
 
 	// C++11 make the class non-copyable
@@ -40,9 +40,9 @@ public:
     void SetColor(COLOR color);
     void SetRotSpeed(int speed);
     void SetRadius(double radius);
-    void SetPosition(DOUBLE2 position);
+    void SetPosition(float2 position);
     void SetDrawState(drawState drawState);
-    DOUBLE2 GetPosition();
+    float2 GetPosition();
 private: 
 	//-------------------------------------------------
 	// Datamembers								

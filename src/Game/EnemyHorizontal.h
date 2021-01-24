@@ -17,7 +17,7 @@
 class EnemyHorizontal : public Enemy
 {
 public:
-    EnemyHorizontal(DOUBLE2 position, Bitmap* bmpEnemyPtr, Avatar* avatarPtr);
+    EnemyHorizontal(float2 position, Bitmap* bmpEnemyPtr, Avatar* avatarPtr);
 	virtual ~EnemyHorizontal( );
 
 	// C++11 make the class non-copEnemyable
@@ -35,8 +35,8 @@ public:
     void Tick(double deltatime);
     void Paint(graphics::D2DRenderContext& ctx);
 
-    void SetVelocity(DOUBLE2 velocity);
-    void SetOffSet(DOUBLE2 offset);
+    void SetVelocity(float2 velocity);
+    void SetOffSet(float2 offset);
     void SetAvatar(Avatar* m_AvatarPtr);
     void SetLifes(int lifes);
     bool GetAttackByAvatar();
@@ -47,9 +47,9 @@ private:
 	//-------------------------------------------------
     Bitmap* m_BmpPtr = nullptr;
     Avatar* m_AvatarPtr = nullptr;
-    DOUBLE2 m_StartPosition;
-    DOUBLE2 m_Velocity;
-    DOUBLE2 m_OffSet = DOUBLE2(30, 0);
+    float2 m_StartPosition;
+    float2 m_Velocity;
+    float2 m_OffSet = float2(30, 0);
     int m_Lifes = 1;
     bool m_boolAttackContact = false;
 };

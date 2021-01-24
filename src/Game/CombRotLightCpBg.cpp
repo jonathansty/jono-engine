@@ -9,7 +9,7 @@
 #include "CheckPointBg.h"
 #include "RotLight.h"
 
-CombRotLightCpBg::CombRotLightCpBg(DOUBLE2 position,int radius, Bitmap*  bmpPtr, COLOR color)
+CombRotLightCpBg::CombRotLightCpBg(float2 position,int radius, Bitmap*  bmpPtr, COLOR color)
     : Animation(position)
 {
 	// nothing to create

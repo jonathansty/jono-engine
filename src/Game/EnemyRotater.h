@@ -17,7 +17,7 @@
 class EnemyRotater : public Enemy
 {
 public:
-    EnemyRotater(DOUBLE2 position, Bitmap* bmpPtr);
+    EnemyRotater(float2 position, Bitmap* bmpPtr);
 	virtual ~EnemyRotater( );
 
 	// C++11 make the class non-copyable
@@ -31,7 +31,7 @@ public:
 	virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
 	virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
     virtual PhysicsActor* GetActor();
-    virtual void SetSpawnPosition(DOUBLE2 respawnPosition);
+    virtual void SetSpawnPosition(float2 respawnPosition);
     virtual void Reset();
 
     virtual void Tick(double deltaTime) override;

@@ -18,7 +18,7 @@
 using std::search;
 using std::tifstream;
 
-SVGParser::SVGParser(const String& svgFilePathRef, std::vector<std::vector<DOUBLE2>> &verticesArrRef)
+SVGParser::SVGParser(const String& svgFilePathRef, std::vector<std::vector<float2>> &verticesArrRef)
 {
 	LoadGeometryFromSvgFile(svgFilePathRef, verticesArrRef);
 }
@@ -26,7 +26,7 @@ SVGParser::SVGParser(const String& svgFilePathRef, std::vector<std::vector<DOUBL
 SVGParser::~SVGParser()
 {}
 
-bool SVGParser::LoadGeometryFromSvgFile(const String& svgFilePathRef, std::vector<std::vector<DOUBLE2>> &verticesArrRef)
+bool SVGParser::LoadGeometryFromSvgFile(const String& svgFilePathRef, std::vector<std::vector<float2>> &verticesArrRef)
 {
 	// open the file, close if not found
 	tifstream svgFile(svgFilePathRef.C_str());
@@ -136,14 +136,12 @@ bool SVGParser::ExtractPathInformation(tstring& svgTextRef, tstring& sGeometryIn
 }
 
 // Points are transformed by groups into the same space.
-bool SVGParser::ReadSvgFromData(tstring& sTransformInfoRef, tstring& sPathInfoRef, std::vector<std::vector<DOUBLE2>> &verticesArrRef)
+bool SVGParser::ReadSvgFromData(tstring& sTransformInfoRef, tstring& sPathInfoRef, std::vector<std::vector<float2>> &verticesArrRef)
 {
 	std::vector<ID2D1Geometry*> outGeometryArr;
 
-	//HRESULT hr;
-
 	// parse the transform information
-	MATRIX3X2 pathTransform = ReadTransform(sTransformInfoRef);
+	float3x3 pathTransform = ReadTransform(sTransformInfoRef);
 
 	// parse the geometry information
 	//ID2D1PathGeometry* pathGeometryPtr;
@@ -181,45 +179,51 @@ bool SVGParser::GetGeometryOrGroup(ID2D1Factory* factoryPtr, std::vector<ID2D1Ge
 	return true;
 }
 
-MATRIX3X2 SVGParser::ReadTransform(tstring& sTransformInfoRef)
+float3x3 SVGParser::ReadTransform(tstring& sTransformInfoRef)
 {
 	int argCount;
-	MATRIX3X2 matrix;
+	float3x3 matrix = float3x3::identity();
+
+	float2 dirX = {};
+	float2 dirY = {};
+	float2 orig = {};
 
 	if (sTransformInfoRef != _T(""))
 	{
 		switch (sTransformInfoRef.c_str()[0])
 		{
 		case _T('m'):
-			_stscanf_s(sTransformInfoRef.c_str(), _T("matrix(%lf,%lf,%lf,%lf,%lf,%lf)"), &matrix.dirX.x, &matrix.dirX.y, &matrix.dirY.x, &matrix.dirY.y, &matrix.orig.x, &matrix.orig.y);
+			_stscanf_s(sTransformInfoRef.c_str(), _T("matrix(%f,%f,%f,%f,%f,%f)"), (float*)&dirX.x, (float*)&dirX.y, (float*)&dirY.x, (float*)&dirY.y, (float*)&orig.x, (float*)&orig.y);
+			matrix = float3x3(float3(dirX, 0.0), float3(dirY, 0.0), float3(orig, 1.0));
 			break;
 
 		case _T('t'):
-			argCount = _stscanf_s(sTransformInfoRef.c_str(), _T("translate(%lf,%lf)"), &matrix.orig.x, &matrix.orig.y);
+			argCount = _stscanf_s(sTransformInfoRef.c_str(), _T("translate(%f,%f)"), (float*)&orig.x, (float*)&orig.y);
+			matrix = float3x3(float3(1.0f,0.0f, 0.0), float3(0.0, 1.0f, 0.0), float3(orig, 1.0));
 			break;
 
 		case _T('s'):
-			argCount = _stscanf_s(sTransformInfoRef.c_str(), _T("scale(%lf,%lf)"), &matrix.dirX.x, &matrix.dirY.y);
-
+			argCount = _stscanf_s(sTransformInfoRef.c_str(), _T("scale(%f,%f)"), (float*)&dirX.x, (float*)&dirY.y);
 			if (argCount == 1)
 			{
-				matrix.dirY.y = matrix.dirX.x;
+				dirY.y = dirX.x;
 			}
+			matrix = float3x3(float3(dirX, 0.0f), float3(dirY, 0.0), float3(orig, 1.0));
 			break;
 
 		case _T('r'):
 		{
-			double angle;
-			DOUBLE2 center;
-			argCount = _stscanf_s(sTransformInfoRef.c_str(), _T("rotate(%lf,%lf,%lf)"), &angle, &center.x, &center.y);
+			float angle;
+			float2 center;
+			argCount = _stscanf_s(sTransformInfoRef.c_str(), _T("rotate(%f,%f,%f)"), (float*)&angle, (float*)&center.x, (float*)&center.y);
 
 			switch (argCount)
 			{
 			case 1:
-				matrix = MATRIX3X2::CreateRotationMatrix(angle * M_PI / 180);
+				matrix = float3x3::rotation_z(angle * float(M_PI) / 180.0f);
 				break;
 			case 3:
-				matrix = MATRIX3X2::CreateTranslationMatrix(-center) * MATRIX3X2::CreateRotationMatrix(angle * M_PI / 180) * MATRIX3X2::CreateTranslationMatrix(center);
+				matrix = float3x3::translation(-center) * float3x3::rotation_z(angle * float(M_PI) / 180.0f) * float3x3::translation(center);
 				break;
 			}
 		}
@@ -234,24 +238,24 @@ MATRIX3X2 SVGParser::ReadTransform(tstring& sTransformInfoRef)
 	return matrix;
 }
 
-bool SVGParser::ReadSvgPath(tstring& sPathInfoRef, std::vector<std::vector<DOUBLE2>> &verticesArrRef)
+bool SVGParser::ReadSvgPath(tstring& sPathInfoRef, std::vector<std::vector<float2>> &verticesArrRef)
 {
 	// Use streamstream for parsing
 	tstringstream ss(sPathInfoRef);
 
 	TCHAR cmd = 0;
 	tstring svgCmds(_T("mMZzLlHhVvCcSsQqTtAa"));
-	DOUBLE2 cursor;
-	DOUBLE2 abscur;
-	DOUBLE2 startPoint;//At the end of the z command, the new current point is set to the initial point of the current subpath.
+	float2 cursor;
+	float2 abscur;
+	float2 startPoint;//At the end of the z command, the new current point is set to the initial point of the current subpath.
 
 	bool isOpen = true;
 
 	// http://www.w3.org/TR/SVG/paths.html#Introduction
 
 	int currentChainIndex = 0;
-	std::vector<DOUBLE2> currentChain;
-	DOUBLE2 vertex;
+	std::vector<float2> currentChain;
+	float2 vertex;
 	while (true)
 	{
 		TCHAR c;
@@ -295,21 +299,21 @@ bool SVGParser::ReadSvgPath(tstring& sPathInfoRef, std::vector<std::vector<DOUBL
 			// Fallthrough when isOpen
 		case _T('L'):
 		case _T('l'):
-			vertex = NextSvgPoint(ss, cursor, cmd, isOpen, true).ToPoint2F();
+			vertex = NextSvgPoint(ss, cursor, cmd, isOpen, true);
 			currentChain.push_back(vertex);
 			//geometrySinkPtr->AddLine(cbs.point2);
 			break;
 
 		case _T('h'):
 		case _T('H'):
-			vertex = NextSvgCoordX(ss, cursor, cmd, isOpen).ToPoint2F();
+			vertex = NextSvgCoordX(ss, cursor, cmd, isOpen);
 			currentChain.push_back(vertex);
 			//geometrySinkPtr->AddLine(cbs.point2);
 			break;
 
 		case _T('v'):
 		case _T('V'):
-			vertex = NextSvgCoordY(ss, cursor, cmd, isOpen).ToPoint2F();
+			vertex = NextSvgCoordY(ss, cursor, cmd, isOpen);
 			currentChain.push_back(vertex);
 			//geometrySinkPtr->AddLine(cbs.point2);
 			break;
@@ -447,19 +451,19 @@ double SVGParser::ReadSvgValue(tstringstream& ssRef, bool separatorRequired)
 }
 
 // Reads a single point
-DOUBLE2 SVGParser::ReadSvgPoint(tstringstream& ssRef)
+float2 SVGParser::ReadSvgPoint(tstringstream& ssRef)
 {
-	DOUBLE2 p;
+	float2 p;
 	p.x = ReadSvgValue(ssRef, true);
 	p.y = ReadSvgValue(ssRef, false);
 	return p;
 }
 
-DOUBLE2 SVGParser::FirstSvgPoint(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cmd, bool isOpen, bool advance)
+float2 SVGParser::FirstSvgPoint(tstringstream& ssRef, float2& cursor, TCHAR cmd, bool isOpen, bool advance)
 {
 	if (!isOpen) GameEngine::instance()->message_box(String("expected 'Z' or 'z' command"));
 
-	DOUBLE2 p = ReadSvgPoint(ssRef);
+	float2 p = ReadSvgPoint(ssRef);
 
 	if (islower(cmd))
 	{
@@ -478,16 +482,16 @@ DOUBLE2 SVGParser::FirstSvgPoint(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cm
 // taking into account relative and absolute positioning.
 // Advances the cursor if requested.
 // Throws an exception if the figure is not open
-DOUBLE2 SVGParser::NextSvgPoint(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cmd, bool isOpen, bool advance)
+float2 SVGParser::NextSvgPoint(tstringstream& ssRef, float2& cursor, TCHAR cmd, bool isOpen, bool advance)
 {
 	if (isOpen) GameEngine::instance()->message_box(String("expected 'M' or 'm' command"));
 
-	DOUBLE2 p = ReadSvgPoint(ssRef);
+	float2 p = ReadSvgPoint(ssRef);
 
 	if (islower(cmd))
 	{
 		// Relative point
-		p = cursor + (p - DOUBLE2());
+		p = cursor + (p - float2());
 	}
 
 	if (advance)
@@ -499,7 +503,7 @@ DOUBLE2 SVGParser::NextSvgPoint(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cmd
 }
 
 // Reads next point, given only the new x coordinate 
-DOUBLE2 SVGParser::NextSvgCoordX(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cmd, bool isOpen)
+float2 SVGParser::NextSvgCoordX(tstringstream& ssRef, float2& cursor, TCHAR cmd, bool isOpen)
 {
 	if (isOpen)
 		GameEngine::instance()->message_box(String("expected 'M' or 'm' command"));
@@ -510,7 +514,7 @@ DOUBLE2 SVGParser::NextSvgCoordX(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cm
 	if (islower(cmd))
 	{
 		// Relative point
-		cursor += DOUBLE2(c, 0);
+		cursor += float2(c, 0);
 	}
 	else
 	{
@@ -521,7 +525,7 @@ DOUBLE2 SVGParser::NextSvgCoordX(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cm
 }
 
 // Reads next point, given only the new y coordinate 
-DOUBLE2 SVGParser::NextSvgCoordY(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cmd, bool isOpen)
+float2 SVGParser::NextSvgCoordY(tstringstream& ssRef, float2& cursor, TCHAR cmd, bool isOpen)
 {
 	if (isOpen)
 		GameEngine::instance()->message_box(String("expected 'M' or 'm' command"));
@@ -532,7 +536,7 @@ DOUBLE2 SVGParser::NextSvgCoordY(tstringstream& ssRef, DOUBLE2& cursor, TCHAR cm
 	if (islower(cmd))
 	{
 		// Relative point
-		cursor += DOUBLE2(0, c);
+		cursor += float2(0, c);
 	}
 	else
 	{

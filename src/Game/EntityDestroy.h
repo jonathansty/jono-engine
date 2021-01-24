@@ -17,7 +17,7 @@
 class EntityDestroy : public Animation
 {
 public:
-	EntityDestroy(DOUBLE2 position );
+	EntityDestroy(float2 position );
 	virtual ~EntityDestroy( );
 
 	// C++11 make the class non-copyable

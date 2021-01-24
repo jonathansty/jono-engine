@@ -111,8 +111,8 @@ private:
     //! Gets the value of a property
     std::wstring GetValue(const std::wstring& nameRef, const std::wstring& objectRef);
     std::string GetValue(const std::string& nameRef, tinyxml2::XMLElement* el);
-    DOUBLE2 StringToDouble2(const std::wstring& valueRef);
-    DOUBLE2 StringToDouble2(const std::string& valueRef);
+    float2 StringToDouble2(const std::wstring& valueRef);
+    float2 StringToDouble2(const std::string& valueRef);
     //! Reads a start block
     void ReadGameResultsStart(std::wstring &expressionStringRef, sessionStats* tmpSessionStat);
     //! Read an end block

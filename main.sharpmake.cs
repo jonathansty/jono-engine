@@ -350,7 +350,7 @@ public class ImGui : ExternalProject
         base.ConfigureAll(conf, target);
 
         // FreeType is a dependency
-        conf.AddPrivateDependency<FreeType>(target,DependencySetting.DefaultWithoutLinking);
+        conf.AddPrivateDependency<FreeType>(target, DependencySetting.DefaultWithoutLinking);
 
         conf.Output = Configuration.OutputType.Lib;
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]");
@@ -364,6 +364,8 @@ public class HLSLPP : ExternalProject
     public HLSLPP() : base()
     {
         Name = "hlslpp";
+        SourceRootPath = Path.Combine(externalDir, "hlslpp/");
+        NatvisFiles.Add(Path.Combine(SourceRootPath,"include/hlsl++.natvis"));
     }
 
     override public void ConfigureAll(Configuration conf, Target target)
@@ -371,7 +373,8 @@ public class HLSLPP : ExternalProject
         base.ConfigureAll(conf, target);
 
         conf.Output = Configuration.OutputType.None;
-        conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]/include");
+        conf.IncludeSystemPaths.Add(Path.Combine(externalDir, "[project.Name]/include"));
+        conf.ExportDefines.Add("HLSLPP_FEATURE_TRANSFORM");
     }
 
 

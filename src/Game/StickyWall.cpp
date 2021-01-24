@@ -3,7 +3,7 @@
 #include "StickyWall.h"
 #include "Avatar.h"
 
-StickyWall::StickyWall(DOUBLE2 position, int width, int height):
+StickyWall::StickyWall(float2 position, int width, int height):
 Entity(position),
 m_Width(width),
 m_Height(height)
@@ -49,28 +49,28 @@ void StickyWall::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 void StickyWall::Paint(graphics::D2DRenderContext& ctx)
 {
     ctx.set_color(COLOR(0, 0, 0));
-    MATRIX3X2 matTranslate, matPivot;
-    matTranslate.SetAsTranslate(m_Position);
-    matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
+    float3x3 matTranslate, matPivot;
+    matTranslate= float3x3::translation(m_Position);
+    matPivot= float3x3::translation(float2(-m_Width / 2, -m_Height / 2));
     ctx.set_world_matrix(matPivot*matTranslate);
     ctx.fill_rect(0, 0, (int)m_Width, (int)m_Height);
     ctx.set_color(COLOR(0, 125, 50));
     ctx.fill_rect(0, 0, (int)(m_Width * 0.2), (int)(m_Height));
     ctx.fill_rect((int)(m_Width - (m_Width*0.2)), 0, (int)m_Width, (int)m_Height);
     ctx.set_color(COLOR(0, 0, 0));
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void StickyWall::Tick(double deltaTime)
 {
     PhysicsActor* tmpActAvatarPtr = m_AvatarPtr->GetActor();
-    DOUBLE2 velocity = tmpActAvatarPtr->GetLinearVelocity();
+    float2 velocity = tmpActAvatarPtr->GetLinearVelocity();
     m_Position = m_ActPtr->GetPosition();
     if (m_IsHit)
     {
         m_AvatarPtr->SetNrJumps(0);
         if (m_AvatarPtr->GetMoveState() != Avatar::moveState::JUMPING && velocity.y > 0)
         {
-            tmpActAvatarPtr->ApplyLinearImpulse(DOUBLE2(0,-velocity.y*tmpActAvatarPtr->GetMass()/PhysicsActor::SCALE));
+            tmpActAvatarPtr->ApplyLinearImpulse(float2(0,-velocity.y*tmpActAvatarPtr->GetMass()/PhysicsActor::SCALE));
         }
     }
 }

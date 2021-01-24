@@ -1,7 +1,7 @@
 #include "stdafx.h"		
 #include "Bullet.h"
 
-Bullet::Bullet(DOUBLE2 startPosition, DOUBLE2 velocity)
+Bullet::Bullet(float2 startPosition, float2 velocity)
 	: m_startPosition(startPosition)
 	, m_Direction(velocity)
 {

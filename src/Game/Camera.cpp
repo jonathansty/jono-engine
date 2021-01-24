@@ -25,16 +25,16 @@ m_Direction(0,1)
 
     m_Scale = scale;
     m_ActBoundsPtr = new PhysicsActor(m_CameraPosition, 0, BodyType::KINEMATIC);
-    std::vector<DOUBLE2>pointsPtrArr;
-    pointsPtrArr.push_back(DOUBLE2(-GameEngine::instance()->get_width()/2,-GameEngine::instance()->get_height()/2));
-    pointsPtrArr.push_back(DOUBLE2(-GameEngine::instance()->get_width()/2, 20 + GameEngine::instance()->get_height()/2));
-    pointsPtrArr.push_back(DOUBLE2( GameEngine::instance()->get_width()/2, 20 + GameEngine::instance()->get_height()/2));
+    std::vector<float2>pointsPtrArr;
+    pointsPtrArr.push_back(float2(-GameEngine::instance()->get_width()/2,-GameEngine::instance()->get_height()/2));
+    pointsPtrArr.push_back(float2(-GameEngine::instance()->get_width()/2, 20 + GameEngine::instance()->get_height()/2));
+    pointsPtrArr.push_back(float2( GameEngine::instance()->get_width()/2, 20 + GameEngine::instance()->get_height()/2));
 
     for (size_t i = 0; i < pointsPtrArr.size(); i++)
     {
-        MATRIX3X2 matScale;
-        matScale.SetAsScale(scale);
-        pointsPtrArr[i] = matScale.TransformPoint(pointsPtrArr[i]);
+        float3x3 matScale;
+        matScale = float3x3::scale(scale);
+        pointsPtrArr[i] = hlslpp::mul(matScale, float3(pointsPtrArr[i],1.0f)).xy;
     }
     m_ActBoundsPtr->AddChainShape(pointsPtrArr,false);
     m_ActBoundsPtr->SetName(String("CameraDeathBounds"));
@@ -51,8 +51,8 @@ Camera::~Camera()
 }
 
 //! Returns the viewmatrix of the camera.
-MATRIX3X2 Camera::GetViewMatrix(){
-    DOUBLE2 position(0,0);
+hlslpp::float3x3 Camera::GetViewMatrix(){
+    float2 position(0,0);
     if (m_AvatarPtr != nullptr)
     {
         position = m_AvatarPtr->GetPosition();
@@ -60,15 +60,18 @@ MATRIX3X2 Camera::GetViewMatrix(){
     
 
     // These 2 if statements check for the boundaries
-    MATRIX3X2 matTranslate, matCenter, matRotate,matScale;
-    MATRIX3X2 matWorldTransform;
-    matCenter.SetAsTranslate(-GameEngine::instance()->get_width() / 2, -GameEngine::instance()->get_height() / 2);
+    using hlslpp::float3x3;
+    float3x3 matTranslate, matCenter, matRotate,matScale;
+    float3x3 matWorldTransform;
+	matCenter = float3x3::translation(-GameEngine::instance()->get_width() / 2, -GameEngine::instance()->get_height() / 2);
+
     GameEngine::instance()->set_bitmap_interpolation_mode(bitmap_interpolation_mode::linear);
-    matTranslate.SetAsTranslate(m_CameraPosition);
-    matRotate.SetAsRotate(m_Angle);
-    matScale.SetAsScale(m_Scale);
-    matWorldTransform = matCenter*matRotate*matScale * matTranslate;
-    return matWorldTransform.Inverse();
+
+    matTranslate = float3x3::translation(m_CameraPosition);
+    matRotate = float3x3::rotation_z(m_Angle);
+	matScale = float3x3::scale(m_Scale);
+    matWorldTransform = hlslpp::mul(matCenter , hlslpp::mul(matRotate, hlslpp::mul(matScale , matTranslate)));
+	return hlslpp::inverse(matWorldTransform);
 }
 
 void Camera::Tick(double dTime)
@@ -79,7 +82,7 @@ void Camera::Tick(double dTime)
     m_ActBoundsPtr->SetPosition(m_CameraPosition);
     m_ActBoundsPtr->SetAngle(m_Angle);
 
-    DOUBLE2 positionBeforeShaking = m_CameraPositionWithoutShaking;
+    float2 positionBeforeShaking = m_CameraPositionWithoutShaking;
     int offsetx = 0;
     int offsety = 0;
     if (m_ScreenShakeOffset != 0)
@@ -103,7 +106,7 @@ void Camera::Tick(double dTime)
         }
     }
     //Updating the camera position
-    m_ActPtr->SetPosition(positionBeforeShaking + DOUBLE2(offsetx, offsety));
+    m_ActPtr->SetPosition(positionBeforeShaking + float2(offsetx, offsety));
     m_CameraPosition = m_ActPtr->GetPosition();
     m_CameraPositionWithoutShaking = positionBeforeShaking;
     if (GameEngine::instance()->is_key_pressed(VK_F7))
@@ -132,10 +135,10 @@ void Camera::Tick(double dTime)
         }
     }
 }
-void Camera::FollowAvatar(double deltaTime, DOUBLE2 &oldPosition)
+void Camera::FollowAvatar(double deltaTime, float2 &oldPosition)
 {
     
-    DOUBLE2 avatarPosition = m_AvatarPtr->GetPosition();
+    float2 avatarPosition = m_AvatarPtr->GetPosition();
     double distance = abs(avatarPosition.x - m_CameraPosition.x);
     double yDistance = abs(avatarPosition.y - m_CameraPosition.y);
     double fraction = distance / (MAX_RIGHT);
@@ -143,11 +146,11 @@ void Camera::FollowAvatar(double deltaTime, DOUBLE2 &oldPosition)
 
     //Hold the position before we apply the shake to it.
 
-    if (avatarPosition.x > (m_CameraPosition.x))
+    if (float(avatarPosition.x) > float(m_CameraPosition.x))
     {
         oldPosition.x += fraction * distance;
     }
-    if (avatarPosition.x < (m_CameraPosition.x))
+    if (float(avatarPosition.x) < float(m_CameraPosition.x))
     {
         fraction = distance / (MAX_LEFT);
         fraction = fraction*fraction;
@@ -157,13 +160,13 @@ void Camera::FollowAvatar(double deltaTime, DOUBLE2 &oldPosition)
     {
         m_CameraPosition = avatarPosition;
     }
-    if (avatarPosition.y > m_CameraPosition.y)
+    if (float(avatarPosition.y) > float(m_CameraPosition.y))
     {
         fraction = yDistance / MAX_BOTTOM;
         fraction = fraction*fraction;
         oldPosition.y += fraction *yDistance;
     }
-    if (avatarPosition.y < m_CameraPosition.y)
+    if (float(avatarPosition.y) < float(m_CameraPosition.y))
     {
         fraction = yDistance / MAX_TOP;
         fraction = fraction*fraction;
@@ -174,7 +177,7 @@ void Camera::FollowAvatar(double deltaTime, DOUBLE2 &oldPosition)
         oldPosition.y = avatarPosition.y;
     }
 }
-void Camera::AutomaticMode(double deltaTime, DOUBLE2 &oldPosition)
+void Camera::AutomaticMode(double deltaTime, float2 &oldPosition)
 {
     // Interpolation algorithme for starting
     if (m_AccuTime>0.5)
@@ -193,20 +196,20 @@ void Camera::AutomaticMode(double deltaTime, DOUBLE2 &oldPosition)
             offsetx = rand() % m_ScreenShakeOffset - m_ScreenShakeOffset / 2;
             offsety = rand() % m_ScreenShakeOffset - m_ScreenShakeOffset / 2;
         }
-        oldPosition = m_CameraPositionWithoutShaking + m_Direction.Normalized()*m_Speed*deltaTime;
+        oldPosition = m_CameraPositionWithoutShaking + hlslpp::normalize(m_Direction)*m_Speed*deltaTime;
 
-        DOUBLE2 vectorToAvatar = m_AvatarPtr->GetPosition() - oldPosition;
-        DOUBLE2 normalizedVector = vectorToAvatar.Normalized();
-        double length = vectorToAvatar.Length();
-        DOUBLE2 offsetPosition2 = DOUBLE2(GameEngine::instance()->get_width() - 200, 0);
-        MATRIX3X2 matTranslate, matRotate, matScale, matTransform, matPivot;
-        matPivot.SetAsTranslate(DOUBLE2(-m_CameraDimension.x / 2, -m_CameraDimension.y / 2));
-        matTranslate.SetAsTranslate(oldPosition);
-        matRotate.SetAsRotate(m_Angle);
-        matScale.SetAsScale(m_Scale);
+        float2 vectorToAvatar = m_AvatarPtr->GetPosition() - oldPosition;
+        float2 normalizedVector = hlslpp::normalize(vectorToAvatar);
+		double length = hlslpp::length(vectorToAvatar);
+        float2 offsetPosition2 = float2(GameEngine::instance()->get_width() - 200, 0);
+        float3x3 matTranslate, matRotate, matScale, matTransform, matPivot;
+        matPivot= float3x3::translation(float2(-m_CameraDimension.x / 2, -m_CameraDimension.y / 2));
+        matTranslate= float3x3::translation(oldPosition);
+        matRotate = float3x3::rotation_z(m_Angle);
+        matScale = float3x3::scale(m_Scale);
         matTransform = matPivot * matRotate * matScale * matTranslate;
-        offsetPosition2 = matTransform.TransformPoint(offsetPosition2);
-        if (m_AvatarPtr->GetPosition().x > offsetPosition2.x)
+        offsetPosition2 = hlslpp::mul(matTransform, float3(offsetPosition2, 1.0f)).xy;
+        if (float(m_AvatarPtr->GetPosition().x) > float(offsetPosition2.x))
         {
             m_Speed += (m_AvatarPtr->GetPosition().x - offsetPosition2.x) * deltaTime;
         }
@@ -218,14 +221,14 @@ void Camera::AutomaticMode(double deltaTime, DOUBLE2 &oldPosition)
 
     }
 }
-void Camera::ManualMode(double deltaTime, DOUBLE2 &oldPosition)
+void Camera::ManualMode(double deltaTime, float2 &oldPosition)
 {
-    DOUBLE2 actorPosition = m_ActPtr->GetPosition();
-    DOUBLE2 newPosition = DOUBLE2();
-    if (GameEngine::instance()->is_key_down('I'))newPosition += DOUBLE2(0, -m_Speed * deltaTime);
-    if (GameEngine::instance()->is_key_down('J'))newPosition += DOUBLE2(-m_Speed * deltaTime, 0);
-    if (GameEngine::instance()->is_key_down('K'))newPosition += DOUBLE2(0, m_Speed * deltaTime);
-    if (GameEngine::instance()->is_key_down('L'))newPosition += DOUBLE2(m_Speed * deltaTime, 0);
+    float2 actorPosition = m_ActPtr->GetPosition();
+    float2 newPosition = float2();
+    if (GameEngine::instance()->is_key_down('I'))newPosition += float2(0, -m_Speed * deltaTime);
+    if (GameEngine::instance()->is_key_down('J'))newPosition += float2(-m_Speed * deltaTime, 0);
+    if (GameEngine::instance()->is_key_down('K'))newPosition += float2(0, m_Speed * deltaTime);
+    if (GameEngine::instance()->is_key_down('L'))newPosition += float2(m_Speed * deltaTime, 0);
     oldPosition = actorPosition + newPosition;
 
     if (GameEngine::instance()->is_key_down('2'))
@@ -271,13 +274,13 @@ void Camera::Paint(graphics::D2DRenderContext& ctx)
     
 }
 //! Gets the camera Dimensions
-DOUBLE2 Camera::GetCameraDimension() const
+float2 Camera::GetCameraDimension() const
 {
     return m_CameraDimension;
 }
 
 //! Sets the current cameraPosition
-void Camera::SetCameraPosition(DOUBLE2 position)
+void Camera::SetCameraPosition(float2 position)
 {
     m_ActPtr->SetPosition(position);
     m_ActBoundsPtr->SetPosition(position);
@@ -285,7 +288,7 @@ void Camera::SetCameraPosition(DOUBLE2 position)
     m_CameraPositionWithoutShaking = position;
 }
 //! Sets the cameraStartPosition
-void Camera::SetCameraStartPosition(DOUBLE2 position)
+void Camera::SetCameraStartPosition(float2 position)
 {
     m_StartPosition = position;
 }
@@ -295,7 +298,7 @@ void Camera::SetCameraSpeed(double speed)
     m_MaxSpeed = speed;
 }
 //! Returns the cameraPosition
-DOUBLE2 Camera::GetCameraPosition() const
+float2 Camera::GetCameraPosition() const
 {
     return m_ActPtr->GetPosition();
 }
@@ -305,12 +308,12 @@ double Camera::GetCameraSpeed() const
     return m_Speed;
 }
 //! Gets the startPosition of the camera in the level.
-DOUBLE2 Camera::GetCameraStartPosition() const
+float2 Camera::GetCameraStartPosition() const
 {
     return m_StartPosition;
 }
 //!Gets the current Camere Direction
-DOUBLE2 Camera::GetCameraDirection() const
+float2 Camera::GetCameraDirection() const
 {
     return m_Direction;
 }
@@ -320,7 +323,7 @@ DOUBLE2 Camera::GetCameraDirection() const
 //! Resets angle
 //! Set CameraPosition
 //! Reset CameraControlState to default state
-void Camera::Reset(DOUBLE2 position)
+void Camera::Reset(float2 position)
 {
     m_Speed = 0;
     m_AccuTime = 0;

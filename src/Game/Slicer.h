@@ -16,7 +16,7 @@
 class Slicer : public Enemy
 {
 public:
-    Slicer(DOUBLE2 position, DOUBLE2 barPoint, int radius);
+    Slicer(float2 position, float2 barPoint, int radius);
 	virtual ~Slicer( );
 
 	// C++11 make the class non-copyable
@@ -42,7 +42,7 @@ private:
 	//-------------------------------------------------
     static const int BLADEWIDTH = 150;
     static const int BLADEHEIGHT = 20;
-    DOUBLE2 m_BarPosition;
+    float2 m_BarPosition;
     PhysicsActor* m_ActBarPoint = nullptr;
     PhysicsActor* m_ActBarPtr = nullptr;
 

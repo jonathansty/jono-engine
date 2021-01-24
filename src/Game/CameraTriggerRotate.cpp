@@ -3,7 +3,7 @@
 #include "CameraTriggerRotate.h"
 #include "Camera.h"
 
-CameraTriggerRotate::CameraTriggerRotate(DOUBLE2 position, int width, int height) :
+CameraTriggerRotate::CameraTriggerRotate(float2 position, int width, int height) :
 CameraTrigger(position,width,height)
 {
     m_ActPtr = new PhysicsActor(position, 0, BodyType::STATIC);

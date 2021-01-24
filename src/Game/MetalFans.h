@@ -17,7 +17,7 @@
 class MetalFans : public Entity
 {
 public:
-    MetalFans(DOUBLE2 position, double angle);
+    MetalFans(float2 position, double angle);
 	virtual ~MetalFans( );
 
 	// C++11 make the class non-copyable
@@ -47,7 +47,7 @@ private:
     double m_RepulsionForce = 50;
     double m_FrictionForce = 25;
     double m_Angle = 0;
-    DOUBLE2 m_Direction;
+    float2 m_Direction;
     PhysicsActor* m_ActTriggerPtr = nullptr;
 };
 

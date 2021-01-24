@@ -17,7 +17,7 @@
 class EnemyLaser : public Enemy
 {
 public:
-	EnemyLaser(DOUBLE2 position);
+	EnemyLaser(float2 position);
 	virtual ~EnemyLaser( );
 
 	// C++11 make the class non-copyable
@@ -41,11 +41,11 @@ private:
 	//-------------------------------------------------
     static const int RAYLENGTH = 250;
     double m_AngularVelocity = 2;
-    DOUBLE2 m_RayStart;
-    DOUBLE2 m_RayEnd;
-    DOUBLE2 m_RayEndRight;
-    DOUBLE2 m_IntersectionLeft;
-    DOUBLE2 m_IntersectionRight;
+    float2 m_RayStart;
+    float2 m_RayEnd;
+    float2 m_RayEndRight;
+    float2 m_IntersectionLeft;
+    float2 m_IntersectionRight;
     
 };
 

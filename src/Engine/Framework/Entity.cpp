@@ -2,101 +2,127 @@
 #include "Entity.h"
 
 #include "Component.h"
+#include "core/Math.h"
+
+using hlslpp::float3;
+using hlslpp::float4;
+using hlslpp::float4x4;
+using hlslpp::quaternion;
+using hlslpp::float1;
 
 using namespace framework;
 IMPL_REFLECT(Entity)
 {
 	type.register_property("name", &Entity::_name);
 	type.register_property("position", &Entity::_pos);
-	type.register_property<Entity, XMFLOAT3>("rotation", 
-		[](Entity* obj, XMFLOAT3 const* v) { 
+	type.register_property<Entity, float3>("rotation", 
+		[](Entity* obj, float3 const* v) { 
 			obj->_rot_euler = *v; 
-			obj->_rot = XMQuaternionRotationRollPitchYaw(v->x, v->y, v->z);
+			obj->_rot = hlslpp::euler({ v->x, v->y, v->z });
 		}, 
-		[](Entity* obj, XMFLOAT3** out) 
+		[](Entity* obj, float3** out) 
 		{
 			*out = &obj->_rot_euler;
 		}
 	);
 }
 
-Entity::Entity(XMFLOAT3 pos)
+Entity::Entity(float3 pos)
 	: _parent(nullptr)
-	, _pos(pos.x, pos.y, pos.z)
-	, _scale({ 1.0f, 1.0f, 1.0f })
-	, _rot(XMQuaternionIdentity())
-	, _rot_euler({0.0f,0.0f,0.0f})
+	, _pos(pos.x, pos.y, pos.z, 1.0f)
+	, _scale(float3{ 1.0f, 1.0f, 1.0f })
+	, _rot(hlslpp::quaternion::identity())
+	, _rot_euler(float3{0.0f,0.0f,0.0f})
 {
 }
 
-Entity::Entity() : Entity({ 0.0f, 0.0f })
-{
-
-}
-
-Entity::Entity(XMFLOAT2 pos) : Entity({pos.x, pos.y, 0.0})
+Entity::Entity() : Entity(float2{ 0.0f, 0.0f })
 {
 
 }
 
-void Entity::set_local_position(XMFLOAT3 pos)
+Entity::Entity(float2 pos) : Entity({pos.x, pos.y, 0.0})
 {
+
+}
+
+void Entity::set_local_position(float4 pos) {
 	_pos = pos;
 }
+void Entity::set_local_position(float3 pos)
+{
+	_pos = float4(pos,1.0f);
+}
 
-void Entity::set_local_scale(XMFLOAT3 scale)
+void Entity::set_local_scale(float3 scale)
 {
 	_scale = scale;
 }
 
-void Entity::set_rotation(XMVECTOR quat)
+float3 to_euler(hlslpp::quaternion q) {
+	// https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+	float3 angles;
+
+	// roll (x-axis rotation)
+	float1 sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
+	float1 cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
+	angles.x = hlslpp::atan2(sinr_cosp, cosr_cosp);
+
+	// pitch (y-axis rotation)
+	float1 sinp = 2 * (q.w * q.y - q.z * q.x);
+	if (hlslpp::all(hlslpp::abs(sinp) >= float1(1)))
+		angles.y = std::copysign(M_PI / 2, float(sinp)); // use 90 degrees if out of range
+	else
+		angles.y = hlslpp::asin(sinp);
+
+	// yaw (z-axis rotation)
+	float1 siny_cosp = 2 * (q.w * q.z + q.x * q.y);
+	float1 cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
+	angles.z = hlslpp::atan2(siny_cosp, cosy_cosp);
+
+	return angles;
+}
+
+void Entity::set_rotation(hlslpp::quaternion quat)
 {
-	XMMATRIX m = XMMatrixRotationQuaternion(quat);
-	XMVECTOR scale, rot, trans;
-	XMMatrixDecompose(&scale, &rot, &trans, m);
-
-	XMStoreFloat3(&_rot_euler, rot);
-
 	_rot = quat;
+	_rot_euler = to_euler(_rot);
 }
 
 void Entity::set_rotation(float angle)
 {
-	set_rotation(XMQuaternionRotationRollPitchYaw(0.0, 0.0, angle));
+	set_rotation(hlslpp::euler({ 0.0, 0.0, angle }));
 }
 
-XMMATRIX Entity::get_world_transform() const
+using hlslpp::float4x4;
+using hlslpp::float3;
+float4x4 Entity::get_world_transform() const
 {
-	XMMATRIX curr = get_local_transform();
+	float4x4 curr = get_local_transform();
 	if (_parent)
 	{
-		curr = XMMatrixMultiply(get_local_transform(), _parent->get_world_transform());
+		curr = hlslpp::mul(curr, _parent->get_world_transform());
 	}
 
 	return curr;
 }
 
-XMMATRIX Entity::get_local_transform() const
+float4x4 Entity::get_local_transform() const
 {
-	XMMATRIX m = XMMatrixIdentity();
+	float4x4 m = float4x4::identity();
 
-	XMVECTOR pos = XMLoadFloat3(&_pos);
+	float4 pos = _pos;
+	float4x4 transMat = float4x4::translation(pos.xyz);
+	float4x4 rotMat = float4x4(_rot);
+	float4x4 scaleMat = float4x4::scale(_scale.x, _scale.y, _scale.z);
 
-	XMMATRIX transMat = XMMatrixTranslationFromVector(pos);
-	XMMATRIX rotMat = XMMatrixRotationQuaternion(_rot);
-	XMMATRIX scaleMat = XMMatrixScaling(_scale.x, _scale.y, _scale.z);
-
-	return XMMatrixMultiply(rotMat, XMMatrixMultiply(transMat, scaleMat));
+	return hlslpp::mul(rotMat, hlslpp::mul(scaleMat,transMat));
 }
 
-XMFLOAT3 Entity::get_world_position() const
+hlslpp::float4 Entity::get_world_position() const
 {
-	XMVECTOR scale, pos, quat;
-	XMMatrixDecompose(&scale, &quat, &pos, get_world_transform());
-	XMFLOAT3 out{};
-	XMStoreFloat3(&out, pos);
-
-	return out;
+	float4x4 world = get_world_transform();
+	return hlslpp::mul(world, hlslpp::float4(_pos));
 }
 
 Entity::~Entity()
@@ -121,6 +147,11 @@ void Entity::update(float dt)
 
 void Entity::render()
 {
+	float4x4 transform = get_world_transform();
+
+	float3x3 c = float3x3(transform._11_12_14, transform._21_22_24, transform._41_42_44);
+	GameEngine::instance()->_d2d_ctx->set_world_matrix(c);
+
 	for (Component* el : _components)
 	{
 		if(el->is_active())
@@ -128,17 +159,17 @@ void Entity::render()
 	}
 }
 
-void Entity::set_local_position(XMFLOAT2 pos)
+void Entity::set_local_position(float2 pos)
 {
-	_pos = { pos.x, pos.y, 0.0 };
+	_pos = { pos.x, pos.y, 0.0, 1.0f };
 }
 
 void Entity::set_local_position(float x, float y)
 {
-	set_local_position({ x,y });
+	set_local_position(float2{ x,y });
 }
 
-XMFLOAT3 Entity::get_local_position() const
+float4 Entity::get_local_position() const
 {
 	return _pos;
 }

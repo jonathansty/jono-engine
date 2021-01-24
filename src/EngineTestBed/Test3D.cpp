@@ -1,4 +1,5 @@
 #include "stdafx.h"
+#include <hlsl++.h>
 #include "Test3D.h"
 
 #include "Engine/Core/ModelResource.h"
@@ -18,19 +19,22 @@ namespace Shaders {
 #include "shaders/debug_px.h"
 }
 
+using hlslpp::float4x4;
+using hlslpp::float4;
+
 __declspec(align(16))
 struct MVPConstantBuffer
 {
-	XMFLOAT4X4 World;
-	XMFLOAT4X4 WorldView;
-	XMFLOAT4X4 Projection;
-	XMFLOAT4X4 WorldViewProjection;
+	float4x4 World;
+	float4x4 WorldView;
+	float4x4 Projection;
+	float4x4 WorldViewProjection;
 
-	XMFLOAT4X4 View;
-	XMFLOAT4X4 InvView;
+	float4x4 View;
+	float4x4 InvView;
 
-	XMFLOAT4 ViewDirection;
-	XMFLOAT4 LightDirection;
+	float4 ViewDirection;
+	float4 LightDirection;
 };
 
 struct DebugVisualizeMode
@@ -49,6 +53,7 @@ __declspec(align(16))
 struct DebugCB
 {
 	unsigned int m_VisualizeMode;
+	uint8_t pad[12];
 };
 
 int g_DebugMode = 0;
@@ -88,7 +93,7 @@ void Hello3D::start()
 		framework::Entity* ent = _world->get_entity(cam_id);
 		ent->set_name("MainCamera");
 		auto comp = ent->create_component<CameraComponent>();
-		ent->set_local_position(XMFLOAT3(0.0f, 0.0f, -2.0f));
+		ent->set_local_position(float3(0.0f, 0.0f, -2.0f));
 	}
 
 	{
@@ -113,7 +118,7 @@ void Hello3D::start()
 		World::EntityId model = _world->create_entity();
 		Entity* ent = _world->get_entity(model);
 		ent->set_name("Sun");
-		ent->set_rotation(XMQuaternionRotationRollPitchYaw(-0.33, -0.33, 0.0));
+		ent->set_rotation(hlslpp::euler(float3(-0.33f, -0.33f, 0.0f)));
 		auto comp = ent->create_component<LightComponent>();
 	}
 
@@ -197,17 +202,6 @@ void Hello3D::debug_ui()
 
 }
 
-XMVECTOR XMVector4Create(float x, float y, float z, float w)
-{
-	XMFLOAT4 v = { x,y,z,w };
-	return XMLoadFloat4(&v);
-}
-
-XMVECTOR XMVector3Create(float x, float y, float z)
-{
-	return XMVector4Create(x, y, z, 0.0);
-}
-
 void Hello3D::render_3d()
 {
 	auto device = GameEngine::instance()->GetD3DDevice();
@@ -215,23 +209,26 @@ void Hello3D::render_3d()
 
 	// Use RH system so that we can directly export from blender
 	//_timer = 0.0f;
-	XMVECTOR view_direction = XMVector3Create(0.0f, 0.0f, -2.0f);
-	XMVECTOR light_direction = XMVector3Create(0.0, -1.0, -1.0f);
+	using namespace hlslpp;
+	float4 view_direction = float4(0.0f, 0.0f, -2.0f, 0.0f);
+	float4 light_direction = float4(0.0, -1.0, -1.0f,0.0f);
 	LightComponent* comp = (LightComponent*)_world->find_first_component(LightComponent::get_static_type());
 	if (comp)
 	{
-		XMMATRIX worldTransform = comp->get_entity()->get_world_transform();
-		XMVECTOR fwd = XMVector3Create(0.0f, 0.0f, 1.0f);
-		light_direction = XMVector3Transform(fwd, worldTransform);
+		float4x4 worldTransform = comp->get_entity()->get_world_transform();
+		float3 fwd = float3(0.0f, 0.0f, 1.0f);
+		light_direction = hlslpp::mul(worldTransform, float4(fwd, 0.0));
 	}
 
-	XMMATRIX View = XMMatrixIdentity();
+	float4x4 View = float4x4::identity();
 
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
-	float aspect = (float)size.x / (float)size.y;
-	float near_plane = 0.01f;
-	float far_plane = 100.0f;
-	XMMATRIX Projection = XMMatrixPerspectiveFovLH( XMConvertToRadians(45.0f), aspect, far_plane, near_plane);
+	const float aspect = (float)size.x / (float)size.y;
+	const float near_plane = 0.01f;
+	const float far_plane = 100.0f;
+
+	hlslpp::projection proj(frustum::field_of_view_x(XMConvertToRadians(45.0f),aspect, far_plane, near_plane), zclip::zero);
+	float4x4 Projection = float4x4::perspective(proj);
 
 
 	ctx->OMSetDepthStencilState(_depth_state.Get(), 0);
@@ -245,18 +242,20 @@ void Hello3D::render_3d()
 
 	// Find our camera and use the matrices
 	CameraComponent* camera = _world->find_first_component<CameraComponent>();
-	View = XMMatrixLookAtLH(view_direction, XMVector3Create(0.0f,0.0f,0.0f), XMVector3Create(0.0f,1.0f,0.0f));
+	View = hlslpp::float4x4::look_at(view_direction.xyz, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
 	if (camera)
 	{
-		View = XMMatrixInverse(nullptr,camera->get_entity()->get_world_transform());
-		Projection = XMMatrixPerspectiveFovLH(XMConvertToRadians(camera->get_fov()), aspect, camera->get_far_plane(), camera->get_near_plane());
+		float4x4 cameraTransform = camera->get_entity()->get_world_transform();
+		View = inverse(cameraTransform);
+
+		hlslpp::projection proj(frustum::field_of_view_x(camera->get_fov(), aspect, camera->get_far_plane(), camera->get_near_plane()), zclip::zero);
+		float4x4 Projection = float4x4::perspective(proj);
 
 		// +Y is forward
-		XMFLOAT4 forward = { 0.0f,0.0f,1.0f, 0.0f };
-		XMVECTOR world_fwd = XMLoadFloat4(&forward);
-		view_direction = XMVector3Transform(world_fwd, camera->get_entity()->get_world_transform());
+		float4 world_fwd{ 0.0f, 0.0f, 1.0f, 0.0f };
+		view_direction = mul(cameraTransform, world_fwd);
 	}
-	XMMATRIX invView = XMMatrixInverse(nullptr, View);
+	float4x4 invView = inverse(View);
 
 
 	// Update debug mode
@@ -278,20 +277,20 @@ void Hello3D::render_3d()
 		// If the entity has a mesh component and is done loading
 		if (SimpleMeshComponent* mesh_comp = ent->get_component<SimpleMeshComponent>(); mesh_comp && mesh_comp->is_loaded())
 		{
-			XMMATRIX world = ent->get_world_transform();
-			XMMATRIX MVP = XMMatrixMultiply(XMMatrixMultiply(world, View), Projection);
+			float4x4 world = ent->get_world_transform();
+			float4x4 MVP = mul(mul(world, View), Projection);
 
 			D3D11_MAPPED_SUBRESOURCE resource{};
 			ctx->Map(_cb_MVP.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
 			MVPConstantBuffer* buffer = (MVPConstantBuffer*)resource.pData;
-			XMStoreFloat4x4(&buffer->World, (world));
-			XMStoreFloat4x4(&buffer->WorldViewProjection, (MVP));
-			XMStoreFloat4x4(&buffer->WorldView, (XMMatrixMultiply(world, View)));
-			XMStoreFloat4x4(&buffer->Projection, (Projection));
-			XMStoreFloat4x4(&buffer->InvView, (invView));
-			XMStoreFloat4x4(&buffer->View, (View));
-			XMStoreFloat4(&buffer->ViewDirection, ( view_direction));
-			XMStoreFloat4(&buffer->LightDirection, (light_direction));
+			buffer->World=  world;
+			buffer->WorldViewProjection= MVP;
+			buffer->WorldView = mul(world, View);
+			buffer->Projection = Projection;
+			buffer->InvView = invView;
+			buffer->View = View;
+			buffer->ViewDirection =  view_direction;
+			buffer->LightDirection = light_direction;
 			ctx->Unmap(_cb_MVP.Get(), 0);
 
 			// TODO: Implement materials supplying buffers?

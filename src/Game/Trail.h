@@ -18,7 +18,7 @@
 class Trail 
 {
 public:
-    Trail(DOUBLE2 position);
+    Trail(float2 position);
 	virtual ~Trail( );
 
 	// C++11 make the class non-copyable
@@ -31,7 +31,7 @@ public:
 	//virtual void BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr); 
 	//virtual void EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr);   
 	//virtual void ContactImpulse(PhysicsActor *actThisPtr, double impulse);
-    void Paint(graphics::D2DRenderContext& ctx, DOUBLE2 position);
+    void Paint(graphics::D2DRenderContext& ctx, float2 position);
 
     void SetSize(double size);
     void SetTrailLength(double length);
@@ -42,12 +42,12 @@ private:
 	//-------------------------------------------------
 	// Datamembers								
 	//-------------------------------------------------
-    DOUBLE2 m_Position;
+    float2 m_Position;
     double m_TrailLength = 100;
     int m_Opacity = 255;
     double m_Size = 30;
     double m_AmountOfInterpolation = 2;
-    std::deque<DOUBLE2>m_deqTrailPtrArr;
+    std::deque<float2>m_deqTrailPtrArr;
 };
 
  

@@ -24,7 +24,7 @@ public:
 	//! @param pos the position of the actor
 	//! @param angle the angle of rotation of this actor
 	//! @param bodyType BodyType is an Enumeration with three possible values. Eg. use BodyType::DYNAMIC
-	PhysicsActor(DOUBLE2 pos, double angle, BodyType bodyType);
+	PhysicsActor(float2 pos, double angle, BodyType bodyType);
 
 	//! Destructor
 	virtual ~PhysicsActor();
@@ -47,7 +47,7 @@ public:
 
 
     bool AddBoxShape(double width, double height, double restituion = 0.8, double friction = 0.7, double density = 1);
-    bool AddBoxShapeWithOffset(double width, double height,DOUBLE2 offset = DOUBLE2(0,0), double restituion = 0.8, double friction = 0.7, double density = 1);
+    bool AddBoxShapeWithOffset(double width, double height,float2 offset = float2(0,0), double restituion = 0.8, double friction = 0.7, double density = 1);
 	//! Adds a circle shape to the actor, the circle is centered around the position of the actor
 	//! @param radius is the radius of the circle
 	//! @param offset is position, relative to the body position
@@ -58,10 +58,10 @@ public:
 	//!	Box2D must combine the friction parameters of the two parent fixtures.
 	//! @param density represents the density of this shape.  The default density is 1 
 	//! @return true if the operation was successful
-	bool AddCircleShape(double radius, DOUBLE2 offset = DOUBLE2(0,0), double restitution = 0.8, double friction = 0.7, double density = 1);
+	bool AddCircleShape(double radius, float2 offset = float2(0,0), double restitution = 0.8, double friction = 0.7, double density = 1);
 
 	//! Adds a polygon shape to the actor, the polygon coordinates are relative to the position of the actor. Polygons must be convex. 
-	//! @param vertexArrRef is a std::vector containing DOUBLE2 values that are representing the coordinates of the points of the polygon. There is a limit of 8 vertices per polygon!
+	//! @param vertexArrRef is a std::vector containing float2 values that are representing the coordinates of the points of the polygon. There is a limit of 8 vertices per polygon!
 	//! @param restitution is the a value between 0 (full damping) and 1 (no energy loss)
 	//! @param friction represents the static and dynamic friction.  The friction parameter is
 	//! usually set between 0 and 1, but can be any non - negative value. A friction value of 0 turns off friction
@@ -69,11 +69,11 @@ public:
 	//!	Box2D must combine the friction parameters of the two parent fixtures.
 	//! @param density represents the density of this shape.  The default density is 1 
 	//! @return true if the operation was successful
-	bool AddPolygonShape(const std::vector<DOUBLE2> & vertexArrRef, double restitution = 0.8, double friction = 0.7, double density = 1);
+	bool AddPolygonShape(const std::vector<float2> & vertexArrRef, double restitution = 0.8, double friction = 0.7, double density = 1);
 
 	//! Adds a chain shape to the actor. A chain is a line list that provides two-sided collision.
 	//! Torque can not be applied to this shape!!
-	//! @param vertexArrRef is a std::vector containing DOUBLE2 values that are representing the coordinates of the points of the line list
+	//! @param vertexArrRef is a std::vector containing float2 values that are representing the coordinates of the points of the line list
 	//! @param restitution is the a value between 0 (full damping) and 1 (no energy loss)
 	//! @param friction represents the static and dynamic friction.  The friction parameter is
 	//! usually set between 0 and 1, but can be any non - negative value. A friction value of 0 turns off friction
@@ -81,7 +81,7 @@ public:
 	//!	Box2D must combine the friction parameters of the two parent fixtures.
 	//! @param density represents the density of this shape.  The default density is 1 
 	//! @return true if the operation was successful
-	bool AddChainShape(const std::vector<DOUBLE2> & vertexArrRef, bool closed, double restitution = 0.8, double friction = 0.7, double density = 1);
+	bool AddChainShape(const std::vector<float2> & vertexArrRef, bool closed, double restitution = 0.8, double friction = 0.7, double density = 1);
 
 	//! Parses a svg file and extracts lines only. Supports only SVG1.0 and 1.1 text files. Use Inkscape to create the svg file.
 	//! Converts the lines into chains and adds them to the actor. 
@@ -103,11 +103,11 @@ public:
 	String GetName();
 
 	//! Returns the position of this actor
-	DOUBLE2 GetPosition();
+	float2 GetPosition();
 
 	//! Sets the positon of this actor
 	//! param position is the new position for this actor
-	void SetPosition(const DOUBLE2& positionRef);
+	void SetPosition(const float2& positionRef);
 
 	//! Returns the angle of this actor
 	double GetAngle();
@@ -117,11 +117,11 @@ public:
 
 	//! Sets velocity of the actor
 	//! @param velocity is the new velocity
-	void SetLinearVelocity(DOUBLE2 velocity);
+	void SetLinearVelocity(float2 const& velocity);
 
 	//! Gets velocity of the actor
 	//! @return the velocity vector
-	DOUBLE2 GetLinearVelocity();
+	float2 GetLinearVelocity();
 
 	//! Sets angular velocity of the actor
 	//! @param velocity is the new angular velocity
@@ -160,7 +160,7 @@ public:
 	//void AddContact(void* ptr);
 
 	//! test a point for overlap 
-	bool IsPointInActor(const DOUBLE2 &pointRef);
+	bool IsPointInActor(const float2& pointRef);
 
 	//! test a point for overlap 
 	bool IsPointInActor(const POINT &pointRef);
@@ -187,12 +187,12 @@ public:
 	//! @param fractionRef resulting fraction of the intersection is a value between 0 and 1 where
 	//!        0 -> intersection at point1 
 	//!        1 -> intersection at point2
-	bool Raycast(DOUBLE2 point1, DOUBLE2 point2, DOUBLE2 &intersectionRef, DOUBLE2 &normalRef, double &fractionRef);
+	bool Raycast(float2 point1, float2 point2, float2& intersectionRef, float2& normalRef, double& fractionRef);
 
 	//! forces act gradually over time to change the velocity of a body. Use this with the KeyboardKeyDown.
 	//! @param force is the force vector that is to be applied on the actor
 	//! @param offsetPoint is the point at which we apply the force/impulse in object space (according to the position of the physics actor) 
-	void ApplyForce(DOUBLE2 force, DOUBLE2 offsetPoint=DOUBLE2());
+	void ApplyForce(float2 force, float2 offsetPoint = float2());
 
 	//! forces act gradually over time to change the velocity of a body. Use this with the KeyboardKeyDown.
 	//! @param torque is the torque that is to be applied on the actor
@@ -201,7 +201,7 @@ public:
 	//! impulses can change a body's velocity immediately. Use Impulse with KeyBoardKeyPressed.
 	//! @param force is the force vector that is to be applied on the actor
 	//! @param offsetPoint is the point at which we apply the force/impulse in object space (according to the position of the physics actor) 
-	void ApplyLinearImpulse(DOUBLE2 impulse, DOUBLE2 offsetPoint = DOUBLE2());
+	void ApplyLinearImpulse(float2 impulse, float2 offsetPoint = float2());
 
 	//! impulses can change a body's velocity immediately. Use Impulse with KeyBoardKeyPressed.
 	//! @param impulse is the impulse that is to be applied on the actor
@@ -213,7 +213,7 @@ public:
 
 	//! retrieve a list of all the touching contact points
 	//! @return a std::vector containing all the touching contact points
-	std::vector<DOUBLE2> GetContactList();
+	std::vector<float2> GetContactList();
 
 	//! add this object to the contactlistener. This must be an object of a class that is derived from the ContactListener Class
 	//! listener is "this": the pointer of the object derived from the contactlistener class
@@ -246,7 +246,8 @@ private:
 	friend class PhysicsWeldJoint;
 
 	//! private internal member function, not for students
-	bool SetBody(DOUBLE2 pos, double angle, BodyType bodyType);
+	bool SetBody(float2 pos, double angle, BodyType bodyType);
+
 	bool m_bGhost = false, m_bTrigger = false;
 	std::wstring m_Name;
 	b2Body* m_BodyPtr = nullptr;

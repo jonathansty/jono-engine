@@ -19,7 +19,7 @@ class Trail;
 class EnemyRocket : public Enemy
 {
 public:
-	EnemyRocket(DOUBLE2 startPosition, DOUBLE2 startVelocity);
+	EnemyRocket(float2 startPosition, float2 startVelocity);
 	virtual ~EnemyRocket( );
 
 	// C++11 make the class non-copyable
@@ -46,8 +46,8 @@ private:
 	//-------------------------------------------------
     static const int WIDTH = 30;
     static const int HEIGHT = 15;
-    DOUBLE2 m_Direction;
-    DOUBLE2 m_AdjustedVelocity;
+    float2 m_Direction;
+    float2 m_AdjustedVelocity;
 
     Trail* m_TrailPtr = nullptr;
     bool m_IsHitByAvatar = false;

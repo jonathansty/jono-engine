@@ -101,7 +101,7 @@ bool GUIBase::PointInRect(RECT r, POINT pt) const
 	//return false;
 }
 
-bool GUIBase::PointInRect(RECT r, DOUBLE2 pt) const
+bool GUIBase::PointInRect(RECT r, float2 pt) const
 {
 	if (pt.x<r.left || pt.x>r.right || pt.y<r.top || pt.y>r.bottom)return false;
 	return true;

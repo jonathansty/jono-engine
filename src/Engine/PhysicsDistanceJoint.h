@@ -16,7 +16,7 @@ public:
 	//! @param length: The natural length between the anchor points.
 	//! @param frequencyHz: The mass-spring-damper frequency in Hertz. A value of 0
 	//! @param dampingRatio: disables softness. The damping ratio. 0 = no damping, 1 = critical damping.
-	PhysicsDistanceJoint(PhysicsActor *actAPtr, DOUBLE2 anchorA, PhysicsActor *actBPtr, DOUBLE2 anchorB, double length = 1, double dampingRatio = 0);
+	PhysicsDistanceJoint(PhysicsActor *actAPtr, float2 anchorA, PhysicsActor *actBPtr, float2 anchorB, double length = 1, double dampingRatio = 0);
 	virtual ~PhysicsDistanceJoint();
 	// C++11 make the class non-copyable
 	PhysicsDistanceJoint(const PhysicsDistanceJoint&) = delete;
@@ -35,7 +35,7 @@ public:
 	//! Get the reaction force applied to actorA at the anchor point in Newton. 
 	//! This reaction force can be used to break joints or trigger other game events
 	//! @param deltaTime is the time as given by the GameTick method
-	DOUBLE2 GetReactionForce(double deltaTime) const;
+	float2 GetReactionForce(double deltaTime) const;
 
 	//! Get the reaction torque applied to actorA at the anchor point in Newton. 
 	//! This reaction force can be used to break joints or trigger other game events

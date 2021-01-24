@@ -36,10 +36,10 @@ HUD::~HUD()
 void HUD::Paint(graphics::D2DRenderContext& ctx)
 {
     ctx.set_font(m_FntPtr);
-    PaintMoneyWindow(ctx,DOUBLE2(10, 10));
-    PaintDeathCounterWindow(ctx,DOUBLE2(GameEngine::instance()->get_width() - 100, 50));
+    PaintMoneyWindow(ctx,float2(10, 10));
+    PaintDeathCounterWindow(ctx,float2(GameEngine::instance()->get_width() - 100, 50));
     
-    ctx.set_world_matrix(ctx.get_view_matrix().Inverse());
+    ctx.set_world_matrix(hlslpp::inverse(ctx.get_view_matrix()));
     ctx.draw_string(String(m_AccuTime, 2), GameEngine::instance()->get_width() / 2, 10);
     ctx.set_font(nullptr); 
     
@@ -49,7 +49,7 @@ void HUD::Paint(graphics::D2DRenderContext& ctx)
 void HUD::Tick(double deltaTime)
 {
 
-    XMFLOAT2 mousePosition = GameEngine::instance()->get_mouse_pos_in_viewport();
+    float2 mousePosition = GameEngine::instance()->get_mouse_pos_in_viewport();
     if (m_BtnSndMutePtr != nullptr && m_BtnSndMutePtr->IsPressed())
     {
         if (m_Muted)
@@ -89,7 +89,7 @@ void HUD::Tick(double deltaTime)
     
     
 }
-void HUD::PaintMoneyWindow(graphics::D2DRenderContext &ctx, DOUBLE2 position) {
+void HUD::PaintMoneyWindow(graphics::D2DRenderContext &ctx, float2 position) {
     GameEngine::instance()->set_default_font();
     int amountOfMoney = 0;
     if (m_AvatarPtr != nullptr)
@@ -112,10 +112,10 @@ void HUD::PaintMoneyWindow(graphics::D2DRenderContext &ctx, DOUBLE2 position) {
     int bitmapWidth = m_BmpMoneyDisplayPtr->GetWidth();
     int bitmapHeight = m_BmpMoneyDisplayPtr->GetHeight();
 
-    MATRIX3X2 matTranslate, matPivot;
-    matTranslate.SetAsTranslate(position);
+    float3x3 matTranslate, matPivot;
+    matTranslate= float3x3::translation(position);
 
-    ctx.set_world_matrix(matTranslate * ctx.get_view_matrix().Inverse());
+    ctx.set_world_matrix(matTranslate * hlslpp::inverse(ctx.get_view_matrix()));
     ctx.draw_bitmap(m_BmpMoneyDisplayPtr);
     ctx.set_color(COLOR(255, 255, 255));
     ctx.draw_string(String(amountOfGold), (int)(bitmapWidth - 30), (int)(5 ));
@@ -123,25 +123,25 @@ void HUD::PaintMoneyWindow(graphics::D2DRenderContext &ctx, DOUBLE2 position) {
     ctx.draw_string(String(amountOfCopper), (int)(bitmapWidth - 110), (int)( 5 ));
     ctx.set_color(COLOR(0, 0, 0));
     ctx.set_font(m_FntPtr);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 
 }
 
-void HUD::PaintDeathCounterWindow(graphics::D2DRenderContext& ctx, DOUBLE2 position)
+void HUD::PaintDeathCounterWindow(graphics::D2DRenderContext& ctx, float2 position)
 {
-    MATRIX3X2 matTranslate, matPivot;
-    DOUBLE2 positionIcon = DOUBLE2(-m_BmpDeathIconPtr->GetWidth() / 2, -m_BmpDeathIconPtr->GetHeight() / 2);
-    matTranslate.SetAsTranslate(position);
-    matPivot.SetAsTranslate(positionIcon);
+    float3x3 matTranslate, matPivot;
+    float2 positionIcon = float2(-m_BmpDeathIconPtr->GetWidth() / 2, -m_BmpDeathIconPtr->GetHeight() / 2);
+    matTranslate= float3x3::translation(position);
+    matPivot= float3x3::translation(positionIcon);
 
-    auto invView = ctx.get_view_matrix().Inverse();
+    auto invView = hlslpp::inverse(ctx.get_view_matrix());
     ctx.set_world_matrix(matPivot * matTranslate * invView);
     ctx.draw_bitmap(m_BmpDeathIconPtr);
 
-    matPivot.SetAsTranslate(DOUBLE2(20 + m_BmpDeathIconPtr->GetWidth() / 2, -m_BmpDeathIconPtr->GetHeight() / 2));
+    matPivot= float3x3::translation(float2(20 + m_BmpDeathIconPtr->GetWidth() / 2, -m_BmpDeathIconPtr->GetHeight() / 2));
     ctx.set_world_matrix(matPivot * matTranslate * invView);
-    ctx.draw_string(String(m_AvatarPtr->GetDeaths()),DOUBLE2());
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.draw_string(String(m_AvatarPtr->GetDeaths()),float2());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void HUD::CreatePauseMenu()
 {
@@ -166,16 +166,16 @@ void HUD::RemovePauseMenu()
     m_BtnQuitToMenuPtr = nullptr;
 }
 
-void HUD::PaintGameOverWindow(graphics::D2DRenderContext& ctx, DOUBLE2 position)
+void HUD::PaintGameOverWindow(graphics::D2DRenderContext& ctx, float2 position)
 {
-    MATRIX3X2 matTranslate, matPivot;
-    matTranslate.SetAsTranslate(position);
-    matPivot.SetAsTranslate(DOUBLE2(-m_BmpGameOverPtr->GetWidth() / 2, -m_BmpGameOverPtr->GetHeight() / 2));
-    ctx.set_world_matrix(matPivot*matTranslate * ctx.get_view_matrix().Inverse());
+    float3x3 matTranslate, matPivot;
+    matTranslate= float3x3::translation(position);
+    matPivot= float3x3::translation(float2(-m_BmpGameOverPtr->GetWidth() / 2, -m_BmpGameOverPtr->GetHeight() / 2));
+    ctx.set_world_matrix(matPivot*matTranslate * hlslpp::inverse(ctx.get_view_matrix()));
     ctx.set_color(COLOR(0, 0, 0, m_GameOverOpacity));
     ctx.draw_bitmap(m_BmpGameOverPtr);
     m_IsGameOverDrawn = true;
-    ctx.set_world_matrix(ctx.get_view_matrix().Inverse());
+    ctx.set_world_matrix(hlslpp::inverse(ctx.get_view_matrix()));
 }
 bool HUD::IsGoToStartMenu()
 {

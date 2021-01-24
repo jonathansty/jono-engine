@@ -4,8 +4,15 @@
 
 namespace graphics {
 
-D2DRenderContext::D2DRenderContext(ID2D1Factory *factory, ID2D1RenderTarget *rt, ID2D1SolidColorBrush *brush, Font* font) :
-		_rt(rt), _brush(brush), _factory(factory), _interpolation_mode(D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR), _default_font(font), _font(font), _mat_view(Matrix3x2F::Identity()), _mat_world(Matrix3x2F::Identity()) {
+D2DRenderContext::D2DRenderContext(ID2D1Factory *factory, ID2D1RenderTarget *rt, ID2D1SolidColorBrush *brush, Font* font) 
+		: _rt(rt)
+		, _brush(brush)
+		, _factory(factory)
+		, _interpolation_mode(D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR)
+		, _default_font(font)
+		, _font(font)
+		, _mat_view(float3x3::identity())
+		, _mat_world(float3x3::identity()) {
 }
 
 bool D2DRenderContext::begin_paint() {
@@ -35,16 +42,16 @@ bool D2DRenderContext::draw_background(COLOR backgroundColor) {
 	return true;
 }
 
-bool D2DRenderContext::draw_line(DOUBLE2 p1, DOUBLE2 p2, double strokeWidth /*= 1.0*/) {
+bool D2DRenderContext::draw_line(float2 p1, float2 p2, double strokeWidth /*= 1.0*/) {
 	_rt->DrawLine(Point2F((FLOAT)p1.x, (FLOAT)p1.y), Point2F((FLOAT)p2.x, (FLOAT)p2.y), _brush, (FLOAT)strokeWidth);
 	return true;
 }
 
 bool D2DRenderContext::draw_line(int x1, int y1, int x2, int y2) {
-	return draw_line(DOUBLE2(x1, y1), DOUBLE2(x2, y2), 1.0);
+	return draw_line(float2(x1, y1), float2(x2, y2), 1.0);
 }
 
-bool D2DRenderContext::draw_polygon(const std::vector<DOUBLE2> &ptsArr, unsigned int count, bool close /*= true*/, double strokeWidth /*= 1.0*/) {
+bool D2DRenderContext::draw_polygon(const std::vector<float2> &ptsArr, unsigned int count, bool close /*= true*/, double strokeWidth /*= 1.0*/) {
 	if (count < 2) {
 		return false;
 	}
@@ -73,7 +80,7 @@ bool D2DRenderContext::draw_polygon(const std::vector<POINT> &ptsArr, unsigned i
 	return true;
 }
 
-bool D2DRenderContext::fill_polygon(const std::vector<DOUBLE2> &ptsArr, unsigned int count) {
+bool D2DRenderContext::fill_polygon(const std::vector<float2> &ptsArr, unsigned int count) {
 	if (count < 2) {
 		return false;
 	}
@@ -187,7 +194,7 @@ bool D2DRenderContext::draw_rect(RECT2 rect, double strokeWidth /*= 1*/) {
 	return true;
 }
 
-bool D2DRenderContext::draw_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom, double strokeWidth /*= 1.0*/) {
+bool D2DRenderContext::draw_rect(float2 topLeft, float2 rightbottom, double strokeWidth /*= 1.0*/) {
 	RECT2 rect2(topLeft.x, topLeft.y, rightbottom.x, rightbottom.y);
 	return draw_rect(rect2, strokeWidth);
 }
@@ -214,7 +221,7 @@ bool D2DRenderContext::fill_rect(RECT2 rect) {
 	return true;
 }
 
-bool D2DRenderContext::fill_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom) {
+bool D2DRenderContext::fill_rect(float2 topLeft, float2 rightbottom) {
 	RECT2 rect2(topLeft.x, topLeft.y, rightbottom.x, rightbottom.y);
 	return fill_rect(rect2);
 }
@@ -236,7 +243,7 @@ bool D2DRenderContext::draw_rounded_rect(RECT2 rect, int radiusX, int radiusY, d
 	return true;
 }
 
-bool D2DRenderContext::draw_rounded_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY, double strokeWidth /*= 1.0*/) {
+bool D2DRenderContext::draw_rounded_rect(float2 topLeft, float2 rightbottom, int radiusX, int radiusY, double strokeWidth /*= 1.0*/) {
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(rightbottom.x), (FLOAT)(rightbottom.y));
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
 	_rt->DrawRoundedRectangle(d2dRoundedRect, _brush, (FLOAT)strokeWidth);
@@ -264,7 +271,7 @@ bool D2DRenderContext::fill_rounded_rect(RECT2 rect, int radiusX, int radiusY) {
 	return true;
 }
 
-bool D2DRenderContext::fill_rounded_rect(DOUBLE2 topLeft, DOUBLE2 rightbottom, int radiusX, int radiusY) {
+bool D2DRenderContext::fill_rounded_rect(float2 topLeft, float2 rightbottom, int radiusX, int radiusY) {
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(rightbottom.x), (FLOAT)(rightbottom.y));
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
 	_rt->FillRoundedRectangle(d2dRoundedRect, _brush);
@@ -285,7 +292,7 @@ bool D2DRenderContext::fill_rounded_rect(int left, int top, int right, int botto
 	return true;
 }
 
-bool D2DRenderContext::draw_ellipse(DOUBLE2 centerPt, double radiusX, double radiusY, double strokeWidth /*= 1.0*/) {
+bool D2DRenderContext::draw_ellipse(float2 centerPt, double radiusX, double radiusY, double strokeWidth /*= 1.0*/) {
 	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerPt.x, (FLOAT)centerPt.y), (FLOAT)radiusX, (FLOAT)radiusY);
 	_rt->DrawEllipse(ellipse, _brush, (FLOAT)strokeWidth);
 	return true;
@@ -297,7 +304,7 @@ bool D2DRenderContext::draw_ellipse(int centerX, int centerY, int radiusX, int r
 	return true;
 }
 
-bool D2DRenderContext::fill_ellipse(DOUBLE2 centerPt, double radiusX, double radiusY) {
+bool D2DRenderContext::fill_ellipse(float2 centerPt, double radiusX, double radiusY) {
 	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerPt.x, (FLOAT)centerPt.y), (FLOAT)radiusX, (FLOAT)radiusY);
 	_rt->FillEllipse(ellipse, _brush);
 	return true;
@@ -309,7 +316,7 @@ bool D2DRenderContext::fill_ellipse(int centerX, int centerY, int radiusX, int r
 	return true;
 }
 
-bool D2DRenderContext::draw_string(std::string text, DOUBLE2 topLeft, double right /*= -1*/, double bottom /*= -1*/) {
+bool D2DRenderContext::draw_string(std::string text, float2 topLeft, double right /*= -1*/, double bottom /*= -1*/) {
 	D2D1_SIZE_F dstSize_f = _rt->GetSize();
 	D2D1_DRAW_TEXT_OPTIONS options = D2D1_DRAW_TEXT_OPTIONS_CLIP;
 	if (right == -1 || bottom == -1) //ignore the right and bottom edge to enable drawing in entire Level
@@ -326,7 +333,7 @@ bool D2DRenderContext::draw_string(std::string text, DOUBLE2 topLeft, double rig
 }
 
 bool D2DRenderContext::draw_string(std::string text, int xPos, int yPos, int right /*= -1*/, int bottom /*= -1*/) {
-	return draw_string(text, DOUBLE2(xPos, yPos), right, bottom);
+	return draw_string(text, float2(xPos, yPos), right, bottom);
 }
 
 bool D2DRenderContext::draw_string(const String &textRef, RECT boundingRect) {
@@ -337,7 +344,7 @@ bool D2DRenderContext::draw_string(const String &textRef, RECT2 boundingRect) {
 	return draw_string(textRef, (int)boundingRect.left, (int)boundingRect.top, (int)boundingRect.right, (int)boundingRect.bottom);
 }
 
-bool D2DRenderContext::draw_string(const String &textRef, DOUBLE2 topLeft, double right /*= -1*/, double bottom /*= -1*/) {
+bool D2DRenderContext::draw_string(const String &textRef, float2 topLeft, double right /*= -1*/, double bottom /*= -1*/) {
 	tstring stext(textRef.C_str(), textRef.C_str() + textRef.Length());
 
 	D2D1_DRAW_TEXT_OPTIONS options = D2D1_DRAW_TEXT_OPTIONS_CLIP;
@@ -353,10 +360,10 @@ bool D2DRenderContext::draw_string(const String &textRef, DOUBLE2 topLeft, doubl
 }
 
 bool D2DRenderContext::draw_string(const String &textRef, int xPos, int yPos, int right /*= -1*/, int bottom /*= -1*/) {
-	return draw_string(textRef, DOUBLE2(xPos, yPos), right, bottom);
+	return draw_string(textRef, float2(xPos, yPos), right, bottom);
 }
 
-bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, DOUBLE2 position, RECT2 srcRect) {
+bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, float2 position, RECT2 srcRect) {
 	if (imagePtr == nullptr) {
 		GameEngine::instance()->message_box(String("DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio."));
 		return false;
@@ -383,7 +390,7 @@ bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, DOUBLE2 position, RECT2 src
 	return true;
 }
 
-bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, DOUBLE2 position) {
+bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, float2 position) {
 	if (imagePtr == nullptr) {
 		GameEngine::instance()->message_box(String("DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio."));
 		return false;
@@ -395,7 +402,7 @@ bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, DOUBLE2 position) {
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, int x, int y, RECT srcRect) {
 	RECT2 srcRect2(srcRect.left, srcRect.top, srcRect.right, srcRect.bottom);
-	return draw_bitmap(imagePtr, DOUBLE2(x, y), srcRect2);
+	return draw_bitmap(imagePtr, float2(x, y), srcRect2);
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, int x, int y) {
@@ -405,12 +412,12 @@ bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, int x, int y) {
 	}
 
 	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
-	return draw_bitmap(imagePtr, DOUBLE2(x, y), srcRect2);
+	return draw_bitmap(imagePtr, float2(x, y), srcRect2);
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, RECT srcRect) {
 	RECT2 srcRect2(srcRect.left, srcRect.top, srcRect.right, srcRect.bottom);
-	return draw_bitmap(imagePtr, DOUBLE2(0, 0), srcRect2);
+	return draw_bitmap(imagePtr, float2(0, 0), srcRect2);
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr) {
@@ -420,7 +427,7 @@ bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr) {
 	}
 
 	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
-	return draw_bitmap(imagePtr, DOUBLE2(0, 0), srcRect2);
+	return draw_bitmap(imagePtr, float2(0, 0), srcRect2);
 }
 
 void D2DRenderContext::set_color(COLOR color) {
@@ -432,21 +439,20 @@ COLOR D2DRenderContext::get_color() const {
 	return COLOR((unsigned char)(dColor.r * 255), (unsigned char)(dColor.g * 255), (unsigned char)(dColor.b * 255), (unsigned char)(dColor.a * 255));
 }
 
-void D2DRenderContext::set_world_matrix(const MATRIX3X2 &mat) {
+void D2DRenderContext::set_world_matrix(float3x3 const& mat) {
 	_mat_world = mat;
-	D2D1::Matrix3x2F matDirect2D = (_mat_world * _mat_view).ToMatrix3x2F();
-	_rt->SetTransform(matDirect2D);
-}
-MATRIX3X2 D2DRenderContext::get_world_matrix() const {
-	return _mat_world;
-}
-void D2DRenderContext::set_view_matrix(const MATRIX3X2 &mat) {
-	_mat_view = mat;
-	D2D1::Matrix3x2F matDirect2D = (_mat_world * _mat_view).ToMatrix3x2F();
-	_rt->SetTransform(matDirect2D);
+	update_transforms();
 }
 
-MATRIX3X2 D2DRenderContext::get_view_matrix() const {
+float3x3 D2DRenderContext::get_world_matrix() const {
+	return _mat_world;
+}
+void D2DRenderContext::set_view_matrix(float3x3 const &mat) {
+	_mat_view = mat;
+	update_transforms();
+}
+
+float3x3 D2DRenderContext::get_view_matrix() const {
 	return _mat_view;
 }
 
@@ -462,6 +468,12 @@ void D2DRenderContext::set_bitmap_interpolation_mode(bitmap_interpolation_mode m
 			assert("Case not supported");
 			break;
 	}
+}
+
+void D2DRenderContext::update_transforms() {
+	float3x3 result = hlslpp::mul(_mat_world, _mat_view);
+	auto r = D2D1::Matrix3x2F(result._11, result._12, result._21, result._22, result._31, result._32);
+	_rt->SetTransform(r);
 }
 
 } // namespace graphics

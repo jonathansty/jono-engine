@@ -17,7 +17,7 @@
 class Coin : public PickUp
 {
 public:
-	Coin(DOUBLE2 position, Bitmap* bmpPtr);
+	Coin(float2 position, Bitmap* bmpPtr);
 	virtual ~Coin( );
 
 	// C++11 make the class non-copyable
@@ -37,7 +37,7 @@ public:
 
     void SetCoinValue(int value);
 
-    DOUBLE2 GetPosition();
+    float2 GetPosition();
     int GetCoinValue();
     void SetIndex(int number);
 

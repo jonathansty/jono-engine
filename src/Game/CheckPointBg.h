@@ -17,7 +17,7 @@
 class CheckPointBg : public Animation
 {
 public:
-    CheckPointBg(DOUBLE2 position, Bitmap* bmpPtr);
+    CheckPointBg(float2 position, Bitmap* bmpPtr);
 	virtual ~CheckPointBg( );
 
 	// C++11 make the class non-copyable
@@ -36,9 +36,9 @@ public:
     };
     void Paint(graphics::D2DRenderContext& ctx);
     void Tick(double deltaTime);
-    void SetPosition(DOUBLE2 position);
+    void SetPosition(float2 position);
     void SetDrawState(drawState drawState);
-    DOUBLE2 GetPosition();
+    float2 GetPosition();
 private: 
 	//-------------------------------------------------
 	// Datamembers								

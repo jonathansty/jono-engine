@@ -3,7 +3,7 @@
 #include "Slicer.h"
 #include "Avatar.h"
 
-Slicer::Slicer(DOUBLE2 position,DOUBLE2 barPoint,int radius): Enemy(position),
+Slicer::Slicer(float2 position,float2 barPoint,int radius): Enemy(position),
 m_BarPosition(barPoint), m_Radius(radius)
 {
     m_ActPtr = new PhysicsActor(position, 0, BodyType::DYNAMIC);
@@ -20,8 +20,8 @@ m_BarPosition(barPoint), m_Radius(radius)
     m_ActBarPtr = new PhysicsActor(position, 0, BodyType::DYNAMIC);
     m_ActBarPtr->AddBoxShape(m_Radius*2, 10);
     m_ActBarPtr->SetTrigger(true);
-    m_JntPtr = new PhysicsRevoluteJoint(m_ActBarPoint, DOUBLE2(), m_ActBarPtr, DOUBLE2(-m_Radius, 0));
-    m_JntBarPlatform = new PhysicsRevoluteJoint(m_ActBarPtr, DOUBLE2(m_Radius, 0), m_ActPtr, DOUBLE2());
+    m_JntPtr = new PhysicsRevoluteJoint(m_ActBarPoint, float2(), m_ActBarPtr, float2(-m_Radius, 0));
+    m_JntBarPlatform = new PhysicsRevoluteJoint(m_ActBarPtr, float2(m_Radius, 0), m_ActPtr, float2());
     m_JntPtr->EnableMotor(true, 10, 2);
    
 
@@ -63,25 +63,25 @@ void Slicer::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 }
 void Slicer::Tick(double deltaTime)
 {
-    DOUBLE2 direction = m_ActBarPoint->GetPosition() - m_ActPtr->GetPosition();
+    float2 direction = m_ActBarPoint->GetPosition() - m_ActPtr->GetPosition();
     m_Position = m_ActPtr->GetPosition();
 }
 void Slicer::Paint(graphics::D2DRenderContext& ctx)
 {
     ctx.draw_line(m_ActBarPoint->GetPosition(), m_ActPtr->GetPosition());
 
-    MATRIX3X2 matTranlate, matRotate, matPivot;
-    matTranlate.SetAsTranslate(m_Position);
-    matRotate.SetAsRotate(m_ActPtr->GetAngle());
-    matPivot.SetAsTranslate(DOUBLE2(-BLADEWIDTH / 2, -BLADEHEIGHT / 2));
+    float3x3 matTranlate, matRotate, matPivot;
+    matTranlate= float3x3::translation(m_Position);
+    matRotate = float3x3::rotation_z(m_ActPtr->GetAngle());
+    matPivot= float3x3::translation(float2(-BLADEWIDTH / 2, -BLADEHEIGHT / 2));
     ctx.set_world_matrix(matPivot * matRotate * matTranlate);
     ctx.set_color(COLOR(0, 0, 0));
     ctx.fill_rect(0, 0, BLADEWIDTH, BLADEHEIGHT);
 
-    matRotate.SetAsRotate(m_ActPtr->GetAngle() + M_PI_2);
+    matRotate = float3x3::rotation_z(m_ActPtr->GetAngle() + M_PI_2);
     ctx.set_world_matrix(matPivot * matRotate * matTranlate);
     ctx.fill_rect(0, 0, BLADEWIDTH, BLADEHEIGHT);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 PhysicsActor* Slicer::GetActor()
 {

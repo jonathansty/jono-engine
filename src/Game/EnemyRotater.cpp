@@ -13,10 +13,10 @@
 //---------------------------
 // Constructor & Destructor
 //---------------------------
-EnemyRotater::EnemyRotater(DOUBLE2 position, Bitmap* bmpPtr): Enemy(position), m_BmpPtr(bmpPtr)
+EnemyRotater::EnemyRotater(float2 position, Bitmap* bmpPtr): Enemy(position), m_BmpPtr(bmpPtr)
 {
     m_ActPtr = new PhysicsActor(position, 0, BodyType::KINEMATIC);
-    m_ActPtr->AddCircleShape(bmpPtr->GetWidth()/2,DOUBLE2(m_Radius,0),0,0);
+    m_ActPtr->AddCircleShape(bmpPtr->GetWidth()/2,float2(m_Radius,0),0,0);
     m_ActPtr->SetName(String("EnemyRotater"));
 }
 
@@ -49,16 +49,16 @@ void EnemyRotater::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 }
 void EnemyRotater::Paint(graphics::D2DRenderContext& ctx)
 {
-    DOUBLE2 position = m_ActPtr->GetPosition();
-    MATRIX3X2 matRotation, matOrbitRadius, matOrbitCenter, matCenter,matBitmapRotation;
-    matCenter.SetAsTranslate(DOUBLE2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
-    matRotation.SetAsRotate(m_Angle);
-    matOrbitRadius.SetAsTranslate(DOUBLE2(m_Radius,0));
-    matOrbitCenter.SetAsTranslate(position);
-    matBitmapRotation = matRotation.Inverse();
+    float2 position = m_ActPtr->GetPosition();
+    float3x3 matRotation, matOrbitRadius, matOrbitCenter, matCenter,matBitmapRotation;
+    matCenter = float3x3::translation(float2(-m_BmpPtr->GetWidth() / 2, -m_BmpPtr->GetHeight() / 2));
+    matRotation = float3x3::rotation_z(m_Angle);
+    matOrbitRadius = float3x3::translation(float2(m_Radius,0));
+    matOrbitCenter = float3x3::translation(position);
+    matBitmapRotation = hlslpp::inverse(matRotation);
     ctx.set_world_matrix(matCenter *matBitmapRotation * matOrbitRadius*matRotation*matOrbitCenter);
     ctx.draw_bitmap(m_BmpPtr);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void EnemyRotater::Tick(double deltaTime)
 {
@@ -74,7 +74,7 @@ void EnemyRotater::Reset()
 {
 
 }
-void EnemyRotater::SetSpawnPosition(DOUBLE2 respawnPosition)
+void EnemyRotater::SetSpawnPosition(float2 respawnPosition)
 {
     m_Position = respawnPosition;
 }

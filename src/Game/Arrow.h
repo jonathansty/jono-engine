@@ -1,23 +1,11 @@
 #pragma once
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 
-//-----------------------------------------------------
-// Include Files
-//-----------------------------------------------------
-
-//#include "ContactListener.h"
 #include "Entity.h"
-//-----------------------------------------------------
-// Arrow Class									
-//-----------------------------------------------------
+
 class Arrow : public Entity
 {
 public:
-	Arrow(DOUBLE2 position, Bitmap* bmpPtr);
+	Arrow(float2 position, Bitmap* bmpPtr);
 	virtual ~Arrow( );
 
 	// C++11 make the class non-copyable
@@ -35,8 +23,6 @@ public:
     virtual void Tick(double deltaTime) override;
 
     PhysicsActor* GetActor();
-    void SetSpawnPosition(DOUBLE2 respawnPosition){};
-    void Reset(){};
     void SetPushPower(double pushPower);
 private:
     Bitmap* m_BmpPtr = nullptr;

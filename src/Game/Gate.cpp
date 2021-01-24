@@ -3,7 +3,7 @@
 #include "Gate.h"
 #include "Avatar.h"
 
-Gate::Gate(DOUBLE2 position, DOUBLE2 triggerposition):
+Gate::Gate(float2 position, float2 triggerposition):
 Entity(position), m_TriggerPosition(triggerposition)
 {
     m_ActPtr = new PhysicsActor(triggerposition, 0, BodyType::STATIC);
@@ -14,7 +14,7 @@ Entity(position), m_TriggerPosition(triggerposition)
     m_ActBasePtr = new PhysicsActor(position, 0, BodyType::STATIC);
     m_ActBasePtr->AddBoxShape(10, 10);
     m_ActBasePtr->SetGhost(true);
-    m_ActGatePtr = new PhysicsActor(position - DOUBLE2(0,GameEngine::instance()->get_height()/2), 0, BodyType::DYNAMIC);
+    m_ActGatePtr = new PhysicsActor(position - float2(0,GameEngine::instance()->get_height()/2), 0, BodyType::DYNAMIC);
     m_ActGatePtr->SetGravityScale(1);
     b2Filter filter;
     filter.groupIndex = -5;
@@ -22,7 +22,7 @@ Entity(position), m_TriggerPosition(triggerposition)
     m_Width = 50;
     m_Height = GameEngine::instance()->get_height() + 800;
     m_ActGatePtr->AddBoxShape(m_Width,m_Height);
-    m_JntGatePtr = new PhysicsPrismaticJoint(m_ActBasePtr, DOUBLE2(), m_ActGatePtr, DOUBLE2(0,(GameEngine::instance()->get_height()+800)/2 ), DOUBLE2(0, 1), false);
+    m_JntGatePtr = new PhysicsPrismaticJoint(m_ActBasePtr, float2(), m_ActGatePtr, float2(0,(GameEngine::instance()->get_height()+800)/2 ), float2(0, 1), false);
     m_JntGatePtr->EnableJointLimits(true, -GameEngine::instance()->get_height(),0 );
 }
 
@@ -67,14 +67,14 @@ void Gate::Tick(double deltaTime)
 }
 void Gate::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate, matPivot;
-    DOUBLE2 position = m_ActGatePtr->GetPosition();
-    matTranslate.SetAsTranslate(position);
-    matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
+    float3x3 matTranslate, matPivot;
+    float2 position = m_ActGatePtr->GetPosition();
+    matTranslate= float3x3::translation(position);
+    matPivot= float3x3::translation(float2(-m_Width / 2, -m_Height / 2));
     ctx.set_world_matrix(matPivot * matTranslate);
     ctx.set_color(COLOR(0, 0, 0, 255));
     ctx.fill_rect(0, 0, m_Width, m_Height);
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void Gate::Reset()
 {

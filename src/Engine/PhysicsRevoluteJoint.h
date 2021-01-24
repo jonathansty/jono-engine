@@ -15,7 +15,7 @@ public:
 	//! @param anchorB: The local anchor point relative to actB's origin.
 	//! @param collide: if true the actors attached to this joint will collide
 	//! @param referenceAngle: an angle between bodies considered to be zero for the joint angle. See http://www.iforce2d.net/b2dtut/joints-revolute
-	PhysicsRevoluteJoint(PhysicsActor *actAPtr, DOUBLE2 anchorA, PhysicsActor *actBPtr, DOUBLE2 anchorB, bool collide = false, double referenceAngle = 0);
+	PhysicsRevoluteJoint(PhysicsActor *actAPtr, float2 anchorA, PhysicsActor *actBPtr, float2 anchorB, bool collide = false, double referenceAngle = 0);
 	virtual ~PhysicsRevoluteJoint();
 	// C++11 make the class non-copyable
 	PhysicsRevoluteJoint(const PhysicsRevoluteJoint&) = delete;

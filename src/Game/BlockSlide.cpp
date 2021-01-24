@@ -3,7 +3,7 @@
 #include "BlockSlide.h"
 #include "Avatar.h"
 
-BlockSlide::BlockSlide(DOUBLE2 position, int width, int height) 
+BlockSlide::BlockSlide(float2 position, int width, int height) 
     : Entity(position)
     , m_Width(width)
     , m_Height(height)
@@ -44,15 +44,15 @@ void BlockSlide::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
 }
 void BlockSlide::Paint(graphics::D2DRenderContext& ctx)
 {
-    MATRIX3X2 matTranslate, matPivot;
-    matTranslate.SetAsTranslate(m_Position);
-    matPivot.SetAsTranslate(DOUBLE2(-m_Width / 2, -m_Height / 2));
+    float3x3 matTranslate, matPivot;
+    matTranslate= float3x3::translation(m_Position);
+    matPivot= float3x3::translation(float2(-m_Width / 2, -m_Height / 2));
     ctx.set_world_matrix(matPivot * matTranslate);
     ctx.fill_rect(0, 0, m_Width, m_Height);
     ctx.set_color(COLOR(255,255,255));
     ctx.fill_rect(0, 0, m_Width, 5);
     ctx.set_color(COLOR(0, 0, 0));
-    ctx.set_world_matrix(MATRIX3X2::CreateIdentityMatrix());
+    ctx.set_world_matrix(float3x3::identity());
 }
 void BlockSlide::Tick(double deltaTime)
 {

@@ -13,10 +13,13 @@ public:
 	HelloWorldGame() = default;
 	virtual ~HelloWorldGame() = default;
 
-	void initialize(GameSettings& gameSettings)
-	{
+	void configure_engine(EngineSettings& engineSettings) {
+		engineSettings.d2d_use = true;
+	}
+	void initialize(GameSettings& gameSettings) {
 		gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableConsole;
 	}
+
 	void start() override;
 
 	void end() override;

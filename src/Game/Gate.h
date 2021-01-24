@@ -17,7 +17,7 @@
 class Gate : public Entity
 {
 public:
-    Gate(DOUBLE2 position, DOUBLE2 triggerposition);
+    Gate(float2 position, float2 triggerposition);
 	virtual ~Gate( );
 
 	// C++11 make the class non-copyable
@@ -39,7 +39,7 @@ private:
 	// Datamembers								
 	//-------------------------------------------------
     
-    DOUBLE2 m_TriggerPosition;
+    float2 m_TriggerPosition;
     int m_Width;
     int m_Height;
     PhysicsActor* m_ActGatePtr = nullptr;
