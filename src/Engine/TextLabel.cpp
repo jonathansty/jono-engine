@@ -1,5 +1,8 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 #include "TextLabel.h"
+
+#include "graphics/2DRenderContext.h"
+#include "Font.h"
 
 TextLabel::TextLabel(std::string const& text)
 	: GUIBase()

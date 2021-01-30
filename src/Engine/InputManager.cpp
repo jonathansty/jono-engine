@@ -1,4 +1,6 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
+
+#include "GameEngine.h"
 #include "InputManager.h"
 
 //------------------------------------------------------------------------------

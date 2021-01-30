@@ -8,7 +8,7 @@
 //-----------------------------------------------------------------
 // Include Files
 //-----------------------------------------------------------------
-#include "stdafx.h"
+#include "game.stdafx.h"
 #include "GameWinMain.h"
 
 //ReportLiveObjects:

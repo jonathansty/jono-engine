@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 
 #include "Avatar.h"
 #include "Level.h"
@@ -256,7 +256,8 @@ void Avatar::Paint(graphics::D2DRenderContext& ctx)
         matScale = float3x3::scale(-1,1);
     }
     // #TODO: Fix avatar mirroring
-    matWorldTransform = hlslpp::mul(matPivot , matTranslate);
+	auto mat = hlslpp::mul(matPivot, matScale);
+	matWorldTransform = hlslpp::mul(mat, matTranslate);
     if (GameEngine::instance()->is_key_down(VK_LEFT))
     {     
         m_Mirror = true;
@@ -433,7 +434,7 @@ void Avatar::NormalMoveState(double dTime)
     }
     dVelocity.x = desiredVelocity.x - oldVelocity.x;
     dVelocity.y = desiredVelocity.y;
-    m_ActPtr->ApplyLinearImpulse(m_ActPtr->GetMass() * dVelocity / PhysicsActor::SCALE);
+    m_ActPtr->ApplyLinearImpulse(m_ActPtr->GetMass() * dVelocity);
 
     //Updating the moveState
     if (m_moveState == moveState::RUNNING || m_moveState == moveState::STANDING)

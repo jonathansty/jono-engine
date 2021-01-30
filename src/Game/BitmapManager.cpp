@@ -2,7 +2,7 @@
 // Name, first name: Steyfkens, Jonathan
 // Group: 1DAE01
 //-----------------------------------------------------
-#include "stdafx.h"	
+#include "game.stdafx.h"	
 #include "BitmapManager.h"
 
 BitmapManager::BitmapManager() : m_BitmapPtrArr{}

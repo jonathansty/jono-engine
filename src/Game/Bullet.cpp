@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 #include "Bullet.h"
 
 Bullet::Bullet(float2 startPosition, float2 velocity)

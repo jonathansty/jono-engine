@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "testbed.stdafx.h"
 #include "Engine/rtti/rtti.h"
 
 #ifdef _DEBUG

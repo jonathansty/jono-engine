@@ -7,3 +7,6 @@
 [submodule "external/hlslpp"]
 	path = external/hlslpp
 	url = https://github.com/redorav/hlslpp.git
+[submodule "external/refl-cpp"]
+	path = external/refl-cpp
+	url = https://github.com/veselink1/refl-cpp.git

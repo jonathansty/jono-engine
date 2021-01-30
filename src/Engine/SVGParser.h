@@ -1,14 +1,8 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015 
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
-
 #pragma once
-//-----------------------------------------------------------------
-// SVGParser Class
-//-----------------------------------------------------------------
+class String;
+struct ID2D1Factory;
+struct ID2D1Geometry;
+
 class SVGParser
 {
 public:

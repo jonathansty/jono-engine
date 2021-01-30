@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 	
 #include "Teleport.h"
 #include "Avatar.h"

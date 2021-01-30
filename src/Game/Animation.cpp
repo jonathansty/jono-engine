@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 #include "Animation.h"
 
 Animation::Animation(float2 position)

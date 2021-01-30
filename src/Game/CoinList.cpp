@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 	
 #include "CoinList.h"
 #include "Coin.h"

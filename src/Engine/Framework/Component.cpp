@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 #include "Component.h"
 
 using namespace framework;

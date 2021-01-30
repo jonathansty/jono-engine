@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 #include "typeinfo.h"
 
 #include "property.h"
@@ -71,6 +71,19 @@ rtti::Property* rtti::TypeInfo::find_property(std::string const& field)
 	if (_parent)
 	{
 		return _parent->find_property(field);
+	}
+
+	return nullptr;
+}
+
+rtti::FunctionBase* rtti::TypeInfo::find_function(std::string const& name) {
+	if (auto it = _functions.find(name); it != _functions.end()) {
+		return it->second.get();
+	}
+
+	// Recurse into parent
+	if (_parent) {
+		return _parent->find_function(name);
 	}
 
 	return nullptr;

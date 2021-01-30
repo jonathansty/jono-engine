@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 	
 #include "Entity.h"
 #include "Level.h"

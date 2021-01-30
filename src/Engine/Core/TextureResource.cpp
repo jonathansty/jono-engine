@@ -1,5 +1,7 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 #include "TextureResource.h"
+
+#include "GameEngine.h"
 
 #include <DirectXTK/WICTextureLoader.h>
 

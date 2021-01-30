@@ -24,11 +24,11 @@ VS_OUT main(VS_IN vin)
 	vout.colour = vin.colour;
 	vout.uv = vin.uv;
 
-	vout.viewPosition = mul(WorldView, float4(vin.position, 1.0));
-
-	vout.viewNormal = mul(WorldView, float4(vin.normal, 0.0));
-	vout.worldNormal = mul(World, float4(vin.normal, 0.0));
-	vout.worldTangent = mul(World, vin.tangent);
+	// Matrices
+	vout.viewPosition   = mul(WorldView, float4(vin.position, 1.0));
+	vout.viewNormal     = mul(WorldView, float4(vin.normal, 0.0));
+	vout.worldNormal    = mul(World, float4(vin.normal, 0.0));
+	vout.worldTangent   = mul(World, vin.tangent);
 	vout.worldBitangent = mul(World, vin.bitangent);
 
 	return vout;

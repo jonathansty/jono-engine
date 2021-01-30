@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 
 #include "GameEngine.h"
 #include "ContactListener.h"
@@ -13,6 +13,12 @@
 
 #include "Core/ResourceLoader.h"
 #include "Core/logging.h"
+
+#include "InputManager.h"
+#include "PrecisionTimer.h"
+#include "AudioSystem.h"
+#include "GUIBase.h"
+#include "Font.h"
 
 enki::TaskScheduler GameEngine::s_TaskScheduler;
 std::thread::id GameEngine::s_main_thread;
@@ -75,7 +81,7 @@ GameEngine::GameEngine()
 {
 
 	// Seed the random number generator
-	srand(GetTickCount64());
+	srand(unsigned int(GetTickCount64()));
 
 	// Initialize Direct2D system
 	CoInitialize(NULL);
@@ -654,13 +660,12 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 
 
 	// Either create the swapchain or retrieve the existing description
-	DXGI_SWAP_CHAIN_DESC desc;
+	DXGI_SWAP_CHAIN_DESC desc{};
 	if(_dxgi_swapchain) {
 		_dxgi_swapchain->GetDesc(&desc);
 		_dxgi_swapchain->ResizeBuffers(desc.BufferCount, width, height, desc.BufferDesc.Format, desc.Flags);
 	}
 	else {
-		DXGI_SWAP_CHAIN_DESC desc{};
 		desc.BufferDesc.Width = get_width();
 		desc.BufferDesc.Height = get_height();
 		desc.BufferDesc.Format = swapchain_format;
@@ -703,6 +708,8 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 
 	SUCCEEDED(_d2d_factory->CreateDxgiSurfaceRenderTarget(surface.Get(), rtp, &_d2d_rt));
 	set_debug_name(surface.Get(), "[D2D] Output");
+
+	_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
 }
 
 void GameEngine::quit_game()
@@ -1240,7 +1247,7 @@ void GameEngine::create_factories()
 			creation_flag |= D3D11_CREATE_DEVICE_DEBUG;
 		}
 
-		SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT, featureLevels, std::size(featureLevels), D3D11_SDK_VERSION, &_d3d_device, &featureLevel, &_d3d_device_ctx));
+		SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT, featureLevels, UINT(std::size(featureLevels)), D3D11_SDK_VERSION, &_d3d_device, &featureLevel, &_d3d_device_ctx));
 
 		if (debug_layer) {
 

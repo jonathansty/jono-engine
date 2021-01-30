@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "testbed.stdafx.h"
 #include <hlsl++.h>
 #include "Test3D.h"
 
@@ -78,7 +78,6 @@ void Hello3D::start()
 	auto device = GameEngine::instance()->GetD3DDevice();
 	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
 
-
 	::SetCapture(GameEngine::instance()->get_window());
 
 	using namespace framework;
@@ -104,12 +103,12 @@ void Hello3D::start()
 				World::EntityId model = _world->create_entity();
 				Entity* ent = _world->get_entity(model);
 				ent->set_name("boxes_3");
-				ent->set_local_position({ 2.0f * (float)i, 0.0f, 2.0f * (float)j});
+				ent->set_local_position(float3( 2.0f * (float)i, 0.0f, 2.0f * (float)j));
 				ent->set_local_scale({ 10.0f, 10.0f,10.0f });
 				auto comp = ent->create_component<SimpleMeshComponent>();
 				comp->set_model("Resources/Models/m-96_mattock/scene.gltf");
 
-				auto c = ent->create_component<SimpleMovement>();
+				auto c = ent->create_component<SimpleMovement3D>();
 				c->set_speed(10.0f);
 			}
 		}
@@ -283,13 +282,13 @@ void Hello3D::render_3d()
 			D3D11_MAPPED_SUBRESOURCE resource{};
 			ctx->Map(_cb_MVP.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
 			MVPConstantBuffer* buffer = (MVPConstantBuffer*)resource.pData;
-			buffer->World=  world;
-			buffer->WorldViewProjection= MVP;
+			buffer->World = world;
+			buffer->WorldViewProjection = MVP;
 			buffer->WorldView = mul(world, View);
 			buffer->Projection = Projection;
 			buffer->InvView = invView;
 			buffer->View = View;
-			buffer->ViewDirection =  view_direction;
+			buffer->ViewDirection = view_direction;
 			buffer->LightDirection = light_direction;
 			ctx->Unmap(_cb_MVP.Get(), 0);
 

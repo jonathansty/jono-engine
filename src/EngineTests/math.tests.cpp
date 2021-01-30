@@ -1,5 +1,7 @@
 #include "CppUnitTest.h"
 
+#include <hlsl++.h>
+#include <DirectXMath.h>
 #include "Engine/core/Math.h"
 using namespace DirectX;
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -26,6 +28,7 @@ std::wstring ToString(const hlslpp::float4x4 &q) {
 
 namespace EngineTests {
 	using hlslpp::float4x4;
+	using hlslpp::float3x3;
 	TEST_CLASS(hlslpp_helpers_tests) {
 
 
@@ -91,6 +94,28 @@ namespace EngineTests {
 			Assert::AreEqual<float>(dataref._11, ref._11);
 			Assert::AreEqual<float>(dataref._33, ref._33);
 		};
+
+		TEST_METHOD(verify_hlslpp_multiplication) {
+			// 
+			float4x4 result4x4;
+			{
+				auto t = float4x4::translation({ 100.0f, 0.0f, 0.0f});
+				auto mirror = float4x4::scale(-1.0f, 1.0f, 1.0f);
+
+				result4x4 = hlslpp::mul(mirror, t);
+			}
+
+			float3x3 result3x3;
+			{
+				auto t = float3x3::translation({ 100.0f, 0.0f});
+				auto mirror = float3x3::scale(-1.0f, 1.0f);
+
+				result3x3 = hlslpp::mul(mirror, t);
+			}
+
+			Assert::AreEqual<float>(result3x3._31, result4x4._41);
+		};
+
 
 
 

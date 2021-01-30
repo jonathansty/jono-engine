@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 	
 #include "BitmapManager.h"
 #include "LevelEnd.h"

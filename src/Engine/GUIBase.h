@@ -1,16 +1,11 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015 
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
-
 #pragma once
+#include "EString.h"
+#include "Structs.h"
 
 class Font;
-//-----------------------------------------------------
-// GUIBase Class									
-//-----------------------------------------------------
+namespace graphics {
+	class D2DRenderContext;
+}
 
 class GUIBase
 {

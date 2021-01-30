@@ -1,11 +1,9 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015 
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
-
 #pragma once
+
+#include "EString.h"
+#include "Structs.h"
+
+struct ID2D1Bitmap;
 
 class Bitmap
 {

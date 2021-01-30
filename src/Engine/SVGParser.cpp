@@ -1,11 +1,8 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 #include "SVGParser.h"
 
-#include <algorithm>
-
-//-----------------------------------------------------------------
-// SVGParser Class
-//-----------------------------------------------------------------
+#include "EString.h"
+#include "GameEngine.h"
 
 // This ifdef block is here because in the 1st year students still need to learn what it means/put it in themselves. In the 2nd year engine it is defined in GameDefines.h
 #ifdef _UNICODE

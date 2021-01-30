@@ -3,7 +3,7 @@
 // First name: Jonathan
 // Group: 1DAE01
 //-----------------------------------------------------
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 	
 #include "Game.h"
 #include "ElectronicJonaJoy.h"																				

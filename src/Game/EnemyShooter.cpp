@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 	
 #include "EnemyShooter.h"
 #include "Bullet.h"

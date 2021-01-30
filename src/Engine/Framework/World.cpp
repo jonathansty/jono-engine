@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 #include "rtti/rtti.h"
 #include "World.h"
 
@@ -77,17 +77,6 @@ void World::update(float dt)
 		if (it)
 		{
 			it->update(dt);
-		}
-	}
-}
-
-void World::render()
-{
-	for (auto it : _entities)
-	{
-		if (it)
-		{
-			it->render();
 		}
 	}
 }

@@ -1,11 +1,7 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015 
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
-
 #pragma once
+
+class String;
+class ContactListener;
 
 //! BodyType enumeration
 //! @enum Box2D enumerations

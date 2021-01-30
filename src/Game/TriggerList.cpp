@@ -3,7 +3,7 @@
 // First name:
 // Group: 1DAE.
 //-----------------------------------------------------
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 	
 //---------------------------
 // Includes

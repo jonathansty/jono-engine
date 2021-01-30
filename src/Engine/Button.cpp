@@ -1,6 +1,8 @@
-#include "stdafx.h"    // for compiler
+#include "engine.stdafx.h"    // for compiler
 
+#include "GameEngine.h"
 #include "Button.h"
+#include "Bitmap.h"
 
 //-----------------------------------------------------------------
 // Button methods
@@ -228,4 +230,12 @@ TextureButton::~TextureButton()
 	delete m_BmpReleasedPtr;
 	delete m_BmpPressedPtr;
 
+}
+
+float TextureButton::GetWidth() const {
+	return (float)m_BmpPressedPtr->GetWidth();
+}
+
+float TextureButton::GetHeight() const {
+	return (float)m_BmpPressedPtr->GetHeight();
 }

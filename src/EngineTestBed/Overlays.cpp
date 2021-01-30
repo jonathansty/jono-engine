@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "testbed.stdafx.h"
 #include "RTTI/rtti.h"
 #include "Overlays.h"
 

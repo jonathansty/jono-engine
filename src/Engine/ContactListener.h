@@ -1,5 +1,7 @@
 #pragma once
 
+class PhysicsActor;
+
 class ContactListener
 {
 public:

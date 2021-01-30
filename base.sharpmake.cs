@@ -107,6 +107,7 @@ public class CompileHLSL : Project.Configuration.CustomFileBuildStep
     {
         ClaimShaderFiles(project, ShaderProfile.vs_5_0, "_vx.hlsl", "main");
         ClaimShaderFiles(project, ShaderProfile.ps_5_0, "_px.hlsl", "main");
+        ClaimShaderFiles(project, ShaderProfile.cs_5_0, "_cs.hlsl", "main");
 
     }
     public static void ClaimShaderFiles(Project project, ShaderProfile profile, string ext, string entryName)

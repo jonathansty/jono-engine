@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 #include "Level.h"
 
 Level::Level(Bitmap* bmpPtr, String svgPath)
@@ -34,23 +34,6 @@ Level::~Level()
     
 }
 
-//-------------------------------------------------------
-// ContactListener overloaded member function definitions
-//-------------------------------------------------------
-//void Level::BeginContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
-//{
-//
-//}
-//
-//void Level::EndContact(PhysicsActor *actThisPtr, PhysicsActor *actOtherPtr)
-//{
-//
-//}
-//
-//void Level::ContactImpulse(PhysicsActor *actThisPtr, double impulse)
-//{
-//
-//}
 void Level::Paint(graphics::D2DRenderContext& ctx)
 {
     ctx.draw_bitmap(m_BmpLevelPtr);

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "rtti/rtti.h"
+
 class EntityDebugOverlay;
 namespace framework
 {
@@ -16,9 +18,9 @@ namespace framework
 
 		virtual ~Entity();
 
+		// Helper to update the entire entities and it's component
+		// #TODO: This should be managed by systems instead
 		virtual void update(float dt);
-
-		virtual void render();
 
 		template<typename T, typename...Args>
 		T* create_component( Args...args);
@@ -26,7 +28,7 @@ namespace framework
 		Component* get_component(rtti::TypeInfo const* t) const;
 
 		template<typename T>
-		T* get_component();
+		T* get_component() const;
 
 		void set_local_position(float4 pos);
 		void set_local_position(float3 pos);
@@ -38,15 +40,9 @@ namespace framework
 		void set_rotation(float angle);
 		void set_rotation(hlslpp::quaternion quat);
 
-		void attach_to(Entity* parent) 
-		{ 
-			if (_parent)
-			{
-				_parent->_children.erase(std::find(_parent->_children.begin(), _parent->_children.end(), this));
-			}
-			_parent = parent; 
-			_parent->_children.push_back(this);
-		}
+		hlslpp::quaternion const& get_rotation() const { return _rot; }
+
+		void attach_to(Entity* parent);
 
 		hlslpp::float4 get_local_position() const;
 		hlslpp::float4 get_world_position() const;
@@ -91,7 +87,7 @@ namespace framework
 	}
 
 	template<typename T>
-	T* Entity::get_component()
+	T* Entity::get_component() const
 	{
 		rtti::TypeInfo* info = rtti::Registry::template get<T>();
 		return static_cast<T*>(get_component(info));

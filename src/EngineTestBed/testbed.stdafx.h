@@ -103,5 +103,4 @@ using hlslpp::double2;
 #include "Game/BitmapManager.h"
 #include "Game/SoundManager.h"
 
-
 using namespace DirectX;

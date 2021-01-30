@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 #include "ModelResource.h"
 
 #include <assimp/Importer.hpp>
@@ -10,6 +10,8 @@
 
 #include "TextureResource.h"
 #include "MaterialResource.h"
+
+#include "GameEngine.h"
 
 
 // Inline shaders

@@ -52,8 +52,6 @@ namespace framework
 
 		void update(float dt);
 
-		void render();
-
 		bool is_handle_valid(EntityHandle const& handle);
 
 		template<typename T = Entity, typename...Args>

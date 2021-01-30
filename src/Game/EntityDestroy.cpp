@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 #include "EntityDestroy.h"
 
 EntityDestroy::EntityDestroy(float2 position) 

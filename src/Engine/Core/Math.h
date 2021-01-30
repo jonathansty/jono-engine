@@ -1,28 +1,11 @@
 #pragma once
-#include <hlsl++.h>
-#include <DirectXMath.h>
-
 
 namespace hlslpp_helpers {
 
-	using DirectX::XMMATRIX;
-	using DirectX::XMFLOAT4X4;
+	hlslpp::float3 to_euler(hlslpp::quaternion q);
 
-	using hlslpp::float4x4;
-
-	XMMATRIX XMLoadFloat4x4(float4x4 matrix) {
-		XMFLOAT4X4 i{};
-		hlslpp::store(matrix, reinterpret_cast<float*>(&i));
-
-		XMMATRIX result = DirectX::XMLoadFloat4x4(&i);
-		return result;
-	}
+	DirectX::XMMATRIX XMLoadFloat4x4(hlslpp::float4x4 matrix);
 	
-	void XMStoreFloat4x4(XMMATRIX src, float4x4& result) {
-
-		XMFLOAT4X4 data{};
-		DirectX::XMStoreFloat4x4(&data, src);
-		hlslpp::load(result, reinterpret_cast<float *>(&data));
-	}
+	void XMStoreFloat4x4(DirectX::XMMATRIX src, hlslpp::float4x4& result);
 
 }

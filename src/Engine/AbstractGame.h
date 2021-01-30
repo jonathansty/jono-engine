@@ -3,6 +3,9 @@
 class PhysicsActor;
 class GameSettings;
 
+class GameSettings;
+struct EngineSettings;
+
 #include "graphics/2DRenderContext.h"
 
 class AbstractGame

@@ -1,5 +1,6 @@
 #pragma once
 #include "OverlayManager.h"
+#include "rtti/rtti.h"
 
 class RTTIDebugOverlay : public DebugOverlay
 {

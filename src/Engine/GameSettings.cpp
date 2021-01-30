@@ -1,10 +1,6 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
+#include "GameSettings.h"
 
-
-
-//------------------------------------------------------------------------------
-// GameSettings class definitions. Encapsulated the user defined game settings
-//------------------------------------------------------------------------------
 GameSettings::GameSettings() :
 m_WindowTitle("Game Engine"),
 m_WindowWidth(853),

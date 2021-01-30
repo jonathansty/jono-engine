@@ -1,4 +1,5 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
+#include "GameEngine.h"
 #include "MetricsOverlay.h"
 
 MetricsOverlay::MetricsOverlay(bool isOpen)

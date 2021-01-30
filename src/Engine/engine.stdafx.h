@@ -41,6 +41,7 @@ using namespace D2D1;
 using Microsoft::WRL::ComPtr;
 
 #include <Box2D/Box2D.h>
+#include <Box2D/b2_world_callbacks.h>
 
 // Define M_PI and other constants
 #define _USE_MATH_DEFINES 
@@ -57,44 +58,24 @@ using Microsoft::WRL::ComPtr;
 
 #include <imgui.h>
 #include <TaskScheduler.h>
+#include <tinyxml2/tinyxml2.h>
 
-#include "tinyxml2/tinyxml2.h"
-
+// HLSLPP
 #include <hlsl++.h>
 using hlslpp::double2;
+using hlslpp::float1;
 using hlslpp::float2;
 using hlslpp::float3;
 using hlslpp::float3x3;
 using hlslpp::float4;
-using hlslpp::float3x3;
+using hlslpp::float4x4;
 using hlslpp::double2;
 
-
-#include "EString.h"
-#include "Structs.h"
-#include "Box2DDebugRenderer.h"
-#include "InputManager.h"
-#include "PrecisionTimer.h"
-#include "GameSettings.h"
-#include "GameEngine.h"
-#include "Font.h"
-#include "AudioSystem.h"
-#include "AudioDecoder.h"
-#include "Bitmap.h"
-#include "GUIBase.h"
-#include "TextBox.h"
-#include "Button.h"
-#include "SVGParser.h"
-#include "sound.h"
-#include "PhysicsActor.h"
-#include "PhysicsRevoluteJoint.h"
-#include "PhysicsPrismaticJoint.h"
-#include "PhysicsDistanceJoint.h"
-
+// Default C++ types
+using std::string;
 using std::shared_ptr;
 using std::weak_ptr;
 
-#include "rtti/rtti.h"
 
-
-
+// This is the only engine header that should be in the precompiled header to allow standard type usages across the project 
+#include "core/types.h"

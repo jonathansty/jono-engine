@@ -1,12 +1,4 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015 
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
-
 #pragma once
-
 #include "GUIBase.h"
 
 class Bitmap;
@@ -74,8 +66,8 @@ public:
 	TextureButton(std::string const& pressed, std::string const& released);
 	virtual ~TextureButton();
 
-	float GetWidth() const { return (float)m_BmpPressedPtr->GetWidth(); }
-	float GetHeight() const { return (float)m_BmpPressedPtr->GetHeight(); }
+	float GetWidth() const;
+	float GetHeight() const;
 private:
 
 

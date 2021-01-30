@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "testbed.stdafx.h"
 #include "Components.h"
 
 #include "Core/TextureResource.h"
@@ -6,11 +6,20 @@
 #include "Core/MaterialResource.h"
 #include "Core/Material.h"
 
-IMPL_REFLECT(SimpleMovement)
+
+IMPL_REFLECT(SimpleMovement2D)
 {
 	type.bind_parent<Component>();
-	type.register_property("speed", &SimpleMovement::_speed);
+	type.register_property("speed", &SimpleMovement2D::_speed);
+	type.register_function("reset", &SimpleMovement2D::reset);
+
 }
+
+IMPL_REFLECT(SimpleMovement3D) {
+	type.bind_parent<Component>();
+	type.register_property("speed", &SimpleMovement3D::_speed);
+}
+
 
 IMPL_REFLECT(BitmapComponent)
 {
@@ -70,7 +79,7 @@ IMPL_REFLECT(SimpleMeshComponent)
 
 }
 
-SimpleMovement::SimpleMovement(XMFLOAT2 pos, float speed) : Component()
+SimpleMovement2D::SimpleMovement2D(XMFLOAT2 pos, float speed) : Component()
 , _speed(speed)
 , _elapsed(0.0)
 , _offset(float4{ pos.x, pos.y, 0.0f, 1.0f })
@@ -79,7 +88,7 @@ SimpleMovement::SimpleMovement(XMFLOAT2 pos, float speed) : Component()
 
 }
 
-SimpleMovement::SimpleMovement()
+SimpleMovement2D::SimpleMovement2D()
 		: Component()
 		, _speed(0.0)
 		, _elapsed(0.0)
@@ -87,26 +96,27 @@ SimpleMovement::SimpleMovement()
 
 }
 
-SimpleMovement::~SimpleMovement()
+SimpleMovement2D::~SimpleMovement2D()
 {
 
 }
 
-void SimpleMovement::on_attach(framework::Entity* ent)
+void SimpleMovement2D::on_attach(framework::Entity* ent)
 {
 	__super::on_attach(ent);
 
 	_offset = ent->get_local_position();
 }
 
-void SimpleMovement::update(float dt)
+void SimpleMovement2D::update(float dt)
 {
 	_elapsed += dt * _speed;
 	framework::Entity* ent = get_entity();
 	float3 up { 0.0f,0.0f,1.0f };
-	double e = _elapsed;
 
-	quaternion rot = hlslpp::axisangle(up, hlslpp::radians(_elapsed));
+	quaternion rot = ent->get_rotation();
+	quaternion added = hlslpp::axisangle(up, hlslpp::radians(hlslpp::float1(dt * _speed)));
+	rot *= added;
 	ent->set_rotation(rot);
 	//ent->set_local_position(_offset.x + cos(_elapsed) * 100.0, _offset.y + sin(_elapsed) * 100.0);
 }
@@ -133,12 +143,6 @@ void SimpleMeshComponent::on_detach(Entity* ent)
 {
 	__super::on_detach(ent);
 }
-
-void SimpleMeshComponent::update(float dt)
-{
-
-}
-
 
 void SimpleMeshComponent::render()
 {
@@ -218,57 +222,45 @@ void CameraComponent::update(float dt)
 		return;
 	}
 
-	float4 fwd = { 0.0f,0.0f, 1.0f, 0.0f };
-	float4 right = { 1.0f,0.0f, 0.0f,0.0f };
-	float4 v_up{ 0.0f,1.0f,0.0, 0.0f };
-
-	float4 forward = fwd;
-	float4 rght = right;
-	float4 up = v_up;
+	float4 right   = { 1.0f, 0.0f, 0.0f, 0.0f };
+	float4 up	   = { 0.0f, 1.0f, 0.0f, 0.0f };
+	float4 forward = { 0.0f, 0.0f, 1.0f, 0.0f };
 
 	float4x4 world = get_entity()->get_local_transform();
 
+	// Update forward to be the world forward
 	forward = hlslpp::mul(forward, world);
-	rght = hlslpp::mul(rght, world);
-
-
+	right   = hlslpp::mul(right, world);
 
 	Entity* ent = get_entity();
 	float4 movement = float4(0.0f);
 	float fly_speed = _fly_speed;
 
-	if (GameEngine::instance()->is_key_down(VK_LSHIFT))
-	{
+	if (GameEngine::instance()->is_key_down(VK_LSHIFT)) {
 		fly_speed *= 1.5f;
 	}
 
-	if (GameEngine::instance()->is_key_down('W'))
-	{
+	if (GameEngine::instance()->is_key_down('W')) {
 		movement += movement + forward * fly_speed * dt;
 	}
 
-	if (GameEngine::instance()->is_key_down('S'))
-	{
+	if (GameEngine::instance()->is_key_down('S')) {
 		movement += movement + forward * -fly_speed * dt;
 	}
 
-	if (GameEngine::instance()->is_key_down('A'))
-	{
-		movement += rght * -fly_speed * dt;
+	if (GameEngine::instance()->is_key_down('A')) {
+		movement += right * -fly_speed * dt;
 	}
 
-	if (GameEngine::instance()->is_key_down('D'))
-	{
-		movement += rght * fly_speed * dt;
+	if (GameEngine::instance()->is_key_down('D')) {
+		movement += right * fly_speed * dt;
 	}
 
-	if (GameEngine::instance()->is_key_down(VK_SPACE))
-	{
+	if (GameEngine::instance()->is_key_down(VK_SPACE)) {
 		movement += up * (fly_speed * 0.5f) * dt;
 	}
 
-	if (GameEngine::instance()->is_key_down(VK_LCONTROL))
-	{
+	if (GameEngine::instance()->is_key_down(VK_LCONTROL)) {
 		movement -= up * (fly_speed * 0.5f) * dt;
 	}
 
@@ -288,15 +280,14 @@ void CameraComponent::update(float dt)
 		_y_angle += (float)y;
 		// Do stuff
 
-		float x_angle = XMConvertToRadians(25.0f) * dt * _x_angle;
-		float y_angle = XMConvertToRadians(25.0f) * dt * _y_angle;
+		float x_angle = hlslpp::radians(hlslpp::float1(25.0f)) * dt * _x_angle;
+		float y_angle = hlslpp::radians(hlslpp::float1(25.0f)) * dt * _y_angle;
 
 		quaternion x_quat = hlslpp::axisangle(up.xyz, x_angle);
 
-		float4 rght0 = right;
-		rght0 = hlslpp::mul(rght0, float4x4(x_quat));
+		right = hlslpp::mul(right, float4x4(x_quat));
 
-		quaternion y_quat = hlslpp::axisangle(rght0.xyz, y_angle);
+		quaternion y_quat = hlslpp::axisangle(right.xyz, y_angle);
 		quaternion transform_result = x_quat* y_quat;
 		ent->set_rotation(transform_result);
 	}

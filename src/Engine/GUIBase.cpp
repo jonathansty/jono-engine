@@ -1,9 +1,8 @@
-#include "stdafx.h"    // for compiler
+#include "engine.stdafx.h"    // for compiler
+#include "GameEngine.h"
 #include "GUIBase.h"
+#include "Font.h"
 
-//------------------------------------------------------------------------------
-// GUIBase class definitions. Derived classes visualise a gui control using D2D draw operations
-//------------------------------------------------------------------------------
 GUIBase::GUIBase() :
 	m_FontPtr(nullptr),
 	m_bTriggered(false),

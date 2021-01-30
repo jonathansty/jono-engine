@@ -1,6 +1,8 @@
-#include "stdafx.h"    // for compiler
+#include "engine.stdafx.h"    // for compiler
 
+#include "Font.h"
 #include "TextBox.h"
+#include "GameEngine.h"
 
 //-----------------------------------------------------------------
 // TextBox methods

@@ -15,6 +15,7 @@ public:
 
 	void configure_engine(EngineSettings& engineSettings) {
 		engineSettings.d2d_use = true;
+		engineSettings.d2d_use_aa = true;
 	}
 	void initialize(GameSettings& gameSettings) {
 		gameSettings.m_WindowFlags |= GameSettings::WindowFlags::EnableConsole;

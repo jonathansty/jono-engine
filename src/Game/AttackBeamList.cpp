@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 	
 #include "AttackBeamList.h"
 #include "AttackBeam.h"

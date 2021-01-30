@@ -1,20 +1,19 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-// Heavily modified by Jonathan Steyfkens.
-//-----------------------------------------------------------------
 #pragma once
+
 #include "singleton.h"
 
 #include "TaskScheduler.h"
 
+#include "Box2DDebugRenderer.h"
+
 #include "debug_overlays/MetricsOverlay.h"
 #include "debug_overlays/OverlayManager.h"
 
-#include <Box2D/b2_world_callbacks.h>
 #include "cli/CommandLine.h"
+
+#include "graphics/2DRenderContext.h"
+
+#include "GameSettings.h"
 
 class Bitmap;
 class String;
@@ -28,7 +27,6 @@ class PrecisionTimer;
 class b2World;
 class ContactListener;
 
-#include "graphics/2DRenderContext.h"
 
 using graphics::bitmap_interpolation_mode;
 

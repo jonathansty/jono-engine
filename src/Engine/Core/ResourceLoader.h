@@ -1,5 +1,7 @@
 #pragma once
 
+#include "singleton.h"
+
 struct FromFileResourceParameters
 {
 	std::string path;

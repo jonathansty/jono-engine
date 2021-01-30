@@ -1,6 +1,7 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 #include "Box2DDebugRenderer.h"
 
+#include "PhysicsActor.h"
 #include "graphics/2DRenderContext.h"
 
 

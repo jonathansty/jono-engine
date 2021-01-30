@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 #include "OverlayManager.h"
 
 void OverlayManager::register_overlay(DebugOverlay* overlay)

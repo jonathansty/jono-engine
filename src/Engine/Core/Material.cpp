@@ -1,6 +1,7 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 #include "Material.h"
 
+#include "GameEngine.h"
 #include "ModelResource.h"
 #include "TextureResource.h"
 

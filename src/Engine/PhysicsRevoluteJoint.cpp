@@ -1,7 +1,9 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 
 #include "PhysicsRevoluteJoint.h"
 #include "PhysicsActor.h"
+
+#include "GameEngine.h"
 
 PhysicsRevoluteJoint::PhysicsRevoluteJoint(PhysicsActor *actAPtr, float2 anchorA, PhysicsActor *actBPtr, float2 anchorB, bool collide, double referenceAngle)
 {

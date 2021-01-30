@@ -1,19 +1,12 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015 
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
-
 #pragma once
+
+#include "EString.h"
+
+struct IDWriteTextFormat;
 
 class Font
 {
 public:
-	// -------------------------
-	// Constructors & Destructor
-	// -------------------------
-
 	//! Provide a String containing a type name, 
 	//! and a number representing the desired size of the font
 	//! Example m_MyFont = new Font(String("Consolas"), 96);

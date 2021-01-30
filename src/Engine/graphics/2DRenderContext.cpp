@@ -1,6 +1,9 @@
-#include "stdafx.h"
+#include "engine.stdafx.h"
 
+#include "GameEngine.h"
 #include "2DRenderContext.h"
+#include "Font.h"
+#include "Bitmap.h"
 
 namespace graphics {
 

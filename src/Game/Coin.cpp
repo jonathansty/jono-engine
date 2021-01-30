@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 #include "Coin.h"
 
 Coin::Coin(float2 position, Bitmap* bmpPtr)

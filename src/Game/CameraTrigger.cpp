@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 #include "CameraTrigger.h"
 
 CameraTrigger::CameraTrigger(float2 position, int width, int height):

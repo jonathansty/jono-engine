@@ -1,5 +1,14 @@
 #pragma once
 
+#include "Structs.h"
+#include "EString.h"
+
+struct ID2D1Factory;
+struct ID2D1RenderTarget;
+struct ID2D1SolidColorBrush;
+class Font;
+class Bitmap;
+
 namespace graphics {
 
 // Bitmap interpolation mode enum

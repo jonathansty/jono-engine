@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 	
 #include "CameraTriggerRotate.h"
 #include "Camera.h"

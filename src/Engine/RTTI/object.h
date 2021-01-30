@@ -77,7 +77,7 @@ template<typename T>
 T const& rtti::Object::get_property(std::string const& name)
 {
 	static T invalid{};
-	rtti::Property* property_info = _type->find_property(name);
+	rtti::Property const* property_info = _type->find_property(name);
 	if (!property_info)
 		return invalid;
 

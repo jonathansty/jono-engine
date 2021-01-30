@@ -12,25 +12,52 @@ using hlslpp::float4;
 using hlslpp::float4x4;
 using hlslpp::quaternion;
 
-class SimpleMovement final : public framework::Component
+class SimpleMovement2D final : public framework::Component
 {
-	REFLECT(SimpleMovement)
+	REFLECT(SimpleMovement2D)
 public:
-	SimpleMovement();
+	SimpleMovement2D();
 
-	SimpleMovement(XMFLOAT2 pos, float speed);
+	SimpleMovement2D(XMFLOAT2 pos, float speed);
 
-	~SimpleMovement();
+	~SimpleMovement2D();
 
 	void on_attach(framework::Entity* ent) override;
 	void update(float dt) override;
 
 	void set_speed(float speed) { _speed = speed; }
 
+	void reset() { _speed = 0.0; }
+
 	float4 _offset;
 	float _elapsed = 0.0;
 	float _speed;
 
+};
+
+class SimpleMovement3D final : public framework::Component {
+	REFLECT(SimpleMovement3D)
+public:
+	SimpleMovement3D() = default;
+
+	~SimpleMovement3D() = default;
+
+	void update(float dt) {
+		_elapsed += dt * _speed;
+		framework::Entity* ent = get_entity();
+		float3 up{ 0.0f, 1.0f, 0.0f };
+
+		quaternion rot = ent->get_rotation();
+		quaternion added = hlslpp::axisangle(up, hlslpp::radians(hlslpp::float1(dt * _speed)));
+		rot *= added;
+		ent->set_rotation(rot);
+		//ent->set_local_position(_offset.x + cos(_elapsed) * 100.0, _offset.y + sin(_elapsed) * 100.0);
+	}
+
+	void set_speed(float speed) { _speed = speed; }
+
+	float _elapsed = 0.0f;
+	float _speed = 0.0f;
 };
 
 
@@ -59,7 +86,6 @@ public:
 	}
 
 
-private:
 	Bitmap* _bmp;
 
 };
@@ -77,8 +103,6 @@ public:
 	virtual void on_attach(Entity* ent) override;
 	virtual void on_detach(Entity* ent) override;
 
-
-	virtual void update(float dt) override;
 	virtual void render() override;
 
 	bool is_loaded() const;

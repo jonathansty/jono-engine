@@ -1,6 +1,8 @@
-#include "stdafx.h" //for compiler
+#include "engine.stdafx.h" //for compiler
 
+#include "GameEngine.h"
 #include "PhysicsActor.h"
+#include "SVGParser.h"
 
 
 // http://www.iforce2d.net/b2dtut
@@ -321,7 +323,7 @@ double  PhysicsActor::GetAngularVelocity()
 
 double PhysicsActor::GetMass()
 {
-	return m_BodyPtr->GetMass() * SCALE * SCALE;
+	return m_BodyPtr->GetMass() * SCALE;
 }
 
 void PhysicsActor::SetFixedRotation(bool fixedRotation)

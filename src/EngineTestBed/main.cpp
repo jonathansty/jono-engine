@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "testbed.stdafx.h"
 
 #include "HelloWorld.h"
 #include "Test3D.h"

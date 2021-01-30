@@ -1,4 +1,4 @@
-#include "stdafx.h"		
+#include "game.stdafx.h"		
 #include "Engine/TextLabel.h"
 	
 #include "StartMenu.h"

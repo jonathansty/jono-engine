@@ -1,4 +1,5 @@
 #pragma once
+#include "rtti/rtti.h"
 
 namespace framework
 {

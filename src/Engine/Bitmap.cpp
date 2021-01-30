@@ -1,6 +1,7 @@
-#include "stdafx.h"    // for compiler
+#include "engine.stdafx.h"    // for compiler
 
 #include "Bitmap.h"
+#include "GameEngine.h"
 
 //---------------------------
 // Bitmap methods
