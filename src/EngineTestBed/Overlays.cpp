@@ -110,6 +110,14 @@ void EntityDebugOverlay::render_object(rtti::Object& obj)
 			}
 			ImGui::PopID();
 		}
+
+		for(auto& fn : t->_functions) {
+			ImGui::PushID(&fn);
+			if(ImGui::Button(fn.first.c_str())) {
+				fn.second->invoke(obj);
+			}
+			ImGui::PopID();
+		}
 	}
 	ImGui::PopID();
 }
