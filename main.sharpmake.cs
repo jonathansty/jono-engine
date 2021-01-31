@@ -6,45 +6,6 @@ using Sharpmake;
 [module: Sharpmake.Include("base.sharpmake.cs")]
 [module: Sharpmake.Include("external.sharpmake.cs")]
 
-[Generate]
-public class JonaBaseProject : Project
-{
-    public JonaBaseProject() :base()
-    {
-        FileInfo fileInfo = Util.GetCurrentSharpmakeFileInfo();
-        string rootDirectory = Path.Combine(fileInfo.DirectoryName, ".");
-        RootPath = Util.SimplifyPath(rootDirectory);
-        Console.WriteLine($"PROJECT PATH: {RootPath}");
-
-        AddTargets(Utils.Targets);
-    }
-
-    [Configure(), ConfigurePriority(1)]
-    virtual public void ConfigureAll(Configuration conf, Target target) 
-    { 
-        Utils.ConfigureProjectName(conf, target);
-
-    }
-
-    [Configure(Blob.Blob)]
-    public virtual void ConfigureBlob(Configuration conf, Target target)
-    {
-        conf.IsBlobbed = true;
-        conf.IncludeBlobbedSourceFiles = false;
-    }
-
-    [Configure(Optimization.Debug),ConfigurePriority(2)]
-    virtual public void ConfigureDebug(Configuration config, Target target)
-    {
-        config.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDebugDLL);
-    }
-
-    [Configure(Optimization.Release), ConfigurePriority(3)]
-    virtual public void ConfigureRelease(Configuration config, Target target)
-    {
-        config.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDLL);
-    }
-}
 
 [Generate]
 public class EngineProject : JonaBaseProject
@@ -110,6 +71,14 @@ public class EngineProject : JonaBaseProject
 
         // Add engine include path
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
+
+        Configuration.BuildStepExecutable step = new Configuration.BuildStepExecutable(
+            @"[project.SharpmakeCsPath]/generated/projects/output/win64/debug/reflection-generator.exe",
+            "", "", "-directory=src/engine -output=obj/reflection -root=[project.SharpmakeCsPath]");
+        conf.EventPreBuildExe.Add(step);
+        conf.EventCustomPreBuildExe.Add(step);
+
+        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
     }
 
     protected override void ExcludeOutputFiles()
@@ -186,6 +155,10 @@ public class GameProject : JonaBaseProject
 
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/src/");
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
+
+        Configuration.BuildStepExecutable step = new Configuration.BuildStepExecutable(@"[project.SharpmakeCsPath]/generated/projects/output/win64/debug/reflection-generator.exe","", "", "-directory=src/game -output=obj/reflection -root=[project.SharpmakeCsPath]");
+        conf.EventPreBuildExe.Add(step);
+
     }
 }
 
@@ -227,6 +200,24 @@ public class EngineTestBed : JonaBaseProject
 
 
 [Generate]
+public class ReflectionGenerator : JonaBaseProject
+{
+    public ReflectionGenerator() : base()
+    {
+        Name = "reflection-generator";
+        SourceRootPath = @"[project.SharpmakeCsPath]/src/tools/ReflectionGenerator";
+    }
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+        conf.SolutionFolder = "tools";
+        conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
+        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
+    }
+
+}
+
+[Generate]
 public class GameSolution : Solution
 {
     public GameSolution()
@@ -260,6 +251,10 @@ public class GameSolution : Solution
         conf.AddProject<EngineTestBed>(target);
         conf.AddProject<GameProject>(target);
 
+        conf.AddProject<ReflectionGenerator>(target);
+
+
+
 
     }
 }
@@ -270,8 +265,14 @@ public static class Main
     [Sharpmake.Main]
     public static void SharpmakeMain(Arguments sharpmakeArgs)
     {
+        sharpmakeArgs.Builder.EventPostProjectLink += Builder_EventPostProjectLink;
         // Tells Sharpmake to generate the solution described by
         // BasicsSolution.
         sharpmakeArgs.Generate<GameSolution>();
+    }
+
+    private static void Builder_EventPostProjectLink(Project project)
+    {
+        Console.WriteLine("[POST LINK] LINK");
     }
 }

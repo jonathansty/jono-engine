@@ -30,6 +30,47 @@ public class Utils
     }
 }
 
+[Generate]
+public class JonaBaseProject : Project
+{
+    public JonaBaseProject() : base()
+    {
+        FileInfo fileInfo = Util.GetCurrentSharpmakeFileInfo();
+        string rootDirectory = Path.Combine(fileInfo.DirectoryName, ".");
+        RootPath = Util.SimplifyPath(rootDirectory);
+        Console.WriteLine($"PROJECT PATH: {RootPath}");
+
+        AddTargets(Utils.Targets);
+    }
+
+    [Configure(), ConfigurePriority(1)]
+    virtual public void ConfigureAll(Configuration conf, Target target)
+    {
+        Utils.ConfigureProjectName(conf, target);
+
+    }
+
+    [Configure(Blob.Blob)]
+    public virtual void ConfigureBlob(Configuration conf, Target target)
+    {
+        conf.IsBlobbed = true;
+        conf.IncludeBlobbedSourceFiles = false;
+    }
+
+    [Configure(Optimization.Debug), ConfigurePriority(2)]
+    virtual public void ConfigureDebug(Configuration config, Target target)
+    {
+        config.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDebugDLL);
+    }
+
+    [Configure(Optimization.Release), ConfigurePriority(3)]
+    virtual public void ConfigureRelease(Configuration config, Target target)
+    {
+        config.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDLL);
+    }
+}
+
+
 [Export]
 public class VCPKG : Project
 {
