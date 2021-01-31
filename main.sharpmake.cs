@@ -76,7 +76,6 @@ public class EngineProject : JonaBaseProject
             @"[project.SharpmakeCsPath]/generated/projects/output/win64/debug/reflection-generator.exe",
             "", "", "-directory=src/engine -output=obj/reflection -root=[project.SharpmakeCsPath]");
         conf.EventPreBuildExe.Add(step);
-        conf.EventCustomPreBuildExe.Add(step);
 
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
     }
@@ -105,7 +104,7 @@ public class EngineTestProject : JonaBaseProject
         conf.SolutionFolder = "engine";
 
         // Private dependencies
-        conf.AddPrivateDependency<EngineProject>(target);
+        conf.AddPrivateDependency<EngineProject>(target, DependencySetting.DefaultWithoutBuildSteps);
 
         // Compile C++17 
         conf.Output = Configuration.OutputType.Dll;
@@ -135,7 +134,7 @@ public class GameProject : JonaBaseProject
         base.ConfigureAll(conf, target);
         conf.SolutionFolder = "games";
 
-        conf.AddPrivateDependency<EngineProject>(target);
+        conf.AddPrivateDependency<EngineProject>(target, DependencySetting.DefaultWithoutBuildSteps);
 
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
@@ -180,7 +179,7 @@ public class EngineTestBed : JonaBaseProject
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
-        conf.AddPrivateDependency<EngineProject>(target);
+        conf.AddPrivateDependency<EngineProject>(target, DependencySetting.DefaultWithoutBuildSteps);
 
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
@@ -200,13 +199,13 @@ public class EngineTestBed : JonaBaseProject
 
 
 [Generate]
-public class ReflectionGenerator : JonaBaseProject
+public class ToolsProject : JonaBaseProject
 {
-    public ReflectionGenerator() : base()
+    public ToolsProject()
     {
-        Name = "reflection-generator";
-        SourceRootPath = @"[project.SharpmakeCsPath]/src/tools/ReflectionGenerator";
+        SourceRootPath = @"[project.SharpmakeCsPath]/src/tools/[project.Name]";
     }
+
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
@@ -215,6 +214,16 @@ public class ReflectionGenerator : JonaBaseProject
         conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
     }
 
+
+}
+
+[Generate]
+public class ReflectionGenerator : ToolsProject
+{
+    public ReflectionGenerator() : base()
+    {
+        Name = "reflection-generator";
+    }
 }
 
 [Generate]
@@ -273,6 +282,25 @@ public static class Main
 
     private static void Builder_EventPostProjectLink(Project project)
     {
-        Console.WriteLine("[POST LINK] LINK");
+        if(project is JonaBaseProject && !(project is ExternalProject) && !(project is ToolsProject))
+        {
+            Sharpmake.Resolver resolver = new Sharpmake.Resolver();
+            resolver.SetParameter("project", project);
+            string outdir = @"[project.SharpmakeCsPath]\generated\reflection\dumps\[project.Name].txt";
+            outdir = resolver.Resolve(outdir);
+
+            if (!Directory.Exists(Path.GetDirectoryName(outdir)))
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(outdir));
+            }
+            using (StreamWriter file = new StreamWriter(outdir))
+            {
+                Console.WriteLine($"[{project.Name}] Generating file list");
+                foreach (var filePath in project.SourceFiles.Where(p => p.EndsWith(".h", StringComparison.InvariantCultureIgnoreCase)))
+                {
+                    file.WriteLine(filePath);
+                }
+            }
+        }
     }
 }

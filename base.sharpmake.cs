@@ -38,7 +38,6 @@ public class JonaBaseProject : Project
         FileInfo fileInfo = Util.GetCurrentSharpmakeFileInfo();
         string rootDirectory = Path.Combine(fileInfo.DirectoryName, ".");
         RootPath = Util.SimplifyPath(rootDirectory);
-        Console.WriteLine($"PROJECT PATH: {RootPath}");
 
         AddTargets(Utils.Targets);
     }
