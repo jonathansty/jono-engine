@@ -1,5 +1,6 @@
-#include "engine.stdafx.h"
 #include "CommandLine.h"
+
+#include <algorithm>
 
 cli::CommandLine cli::parse(const char **argvs, const int argc) {
 	std::string cmdLine = "";
@@ -42,7 +43,7 @@ bool cli::has_arg(CommandLine const &cmd_args, std::string const &arg) {
 
 std::string cli::get_arg(CommandLine const &cmd_args, std::string const &arg) {
 	auto it = std::find_if(cmd_args.begin(), cmd_args.end(), [arg](auto const &val) {
-		return strstr(val.c_str(), arg.c_str()) != nullptr;
+		return val.rfind(arg, 0) == 0;
 	});
 	if (it != cmd_args.end()) {
 		return *it;

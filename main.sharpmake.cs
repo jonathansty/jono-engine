@@ -8,6 +8,22 @@ using Sharpmake;
 
 
 [Generate]
+public class CliProject : JonaBaseProject
+{
+    public CliProject() : base()
+    {
+        Name = "cli";
+    }
+
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+        conf.SolutionFolder = "engine";
+        conf.Output = Configuration.OutputType.Lib;
+    }
+
+}
+[Generate]
 public class EngineProject : JonaBaseProject
 {
 	public EngineProject()
@@ -33,6 +49,9 @@ public class EngineProject : JonaBaseProject
         conf.AddPublicDependency<ImGui>(target);
         conf.AddPublicDependency<HLSLPP>(target);
         conf.AddPublicDependency<EnkiTS>(target);
+
+        // Own public libraries
+        conf.AddPublicDependency<CliProject>(target);
 
         // Private dependencies
         // Only visible to the engine layer
@@ -72,11 +91,8 @@ public class EngineProject : JonaBaseProject
         // Add engine include path
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
 
-        Configuration.BuildStepExecutable step = new Configuration.BuildStepExecutable(
-            @"[project.SharpmakeCsPath]/generated/projects/output/win64/debug/reflection-generator.exe",
-            "", "", "-directory=src/engine -output=obj/reflection -root=[project.SharpmakeCsPath]");
-        conf.EventPreBuildExe.Add(step);
 
+        conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
     }
 
@@ -155,8 +171,8 @@ public class GameProject : JonaBaseProject
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/src/");
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
 
-        Configuration.BuildStepExecutable step = new Configuration.BuildStepExecutable(@"[project.SharpmakeCsPath]/generated/projects/output/win64/debug/reflection-generator.exe","", "", "-directory=src/game -output=obj/reflection -root=[project.SharpmakeCsPath]");
-        conf.EventPreBuildExe.Add(step);
+        conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
+        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
 
     }
 }
@@ -224,6 +240,18 @@ public class ReflectionGenerator : ToolsProject
     {
         Name = "reflection-generator";
     }
+
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+        conf.AddPrivateDependency<CliProject>(target);
+    }
+
+    public static Configuration.BuildStepExecutable GetCustomBuildStep(string input = "[project.SharpmakeCsPath]/generated/reflection/dumps/[project.Name].txt", string output = "obj/reflection", string root = "[project.SharpmakeCsPath]") {
+        return new Configuration.BuildStepExecutable(
+            @"[conf.TargetPath]/reflection-generator.exe",
+            "", "", $"-file={input} -output={output} -root={root}");
+    }
 }
 
 [Generate]
@@ -275,8 +303,6 @@ public static class Main
     public static void SharpmakeMain(Arguments sharpmakeArgs)
     {
         sharpmakeArgs.Builder.EventPostProjectLink += Builder_EventPostProjectLink;
-        // Tells Sharpmake to generate the solution described by
-        // BasicsSolution.
         sharpmakeArgs.Generate<GameSolution>();
     }
 

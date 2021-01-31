@@ -1,6 +1,6 @@
 #include "CppUnitTest.h"
 
-#include "Engine/cli/CommandLine.h"
+#include "CommandLine.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

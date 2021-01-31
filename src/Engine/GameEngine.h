@@ -9,7 +9,7 @@
 #include "debug_overlays/MetricsOverlay.h"
 #include "debug_overlays/OverlayManager.h"
 
-#include "cli/CommandLine.h"
+#include "CommandLine.h"
 
 #include "graphics/2DRenderContext.h"
 

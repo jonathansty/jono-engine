@@ -39,6 +39,8 @@ public class JonaBaseProject : Project
         string rootDirectory = Path.Combine(fileInfo.DirectoryName, ".");
         RootPath = Util.SimplifyPath(rootDirectory);
 
+        SourceRootPath = @"[project.SharpmakeCsPath]\src\[project.Name]";
+
         AddTargets(Utils.Targets);
     }
 
@@ -46,6 +48,7 @@ public class JonaBaseProject : Project
     virtual public void ConfigureAll(Configuration conf, Target target)
     {
         Utils.ConfigureProjectName(conf, target);
+        conf.IncludePaths.Add(@"[project.SourceRootPath]");
 
     }
 
