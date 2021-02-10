@@ -20,8 +20,8 @@ public:\
 	virtual rtti::TypeInfo* get_type() { return &_sType._info;}  
 
 #define IMPL_REFLECT(classname) \
-	rtti::TypeInfo_Register<classname> classname##::_sType = rtti::TypeInfo_Register<classname>(#classname);  \
-	void classname##::reflect(rtti::TypeInfo& type)
+	rtti::TypeInfo_Register<classname> classname::_sType = rtti::TypeInfo_Register<classname>(#classname);  \
+	void classname::reflect(rtti::TypeInfo& type)
 
 namespace rtti
 {

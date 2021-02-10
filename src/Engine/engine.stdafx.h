@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Resource.h"	
+#include "resource.h"	
 
 // std lib includes
 #include <vector>			// std lib vector
@@ -40,8 +40,8 @@ using namespace D2D1;
 #include <wrl.h>
 using Microsoft::WRL::ComPtr;
 
-#include <Box2D/Box2D.h>
-#include <Box2D/b2_world_callbacks.h>
+#include <box2d/box2d.h>
+#include <box2d/b2_world_callbacks.h>
 
 // Define M_PI and other constants
 #define _USE_MATH_DEFINES 

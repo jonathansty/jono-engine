@@ -25,15 +25,29 @@ void MaterialResource::load()
 	_resource->_debug_pixel_shader = Shader::create(ShaderType::Pixel, (const char*)Shaders::cso_debug_px, uint32_t(std::size(Shaders::cso_debug_px)));
 
 	// Initiate texture loads
-	for (std::string const& path : get_init_parameters().m_texture_paths)
+	auto paths = get_init_parameters().m_texture_paths;
+	for(u32 textureType = 0; textureType < MaterialInitParameters::TextureType_Count; ++textureType)
 	{
-		if (path.empty())
+		if (paths[textureType].empty())
 		{
-			_resource->_textures.push_back(TextureResource::invalid());
+			switch (textureType) {
+				case MaterialInitParameters::TextureType_Albedo:
+					_resource->_textures.push_back(TextureResource::white());
+					break;
+				case MaterialInitParameters::TextureType_MetalnessRoughness:
+					_resource->_textures.push_back(TextureResource::default_roughness());
+					break;
+				case MaterialInitParameters::TextureType_Normal:
+					_resource->_textures.push_back(TextureResource::default_normal());
+					break;
+				case MaterialInitParameters::TextureType_Count:
+					_resource->_textures.push_back(TextureResource::invalid());
+					break;
+			}
 		}
 		else
 		{
-			_resource->_textures.push_back(ResourceLoader::instance()->load<TextureResource>({ path }, true));
+			_resource->_textures.push_back(ResourceLoader::instance()->load<TextureResource>({ paths[textureType] }, true));
 		}
 	}
 }

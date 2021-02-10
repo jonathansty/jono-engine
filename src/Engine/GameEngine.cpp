@@ -81,7 +81,7 @@ GameEngine::GameEngine()
 {
 
 	// Seed the random number generator
-	srand(unsigned int(GetTickCount64()));
+	srand((unsigned int)(GetTickCount64()));
 
 	// Initialize Direct2D system
 	CoInitialize(NULL);

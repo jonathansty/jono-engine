@@ -213,25 +213,25 @@ ID2D1Bitmap* Bitmap::GetBitmapPtr() const
 
 int Bitmap::GetWidth() const
 {
-	if (this == nullptr) MessageBoxA(NULL, "Bitmap::GetWidth() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
+	MessageBoxA(NULL, "Bitmap::GetWidth() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	return m_BitmapPtr->GetPixelSize().width;
 }
 
 int	Bitmap::GetHeight() const
 {
-	if (this == nullptr) MessageBoxA(NULL, "Bitmap::GetHeight() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
+	MessageBoxA(NULL, "Bitmap::GetHeight() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	return m_BitmapPtr->GetPixelSize().height;
 }
 
 double Bitmap::GetOpacity() const
 {
-	if (this == nullptr) MessageBoxA(NULL, "Bitmap::GetOpacity() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
+	MessageBoxA(NULL, "Bitmap::GetOpacity() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	return m_Opacity;
 }
 
 void Bitmap::SetOpacity(double opacity)
 {
-	if (this == nullptr) MessageBoxA(NULL, "Bitmap::SetOpacity() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
+	MessageBoxA(NULL, "Bitmap::SetOpacity() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	m_Opacity = opacity;
 }
 

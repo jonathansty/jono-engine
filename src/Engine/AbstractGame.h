@@ -22,7 +22,7 @@ public :
 	AbstractGame(const AbstractGame&) = delete;
 	AbstractGame& operator=(const AbstractGame&) = delete;
 
-	virtual void configure_engine(EngineSettings &engineSettings){};
+	virtual void configure_engine(EngineSettings &){};
 
 	virtual void initialize(GameSettings &gameSettings) { 	UNREFERENCED_PARAMETER(gameSettings); }								// empty definition
 	virtual void start(void) {}																// empty definition

@@ -24,24 +24,21 @@ OverlayManager::~OverlayManager()
 
 void OverlayManager::render_overlay() 
 {
-	if (_isOpen)
-	{
-		ImGui::Begin(_name.c_str(), &_isOpen);
-
-		for (auto& overlay : _overlays)
-		{
+	if (ImGui::Begin(_name.c_str(), &_isOpen)) {
+		for (auto& overlay : _overlays) {
 			ImGui::PushID(overlay.second);
-			ImGui::Checkbox("", &overlay.second->_isOpen); ImGui::SameLine(); ImGui::Text(overlay.second->get_name());
+			ImGui::Checkbox("", &overlay.second->_isOpen);
+			ImGui::SameLine();
+			ImGui::Text(overlay.second->get_name());
 			ImGui::PopID();
 		}
-		// 
-		ImGui::End();
+		//
 	}
+	ImGui::End();
 
 	for (auto& overlay : _overlays)
 	{
-		if (overlay.second->_isOpen)
-		{
+		if (overlay.second->_isOpen) {
 			overlay.second->render_overlay();
 		}
 	}

@@ -73,7 +73,7 @@ public class ImGui : ExternalProject
     public ImGui() : base()
     {
         Name = "ImGui";
-        SourceRootPath = Path.Combine(externalDir, "imgui/");
+        SourceRootPath = Path.Combine(ExternalDir, "imgui/");
     }
     override public void ConfigureAll(Configuration conf, Target target)
     {
@@ -94,7 +94,7 @@ public class HLSLPP : ExternalProject
     public HLSLPP() : base()
     {
         Name = "hlslpp";
-        SourceRootPath = Path.Combine(externalDir, "hlslpp/");
+        SourceRootPath = Path.Combine(ExternalDir, "hlslpp/");
         NatvisFiles.Add(Path.Combine(SourceRootPath, "include/hlsl++.natvis"));
     }
 
@@ -103,7 +103,7 @@ public class HLSLPP : ExternalProject
         base.ConfigureAll(conf, target);
 
         conf.Output = Configuration.OutputType.None;
-        conf.IncludeSystemPaths.Add(Path.Combine(externalDir, "[project.Name]/include"));
+        conf.IncludeSystemPaths.Add(Path.Combine(ExternalDir, "[project.Name]/include"));
         conf.ExportDefines.Add("HLSLPP_FEATURE_TRANSFORM");
     }
 
@@ -117,7 +117,7 @@ public class EnkiTS : ExternalProject
     public EnkiTS()
     {
         Name = "EnkiTS";
-        SourceRootPath = Path.Combine(externalDir, "enkiTS/");
+        SourceRootPath = Path.Combine(ExternalDir, "enkiTS/");
 
     }
 
@@ -125,25 +125,69 @@ public class EnkiTS : ExternalProject
     {
         base.ConfigureAll(conf, target);
 
-        conf.IncludePaths.Add(Path.Combine(externalDir, "enkiTS/src"));
+        conf.IncludePaths.Add(Path.Combine(ExternalDir, "enkiTS/src"));
         conf.Output = Configuration.OutputType.Lib;
     }
 }
 
 [Export]
-public class Refl : ExternalProject
+public class LibClang : VCPKG
 {
-    public Refl()
+    public LibClang()
     {
-        Name = "refl-cpp";
-        SourceRootPath = Path.Combine(externalDir, "refl-cpp/");
+        Name = "LibClang";
 
     }
 
-    public override void ConfigureAll(Configuration conf, Target target)
+    public override void ConfigureRelease(Configuration config, Target target)
+    {
+        base.ConfigureRelease(config, target);
+        config.LibraryFiles.Add("libclang");
+    }
+    public override void ConfigureDebug(Configuration config, Target target)
+    {
+        base.ConfigureDebug(config, target);
+        config.LibraryFiles.Add("libclangd");
+    }
+
+}
+
+[Export]
+public class ClReflect : ExternalProject
+{
+    public ClReflect()
+    {
+        Name = "clReflect";
+        SourceRootPath = @"[project.ExternalDir]/clReflect";
+    }
+
+    override public void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
 
-        conf.IncludePaths.Add(Path.Combine(externalDir, "refl-cpp/"));
+        conf.Output = Configuration.OutputType.None;
+        conf.IncludeSystemPaths.Add(@"[project.ExternalDir]/[project.Name]/inc");
     }
+}
+
+[Export]
+public class Fmt : VCPKG
+{
+    public Fmt() : base(false)
+    {
+    }
+
+    public override void ConfigureDebug(Configuration conf, Target target)
+    {
+        base.ConfigureDebug(conf, target);
+        conf.LibraryFiles.Add(@"fmtd");
+    }
+
+    public override void ConfigureRelease(Configuration conf, Target target)
+    {
+        base.ConfigureRelease(conf, target);
+        conf.LibraryFiles.Add(@"fmt");
+    }
+
+
 }

@@ -1,10 +1,10 @@
 #pragma once
 #include "rtti/rtti.h"
 
-class EntityDebugOverlay;
 
 namespace framework
 {
+	class EntityDebugOverlay;
 	class Entity;
 	class Component;
 
@@ -85,7 +85,7 @@ namespace framework
 		std::vector<Entity*>  _entities;
 		std::vector<uint64_t> _generation;
 
-		friend EntityDebugOverlay;
+		friend class EntityDebugOverlay;
 	};
 
 	template <typename T, typename ... Args>

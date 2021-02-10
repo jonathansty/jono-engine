@@ -33,9 +33,9 @@ using Microsoft::WRL::ComPtr;
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include <directxtk/DirectXHelpers.h>
-#include <directxtk/VertexTypes.h>
-#include <directxtk/Effects.h>
+#include <DirectXTK/DirectXHelpers.h>
+#include <DirectXTK/VertexTypes.h>
+#include <DirectXTK/Effects.h>
 
 
 // libs used for Direct2D
@@ -49,7 +49,7 @@ using namespace D2D1;
 // Box2D 
 // copy the headers box2d map in a folder with somename:  projectdir/somepath/box2d
 // additional include directories: do NOT add ./ to make this include <> work, use ./somepath instead -> bug in vs2013?
-#include <Box2D/Box2D.h>
+#include <box2d/box2d.h>
 
 // Define M_PI and other constants
 #define _USE_MATH_DEFINES 

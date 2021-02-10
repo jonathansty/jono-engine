@@ -20,6 +20,8 @@ public class CliProject : JonaBaseProject
         base.ConfigureAll(conf, target);
         conf.SolutionFolder = "engine";
         conf.Output = Configuration.OutputType.Lib;
+
+        conf.AddPrivateDependency<Fmt>(target);
     }
 
 }
@@ -49,6 +51,8 @@ public class EngineProject : JonaBaseProject
         conf.AddPublicDependency<ImGui>(target);
         conf.AddPublicDependency<HLSLPP>(target);
         conf.AddPublicDependency<EnkiTS>(target);
+        conf.AddPublicDependency<ClReflect>(target);
+        conf.AddPublicDependency<Fmt>(target);
 
         // Own public libraries
         conf.AddPublicDependency<CliProject>(target);
@@ -92,7 +96,7 @@ public class EngineProject : JonaBaseProject
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
 
 
-        conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
+        //conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
     }
 
@@ -110,7 +114,7 @@ public class EngineTestProject : JonaBaseProject
     public EngineTestProject()
          : base()
     {
-        Name = "EngineTest";
+        Name = "EngineTests";
         SourceRootPath = @"[project.SharpmakeCsPath]/src/EngineTests";
     }
 
@@ -131,6 +135,8 @@ public class EngineTestProject : JonaBaseProject
         // Add engine include path
         conf.IncludeSystemPaths.Add(@"[project.SharpmakeCsPath]/src/");
         conf.IncludePrivatePaths.Add(@"[project.SourceRootPath]");
+
+        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/[project.Name]/");
     }
 }
 
@@ -171,8 +177,8 @@ public class GameProject : JonaBaseProject
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/src/");
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
 
-        conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
-        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
+        //conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
+        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/game/");
 
     }
 }
@@ -215,7 +221,7 @@ public class EngineTestBed : JonaBaseProject
 
 
 [Generate]
-public class ToolsProject : JonaBaseProject
+public abstract class ToolsProject : JonaBaseProject
 {
     public ToolsProject()
     {
@@ -233,9 +239,12 @@ public class ToolsProject : JonaBaseProject
 
 }
 
+
 [Generate]
 public class ReflectionGenerator : ToolsProject
 {
+    public static string ExecutableOutputPath { get { return @"[conf.TargetPath]/[project.Name].exe"; } }
+
     public ReflectionGenerator() : base()
     {
         Name = "reflection-generator";
@@ -245,12 +254,12 @@ public class ReflectionGenerator : ToolsProject
     {
         base.ConfigureAll(conf, target);
         conf.AddPrivateDependency<CliProject>(target);
+        conf.AddPrivateDependency<LibClang>(target);
+        conf.AddPrivateDependency<Fmt>(target);
     }
 
-    public static Configuration.BuildStepExecutable GetCustomBuildStep(string input = "[project.SharpmakeCsPath]/generated/reflection/dumps/[project.Name].txt", string output = "obj/reflection", string root = "[project.SharpmakeCsPath]") {
-        return new Configuration.BuildStepExecutable(
-            @"[conf.TargetPath]/reflection-generator.exe",
-            "", "", $"-file={input} -output={output} -root={root}");
+    public static Configuration.BuildStepExecutable CreateBuildStep(string input = "[project.SharpmakeCsPath]/generated/reflection/dumps/[project.Name].txt", string output = "obj/reflection", string root = "[project.SharpmakeCsPath]") {
+        return new Configuration.BuildStepExecutable(ExecutableOutputPath, "", "", $"-file={input} -output={output} -root={root}");
     }
 }
 
@@ -278,21 +287,56 @@ public class GameSolution : Solution
         conf.SolutionPath = @"[solution.SharpmakeCsPath]/generated";
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]_[target.Platform]";
 
+        var types = System.Reflection.Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(type => {
+                return type.IsSubclassOf(typeof(JonaBaseProject)) && !type.IsAbstract && Attribute.GetCustomAttribute(type, typeof(Sharpmake.Generate)) != null;
+            });
+
+        foreach (var type in types)
+        {
+            conf.AddProject(type, target);
+        }
+
+    }
+}
+
+[Generate]
+public class ToolsOnlySolution : Solution
+{
+    public ToolsOnlySolution()
+        : base()
+    {
+        // The name of the solution.
+        Name = "Tools";
+
+        // As with the project, define which target this solution builds for.
+        // It's usually the same thing.
+        AddTargets(Utils.Targets);
+    }
+
+    // Configure for all 4 generated targets. Note that the type of the
+    // configuration object is of type Solution.Configuration this time.
+    // (Instead of Project.Configuration.)
+    [Configure]
+    public void ConfigureAll(Solution.Configuration conf, Target target)
+    {
+        // Puts the generated solution in the /generated folder too.
+        conf.SolutionPath = @"[solution.SharpmakeCsPath]/generated";
+        conf.SolutionFileName = "[solution.Name]_[target.DevEnv]_[target.Platform]";
+
         // Engine project
-        conf.AddProject<EngineProject>(target);
+        var types = System.Reflection.Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(type =>
+            {
+                return type.IsSubclassOf(typeof(ToolsProject)) && !type.IsAbstract && Attribute.GetCustomAttribute(type, typeof(Sharpmake.Generate)) != null;
+            });
 
-        // Test projects
-        conf.AddProject<EngineTestProject>(target);
-
-        // Game projects
-        conf.AddProject<EngineTestBed>(target);
-        conf.AddProject<GameProject>(target);
-
-        conf.AddProject<ReflectionGenerator>(target);
-
-
-
-
+        foreach (var type in types)
+        {
+            conf.AddProject(type, target);
+        }
     }
 }
 
@@ -302,8 +346,14 @@ public static class Main
     [Sharpmake.Main]
     public static void SharpmakeMain(Arguments sharpmakeArgs)
     {
+        // Post 'linking' we generate a list of files for tools to consume
         sharpmakeArgs.Builder.EventPostProjectLink += Builder_EventPostProjectLink;
+
+        // Generate the solution for our game (all)
         sharpmakeArgs.Generate<GameSolution>();
+
+        // Generate just tools projects
+        sharpmakeArgs.Generate<ToolsOnlySolution>();
     }
 
     private static void Builder_EventPostProjectLink(Project project)

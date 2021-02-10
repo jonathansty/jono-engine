@@ -1,22 +1,11 @@
 #pragma once
-//-----------------------------------------------------
-// Name: Steyfkens
-// First name: Jonathan
-// Group: 1DAE01
-//-----------------------------------------------------
 
-//-----------------------------------------------------
-// Include Files
-//-----------------------------------------------------
-
-//#include "ContactListener.h"
 #include "Entity.h"
 #include "DataManager.h"
-//-----------------------------------------------------
-// Avatar Class									
-//-----------------------------------------------------
+
 class EntityList;
 class EnemyList;
+
 class Avatar : public Entity
 {
 public:

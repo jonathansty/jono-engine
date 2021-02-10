@@ -46,14 +46,6 @@ public:
 };
 
 
-template<typename T>
-struct MemberTraits : MemberTraits<decltype(T)> {};
-
-template<typename T>
-struct MemberTraits<std::vector<T>> {
-	using type = T;
-};
-
 void HelloWorldGame::start()
 {
 #ifdef _DEBUG
@@ -61,10 +53,8 @@ void HelloWorldGame::start()
 #endif
 	std::vector<int> myVec;
 
-	rtti::TypeInfo* info = rtti::Registry::get<MemberTraits<std::vector<int>>::type>();
-
+	auto info = rtti::Registry::get<SimpleMovement2D>();
 	rtti::Object obj = rtti::Object::create<SimpleMovement2D>();
-	info = rtti::Registry::get<SimpleMovement2D>();
 	rtti::FunctionBase const* fn = info->find_function("reset");
 	fn->invoke(obj);
 
@@ -73,7 +63,7 @@ void HelloWorldGame::start()
 
 	using namespace framework;
 	_world = std::make_shared<framework::World>();
-	GameEngine::instance()->get_overlay_manager()->register_overlay(new EntityDebugOverlay(_world.get()));
+	GameEngine::instance()->get_overlay_manager()->register_overlay(new framework::EntityDebugOverlay(_world.get()));
 
 	_parentEntity = _world->create_entity(float2(100, 100));
 	_parentEntity->create_component<BitmapComponent>(ResourcePaths::bmp_coin_silver);

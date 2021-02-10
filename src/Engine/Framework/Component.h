@@ -29,6 +29,9 @@ namespace framework
 	private:
 		bool _active;
 		Entity* _parent;
+
+
+		friend class EntityDebugOverlay;
 	};
 
 }

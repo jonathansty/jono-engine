@@ -78,12 +78,16 @@ void Hello3D::start()
 	auto device = GameEngine::instance()->GetD3DDevice();
 	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
 
+	TextureResource::black();
+	TextureResource::white();
+	TextureResource::default_normal();
+
 	::SetCapture(GameEngine::instance()->get_window());
 
 	using namespace framework;
 	_world = std::make_shared<framework::World>();
 
-	EntityDebugOverlay *overlay = new EntityDebugOverlay(_world.get());
+	framework::EntityDebugOverlay *overlay = new framework::EntityDebugOverlay(_world.get());
 	GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
 	// Create the world camera
@@ -96,29 +100,41 @@ void Hello3D::start()
 	}
 
 	{
+		namespace fs = std::filesystem;
+		auto add_model = [&](float3 pos, float3 scale, fs::path const& model_path) {
+			World::EntityId model = _world->create_entity();
+
+			model->set_name(model_path.string());
+			model->set_local_position(pos);
+			model->set_local_scale(scale);
+			auto comp = model->create_component<SimpleMeshComponent>();
+			comp->set_model((fs::path{"Resources/Models/"} / model_path).string());
+
+			return model;
+		};
+
+		add_model(float3(0.0), float3(1.0), "plane/planes.gltf");
+
 		for (int i = 0; i < 1; ++i)
 		{
 			for (int j = 0; j < 1; ++j)
 			{
-				World::EntityId model = _world->create_entity();
-				Entity* ent = _world->get_entity(model);
-				ent->set_name("boxes_3");
-				ent->set_local_position(float3( 2.0f * (float)i, 0.0f, 2.0f * (float)j));
-				ent->set_local_scale({ 10.0f, 10.0f,10.0f });
-				auto comp = ent->create_component<SimpleMeshComponent>();
-				comp->set_model("Resources/Models/m-96_mattock/scene.gltf");
-
+				World::EntityId ent = add_model(float3(2.0f * (float)i, 3.0f, 2.0f * (float)j), float3(1.0),"m-96_mattock/scene.gltf");
 				auto c = ent->create_component<SimpleMovement3D>();
 				c->set_speed(10.0f);
 			}
 		}
 
 
-		World::EntityId model = _world->create_entity();
-		Entity* ent = _world->get_entity(model);
+		World::EntityId ent = _world->create_entity();
 		ent->set_name("Sun");
 		ent->set_rotation(hlslpp::euler(float3(-0.33f, -0.33f, 0.0f)));
+		ent->set_local_position(float3(0.0, 10.0, 0.0));
 		auto comp = ent->create_component<LightComponent>();
+		auto mesh_comp = ent->create_component<SimpleMeshComponent>();
+		mesh_comp->set_model((fs::path{ "Resources/Models/axes/axes.gltf" }).string());
+
+		add_model(float3(50.0, 0.0, 0.0f), float3(1.0), "Tower/scene.gltf");
 	}
 
 
@@ -193,10 +209,11 @@ void Hello3D::debug_ui()
 		"Metalness",
 		"Normals",
 		"AO",
-		"WorldNormals"
+		"Normals (World)",
+		"Vertex Colours"
 	};
 
-	ImGui::Combo("Debug Mode", &g_DebugMode, items, 7);
+	ImGui::Combo("Debug Mode", &g_DebugMode, items, std::size(items));
 	ImGui::End();
 
 }
@@ -248,7 +265,7 @@ void Hello3D::render_3d()
 		View = inverse(cameraTransform);
 
 		hlslpp::projection proj(frustum::field_of_view_x(camera->get_fov(), aspect, camera->get_far_plane(), camera->get_near_plane()), zclip::zero);
-		float4x4 Projection = float4x4::perspective(proj);
+		Projection = float4x4::perspective(proj);
 
 		// +Y is forward
 		float4 world_fwd{ 0.0f, 0.0f, 1.0f, 0.0f };
@@ -277,7 +294,7 @@ void Hello3D::render_3d()
 		if (SimpleMeshComponent* mesh_comp = ent->get_component<SimpleMeshComponent>(); mesh_comp && mesh_comp->is_loaded())
 		{
 			float4x4 world = ent->get_world_transform();
-			float4x4 MVP = mul(mul(world, View), Projection);
+			float4x4 MVP = mul(world, mul(View, Projection));
 
 			D3D11_MAPPED_SUBRESOURCE resource{};
 			ctx->Map(_cb_MVP.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);

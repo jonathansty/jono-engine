@@ -15,6 +15,8 @@ using CommandLine = std::vector<std::string>;
 CommandLine parse(std::string cmdLine);
 CommandLine parse(const char** cmdLine, const int argc );
 
+std::string to_string(CommandLine const& cmd);
+
 bool has_arg(CommandLine const &cmd_args, std::string const &arg);
 
 std::string get_arg(CommandLine const& cmd_args, std::string const& arg);

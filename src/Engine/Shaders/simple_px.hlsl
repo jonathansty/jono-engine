@@ -38,8 +38,7 @@ float4 main(VS_OUT vout) : SV_Target
 	material.roughness = data.g;
 	material.metalness = data.b;
 
-	// +Y is forward
-	float3 light = normalize(-g_LightDirection.xyz);
+	float3 light = normalize(g_LightDirection.xyz);
 	float3 view = normalize(g_ViewDirection.xyz);
 
 	// Transform our tangent normal into world space

@@ -2,9 +2,9 @@
 
 #include "rtti/rtti.h"
 
-class EntityDebugOverlay;
 namespace framework
 {
+	class EntityDebugOverlay;
 	class Component;
 
 	class Entity
@@ -59,6 +59,8 @@ namespace framework
 			return _name.c_str();
 		}
 
+
+		friend class EntityDebugOverlay;
 	protected:
 		std::string _name;
 		Entity* _parent;
@@ -72,7 +74,6 @@ namespace framework
 		hlslpp::float3 _scale;
 		hlslpp::float3 _rot_euler;
 
-		friend EntityDebugOverlay;
 	};
 
 	template<typename T, typename...Args>

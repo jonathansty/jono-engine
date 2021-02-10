@@ -9,6 +9,14 @@ cli::CommandLine cli::parse(const char **argvs, const int argc) {
 	return cli::parse(cmdLine);
 }
 
+std::string cli::to_string(CommandLine const& cmd) {
+	std::string result{};
+	for (auto const& c : cmd) {
+		result += c + " ";
+	}
+	return result.substr(0, result.size() - 1);
+}
+
 cli::CommandLine cli::parse(std::string cmdLine) {
 	std::string delimiter = " ";
 
@@ -61,7 +69,7 @@ bool cli::get_bool(CommandLine const &cmd_args, std::string const &arg, bool &va
 	}
 
 	// #TODO: parse into bool
-	std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return (char)std::tolower(c); });
+	std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return (char)tolower(c); });
 
 	if(result == "false" || result == "0") {
 		val = false;

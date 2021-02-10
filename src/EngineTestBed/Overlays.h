@@ -3,6 +3,8 @@
 #include "Framework/framework.h"
 #include "debug_overlays/OverlayManager.h"
 
+namespace framework {
+
 class EntityDebugOverlay final : public DebugOverlay
 {
 public:
@@ -19,3 +21,5 @@ private:
 	framework::Entity* _selected;
 	framework::World* _world;
 };
+
+}

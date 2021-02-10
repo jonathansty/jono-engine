@@ -186,7 +186,7 @@ CameraComponent::CameraComponent()
 	, _prev_position(float2{ 0.0,0.0 })
 	, _x_angle(0.0f)
 	, _y_angle(0.0f)
-	, _fly_speed(100.0f)
+	, _fly_speed(50.0f)
 {
 
 }
@@ -215,10 +215,18 @@ void CameraComponent::look_at(float3 eye, float3 target, float3 up /*= { 0.0,0.0
 
 void CameraComponent::update(float dt)
 {
+
 	// Ignore any input if ImGui is focused
-	if (!GameEngine::instance()->is_viewport_focused() || !GameEngine::instance()->is_mouse_button_down(VK_LBUTTON))
+	bool bSkip = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
+	if (bSkip || !GameEngine::instance()->is_viewport_focused() || !GameEngine::instance()->is_mouse_button_down(VK_LBUTTON))
 	{
 		_prev_position = GameEngine::instance()->get_mouse_pos_in_viewport();
+		return;
+	}
+
+	if (GameEngine::instance()->is_key_pressed('R')) {
+		get_entity()->set_local_position(float3{0, 0, 0});
+		get_entity()->set_rotation(quaternion::identity());
 		return;
 	}
 
@@ -239,6 +247,7 @@ void CameraComponent::update(float dt)
 	if (GameEngine::instance()->is_key_down(VK_LSHIFT)) {
 		fly_speed *= 1.5f;
 	}
+
 
 	if (GameEngine::instance()->is_key_down('W')) {
 		movement += movement + forward * fly_speed * dt;
@@ -276,19 +285,19 @@ void CameraComponent::update(float dt)
 		double y = current.y - _prev_position.y;
 		_prev_position = current;
 
-		_x_angle += (float)x;
-		_y_angle += (float)y;
+		_x_angle -= (float)x;
+		_y_angle -= (float)y;
 		// Do stuff
 
-		float x_angle = hlslpp::radians(hlslpp::float1(25.0f)) * dt * _x_angle;
-		float y_angle = hlslpp::radians(hlslpp::float1(25.0f)) * dt * _y_angle;
+		float x_angle = hlslpp::radians(hlslpp::float1(4.9f)) * dt * _x_angle;
+		float y_angle = hlslpp::radians(hlslpp::float1(4.9f)) * dt * _y_angle;
 
 		quaternion x_quat = hlslpp::axisangle(up.xyz, x_angle);
 
-		right = hlslpp::mul(right, float4x4(x_quat));
-
+		// recalculate our right vector for the new position
+		right = float4(hlslpp::mul(x_quat, right.xyz), 0.0);
 		quaternion y_quat = hlslpp::axisangle(right.xyz, y_angle);
-		quaternion transform_result = x_quat* y_quat;
+		quaternion transform_result = y_quat * x_quat;
 		ent->set_rotation(transform_result);
 	}
 

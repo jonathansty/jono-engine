@@ -13,6 +13,7 @@ cbuffer DebugCB : register(b1)
 #define VisualizeMode_Normals 4 
 #define VisualizeMode_AO 5
 #define VisualizeMode_WorldNormal 6
+#define VisualizeMode_VertexColour 7
 
 // PBR inputs
 Texture2D<float4> g_albedo    : register(t0);
@@ -36,7 +37,10 @@ float4 main(VS_OUT vout) : SV_Target
 	material.metalness = data.b;
 
 	float3 output = float3(1.0, 0.0, 0.0);
-	if (g_VisualizeMode == VisualizeMode_Albedo)
+	if (g_VisualizeMode == VisualizeMode_VertexColour) {
+		output = vout.colour;
+	}
+	else if (g_VisualizeMode == VisualizeMode_Albedo)
 	{
 		output = material.albedo;
 	}

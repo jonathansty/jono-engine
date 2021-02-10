@@ -13,7 +13,7 @@ public class Utils
             return new Target[]{
                 new Target(
                   Platform.win64,
-                  DevEnv.vs2019,
+                  DevEnv.vs2017 | DevEnv.vs2019,
                   Optimization.Debug | Optimization.Release,
                   OutputType.Lib),
             };
@@ -31,7 +31,7 @@ public class Utils
 }
 
 [Generate]
-public class JonaBaseProject : Project
+public abstract class JonaBaseProject : Project
 {
     public JonaBaseProject() : base()
     {
@@ -48,6 +48,11 @@ public class JonaBaseProject : Project
     virtual public void ConfigureAll(Configuration conf, Target target)
     {
         Utils.ConfigureProjectName(conf, target);
+
+        //conf.Options.Add(Sharpmake.Options.Vc.General.PlatformToolset.ClangCL);
+        conf.Options.Add(Sharpmake.Options.Vc.Compiler.Exceptions.EnableWithSEH);
+        conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
+
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
 
     }
@@ -107,9 +112,9 @@ public class VCPKG : Project
    
 }
 
-public class ExternalProject : JonaBaseProject
+public abstract class ExternalProject : JonaBaseProject
 {
-    protected string externalDir = @"[project.SharpmakeCsPath]/external";
+    public string ExternalDir = @"[project.SharpmakeCsPath]/external";
 
     override public void ConfigureAll(Configuration conf, Target target)
     {

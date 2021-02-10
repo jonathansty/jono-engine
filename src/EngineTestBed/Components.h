@@ -97,8 +97,8 @@ class SimpleMeshComponent final : public framework::Component
 public:
 	using Entity = framework::Entity;
 
-	SimpleMeshComponent();;
-	virtual ~SimpleMeshComponent();;
+	SimpleMeshComponent();
+	virtual ~SimpleMeshComponent();
 
 	virtual void on_attach(Entity* ent) override;
 	virtual void on_detach(Entity* ent) override;
