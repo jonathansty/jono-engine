@@ -24,82 +24,53 @@ Material CreateMaterial()
 	return material;
 }
 
-float D_GGX(float3 normal, float3 h, float roughness)
-{
-	float a2 = roughness * roughness;
-
-	float NoH = saturate(dot(normal, h));
-	float NoH2 = NoH * NoH;
-
-	float nom = a2;
-	float denom = ((NoH2 * (a2 - 1) + 1));
-	denom = PI * denom * denom;
-	return nom / denom;
-}
-
 // Float K is remapping of roughness
-// 
-float G_SchlickGGX(float NoV, float k)
-{
-	float nom = NoV;
-	float denom = NoV * (1 - k) + k;
-
-	return nom / denom;
+//
+float D_GGX(float NoH, float a) {
+	float a2 = a * a;
+	float f = (NoH * a2 - NoH) * NoH + 1.0;
+	return a2 / (PI * f * f);
 }
 
-float G_Smith(float3 n, float3 v, float3 l, float k)
-{
-	float NoV = saturate(dot(n, v));
-	float NoL = saturate(dot(n, l));
-
-	// Take into account shadowing from both directions
-	float ggx1 = G_SchlickGGX(NoV, k);
-	float ggx2 = G_SchlickGGX(NoL, k);
-
-	return ggx1 * ggx2;
+float3 F_Schlick(float u, float3 f0) {
+	return (f0 + (float3(1.0, 1.0, 1.0) - f0) * pow(1.0 - u, 5.0));
 }
-float3 F_Schlick(float3 h, float3 v, float3 F0)
-{
-	float HoV = saturate(dot(h, v));
-	return F0 + (1 - F0) * pow(1 - HoV, 5);
+
+float V_SmithGGXCorrelated(float NoV, float NoL, float a) {
+	float a2 = a * a;
+	float GGXL = NoV * sqrt((-NoL * a2 + NoL) * NoL + a2);
+	float GGXV = NoL * sqrt((-NoV * a2 + NoV) * NoV + a2);
+	return 0.5 / (GGXV + GGXL);
 }
+
+float Fd_Lambert() {
+	return 1.0 / PI;
+}
+// FILAMENT end
 
 // TODO: Implenent D_GGX, F_SCHLICK and geometry function
-float3 SimpleBlinnPhong(float3 view, float3 light, float3 normal, Material material)
+float3 SimpleBlinnPhong(float3 v, float3 l, float3 n, Material material)
 {
-	// Support metalness workflow
-	float3 F0 = material.F0;
-	F0 = lerp(F0, material.albedo, material.metalness);
+	float3 h = normalize(v + l);
 
-	float NoL = saturate(dot(normal, light));
+	float NoV = abs(dot(n, v)) + 1e-5;
+	float NoL = clamp(dot(n, l), 0.0, 1.0);
+	float NoH = clamp(dot(n, h), 0.0, 1.0);
+	float LoH = clamp(dot(l, h), 0.0, 1.0);
 
-	// Calculate diffuse part of the lighting equation
-	float3 diffuse = material.albedo;
+	// perceptually linear roughness to roughness (see parameterization)
+	float roughness = material.roughness * material.roughness;
 
-	// Specular part
-	float3 h = normalize(light + view);
+	float D = D_GGX(NoH, roughness);
+	float3 F = F_Schlick(LoH, material.F0);
+	float V = V_SmithGGXCorrelated(NoV, NoL, roughness);
 
-	// Specular Calculations
-#if defined(IBL_LIGHTING)
-	float k = roughness * roughness / 2.0;
-#else
-	float k = pow((material.roughness + 1.0), 2.0) / 8.0;
-#endif
+	// specular BRDF
+	float3 Fr = (D * V) * F;
 
-	float D = D_GGX(normal, h, material.roughness);
-	float G = G_Smith(normal, h, light, k);
-	float3 F = F_Schlick(h, view, F0);
+	// diffuse BRDF
+	float3 Fd = material.albedo * Fd_Lambert();
 
-	float3 nom = D * F * G;
-
-
-	//TODO: Fix the spec calculations
-	float3 NoH = saturate(dot(normal, h));
-	float LoN = saturate(dot(light, normal));
-	float3 denom = saturate(4 * LoN * NoH);
-	float3 spec = nom / denom;
-
-	return ((diffuse / PI) + spec) * NoL;
-
+	return (Fd + Fr) * NoL;
 }
 #endif

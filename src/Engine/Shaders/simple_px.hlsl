@@ -38,7 +38,7 @@ float4 main(VS_OUT vout) : SV_Target
 	material.roughness = data.g;
 	material.metalness = data.b;
 
-	float3 light = normalize(g_LightDirection.xyz);
+	float3 light = -normalize(g_LightDirection.xyz);
 	float3 view = normalize(g_ViewDirection.xyz);
 
 	// Transform our tangent normal into world space
@@ -51,10 +51,10 @@ float4 main(VS_OUT vout) : SV_Target
 		normal.xyz
 	);
 
-	float3 final_normal = mul(material.tangentNormal, tbn);
+	float3 final_normal = normalize(mul(material.tangentNormal, tbn));
 
 	float3 light_colour = float3(0.9, 0.9, 0.9);
-	float3 colour = SimpleBlinnPhong( view, light , final_normal,  material) * light_colour;
+	float3 colour = SimpleBlinnPhong(view, light, final_normal,  material) * light_colour;
 
 	float3 ambient = float3(0.02f, 0.02f, 0.02f);
 	return float4(material.ao * (colour + ambient), 1.0);

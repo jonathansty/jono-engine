@@ -186,7 +186,7 @@ CameraComponent::CameraComponent()
 	, _prev_position(float2{ 0.0,0.0 })
 	, _x_angle(0.0f)
 	, _y_angle(0.0f)
-	, _fly_speed(50.0f)
+	, _fly_speed(16.0f)
 {
 
 }

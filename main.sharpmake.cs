@@ -287,17 +287,18 @@ public class GameSolution : Solution
         conf.SolutionPath = @"[solution.SharpmakeCsPath]/generated";
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]_[target.Platform]";
 
-        var types = System.Reflection.Assembly.GetExecutingAssembly()
-            .GetTypes()
-            .Where(type => {
-                return type.IsSubclassOf(typeof(JonaBaseProject)) && !type.IsAbstract && Attribute.GetCustomAttribute(type, typeof(Sharpmake.Generate)) != null;
-            });
+        //var types = System.Reflection.Assembly.GetExecutingAssembly()
+        //    .GetTypes()
+        //    .Where(type => {
+        //        return type.IsSubclassOf(typeof(JonaBaseProject)) && !type.IsAbstract && Attribute.GetCustomAttribute(type, typeof(Sharpmake.Generate)) != null;
+        //    });
 
-        foreach (var type in types)
-        {
-            conf.AddProject(type, target);
-        }
+        //foreach (var type in types)
+        //{
+        //    conf.AddProject(type, target);
+        //}
 
+        conf.AddProject<EngineTestBed>(target);
     }
 }
 
