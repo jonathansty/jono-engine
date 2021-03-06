@@ -13,7 +13,7 @@ public class Utils
             return new Target[]{
                 new Target(
                   Platform.win64,
-                  DevEnv.vs2017 | DevEnv.vs2019,
+                  DevEnv.vs2019,
                   Optimization.Debug | Optimization.Release,
                   OutputType.Lib),
             };
@@ -49,9 +49,20 @@ public abstract class JonaBaseProject : Project
     {
         Utils.ConfigureProjectName(conf, target);
 
-        //conf.Options.Add(Sharpmake.Options.Vc.General.PlatformToolset.ClangCL);
-        conf.Options.Add(Sharpmake.Options.Vc.Compiler.Exceptions.EnableWithSEH);
+        conf.Options.Add(Options.Vc.General.WindowsTargetPlatformVersion.Latest);
+        // conf.Options.Add(Options.Vc.General.PlatformToolset.ClangCL);
+        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
+        conf.Options.Add(Options.Vc.Compiler.MinimalRebuild.Enable);
+
+        // conf.AdditionalCompilerOptions.Add("-Wno-unused-parameter");
+        // conf.AdditionalCompilerOptions.Add("-Wno-reorder-ctor");
+        // conf.AdditionalCompilerOptions.Add("-Wno-unused-variable");
+        // conf.AdditionalCompilerOptions.Add("-Wno-unused-private-field");
+        // conf.AdditionalCompilerOptions.Add("-Wno-format-security");
+
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
+        conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
+
 
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
 

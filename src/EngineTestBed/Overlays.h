@@ -13,7 +13,7 @@ public:
 
 	void render_tree(framework::Entity* ent);
 
-	void render_object(rtti::Object& obj);
+	void render_object(rttr::instance& obj);
 
 	virtual void render_overlay() override;
 

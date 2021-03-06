@@ -3,9 +3,12 @@
 
 using namespace framework;
 
-IMPL_REFLECT(Component)
-{
-	type.register_property("Active", &Component::_active);
+RTTR_REGISTRATION {
+
+	using namespace rttr;
+	registration::class_<Component>("Component")
+		.constructor()
+		.property("Active", &Component::_active);
 }
 
 Component::~Component()

@@ -1,15 +1,24 @@
 #pragma once
 
-#include "rtti/rtti.h"
+#include <rttr/registration>
 
 namespace framework
 {
+
+	struct WrapperFloat4 {
+		hlslpp::float4 value;
+	};
+	struct WrapperFloat3 {
+		hlslpp::float3 value;
+	};
+
+
 	class EntityDebugOverlay;
 	class Component;
 
 	class Entity
 	{
-		REFLECT(Entity);
+		RTTR_REGISTRATION_FRIEND;
 
 	public:
 		Entity();
@@ -25,7 +34,7 @@ namespace framework
 		template<typename T, typename...Args>
 		T* create_component( Args...args);
 
-		Component* get_component(rtti::TypeInfo const* t) const;
+		Component* get_component(rttr::type const& t) const;
 
 		template<typename T>
 		T* get_component() const;
@@ -61,6 +70,7 @@ namespace framework
 
 
 		friend class EntityDebugOverlay;
+
 	protected:
 		std::string _name;
 		Entity* _parent;
@@ -69,6 +79,32 @@ namespace framework
 		std::vector<Component*> _components;
 
 		hlslpp::quaternion _rot;
+
+		WrapperFloat4 get_pos() {
+			return WrapperFloat4{ _pos };
+		};
+
+		void set_pos(WrapperFloat4 pos) {
+			_pos = pos.value;
+		};
+
+		WrapperFloat3 get_scale() const {
+			return { _scale };
+		};
+
+		void set_scale(WrapperFloat3 v) {
+			_scale = v.value;
+		};
+
+		WrapperFloat3 get_rot_euler() const {
+			return { _rot_euler };
+		};
+		void set_rot_euler(WrapperFloat3 v) {
+			_rot_euler = (v.value);
+			_rot = hlslpp::euler({ _rot_euler.x, _rot_euler.y, _rot_euler.z });
+		};
+
+
 
 		hlslpp::float4 _pos;
 		hlslpp::float3 _scale;
@@ -90,7 +126,7 @@ namespace framework
 	template<typename T>
 	T* Entity::get_component() const
 	{
-		rtti::TypeInfo* info = rtti::Registry::template get<T>();
+		rttr::type const& info = rttr::type::get<T>();
 		return static_cast<T*>(get_component(info));
 	}
 

@@ -423,8 +423,6 @@ void PhysicsActor::ApplyAngularImpulse(double impulse)
 }
 void PhysicsActor::SetFriction(double friction)
 {
-    double tmpFriction = friction;
-    
     for (b2Fixture* fixturePtr = m_BodyPtr->GetFixtureList(); fixturePtr != nullptr; fixturePtr = fixturePtr->GetNext())
     {
         if (friction > 0)
@@ -560,7 +558,7 @@ void PhysicsActor::AddContactListener(ContactListener *listenerPtr)
 	m_BodyPtr->SetUserData((void*)listenerPtr);
 }
 
-void PhysicsActor::RemoveContactListener(ContactListener *listenerPtr)
+void PhysicsActor::RemoveContactListener(ContactListener *)
 {
 	//reset the pointer in userdata to be used by the ContactCaller
 	m_BodyPtr->SetUserData((void*)nullptr);

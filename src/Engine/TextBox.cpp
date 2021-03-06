@@ -48,8 +48,6 @@ TextBox::~TextBox()
 //overriding inherited
 void TextBox::SetBounds(int left, int top, int width, int height)
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::SetBounds() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-
 	m_BoundingRect = { left, top, left + width, top + height };
 	m_ClientRect = { left + m_ClientInset, top + m_ClientInset, left + width - m_ClientInset * 2, top + height - m_ClientInset * 2 };
 	LimitTextLengthToClientArea();
@@ -183,7 +181,6 @@ void TextBox::HandleKeyInput(TCHAR c)
 
 bool TextBox::IsEntered() const
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::IsEntered() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	return m_bTriggered;
 }
 

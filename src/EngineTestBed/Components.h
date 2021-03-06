@@ -1,6 +1,5 @@
 #pragma once
 
-#include "RTTI/rtti.h"
 #include "Framework/framework.h"
 
 #include "graphics/2DRenderContext.h"
@@ -14,7 +13,8 @@ using hlslpp::quaternion;
 
 class SimpleMovement2D final : public framework::Component
 {
-	REFLECT(SimpleMovement2D)
+	RTTR_ENABLE(framework::Component);
+
 public:
 	SimpleMovement2D();
 
@@ -36,7 +36,8 @@ public:
 };
 
 class SimpleMovement3D final : public framework::Component {
-	REFLECT(SimpleMovement3D)
+	RTTR_ENABLE(framework::Component);
+
 public:
 	SimpleMovement3D() = default;
 
@@ -63,7 +64,7 @@ public:
 
 class BitmapComponent final : public framework::Component
 {
-	REFLECT(BitmapComponent)
+	RTTR_ENABLE(framework::Component);
 public:
 	BitmapComponent() : Component()
 	{
@@ -92,7 +93,7 @@ public:
 
 class SimpleMeshComponent final : public framework::Component
 {
-	REFLECT(SimpleMeshComponent);
+	RTTR_ENABLE(framework::Component);
 
 public:
 	using Entity = framework::Entity;
@@ -117,7 +118,8 @@ private:
 
 class LightComponent final : public framework::Component
 {
-	REFLECT(LightComponent);
+	RTTR_ENABLE(framework::Component);
+
 public:
 	using Entity = framework::Entity;
 
@@ -125,7 +127,9 @@ public:
 
 class CameraComponent final : public framework::Component
 {
-	REFLECT(CameraComponent);
+	RTTR_ENABLE(framework::Component);
+	RTTR_REGISTRATION_FRIEND;
+
 public:
 	using Entity = framework::Entity;
 

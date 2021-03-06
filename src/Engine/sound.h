@@ -126,8 +126,8 @@ private:
 class sound final
 {
 public:
-	sound(const String& filenameRef) {};
-	sound(int resourceID) {};
+	sound(const String& ) {};
+	sound(int ) {};
 
 	virtual ~sound() {};
 
@@ -149,22 +149,25 @@ public:
 		Queued,
 	};
 
-	bool play(play_mode mode = play_mode::Queued) { return false; };
+	bool play(play_mode mode = play_mode::Queued) {
+		UNREFERENCED_PARAMETER(mode);
+		return false;
+	};
 	bool stop() {
 		return false;
 	};
 	bool pause() {
 		return false;
 	};
-	bool set_volume(double volume) {
+	bool set_volume(double) {
 		return false;
 	};
 	double get_volume() const { return 0.0; };
-	void set_repeat(bool repeat) {};
+	void set_repeat(bool) {};
 	bool get_repeat() const {
 		return false;
 	};
-	void set_pitch(double ratio) {};
+	void set_pitch(double) {};
 	double get_pitch() const { return 0.0; };
 	double get_duration() const { return 0.0; };
 

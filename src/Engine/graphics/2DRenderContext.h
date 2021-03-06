@@ -1,5 +1,9 @@
 #pragma once
 
+#include <vector>
+#include <string>
+#include <d2d1.h>
+
 #include "Structs.h"
 #include "EString.h"
 
@@ -8,6 +12,8 @@ struct ID2D1RenderTarget;
 struct ID2D1SolidColorBrush;
 class Font;
 class Bitmap;
+
+using hlslpp::float2;
 
 namespace graphics {
 
@@ -200,8 +206,8 @@ public:
 
 	D2D1_BITMAP_INTERPOLATION_MODE _interpolation_mode;
 
-	float3x3 _mat_world;
-	float3x3 _mat_view;
+	hlslpp::float3x3 _mat_world;
+	hlslpp::float3x3 _mat_view;
 
 
 	void update_transforms();

@@ -1,5 +1,5 @@
 #pragma once
-#include "rtti/rtti.h"
+#include <rttr/registration>
 
 namespace framework
 {
@@ -7,7 +7,8 @@ namespace framework
 
 	class Component
 	{
-		REFLECT(Component);
+		RTTR_REGISTRATION_FRIEND
+		RTTR_ENABLE()
 	public:
 		Component();
 
@@ -32,6 +33,7 @@ namespace framework
 
 
 		friend class EntityDebugOverlay;
+
 	};
 
 }

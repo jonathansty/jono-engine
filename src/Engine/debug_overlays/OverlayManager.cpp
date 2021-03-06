@@ -29,7 +29,8 @@ void OverlayManager::render_overlay()
 			ImGui::PushID(overlay.second);
 			ImGui::Checkbox("", &overlay.second->_isOpen);
 			ImGui::SameLine();
-			ImGui::Text(overlay.second->get_name());
+			char const* const d = overlay.second->get_name();
+			ImGui::Text(d);
 			ImGui::PopID();
 		}
 		//

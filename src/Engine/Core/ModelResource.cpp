@@ -1,13 +1,6 @@
 #include "engine.stdafx.h"
 #include "ModelResource.h"
 
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <assimp/pbrmaterial.h>
-
-#include <DirectXTK/DirectXHelpers.h>
-
 #include "TextureResource.h"
 #include "MaterialResource.h"
 

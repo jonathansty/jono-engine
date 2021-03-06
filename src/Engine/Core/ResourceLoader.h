@@ -115,7 +115,7 @@ namespace std
 template<typename T>
 std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool blocking )
 {
-	std::size_t  h = std::hash<T::init_parameters>{}(params);
+	std::size_t  h = std::hash<typename T::init_parameters>{}(params);
 	if (auto it = _cache.find(h); it != _cache.end())
 	{
 		return std::static_pointer_cast<T>(it->second);

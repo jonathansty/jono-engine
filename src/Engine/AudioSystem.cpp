@@ -26,7 +26,6 @@ void AudioSystem::Cleanup()
 }
 HRESULT AudioSystem::Initialize()
 {
-	HRESULT hr;
 	// Use the XAudio2Create function to create an instance of the XAudio2 engine.
 	//if (FAILED(hr = XAudio2Create(&m_pXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR)))
 	//	return hr;

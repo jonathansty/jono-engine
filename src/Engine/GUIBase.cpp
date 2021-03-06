@@ -58,8 +58,6 @@ GUIBase::~GUIBase()
 // Example: myPtr->SetFont("Consolas", 14);
 void GUIBase::SetFont(const String& typeRef, int height)
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::SetFont() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-
 	delete m_FontPtr;
 	m_FontPtr = new Font(typeRef, (float)height);
 	m_FontPtr->SetAlignVCenter();
@@ -69,7 +67,6 @@ void GUIBase::SetFont(const String& typeRef, int height)
 
 void GUIBase::SetText(const String& text)
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::SetFont() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 
 	m_OriginalText = text;
 	LimitTextLengthToClientArea();
@@ -77,15 +74,12 @@ void GUIBase::SetText(const String& text)
 
 String GUIBase::GetText() const
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::GetText() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 
 	return m_OriginalText;
 }
 
 void GUIBase::SetBounds(int left, int top, int width, int height)
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::SetBounds() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-
 	m_BoundingRect = { left, top, left + width, top + height };
 	m_ClientRect = m_BoundingRect;
 	LimitTextLengthToClientArea();
@@ -111,33 +105,26 @@ bool GUIBase::PointInRect(RECT r, float2 pt) const
 
 void GUIBase::SetEnabled(bool bEnable)
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::SetEnabled() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-
 	m_bEnabled = bEnable;
 }
 
 void GUIBase::SetBackColor(COLOR backColor)
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::SetBackColor() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-
 	m_BackColor = backColor;
 }
 
 void GUIBase::SetForeColor(COLOR foreColor)
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::SetForeColor() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	m_ForeColor = foreColor;
 }
 
 void GUIBase::SetDefaultBackColor()
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::SetForeColor() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	m_BackColor = m_DefaultBackColor;
 }
 
 void GUIBase::SetDefaultForeColor()
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::SetForeColor() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	m_ForeColor = m_DefaultForeColor;
 }
 

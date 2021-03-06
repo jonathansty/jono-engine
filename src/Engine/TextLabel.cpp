@@ -20,9 +20,6 @@ void TextLabel::Paint(graphics::D2DRenderContext& ctx)
 	Font* originalFont = ctx.get_font();
 	// make sure that the text is left aligned
 	m_FontPtr->SetAlignHLeft();
-	// working copy of the bounds
-	RECT r = m_BoundingRect;
-
 	ctx.set_font(m_FontPtr);
 
 	// Draw forecolor when this is enabled

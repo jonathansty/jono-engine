@@ -1,5 +1,4 @@
 #include "engine.stdafx.h"
-#include "rtti/rtti.h"
 #include "World.h"
 
 #include "Entity.h"
@@ -95,7 +94,7 @@ Entity* World::get_entity(EntityHandle const& id)
 	return _entities[id.id];
 }
 
-Component* World::find_first_component(rtti::TypeInfo const* info) const
+Component* World::find_first_component(rttr::type const& info) const
 {
 	for (std::size_t i = 0; i < _entities.size(); ++i)
 	{

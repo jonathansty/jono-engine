@@ -67,6 +67,25 @@ public class Assimp : VCPKG
 }
 
 
+[Export]
+public class RTTR : VCPKG
+{
+    public override void ConfigureRelease(Configuration conf, Target target)
+    {
+        base.ConfigureRelease(conf, target);
+        conf.LibraryFiles.Add(@"rttr_core");
+    }
+
+    public override void ConfigureDebug(Configuration conf, Target target)
+    {
+        base.ConfigureDebug(conf, target);
+        conf.LibraryFiles.Add(@"rttr_core_d");
+    }
+
+}
+
+
+
 [Generate]
 public class ImGui : ExternalProject
 {

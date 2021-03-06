@@ -84,7 +84,7 @@ private:
 	virtual void Paint(graphics::D2DRenderContext& ctx) = 0;
 	virtual void Tick(double deltaTime) = 0;
 	// initializes members for all constructors 
-	virtual void HandleKeyInput(TCHAR character){};
+	virtual void HandleKeyInput(TCHAR){};
 	virtual void ConsumeEvent() = 0;
 	void Initialize();
 };

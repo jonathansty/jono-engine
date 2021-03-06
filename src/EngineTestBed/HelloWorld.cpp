@@ -53,11 +53,6 @@ void HelloWorldGame::start()
 #endif
 	std::vector<int> myVec;
 
-	auto info = rtti::Registry::get<SimpleMovement2D>();
-	rtti::Object obj = rtti::Object::create<SimpleMovement2D>();
-	rtti::FunctionBase const* fn = info->find_function("reset");
-	fn->invoke(obj);
-
 	// Register default overlays to the overlay manager
 	GameEngine::instance()->get_overlay_manager()->register_overlay(new GameOverlay());
 

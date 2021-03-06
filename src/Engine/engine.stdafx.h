@@ -17,6 +17,9 @@
 #include <thread>
 #include <algorithm>
 
+#include <fmt/core.h>
+#include <fmt/printf.h>
+
 #define NOMINMAX
 // WindowsSDK
 #include <dwrite.h>			// Draw Text
@@ -31,8 +34,18 @@
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
 #include <DirectXTK/VertexTypes.h>
+#include <DirectXTK/DirectXHelpers.h>
 using namespace DirectX;
 
+#include <rttr/registration>
+#include <rttr/registration_friend>
+#include <rttr/type>
+
+//#pragma GCC diagnostic ignored "-Wpragma-pack"
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+#include <assimp/pbrmaterial.h>
 
 // libs used for Direct2D
 using namespace D2D1;
@@ -45,7 +58,7 @@ using Microsoft::WRL::ComPtr;
 
 // Define M_PI and other constants
 #define _USE_MATH_DEFINES 
-#include "math.h"
+#include <math.h>
 
 // Unicode defs for svg parsing
 #ifdef _UNICODE
@@ -75,6 +88,7 @@ using hlslpp::double2;
 using std::string;
 using std::shared_ptr;
 using std::weak_ptr;
+
 
 
 // This is the only engine header that should be in the precompiled header to allow standard type usages across the project 

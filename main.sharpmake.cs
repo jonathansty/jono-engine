@@ -23,8 +23,46 @@ public class CliProject : JonaBaseProject
 
         conf.AddPrivateDependency<Fmt>(target);
     }
-
 }
+
+[Generate]
+public class CoreProject : JonaBaseProject
+{
+    public CoreProject() : base()
+    {
+        Name = "core";
+    }
+
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+        conf.SolutionFolder = "engine";
+        conf.Output = Configuration.OutputType.Lib;
+
+        conf.AddPrivateDependency<Fmt>(target);
+    }
+}
+
+
+[Generate]
+public class RttiProject : JonaBaseProject
+{
+    public RttiProject() : base()
+    {
+        Name = "rtti";
+    }
+
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+        conf.SolutionFolder = "engine";
+        conf.IncludePaths.Add(@"[project.SourceRootPath]\..");
+        conf.Output = Configuration.OutputType.Lib;
+        conf.AddPrivateDependency<HLSLPP>(target);
+    }
+}
+
+
 [Generate]
 public class EngineProject : JonaBaseProject
 {
@@ -56,25 +94,22 @@ public class EngineProject : JonaBaseProject
 
         // Own public libraries
         conf.AddPublicDependency<CliProject>(target);
+        // conf.AddPublicDependency<RttiProject>(target);
+        conf.AddPublicDependency<CoreProject>(target);
+        conf.AddPublicDependency<RTTR>(target);
 
         // Private dependencies
         // Only visible to the engine layer
         conf.AddPrivateDependency<Box2D>(target);
         conf.AddPrivateDependency<Assimp>(target);
 
-        conf.PrecompHeader = "engine.stdafx.h";
-        conf.PrecompSource = "engine.stdafx.cpp";
-
         // Compile C++17 
         conf.Output = Configuration.OutputType.Lib;
-        conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
-        conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
-        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
         conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
             "4100", // Unused method variables
             "4189"  // Unused local variables
         ));
-        //conf.Options.Add(Options.Vc.General.TreatWarningsAsErrors.Enable);
+
         conf.LibraryFiles.AddRange(new string[] { 
             "dxgi", 
             "d2d1", 
@@ -92,12 +127,8 @@ public class EngineProject : JonaBaseProject
             "Winmm" }
         );
 
-        // Add engine include path
-        conf.IncludePaths.Add(@"[project.SourceRootPath]");
-
-
         //conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
-        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
+        //conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
     }
 
     protected override void ExcludeOutputFiles()
@@ -168,9 +199,6 @@ public class GameProject : JonaBaseProject
 
         conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
 
-        conf.PrecompHeader = "game.stdafx.h";
-        conf.PrecompSource = "game.stdafx.cpp";
-
         conf.Output = Configuration.OutputType.Exe;
 
 
@@ -196,12 +224,10 @@ public class EngineTestBed : JonaBaseProject
     {
         base.ConfigureAll(conf, target);
         conf.SolutionFolder = "games";
-        conf.PrecompHeader = "testbed.stdafx.h";
-        conf.PrecompSource = "testbed.stdafx.cpp";
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
-        conf.AddPrivateDependency<EngineProject>(target, DependencySetting.DefaultWithoutBuildSteps);
+        conf.AddPrivateDependency<EngineProject>(target);
 
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
@@ -252,16 +278,39 @@ public class ReflectionGenerator : ToolsProject
 
     public override void ConfigureAll(Configuration conf, Target target)
     {
+
+
         base.ConfigureAll(conf, target);
-        conf.AddPrivateDependency<CliProject>(target);
+        conf.AddPublicDependency<CliProject>(target);
+        conf.AddPublicDependency<CoreProject>(target);
+        conf.AddPublicDependency<Fmt>(target);
+
         conf.AddPrivateDependency<LibClang>(target);
-        conf.AddPrivateDependency<Fmt>(target);
     }
 
     public static Configuration.BuildStepExecutable CreateBuildStep(string input = "[project.SharpmakeCsPath]/generated/reflection/dumps/[project.Name].txt", string output = "obj/reflection", string root = "[project.SharpmakeCsPath]") {
         return new Configuration.BuildStepExecutable(ExecutableOutputPath, "", "", $"-file={input} -output={output} -root={root}");
     }
 }
+
+[Generate]
+public class ReflectionGeneratorTests : ToolsProject
+{
+    public static string ExecutableOutputPath { get { return @"[conf.TargetPath]/[project.Name].exe"; } }
+
+    public ReflectionGeneratorTests() : base()
+    {
+        Name = "reflection-generator-tests";
+    }
+
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+        conf.IncludePaths.Add(@"[project.SourceRootPath]\..\reflection-generator");
+        conf.AddPublicDependency<ReflectionGenerator>(target);
+    }
+}
+
 
 [Generate]
 public class GameSolution : Solution
@@ -338,6 +387,8 @@ public class ToolsOnlySolution : Solution
         {
             conf.AddProject(type, target);
         }
+
+        conf.AddProject<EngineProject>(target);
     }
 }
 

@@ -12,7 +12,7 @@ std::vector<std::string> log_buffer;
 void logging::clear()
 {
 	current_message = 0;
-	memset(buffer, max_msg_size * max_messages, 0);
+	memset(buffer,0, max_msg_size * max_messages);
 }
 
 void logging::logf(char const* fmt, ...)
@@ -25,7 +25,7 @@ void logging::logf(char const* fmt, ...)
 	va_end(args);
 
 	::OutputDebugStringA(offset);
-	::printf(offset);
+	fmt::printf(offset);
 
 	current_message = (++current_message) % max_messages;
 }

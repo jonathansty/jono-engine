@@ -20,6 +20,8 @@ Shader::Shader(ShaderType type, const char* byte_code, uint32_t size)
 	case ShaderType::Pixel:
 		SUCCEEDED(device->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)_shader.GetAddressOf()));
 		break;
+	default:
+		throw new std::exception("ShaderType not supported!");
 	}
 
 	D3DReflect(byte_code, size, IID_ID3D11ShaderReflection, &_reflection);
@@ -64,7 +66,7 @@ void Material::apply()
 
 	// Bind material parameters
 	std::array<ID3D11ShaderResourceView const*, 3> views{};
-	for (int i = 0; i < _textures.size(); ++i)
+	for (std::size_t i = 0; i < _textures.size(); ++i)
 	{
 		if (_textures[i])
 		{

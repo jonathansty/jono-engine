@@ -1,9 +1,10 @@
 #include "engine.stdafx.h"
-
-#include "GameEngine.h"
 #include "2DRenderContext.h"
+
 #include "Font.h"
 #include "Bitmap.h"
+
+using hlslpp::float3x3;
 
 namespace graphics {
 
@@ -46,7 +47,7 @@ bool D2DRenderContext::draw_background(COLOR backgroundColor) {
 }
 
 bool D2DRenderContext::draw_line(float2 p1, float2 p2, double strokeWidth /*= 1.0*/) {
-	_rt->DrawLine(Point2F((FLOAT)p1.x, (FLOAT)p1.y), Point2F((FLOAT)p2.x, (FLOAT)p2.y), _brush, (FLOAT)strokeWidth);
+	_rt->DrawLine(D2D1::Point2F((FLOAT)p1.x, (FLOAT)p1.y), D2D1::Point2F((FLOAT)p2.x, (FLOAT)p2.y), _brush, (FLOAT)strokeWidth);
 	return true;
 }
 
@@ -95,8 +96,6 @@ bool D2DRenderContext::fill_polygon(const std::vector<float2> &ptsArr, unsigned 
 	hr = _factory->CreatePathGeometry(&(geometryPtr));
 	if (FAILED(hr)) {
 		geometryPtr->Release();
-		GameEngine::instance()->message_box(String("Failed to create path geometry"));
-
 		return false;
 	}
 
@@ -106,7 +105,6 @@ bool D2DRenderContext::fill_polygon(const std::vector<float2> &ptsArr, unsigned 
 	if (FAILED(hr)) {
 		geometrySinkPtr->Release();
 		geometryPtr->Release();
-		GameEngine::instance()->message_box(String("Failed to open path geometry"));
 		return false;
 	}
 
@@ -149,7 +147,6 @@ bool D2DRenderContext::fill_polygon(const std::vector<POINT> &ptsArr, unsigned i
 	hr = _factory->CreatePathGeometry(&geometryPtr);
 	if (FAILED(hr)) {
 		geometryPtr->Release();
-		GameEngine::instance()->message_box(String("Failed to create path geometry"));
 		return false;
 	}
 
@@ -159,7 +156,6 @@ bool D2DRenderContext::fill_polygon(const std::vector<POINT> &ptsArr, unsigned i
 	if (FAILED(hr)) {
 		geometrySinkPtr->Release();
 		geometryPtr->Release();
-		GameEngine::instance()->message_box(String("Failed to open path geometry"));
 		return false;
 	}
 	if (SUCCEEDED(hr)) {
@@ -188,7 +184,6 @@ bool D2DRenderContext::fill_polygon(const std::vector<POINT> &ptsArr, unsigned i
 
 bool D2DRenderContext::draw_rect(RECT2 rect, double strokeWidth /*= 1*/) {
 	if ((rect.right < rect.left) || (rect.bottom < rect.top)) {
-		GameEngine::instance()->message_box(String("GameEngine::DrawRect error: invalid dimensions!"));
 		return false;
 	}
 
@@ -214,7 +209,6 @@ bool D2DRenderContext::draw_rect(int left, int top, int right, int bottom) {
 
 bool D2DRenderContext::fill_rect(RECT2 rect) {
 	if ((rect.right < rect.left) || (rect.bottom < rect.top)) {
-		GameEngine::instance()->message_box(String("GameEngine::DrawRect error: invalid dimensions!"));
 		return false;
 	}
 
@@ -327,7 +321,7 @@ bool D2DRenderContext::draw_string(std::string text, float2 topLeft, double righ
 		options = D2D1_DRAW_TEXT_OPTIONS_NONE;
 		right = bottom = FLT_MAX;
 	}
-	D2D1_RECT_F layoutRect = (RectF)((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(right), (FLOAT)(bottom));
+	D2D1_RECT_F layoutRect = (D2D1::RectF)((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(right), (FLOAT)(bottom));
 
 	tstring wText(text.begin(), text.end());
 	_rt->DrawText(wText.c_str(), wText.length(), _font->GetTextFormat(), layoutRect, _brush, options);
@@ -356,7 +350,7 @@ bool D2DRenderContext::draw_string(const String &textRef, float2 topLeft, double
 		options = D2D1_DRAW_TEXT_OPTIONS_NONE;
 		right = bottom = FLT_MAX;
 	}
-	D2D1_RECT_F layoutRect = (RectF)((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(right), (FLOAT)(bottom));
+	D2D1_RECT_F layoutRect = (D2D1::RectF)((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(right), (FLOAT)(bottom));
 
 	_rt->DrawText(stext.c_str(), UINT32(stext.length()), _font->GetTextFormat(), layoutRect, _brush, options);
 	return true;
@@ -368,7 +362,6 @@ bool D2DRenderContext::draw_string(const String &textRef, int xPos, int yPos, in
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, float2 position, RECT2 srcRect) {
 	if (imagePtr == nullptr) {
-		GameEngine::instance()->message_box(String("DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio."));
 		return false;
 	}
 	//The size and position, in device-independent pixels in the bitmap's coordinate space, of the area within the bitmap to draw.
@@ -394,10 +387,7 @@ bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, float2 position, RECT2 srcR
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, float2 position) {
-	if (imagePtr == nullptr) {
-		GameEngine::instance()->message_box(String("DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio."));
-		return false;
-	}
+	assert(imagePtr);
 
 	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
 	return draw_bitmap(imagePtr, position, srcRect2);
@@ -409,10 +399,7 @@ bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, int x, int y, RECT srcRect)
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, int x, int y) {
-	if (imagePtr == nullptr) {
-		GameEngine::instance()->message_box(String("DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio."));
-		return false;
-	}
+	assert(imagePtr);
 
 	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
 	return draw_bitmap(imagePtr, float2(x, y), srcRect2);
@@ -424,10 +411,7 @@ bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, RECT srcRect) {
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr) {
-	if (imagePtr == nullptr) {
-		GameEngine::instance()->message_box(String("DrawBitmap called using a bitmap pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio."));
-		return false;
-	}
+	assert(imagePtr);
 
 	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
 	return draw_bitmap(imagePtr, float2(0, 0), srcRect2);

@@ -388,8 +388,8 @@ public:
 	}
 
 private:
-	ID3DUserDefinedAnnotation *_annotation;
 	std::wstring _name;
+	ID3DUserDefinedAnnotation *_annotation;
 };
 
 #define COMBINE1(X, Y) X##Y // helper macro

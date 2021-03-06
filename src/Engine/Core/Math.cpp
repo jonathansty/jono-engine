@@ -16,7 +16,7 @@ float3 to_euler(hlslpp::quaternion q) {
 	// pitch (y-axis rotation)
 	float1 sinp = 2 * (q.w * q.y - q.z * q.x);
 	if (hlslpp::all(hlslpp::abs(sinp) >= float1(1)))
-		angles.y = std::copysign(M_PI / 2, float(sinp)); // use 90 degrees if out of range
+		angles.y = std::copysign(3.1415 / 2, float(sinp)); // use 90 degrees if out of range
 	else
 		angles.y = hlslpp::asin(sinp);
 
@@ -28,6 +28,7 @@ float3 to_euler(hlslpp::quaternion q) {
 	return angles;
 }
 
+#ifdef USE_XMMATH
 DirectX::XMMATRIX XMLoadFloat4x4(hlslpp::float4x4 matrix) {
 	XMFLOAT4X4 i{};
 	hlslpp::store(matrix, reinterpret_cast<float*>(&i));
@@ -41,5 +42,6 @@ void XMStoreFloat4x4(XMMATRIX src, hlslpp::float4x4& result) {
 	DirectX::XMStoreFloat4x4(&data, src);
 	hlslpp::load(result, reinterpret_cast<float*>(&data));
 }
+#endif
 
 }

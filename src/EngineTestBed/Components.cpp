@@ -7,77 +7,88 @@
 #include "Core/Material.h"
 
 
-IMPL_REFLECT(SimpleMovement2D)
-{
-	type.bind_parent<Component>();
-	type.register_property("speed", &SimpleMovement2D::_speed);
-	type.register_function("reset", &SimpleMovement2D::reset);
+RTTR_REGISTRATION{
+	using namespace rttr;
 
+	registration::class_<SimpleMovement2D>("SimpleMovement2D");
+	registration::class_<SimpleMovement3D>("SimpleMovement3D");
+	registration::class_<BitmapComponent>("BitmapComponent");
+	registration::class_<CameraComponent>("CameraComponent")
+		.property("FoV", &CameraComponent::_fov);
+	registration::class_<LightComponent>("LightComponent");
+	registration::class_<SimpleMeshComponent>("SimpleMeshComponent");
 }
-
-IMPL_REFLECT(SimpleMovement3D) {
-	type.bind_parent<Component>();
-	type.register_property("speed", &SimpleMovement3D::_speed);
-}
-
-
-IMPL_REFLECT(BitmapComponent)
-{
-	type.bind_parent<Component>();
-}
-
-IMPL_REFLECT(CameraComponent)
-{
-	type.bind_parent<Component>();
-
-	type.register_property<CameraComponent,float>("FOV", 
-		[](CameraComponent* comp, float const* fov) 
-		{
-			comp->_fov = *fov;
-		}, 
-		[](CameraComponent* comp, float** out) 
-		{
-			*out = &comp->_fov;
-		}
-	);
-
-	type.register_property<CameraComponent, float>("NearPlane",
-		[](CameraComponent* comp, float const* v)
-		{
-			float n = std::max(*v, 0.01f);
-			comp->_near_plane = n;
-		},
-		[](CameraComponent* comp, float** out)
-		{
-			*out = &comp->_near_plane;
-		}
-		);
-
-	type.register_property<CameraComponent, float>("FarPlane",
-		[](CameraComponent* comp, float const* v)
-		{
-			float n = std::max(*v, 0.01f);
-			comp->_far_plane = n;
-		},
-		[](CameraComponent* comp, float** out)
-		{
-			*out = &comp->_far_plane;
-		}
-		);
-
-	type.register_property("FlySpeed", &CameraComponent::_fly_speed);
-}
-
-IMPL_REFLECT(LightComponent)
-{
-	type.bind_parent<Component>();
-}
-
-IMPL_REFLECT(SimpleMeshComponent)
-{
-	type.bind_parent<Component>();
-
-}
+//IMPL_REFLECT(SimpleMovement2D)
+//{
+//	type.bind_parent<Component>();
+//	type.register_property("speed", &SimpleMovement2D::_speed);
+//	type.register_function("reset", &SimpleMovement2D::reset);
+//
+//}
+//
+//IMPL_REFLECT(SimpleMovement3D) {
+//	type.bind_parent<Component>();
+//	type.register_property("speed", &SimpleMovement3D::_speed);
+//}
+//
+//
+//IMPL_REFLECT(BitmapComponent)
+//{
+//	type.bind_parent<Component>();
+//}
+//
+//IMPL_REFLECT(CameraComponent)
+//{
+//	type.bind_parent<Component>();
+//
+//	type.register_property<CameraComponent,float>("FOV", 
+//		[](CameraComponent* comp, float const* fov) 
+//		{
+//			comp->_fov = *fov;
+//		}, 
+//		[](CameraComponent* comp, float** out) 
+//		{
+//			*out = &comp->_fov;
+//		}
+//	);
+//
+//	type.register_property<CameraComponent, float>("NearPlane",
+//		[](CameraComponent* comp, float const* v)
+//		{
+//			float n = std::max(*v, 0.01f);
+//			comp->_near_plane = n;
+//		},
+//		[](CameraComponent* comp, float** out)
+//		{
+//			*out = &comp->_near_plane;
+//		}
+//		);
+//
+//	type.register_property<CameraComponent, float>("FarPlane",
+//		[](CameraComponent* comp, float const* v)
+//		{
+//			float n = std::max(*v, 0.01f);
+//			comp->_far_plane = n;
+//		},
+//		[](CameraComponent* comp, float** out)
+//		{
+//			*out = &comp->_far_plane;
+//		}
+//		);
+//
+//	type.register_property("FlySpeed", &CameraComponent::_fly_speed);
+//}
+//
+//IMPL_REFLECT(LightComponent)
+//{
+//	type.bind_parent<Component>();
+//}
+//
+//IMPL_REFLECT(SimpleMeshComponent)
+//{
+//	type.bind_parent<Component>();
+//
+//}
 
 SimpleMovement2D::SimpleMovement2D(XMFLOAT2 pos, float speed) : Component()
 , _speed(speed)

@@ -40,11 +40,11 @@ interface IMaterial
 	virtual void apply() = 0;
 };
 
-class Material : public IMaterial
+class Material final : public IMaterial
 {
 public:
 	Material() {};
-	~Material() {}
+	virtual ~Material() {}
 
 	static std::unique_ptr<Material> create(const char* vx_byte_code , uint32_t vx_byte_code_size, const char* px_byte_code, uint32_t px_byte_code_size );
 

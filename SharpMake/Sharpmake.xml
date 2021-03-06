@@ -522,6 +522,11 @@
             </summary>
         </member>
         <!-- Badly formed XML comment ignored for member "F:Sharpmake.FastBuildSettings.CachePath" -->
+        <member name="F:Sharpmake.FastBuildSettings.AdditionalGlobalSettings">
+            <summary>
+            Additional settings to add to the global settings node.
+            </summary>
+        </member>
         <member name="F:Sharpmake.FastBuildSettings.CachePluginDLLFilePath">
             <summary>
             Path to the fastbuild plugin dll if any. This typically will be the path to the Ubisoft asset store plugin DLL but could be any other compatible implementation.
@@ -618,6 +623,16 @@
              It seems that by adding a space between the enum keyword and the name it avoids that problem that looks like memory corruption in the compiler.
              Also it seems that this doesn't occurs with VS2013.
              </remarks>
+        </member>
+        <member name="F:Sharpmake.FastBuildSettings.CompilersUsingRelativePaths">
+            <summary>
+            FastBuild names of compilers to set the 'UseRelativePaths_Experimental' option for.
+            </summary>
+        </member>
+        <member name="F:Sharpmake.FastBuildSettings.AdditionalCompilerSettings">
+            <summary>
+            Additional settings to add to the Compiler node, keyed by compiler name.
+            </summary>
         </member>
         <member name="T:Sharpmake.FileSystemStringComparer">
             <summary>
@@ -1881,6 +1896,22 @@
             </para>
             </remarks>
         </member>
+        <member name="F:Sharpmake.Project.Configuration.AdditionalCompilerOptionsOnPCHCreate">
+            <summary>
+            Compiler-specific options to pass when invoking the compiler to create PCHs.
+            </summary>
+            <remarks>
+            Currently only respected by the BFF generator.
+            </remarks>
+        </member>
+        <member name="F:Sharpmake.Project.Configuration.AdditionalCompilerOptionsOnPCHUse">
+            <summary>
+            Compiler-specific options to pass when invoking the compiler telling it to use PCHs.
+            </summary>
+            <remarks>
+            Currently only respected by the BFF generator.
+            </remarks>
+        </member>
         <member name="F:Sharpmake.Project.Configuration.AdditionalNone">
             <summary>
             Gets a list of file extensions that are added to a Visual Studio project with the
@@ -2212,6 +2243,11 @@
             file name.
             </summary>
         </member>
+        <member name="F:Sharpmake.Project.Configuration.FastBuildUnityUseRelativePaths">
+            <summary>
+            Whether to use relative paths in FASTBuild-generated Unity files.
+            </summary>
+        </member>
         <member name="F:Sharpmake.Project.Configuration.DoNotGenerateFastBuild">
             <summary>
             Gets or sets whether to generate a FASTBuild (.bff) file when using FASTBuild.
@@ -2351,6 +2387,11 @@
         <member name="F:Sharpmake.Project.Configuration.TargetCopyFiles">
             <summary>
             Gets or sets the list of files to copy to the output directory.
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Project.Configuration.TargetCopyFilesToSubDirectory">
+            <summary>
+            Gets or sets the list of files to copy to a sub-directory of the output directory.
             </summary>
         </member>
         <member name="F:Sharpmake.Project.Configuration.TargetDependsFiles">
@@ -2682,6 +2723,11 @@
         <member name="P:Sharpmake.Project.Configuration.ResolvedTargetCopyFiles">
             <summary>
             Gets the list of resolved files to copy.
+            </summary>
+        </member>
+        <member name="P:Sharpmake.Project.Configuration.ResolvedTargetCopyFilesToSubDirectory">
+            <summary>
+            Gets the list of resolved files to copy to a sub directory of the target directory.
             </summary>
         </member>
         <member name="P:Sharpmake.Project.Configuration.ResolvedTargetDependsFiles">

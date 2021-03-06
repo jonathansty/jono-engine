@@ -228,7 +228,7 @@ void Hello3D::render_3d()
 	using namespace hlslpp;
 	float4 view_direction = float4(0.0f, 0.0f, -2.0f, 0.0f);
 	float4 light_direction = float4(0.0, -1.0, -1.0f,0.0f);
-	LightComponent* comp = (LightComponent*)_world->find_first_component(LightComponent::get_static_type());
+	LightComponent* comp = (LightComponent*)_world->find_first_component<LightComponent>();
 	if (comp)
 	{
 		float4x4 worldTransform = comp->get_entity()->get_world_transform();

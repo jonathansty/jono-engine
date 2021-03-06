@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 template <typename T> class Identifier;
 
 template<typename T>
@@ -36,13 +38,13 @@ private:
 
 	friend struct std::hash<Identifier<T>>;
 
-	template<typename T>
-	friend bool operator==(Identifier<T>const& lhs, Identifier<T> const& rhs);
+	template<typename Type>
+	friend bool operator==(Identifier<Type>const& lhs, Identifier<Type> const& rhs);
 
 };
 
-template<typename T>
-bool operator==(Identifier<T>const& lhs, Identifier<T> const& rhs)
+template<typename Type>
+bool operator==(Identifier<Type>const& lhs, Identifier<Type> const& rhs)
 {
 	return lhs._hash == rhs._hash;
 }

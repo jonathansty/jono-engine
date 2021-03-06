@@ -1,6 +1,5 @@
 #pragma once
 #include "OverlayManager.h"
-#include "rtti/rtti.h"
 
 class RTTIDebugOverlay : public DebugOverlay
 {
@@ -15,7 +14,7 @@ public:
 		{
 			ImGui::Begin("Types", &_isOpen);
 
-			using namespace rtti;
+			using namespace rttr;
 			ImGui::Columns(4);
 			ImGui::Text("Key");
 			ImGui::NextColumn();
@@ -26,27 +25,29 @@ public:
 			ImGui::Text("Size");
 			ImGui::NextColumn();
 
-			ImGui::Text("Primitive");
-			ImGui::NextColumn();
+			ImGui::Text("IsClass"); ImGui::NextColumn(); ImGui::Text("IsArithmic"); ImGui::NextColumn();
+
 			ImGui::Separator();
 
 			// Loop over each type
-			Registry::for_each_type([](std::pair<std::type_index, TypeInfo*> info) {
-				ImGui::Text("%u", info.first.hash_code());
+			std::for_each(rttr::type::get_types().begin(), rttr::type::get_types().end(), [](rttr::type const& info) {
+				ImGui::Text("%u", (unsigned int)(info.get_id()));
 				ImGui::NextColumn();
 
-				ImGui::Text("%s", info.second->get_name());
+				ImGui::Text("%s", info.get_name());
 				ImGui::NextColumn();
 
-				ImGui::Text("%d", info.second->get_size());
+				ImGui::Text("%d", int(info.get_sizeof()));
 				ImGui::NextColumn();
 
-				bool is_primive = info.second->is_primitive();
-				ImGui::Checkbox("", &is_primive);
+				bool is_class = info.is_class();
+				ImGui::Checkbox("", &is_class);
 				ImGui::NextColumn();
 
-				});
-
+				bool is_arithmetic = info.is_arithmetic();
+				ImGui::Checkbox("", &is_arithmetic);
+				ImGui::NextColumn();
+			});
 			ImGui::End();
 		}
 	}

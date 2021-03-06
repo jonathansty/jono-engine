@@ -175,7 +175,7 @@ void Button::Tick(double)
 
 bool Button::IsPressed() const
 {
-	if (this == nullptr) MessageBoxA(NULL, "TextBox::IsPressed() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
+	MessageBoxA(NULL, "TextBox::IsPressed() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 
 	return m_bTriggered;
 }

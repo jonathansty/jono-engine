@@ -56,13 +56,11 @@ HRESULT AudioDecoder::Open(const std::wstring& wFilenameRef, XAUDIO2_BUFFER& buf
 		hr = MFCreateSourceReaderFromURL(wFilenameRef.c_str(), NULL, &pReader);
 		if (FAILED(hr))
 		{
-			printf("Error opening input file: %S (%d)\n", wFilenameRef.c_str(), hr);
+			printf("Error opening input file: %S (%d)\n", wFilenameRef.c_str(), (int)hr);
 			return hr;
 		}
 	}
 
-	DWORD cbHeader = 0;         // Size of the WAVE file header, in bytes.
-	DWORD cbAudioData = 0;      // Total bytes of PCM audio data written to the file.
 	DWORD cbMaxAudioData = 0;
 
 	IMFMediaType *pAudioType = nullptr;    // Represents the PCM audio format.

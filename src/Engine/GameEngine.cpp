@@ -11,14 +11,18 @@
 #include "debug_overlays/RTTIDebugOverlay.h"
 #include "debug_overlays/ImGuiOverlays.h"
 
-#include "Core/ResourceLoader.h"
-#include "Core/logging.h"
+#include "core/ResourceLoader.h"
+#include "core/logging.h"
 
 #include "InputManager.h"
 #include "PrecisionTimer.h"
 #include "AudioSystem.h"
 #include "GUIBase.h"
 #include "Font.h"
+
+
+
+
 
 enki::TaskScheduler GameEngine::s_TaskScheduler;
 std::thread::id GameEngine::s_main_thread;
@@ -66,17 +70,17 @@ GameEngine::GameEngine()
 	, _xaudio_system(nullptr)
 	, _game_settings()
 	, _physics_step_enabled(true)
-	, _should_quit(false)
 	, _is_viewport_focused(true) // TODO: When implementing some kind of editor system this should be updating
-	, _recreate_swapchain(false)
+	, _should_quit(false)
 	, _recreate_game_texture(false)
+	, _recreate_swapchain(false)
 	, _debug_physics_rendering(false)
-	, _gravity(float2(0, 9.81))
 	, _d3d_backbuffer_view(nullptr)
+	, _gravity(float2(0, 9.81))
 	, _d3d_backbuffer_srv(nullptr)
 	, _d3d_output_depth(nullptr)
-	, _d3d_output_dsv(nullptr)
 	, _d3d_output_tex(nullptr)
+	, _d3d_output_dsv(nullptr)
 	, _d3d_output_rtv(nullptr)
 {
 
@@ -379,7 +383,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			size_t idx = _frame_cnt % 2;
 			if (_frame_cnt > 2)
 			{
-				size_t prev_idx = (_frame_cnt - 1) % 2;
 				D3D11_QUERY_DATA_TIMESTAMP_DISJOINT timestampDisjoint;
 				UINT64 start;
 				UINT64 end;
@@ -487,7 +490,6 @@ void GameEngine::d2d_render()
 	_d2d_ctx = &context;
 
 	auto size = this->get_viewport_size();
-	RECT usedClientRect = { 0, 0, (LONG)size.x, (LONG)size.y };
 
 	_can_paint = true;
 	// make sure the view matrix is taken in account
@@ -948,9 +950,8 @@ ImVec2 GameEngine::get_window_size() const
 	return { (float)_window_width, (float)_window_height };
 }
 
-ImVec2 GameEngine::get_viewport_size(int id ) const
+ImVec2 GameEngine::get_viewport_size(int) const
 {
-	assert(id == 0);
 	return { (float)_window_width, (float)_window_height };
 }
 
@@ -1330,8 +1331,6 @@ void GameEngine::write_create_factory()
 //
 void GameEngine::d3d_init()
 {
-	HRESULT hr = S_OK;
-
 	resize_swapchain(get_width(), get_height());
 	//set alias mode
 	_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
@@ -1467,7 +1466,7 @@ void GameEngine::EndContact(b2Contact* contactPtr)
     }
 };
 
-void GameEngine::PreSolve(b2Contact* contactPtr, const b2Manifold* oldManifoldPtr)
+void GameEngine::PreSolve(b2Contact*, const b2Manifold*)
 {
 
 }
@@ -1551,7 +1550,6 @@ void GameEngine::build_ui()
 		ImGui::PopStyleVar(2);
 
 		// DockSpace
-		ImGuiIO& io = ImGui::GetIO();
 		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f));
 

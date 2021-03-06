@@ -1,6 +1,4 @@
 #pragma once
-#include "rtti/rtti.h"
-
 
 namespace framework
 {
@@ -62,10 +60,11 @@ namespace framework
 		template<typename T>
 		T* find_first_component() const
 		{
-			return reinterpret_cast<T*>(find_first_component(rtti::Registry::get<T>()));
+			auto t = rttr::type::get<T>();
+			return reinterpret_cast<T*>(find_first_component(t));
 		}
 
-		Component* find_first_component(rtti::TypeInfo const* info) const;
+		Component* find_first_component(rttr::type const& info) const;
 
 		bool remove_entity(EntityHandle const& handle);
 

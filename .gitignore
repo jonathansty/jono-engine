@@ -17,5 +17,6 @@ generated/
 *.csproj
 *.csproj.user
 *.sln
+Properties/
 
 

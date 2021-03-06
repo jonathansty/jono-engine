@@ -4,29 +4,48 @@
 #include "Component.h"
 #include "core/Math.h"
 
+#include <rttr/registration>
+
 using hlslpp::float3;
 using hlslpp::float4;
 using hlslpp::float4x4;
 using hlslpp::quaternion;
 using hlslpp::float1;
 
+
+RTTR_REGISTRATION{
+
+	using namespace rttr;
+	using namespace framework; 
+
+	registration::class_<WrapperFloat4>("float4");
+	registration::class_<WrapperFloat3>("float3");
+
+
+	registration::class_<Entity>("Entity")
+			.property("name", &Entity::_name)
+			.property("position", &Entity::get_pos, &Entity::set_pos)
+			.property("rotation", &Entity::get_rot_euler, &Entity::set_rot_euler)
+			.property("scale", &Entity::get_scale, &Entity::set_scale);
+}
+
 namespace framework {
 
-IMPL_REFLECT(Entity) {
-	type.register_property("name", &Entity::_name);
-	type.register_property("position", &Entity::_pos);
-
-	// Special property with conversion functions
-	type.register_property<Entity, float3>(
-			"rotation",
-			[](Entity* obj, float3 const* v) {
-				obj->_rot_euler = *v;
-				obj->_rot = hlslpp::euler({ v->x, v->y, v->z });
-			},
-			[](Entity* obj, float3** out) {
-				*out = &obj->_rot_euler;
-			});
-}
+//IMPL_REFLECT(Entity) {
+//	type.register_property("name", &Entity::_name);
+//	type.register_property("position", &Entity::_pos);
+//
+//	// Special property with conversion functions
+//	type.register_property<Entity, float3>(
+//			"rotation",
+//			[](Entity* obj, float3 const* v) {
+//				obj->_rot_euler = *v;
+//				obj->_rot = hlslpp::euler({ v->x, v->y, v->z });
+//			},
+//			[](Entity* obj, float3** out) {
+//				*out = &obj->_rot_euler;
+//			});
+//}
 
 Entity::Entity(float3 pos)
 		: _parent(nullptr)
@@ -119,10 +138,12 @@ float4 Entity::get_local_position() const {
 	return _pos;
 }
 
-Component* Entity::get_component(rtti::TypeInfo const* t) const {
+Component* Entity::get_component(rttr::type const& t) const {
 	for (Component* c : _components) {
-		if (c->get_type()->is(t))
+		rttr::type info = rttr::type::get(c);
+		if (info == t) {
 			return c;
+		}
 	}
 
 	return nullptr;

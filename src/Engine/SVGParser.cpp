@@ -137,9 +137,6 @@ bool SVGParser::ReadSvgFromData(tstring& sTransformInfoRef, tstring& sPathInfoRe
 {
 	std::vector<ID2D1Geometry*> outGeometryArr;
 
-	// parse the transform information
-	float3x3 pathTransform = ReadTransform(sTransformInfoRef);
-
 	// parse the geometry information
 	//ID2D1PathGeometry* pathGeometryPtr;
 	bool result = ReadSvgPath(sPathInfoRef, verticesArrRef);
@@ -250,7 +247,6 @@ bool SVGParser::ReadSvgPath(tstring& sPathInfoRef, std::vector<std::vector<float
 
 	// http://www.w3.org/TR/SVG/paths.html#Introduction
 
-	int currentChainIndex = 0;
 	std::vector<float2> currentChain;
 	float2 vertex;
 	while (true)
@@ -451,8 +447,8 @@ double SVGParser::ReadSvgValue(tstringstream& ssRef, bool separatorRequired)
 float2 SVGParser::ReadSvgPoint(tstringstream& ssRef)
 {
 	float2 p;
-	p.x = ReadSvgValue(ssRef, true);
-	p.y = ReadSvgValue(ssRef, false);
+	p.x = (float)ReadSvgValue(ssRef, true);
+	p.y = (float)ReadSvgValue(ssRef, false);
 	return p;
 }
 
@@ -515,7 +511,7 @@ float2 SVGParser::NextSvgCoordX(tstringstream& ssRef, float2& cursor, TCHAR cmd,
 	}
 	else
 	{
-		cursor.x = c;
+		cursor.x = (float)c;
 	}
 
 	return cursor;
@@ -537,7 +533,7 @@ float2 SVGParser::NextSvgCoordY(tstringstream& ssRef, float2& cursor, TCHAR cmd,
 	}
 	else
 	{
-		cursor.y = c;
+		cursor.y = (float)c;
 	}
 
 	return cursor;

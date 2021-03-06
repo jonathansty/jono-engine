@@ -37,6 +37,10 @@ using Microsoft::WRL::ComPtr;
 #include <DirectXTK/VertexTypes.h>
 #include <DirectXTK/Effects.h>
 
+#include <rttr/registration>
+#include <rttr/registration_friend>
+#include <rttr/type>
+
 
 // libs used for Direct2D
 #pragma comment(lib, "dxgi.lib")

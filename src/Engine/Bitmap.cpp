@@ -237,7 +237,7 @@ void Bitmap::SetOpacity(double opacity)
 
 void Bitmap::SetTransparencyColor(COLOR transparentColor)
 {
-	if (this == nullptr) MessageBoxA(NULL, "Bitmap::SetTransparencyColor() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
+	MessageBoxA(NULL, "Bitmap::SetTransparencyColor() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 
 	COLORREF color = RGB(transparentColor.red, transparentColor.green, transparentColor.blue);
 	UINT width = 0, height = 0;
