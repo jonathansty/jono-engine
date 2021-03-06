@@ -171,46 +171,6 @@ public class EngineTestProject : JonaBaseProject
     }
 }
 
-
-
-[Generate]
-public class GameProject : JonaBaseProject
-{
-	public GameProject() : base()
-	{
-        Name = "Game";
-        SourceRootPath = @"[project.SharpmakeCsPath]/src/Game";
-    }
-
-    public override void ConfigureAll(Configuration conf, Target target)
-    {
-        base.ConfigureAll(conf, target);
-        conf.SolutionFolder = "games";
-
-        conf.AddPrivateDependency<EngineProject>(target, DependencySetting.DefaultWithoutBuildSteps);
-
-        conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
-        conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
-        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
-        conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
-            "4100", // Unused method variables
-            "4189"  // Unused local variables
-        ));
-
-        conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
-
-        conf.Output = Configuration.OutputType.Exe;
-
-
-        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/src/");
-        conf.IncludePaths.Add(@"[project.SourceRootPath]");
-
-        //conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
-        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/game/");
-
-    }
-}
-
 [Generate]
 public class EngineTestBed : JonaBaseProject
 {
