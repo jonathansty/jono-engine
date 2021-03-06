@@ -1,15 +1,14 @@
 
 
 # Changelog
-0.1.2:
+v0.2
 - Added tinyxml2
 - Refactored FileManager to now use tinyxml2 to read the level XML files. The goal is to slowly transition to a better serialisation system for levels and objects in general (RTTI)
-
-0.1.1:
 - Fix release build
 - Added GPU markers in the engine code 
+- Major refactor of engien
 
-0.1:
+v0.1 (and before versioning)
 2020-01-17:
 - Added D3D11 backed and device (D2D uses the swapchain to draw to)
 - Added IMGUI support
