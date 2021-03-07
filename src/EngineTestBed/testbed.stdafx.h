@@ -104,7 +104,6 @@ using hlslpp::double2;
 #include "Engine/PhysicsDistanceJoint.h"
 #include "GameEngine.h"
 
-#include "Game/BitmapManager.h"
-#include "Game/SoundManager.h"
-
 using namespace DirectX;
+
+

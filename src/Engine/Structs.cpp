@@ -2,6 +2,21 @@
 
 #include "Structs.h"
 
+RTTR_REGISTRATION{
+	using namespace rttr;
+	using namespace helpers;
+
+	registration::class_<WrapperFloat4>("WrapperFloat4")
+		.property("X", &WrapperFloat4::get_x, &WrapperFloat4::set_x)
+		.property("Y", &WrapperFloat4::get_y, &WrapperFloat4::set_y)
+		.property("Z", &WrapperFloat4::get_z, &WrapperFloat4::set_z)
+		.property("W", &WrapperFloat4::get_w, &WrapperFloat4::set_w);
+
+	registration::class_<WrapperFloat4>("WrapperFloat3")
+		.property("X", &WrapperFloat4::get_x, &WrapperFloat4::set_x)
+		.property("Y", &WrapperFloat4::get_y, &WrapperFloat4::set_y)
+		.property("Z", &WrapperFloat4::get_z, &WrapperFloat4::set_z);
+}
 
 //-----------------------------------------------------------------
 // COLOR Constructors

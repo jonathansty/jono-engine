@@ -34,7 +34,7 @@ public:
 				ImGui::Text("%u", (unsigned int)(info.get_id()));
 				ImGui::NextColumn();
 
-				ImGui::Text("%s", info.get_name());
+				ImGui::Text("%s", info.get_name().to_string().c_str());
 				ImGui::NextColumn();
 
 				ImGui::Text("%d", int(info.get_sizeof()));

@@ -1,16 +1,12 @@
 #pragma once
 
+#include "Structs.h"
+
 #include <rttr/registration>
 
 namespace framework
 {
 
-	struct WrapperFloat4 {
-		hlslpp::float4 value;
-	};
-	struct WrapperFloat3 {
-		hlslpp::float3 value;
-	};
 
 
 	class EntityDebugOverlay;
@@ -81,11 +77,11 @@ namespace framework
 		hlslpp::quaternion _rot;
 
 		WrapperFloat4 get_pos() {
-			return WrapperFloat4{ _pos };
+			return { _pos };
 		};
 
 		void set_pos(WrapperFloat4 pos) {
-			_pos = pos.value;
+			_pos = pos;
 		};
 
 		WrapperFloat3 get_scale() const {
@@ -93,14 +89,14 @@ namespace framework
 		};
 
 		void set_scale(WrapperFloat3 v) {
-			_scale = v.value;
+			_scale = v;
 		};
 
 		WrapperFloat3 get_rot_euler() const {
 			return { _rot_euler };
 		};
 		void set_rot_euler(WrapperFloat3 v) {
-			_rot_euler = (v.value);
+			_rot_euler = v;
 			_rot = hlslpp::euler({ _rot_euler.x, _rot_euler.y, _rot_euler.z });
 		};
 

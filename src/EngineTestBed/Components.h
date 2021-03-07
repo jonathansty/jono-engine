@@ -119,9 +119,16 @@ private:
 class LightComponent final : public framework::Component
 {
 	RTTR_ENABLE(framework::Component);
+	RTTR_REGISTRATION_FRIEND;
 
 public:
 	using Entity = framework::Entity;
+
+	hlslpp::float3 get_color() { return _color; }
+
+private:
+	helpers::WrapperFloat3 _color;
+	float _intensity;
 
 };
 

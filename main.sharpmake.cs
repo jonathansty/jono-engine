@@ -227,59 +227,13 @@ public abstract class ToolsProject : JonaBaseProject
 
 
 [Generate]
-public class ReflectionGenerator : ToolsProject
+public class EngineSolution : Solution
 {
-    public static string ExecutableOutputPath { get { return @"[conf.TargetPath]/[project.Name].exe"; } }
-
-    public ReflectionGenerator() : base()
-    {
-        Name = "reflection-generator";
-    }
-
-    public override void ConfigureAll(Configuration conf, Target target)
-    {
-
-
-        base.ConfigureAll(conf, target);
-        conf.AddPublicDependency<CliProject>(target);
-        conf.AddPublicDependency<CoreProject>(target);
-        conf.AddPublicDependency<Fmt>(target);
-
-        conf.AddPrivateDependency<LibClang>(target);
-    }
-
-    public static Configuration.BuildStepExecutable CreateBuildStep(string input = "[project.SharpmakeCsPath]/generated/reflection/dumps/[project.Name].txt", string output = "obj/reflection", string root = "[project.SharpmakeCsPath]") {
-        return new Configuration.BuildStepExecutable(ExecutableOutputPath, "", "", $"-file={input} -output={output} -root={root}");
-    }
-}
-
-[Generate]
-public class ReflectionGeneratorTests : ToolsProject
-{
-    public static string ExecutableOutputPath { get { return @"[conf.TargetPath]/[project.Name].exe"; } }
-
-    public ReflectionGeneratorTests() : base()
-    {
-        Name = "reflection-generator-tests";
-    }
-
-    public override void ConfigureAll(Configuration conf, Target target)
-    {
-        base.ConfigureAll(conf, target);
-        conf.IncludePaths.Add(@"[project.SourceRootPath]\..\reflection-generator");
-        conf.AddPublicDependency<ReflectionGenerator>(target);
-    }
-}
-
-
-[Generate]
-public class GameSolution : Solution
-{
-    public GameSolution()
+    public EngineSolution()
         :base()
     {
         // The name of the solution.
-        Name = "ElectronicJonaJoy";
+        Name = "jono-engine";
 
         // As with the project, define which target this solution builds for.
         // It's usually the same thing.
@@ -295,18 +249,6 @@ public class GameSolution : Solution
         // Puts the generated solution in the /generated folder too.
         conf.SolutionPath = @"[solution.SharpmakeCsPath]/generated";
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]_[target.Platform]";
-
-        //var types = System.Reflection.Assembly.GetExecutingAssembly()
-        //    .GetTypes()
-        //    .Where(type => {
-        //        return type.IsSubclassOf(typeof(JonaBaseProject)) && !type.IsAbstract && Attribute.GetCustomAttribute(type, typeof(Sharpmake.Generate)) != null;
-        //    });
-
-        //foreach (var type in types)
-        //{
-        //    conf.AddProject(type, target);
-        //}
-
         conf.AddProject<EngineTestBed>(target);
     }
 }
@@ -362,7 +304,7 @@ public static class Main
         sharpmakeArgs.Builder.EventPostProjectLink += Builder_EventPostProjectLink;
 
         // Generate the solution for our game (all)
-        sharpmakeArgs.Generate<GameSolution>();
+        sharpmakeArgs.Generate<EngineSolution>();
 
         // Generate just tools projects
         sharpmakeArgs.Generate<ToolsOnlySolution>();

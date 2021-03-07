@@ -30,6 +30,7 @@ class ContactListener;
 
 using graphics::bitmap_interpolation_mode;
 
+
 enum class MSAAMode {
 	Off,
 	MSAA_2x,

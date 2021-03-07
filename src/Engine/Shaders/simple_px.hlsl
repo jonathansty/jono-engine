@@ -13,6 +13,7 @@ cbuffer MVPConstantBuffer : register(b0)
 
 	float4 g_ViewDirection;
 	float4 g_LightDirection;
+	float4 g_LightColor;
 };
 
 // PBR Inputs
@@ -38,7 +39,7 @@ float4 main(VS_OUT vout) : SV_Target
 	material.roughness = data.g;
 	material.metalness = data.b;
 
-	float3 light = -normalize(g_LightDirection.xyz);
+	float3 light = normalize(g_LightDirection.xyz);
 	float3 view = normalize(g_ViewDirection.xyz);
 
 	// Transform our tangent normal into world space

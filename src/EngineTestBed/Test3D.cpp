@@ -25,16 +25,17 @@ using hlslpp::float4;
 __declspec(align(16))
 struct MVPConstantBuffer
 {
-	float4x4 World;
-	float4x4 WorldView;
-	float4x4 Projection;
-	float4x4 WorldViewProjection;
+	float4x4 world;
+	float4x4 world_view;
+	float4x4 proj;
+	float4x4 wvp;
 
-	float4x4 View;
-	float4x4 InvView;
+	float4x4 view;
+	float4x4 inv_view;
 
-	float4 ViewDirection;
-	float4 LightDirection;
+	float4 view_direction;
+	float4 light_direction;
+	float4 light_color;
 };
 
 struct DebugVisualizeMode
@@ -228,12 +229,14 @@ void Hello3D::render_3d()
 	using namespace hlslpp;
 	float4 view_direction = float4(0.0f, 0.0f, -2.0f, 0.0f);
 	float4 light_direction = float4(0.0, -1.0, -1.0f,0.0f);
+	float3 light_color = float3(1.0, 1.0, 1.0);
 	LightComponent* comp = (LightComponent*)_world->find_first_component<LightComponent>();
 	if (comp)
 	{
 		float4x4 worldTransform = comp->get_entity()->get_world_transform();
 		float3 fwd = float3(0.0f, 0.0f, 1.0f);
 		light_direction = hlslpp::mul(worldTransform, float4(fwd, 0.0));
+		light_color = comp->get_color();
 	}
 
 	float4x4 View = float4x4::identity();
@@ -291,7 +294,7 @@ void Hello3D::render_3d()
 	for (auto& ent : _world->get_entities())
 	{
 		// If the entity has a mesh component and is done loading
-		if (SimpleMeshComponent* mesh_comp = ent->get_component<SimpleMeshComponent>(); mesh_comp && mesh_comp->is_loaded())
+		if (SimpleMeshComponent* mesh_comp = ent->get_component<SimpleMeshComponent>(); mesh_comp && mesh_comp->is_loaded() && mesh_comp->is_active())
 		{
 			float4x4 world = ent->get_world_transform();
 			float4x4 MVP = mul(world, mul(View, Projection));
@@ -299,14 +302,15 @@ void Hello3D::render_3d()
 			D3D11_MAPPED_SUBRESOURCE resource{};
 			ctx->Map(_cb_MVP.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
 			MVPConstantBuffer* buffer = (MVPConstantBuffer*)resource.pData;
-			buffer->World = world;
-			buffer->WorldViewProjection = MVP;
-			buffer->WorldView = mul(world, View);
-			buffer->Projection = Projection;
-			buffer->InvView = invView;
-			buffer->View = View;
-			buffer->ViewDirection = view_direction;
-			buffer->LightDirection = light_direction;
+			buffer->world = world;
+			buffer->wvp = MVP;
+			buffer->world_view = mul(world, View);
+			buffer->proj = Projection;
+			buffer->inv_view = invView;
+			buffer->view = View;
+			buffer->view_direction = view_direction;
+			buffer->light_direction = light_direction;
+			buffer->light_color = float4(light_color, 1.0);
 			ctx->Unmap(_cb_MVP.Get(), 0);
 
 			// TODO: Implement materials supplying buffers?

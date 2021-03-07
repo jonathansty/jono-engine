@@ -15,7 +15,11 @@ RTTR_REGISTRATION{
 	registration::class_<BitmapComponent>("BitmapComponent");
 	registration::class_<CameraComponent>("CameraComponent")
 		.property("FoV", &CameraComponent::_fov);
-	registration::class_<LightComponent>("LightComponent");
+
+	registration::class_<LightComponent>("LightComponent")
+		.property("Intensity", &LightComponent::_intensity)
+		.property("Color", &LightComponent::_color);
+
 	registration::class_<SimpleMeshComponent>("SimpleMeshComponent");
 }
 //IMPL_REFLECT(SimpleMovement2D)

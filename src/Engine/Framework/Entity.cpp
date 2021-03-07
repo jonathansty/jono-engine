@@ -12,7 +12,6 @@ using hlslpp::float4x4;
 using hlslpp::quaternion;
 using hlslpp::float1;
 
-
 RTTR_REGISTRATION{
 
 	using namespace rttr;
@@ -29,23 +28,9 @@ RTTR_REGISTRATION{
 			.property("scale", &Entity::get_scale, &Entity::set_scale);
 }
 
-namespace framework {
 
-//IMPL_REFLECT(Entity) {
-//	type.register_property("name", &Entity::_name);
-//	type.register_property("position", &Entity::_pos);
-//
-//	// Special property with conversion functions
-//	type.register_property<Entity, float3>(
-//			"rotation",
-//			[](Entity* obj, float3 const* v) {
-//				obj->_rot_euler = *v;
-//				obj->_rot = hlslpp::euler({ v->x, v->y, v->z });
-//			},
-//			[](Entity* obj, float3** out) {
-//				*out = &obj->_rot_euler;
-//			});
-//}
+
+namespace framework {
 
 Entity::Entity(float3 pos)
 		: _parent(nullptr)
@@ -140,7 +125,7 @@ float4 Entity::get_local_position() const {
 
 Component* Entity::get_component(rttr::type const& t) const {
 	for (Component* c : _components) {
-		rttr::type info = rttr::type::get(c);
+		rttr::type info = rttr::type::get(*c);
 		if (info == t) {
 			return c;
 		}

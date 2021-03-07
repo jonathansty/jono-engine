@@ -72,3 +72,54 @@ struct RECT2
 	// -------------------------	
 	double left, top, right, bottom;
 };
+
+
+
+namespace helpers {
+
+// Wraps around hlslpp float4 to provide support for RTTR
+struct WrapperFloat4 {
+	hlslpp::float4 value;
+
+	operator hlslpp::float4() {
+		return value;
+	}
+
+private:
+	RTTR_REGISTRATION_FRIEND;
+	float get_x() { return value.x; }
+	float get_y() { return value.y; }
+	float get_z() { return value.z; }
+	float get_w() { return value.w; }
+
+	void set_x(float v) { value.x = v; }
+	void set_y(float v) { value.y = v; }
+	void set_z(float v) { value.z = v; }
+	void set_w(float v) { value.w = v; }
+};
+
+// Wraps around hlslpp float3 to provide support for RTTR
+struct WrapperFloat3 {
+	hlslpp::float3 value;
+
+	operator hlslpp::float3() {
+		return value;
+	}
+
+	private:
+	RTTR_REGISTRATION_FRIEND;
+	float get_x() { return value.x; }
+	float get_y() { return value.y; }
+	float get_z() { return value.z; }
+
+	void set_x(float v) { value.x = v; }
+	void set_y(float v) { value.y = v; }
+	void set_z(float v) { value.z = v; }
+
+
+};
+
+} // namespace helpers
+
+using helpers::WrapperFloat3;
+using helpers::WrapperFloat4;
