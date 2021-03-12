@@ -4,10 +4,11 @@
 
 #include <rttr/registration>
 
+#include "framework/World.h"
+
+
 namespace framework
 {
-
-
 
 	class EntityDebugOverlay;
 	class Component;
@@ -15,6 +16,7 @@ namespace framework
 	class Entity
 	{
 		RTTR_REGISTRATION_FRIEND;
+		friend class World;
 
 	public:
 		Entity();
@@ -32,6 +34,8 @@ namespace framework
 
 		Component* get_component(rttr::type const& t) const;
 
+		std::vector<Component*> get_components() const { return _components; }
+
 		template<typename T>
 		T* get_component() const;
 
@@ -46,8 +50,6 @@ namespace framework
 		void set_rotation(hlslpp::quaternion quat);
 
 		hlslpp::quaternion const& get_rotation() const { return _rot; }
-
-		void attach_to(Entity* parent);
 
 		hlslpp::float4 get_local_position() const;
 		hlslpp::float4 get_world_position() const;
@@ -69,9 +71,9 @@ namespace framework
 
 	protected:
 		std::string _name;
-		Entity* _parent;
+		EntityHandle _parent;
 
-		std::vector<Entity*> _children;
+		std::vector<EntityHandle> _children;
 		std::vector<Component*> _components;
 
 		hlslpp::quaternion _rot;

@@ -14,6 +14,9 @@ EntityHandle::EntityHandle(uint64_t id, uint64_t generation, std::weak_ptr<World
 
 bool EntityHandle::is_valid() const
 {
+	if (world.expired())
+		return false;
+
 	auto p_world = world.lock();
 	return p_world->is_handle_valid(*this);
 }
@@ -34,9 +37,8 @@ Entity* EntityHandle::get() const
 }
 
 World::World()
-	: _root(new Entity())
+: _root()
 {
-	_root->set_name("Root");
 
 	_entities.reserve(1000);
 	_generation.reserve(1000);
@@ -51,9 +53,6 @@ World::~World()
 
 	_entities.clear();
 	_generation.clear();
-
-	delete _root;
-	_root = nullptr;
 }
 
 void World::update(float dt)
@@ -116,4 +115,48 @@ bool World::remove_entity(EntityHandle const& handle)
 	_deletion_list.push_back(handle.id);
 
 	return true;
+}
+
+bool framework::World::attach_to(EntityHandle const& attach_to, EntityHandle const& child) {
+
+	auto current_parent = _entities[child.id]->_parent;
+	if (current_parent) {
+		current_parent->_children.erase(std::find(current_parent->_children.begin(), current_parent->_children.end(), child));
+	}
+
+	_entities[child.id]->_parent = attach_to;
+
+	// update parent
+	_entities[attach_to.id]->_children.push_back(child);
+
+	return true;
+}
+
+void framework::World::init() {
+
+	// Create the root entity 
+	Entity* ent = new Entity();
+
+	std::size_t id = _entities.size();
+
+	// If we have free slots
+	if (!_free_list.empty()) {
+		id = _free_list[_free_list.size() - 1];
+		_free_list.pop_back();
+	}
+	// No free slots means we need to create some
+	else {
+		_entities.push_back(ent);
+	}
+
+	// Update our generation it's size
+	if (_generation.size() <= id) {
+		//TODO: Abstract vector resizing to be more robust
+		_generation.resize(id + 1000, 0);
+	}
+
+	auto w = shared_from_this();
+	auto handle = EntityHandle(id, _generation[id], w);
+	_root = handle;
+	_root->set_name("Root");
 }

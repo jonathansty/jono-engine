@@ -8,12 +8,16 @@ namespace framework
 
 	struct EntityHandle
 	{
-		EntityHandle(){};
+		EntityHandle() : id(-1), generation(-1) {};
 		~EntityHandle() = default;
 
 		uint64_t id;
 		uint64_t generation;
 
+
+		operator bool() const {
+			return is_valid();
+		}
 
 		bool is_valid() const;
 
@@ -48,6 +52,8 @@ namespace framework
 
 		World(World const&) = delete;
 
+		void init();
+
 		void update(float dt);
 
 		bool is_handle_valid(EntityHandle const& handle);
@@ -73,9 +79,11 @@ namespace framework
 			return _entities;
 		}
 
+		bool attach_to(EntityHandle const& attach_to, EntityHandle const& child);
+
 	private:
 
-		Entity* _root;
+		EntityHandle _root;
 
 		std::vector<uint64_t> _free_list;
 		std::vector<uint64_t> _deletion_list;
@@ -114,9 +122,10 @@ namespace framework
 			_generation.resize(id + 1000, 0);
 		}
 
-		obj->attach_to(_root);
-
 		auto w = shared_from_this();
-		return EntityHandle(id, _generation[id], w);
+		auto handle = EntityHandle(id, _generation[id], w);
+		attach_to(_root, handle);
+
+		return handle;
 	}
 }

@@ -58,6 +58,7 @@ void HelloWorldGame::start()
 
 	using namespace framework;
 	_world = std::make_shared<framework::World>();
+	_world->init();
 	GameEngine::instance()->get_overlay_manager()->register_overlay(new framework::EntityDebugOverlay(_world.get()));
 
 	_parentEntity = _world->create_entity(float2(100, 100));
@@ -74,7 +75,8 @@ void HelloWorldGame::start()
 		EntityHandle ent = _world->create_entity();
 		ent->set_local_position(x, y);
 		ent->create_component<BitmapComponent>(ResourcePaths::bmp_coin_gold);
-		ent->attach_to(_parentEntity);
+
+		_world->attach_to(_parentEntity, ent);
 
 		std::string name = "Coin_" + std::to_string(i);
 		ent->set_name(name);

@@ -17,9 +17,6 @@ RTTR_REGISTRATION{
 	using namespace rttr;
 	using namespace framework; 
 
-	registration::class_<WrapperFloat4>("float4");
-	registration::class_<WrapperFloat3>("float3");
-
 
 	registration::class_<Entity>("Entity")
 			.property("name", &Entity::_name)
@@ -33,7 +30,7 @@ RTTR_REGISTRATION{
 namespace framework {
 
 Entity::Entity(float3 pos)
-		: _parent(nullptr)
+		: _parent()
 		, _pos(pos.x, pos.y, pos.z, 1.0f)
 		, _scale(float3{ 1.0f, 1.0f, 1.0f })
 		, _rot(hlslpp::quaternion::identity())
@@ -134,11 +131,4 @@ Component* Entity::get_component(rttr::type const& t) const {
 	return nullptr;
 }
 
-void framework::Entity::attach_to(Entity* parent) {
-	if (_parent) {
-		_parent->_children.erase(std::find(_parent->_children.begin(), _parent->_children.end(), this));
-	}
-	_parent = parent;
-	_parent->_children.push_back(this);
-}
 } // namespace framework

@@ -149,6 +149,11 @@ void GameEngine::set_title(const String& titleRef)
 
 int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 {
+	_platform_io = IO::create();
+
+	// NOTE(Jonathan): Make this smarter to allow more flexibility.
+	_platform_io->mount("Resources");
+
 	assert(_game);
 	_game->configure_engine(this->_engine_settings);
 

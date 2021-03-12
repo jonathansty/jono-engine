@@ -1,6 +1,6 @@
 #include "testbed.stdafx.h"
 #include <hlsl++.h>
-#include "Test3D.h"
+#include "SceneViewer.h"
 
 #include "Engine/Core/ModelResource.h"
 #include "Engine/Core/TextureResource.h"
@@ -9,6 +9,8 @@
 #include "Framework/framework.h"
 #include "Components.h"
 #include "Overlays.h"
+
+#include "Serialization.h"
 
 using framework::Entity;
 using framework::Component;
@@ -59,14 +61,14 @@ struct DebugCB
 
 int g_DebugMode = 0;
 
-void Hello3D::configure_engine(EngineSettings &engineSettings) {
+void SceneViewer::configure_engine(EngineSettings &engineSettings) {
 	engineSettings.d2d_use = false;
 
 	engineSettings.d3d_use = true;
 	engineSettings.d3d_msaa_mode = MSAAMode::MSAA_4x;
 }
 
-void Hello3D::initialize(GameSettings& gameSettings)
+void SceneViewer::initialize(GameSettings& gameSettings)
 {
 	gameSettings.m_FullscreenMode = GameSettings::FullScreenMode::Windowed;
 	gameSettings.m_WindowWidth = 1800;
@@ -74,7 +76,7 @@ void Hello3D::initialize(GameSettings& gameSettings)
 }
 
 
-void Hello3D::start()
+void SceneViewer::start()
 {
 	auto device = GameEngine::instance()->GetD3DDevice();
 	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
@@ -86,7 +88,8 @@ void Hello3D::start()
 	::SetCapture(GameEngine::instance()->get_window());
 
 	using namespace framework;
-	_world = std::make_shared<framework::World>();
+	_world = std::make_shared<World>();
+	_world->init();
 
 	framework::EntityDebugOverlay *overlay = new framework::EntityDebugOverlay(_world.get());
 	GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
@@ -181,25 +184,26 @@ void Hello3D::start()
 	sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	SUCCEEDED(device->CreateSamplerState(&sampler, m_Samplers[uint32_t(Samplers::AllLinear)].GetAddressOf()));
 
+	save_world();
 }
 
-void Hello3D::end()
+void SceneViewer::end()
 {
 
 }
 
-void Hello3D::paint(graphics::D2DRenderContext& ctx)
+void SceneViewer::paint(graphics::D2DRenderContext& ctx)
 {
 }
 
-void Hello3D::tick(double deltaTime)
+void SceneViewer::tick(double deltaTime)
 {
 	_world->update((float)deltaTime);
 
 	_timer += (float)deltaTime;
 }
 
-void Hello3D::debug_ui()
+void SceneViewer::debug_ui()
 {
 	static bool s_open = true;
 	ImGui::Begin("Game", &s_open);
@@ -219,7 +223,7 @@ void Hello3D::debug_ui()
 
 }
 
-void Hello3D::render_3d()
+void SceneViewer::render_3d()
 {
 	auto device = GameEngine::instance()->GetD3DDevice();
 	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
@@ -319,6 +323,54 @@ void Hello3D::render_3d()
 
 			mesh_comp->render();
 		}
+	}
+}
+
+static const char* s_world_path = "Scenes/test_world.scene";
+void SceneViewer::load_world() {
+
+	auto io = GameEngine::instance()->io();
+	if (io->exists(s_world_path)) {
+
+		FILE* file = fopen(s_world_path, "rb");
+
+		// Read the world data
+
+		fclose(file);
+	} 
+}
+
+
+void SceneViewer::save_world() {
+	using namespace serialization;
+
+	auto io = GameEngine::instance()->io();
+	std::shared_ptr<IO::IPlatformFile> file = io->open(s_world_path, IO::Mode::Write, true);
+
+	struct SceneHeader {
+		uint32_t number_of_entities;
+	};
+
+	std::vector<Entity*> all_entities = _world->get_entities();
+
+	for (Entity const* ent : all_entities) {
+		rttr::instance obj = rttr::instance(*ent);
+		rttr::type type = rttr::type::get(*ent);
+
+		serialization::write_instance(file, obj);
+
+		//for (auto const& p : type.get_properties()) {
+		//	rttr::variant val = p.get_value(obj);
+		//	if (val.get_type().is_arithmetic()) {
+		//	
+		//	}
+		//	auto id = val.get_type().get_id();
+		//	val.get_type().get_name().to_string().c_str();
+		//}
+
+		//// Write out each component
+		//for (auto const& comp : ent->get_components()) {
+		//}
 	}
 }
 

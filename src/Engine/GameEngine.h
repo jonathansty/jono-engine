@@ -14,6 +14,7 @@
 #include "graphics/2DRenderContext.h"
 
 #include "GameSettings.h"
+#include "PlatformIO.h"
 
 class Bitmap;
 class String;
@@ -80,6 +81,8 @@ public:
 	static int run_game(HINSTANCE hInstance, cli::CommandLine const &cmdLine, int iCmdShow, class AbstractGame *game);
 
 public:
+	std::shared_ptr<IO::IPlatformIO> io() const { return _platform_io; };
+
 	// Quits the game
 	void quit_game();
 
@@ -371,6 +374,10 @@ private:
 	EngineSettings _engine_settings;
 
 	graphics::D2DRenderContext *_d2d_ctx;
+
+	std::shared_ptr<IO::IPlatformIO> _platform_io;
+
+
 
 	bool _physics_step_enabled;
 	bool _should_quit;

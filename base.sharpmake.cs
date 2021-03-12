@@ -63,6 +63,11 @@ public abstract class JonaBaseProject : Project
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
 
+        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
+        conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
+            "4100", // Unused method variables
+            "4189"  // Unused local variables
+        ));
 
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
 

@@ -145,8 +145,8 @@ public class EngineTestProject : JonaBaseProject
     public EngineTestProject()
          : base()
     {
-        Name = "EngineTests";
-        SourceRootPath = @"[project.SharpmakeCsPath]/src/EngineTests";
+        Name = "tests";
+        SourceRootPath = @"[project.SharpmakeCsPath]/src/tests";
     }
 
     public override void ConfigureAll(Configuration conf, Target target)
@@ -172,12 +172,12 @@ public class EngineTestProject : JonaBaseProject
 }
 
 [Generate]
-public class EngineTestBed : JonaBaseProject
+public class SceneViewerProject : JonaBaseProject
 {
-    public EngineTestBed() : base()
+    public SceneViewerProject() : base()
     {
-        Name = "EngineTestBed";
-        SourceRootPath = @"[project.SharpmakeCsPath]/src/EngineTestBed";
+        Name = "SceneViewer";
+        SourceRootPath = @"[project.SharpmakeCsPath]/src/SceneViewer";
     }
 
     public override void ConfigureAll(Configuration conf, Target target)
@@ -189,13 +189,6 @@ public class EngineTestBed : JonaBaseProject
 
         conf.AddPrivateDependency<EngineProject>(target);
 
-        conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
-        conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
-        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
-        conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
-            "4100", // Unused method variables
-            "4189"  // Unused local variables
-        ));
 
         conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
         conf.Output = Configuration.OutputType.Exe;
@@ -249,7 +242,9 @@ public class EngineSolution : Solution
         // Puts the generated solution in the /generated folder too.
         conf.SolutionPath = @"[solution.SharpmakeCsPath]/generated";
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]_[target.Platform]";
-        conf.AddProject<EngineTestBed>(target);
+        conf.AddProject<EngineProject>(target);
+        conf.AddProject<SceneViewerProject>(target);
+        //conf.AddProject<EngineTestProject>(target);
     }
 }
 

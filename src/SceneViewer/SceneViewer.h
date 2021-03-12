@@ -3,9 +3,13 @@
 #include "AbstractGame.h"
 #include "Framework/World.h"
 
-class Hello3D : public AbstractGame
+class SceneViewer final : public AbstractGame
 {
 public:
+	SceneViewer(std::string const& path) : _scene_path(path)
+	{}
+	virtual ~SceneViewer() {}
+
 	virtual void configure_engine(EngineSettings &engineSettings) override;
 	virtual void initialize(GameSettings& gameSettings);
 	virtual void start() override;
@@ -16,6 +20,14 @@ public:
 	virtual void render_3d() override;
 
 private:
+
+	void load_world();
+	void save_world();
+
+	// Initial scene path to view 
+	std::string _scene_path;
+
+	// World to store our scene data in
 	std::shared_ptr<framework::World> _world;
 
 	ComPtr<ID3D11Buffer> _cb_MVP;
