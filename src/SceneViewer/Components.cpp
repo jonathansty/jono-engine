@@ -11,16 +11,35 @@ RTTR_REGISTRATION{
 	using namespace rttr;
 
 	registration::class_<SimpleMovement2D>("SimpleMovement2D");
-	registration::class_<SimpleMovement3D>("SimpleMovement3D");
+	registration::class_<SimpleMovement3D>("SimpleMovement3D")
+		.constructor()
+			(
+							rttr::policy::ctor::as_raw_ptr
+			)
+		.property("Speed", &SimpleMovement3D::_speed)
+		;
 	registration::class_<BitmapComponent>("BitmapComponent");
 	registration::class_<CameraComponent>("CameraComponent")
+		.constructor()
+			(
+							rttr::policy::ctor::as_raw_ptr
+			)
 		.property("FoV", &CameraComponent::_fov);
 
 	registration::class_<LightComponent>("LightComponent")
+		.constructor()
+			(
+							rttr::policy::ctor::as_raw_ptr
+			)
 		.property("Intensity", &LightComponent::_intensity)
 		.property("Color", &LightComponent::_color);
 
-	registration::class_<SimpleMeshComponent>("SimpleMeshComponent");
+	registration::class_<SimpleMeshComponent>("SimpleMeshComponent")
+		.constructor()
+		(
+					rttr::policy::ctor::as_raw_ptr
+		)
+		.property("ModelPath", &SimpleMeshComponent::get_model_path, &SimpleMeshComponent::set_model_path);
 }
 //IMPL_REFLECT(SimpleMovement2D)
 //{
@@ -182,14 +201,21 @@ void SimpleMeshComponent::render()
 
 bool SimpleMeshComponent::is_loaded() const
 {
-	return _resource->is_loaded();
+	return _resource && _resource->is_loaded();
 }
 
-void SimpleMeshComponent::set_model(std::string const& mesh)
+void SimpleMeshComponent::set_model_path(std::string mesh)
 {
 	_resource = ResourceLoader::instance()->load<ModelResource>({ mesh }, false);
 }
 
+std::string SimpleMeshComponent::get_model_path() {
+	if(_resource) {
+		return _resource->get_init_parameters().path;
+	} else {
+		return "";
+	}
+}
 
 const float CameraComponent::DEFAULT_FOV = 45.0f;
 

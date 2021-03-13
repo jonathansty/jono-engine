@@ -108,6 +108,8 @@ struct WrapperFloat3 {
 
 	private:
 	RTTR_REGISTRATION_FRIEND;
+
+	public:
 	float get_x() { return value.x; }
 	float get_y() { return value.y; }
 	float get_z() { return value.z; }

@@ -91,54 +91,55 @@ void SceneViewer::start()
 	_world = std::make_shared<World>();
 	_world->init();
 
+	bool has_loaded = false;
+
 	framework::EntityDebugOverlay *overlay = new framework::EntityDebugOverlay(_world.get());
 	GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
-	// Create the world camera
-	{
-		World::EntityId cam_id = _world->create_entity();
-		framework::Entity* ent = _world->get_entity(cam_id);
-		ent->set_name("MainCamera");
-		auto comp = ent->create_component<CameraComponent>();
-		ent->set_local_position(float3(0.0f, 0.0f, -2.0f));
-	}
-
-	{
-		namespace fs = std::filesystem;
-		auto add_model = [&](float3 pos, float3 scale, fs::path const& model_path) {
-			World::EntityId model = _world->create_entity();
-
-			model->set_name(model_path.string());
-			model->set_local_position(pos);
-			model->set_local_scale(scale);
-			auto comp = model->create_component<SimpleMeshComponent>();
-			comp->set_model((fs::path{"Resources/Models/"} / model_path).string());
-
-			return model;
-		};
-
-		add_model(float3(0.0), float3(1.0), "plane/planes.gltf");
-
-		for (int i = 0; i < 1; ++i)
+	if (!has_loaded) {
+		// Create the world camera
 		{
-			for (int j = 0; j < 1; ++j)
-			{
-				World::EntityId ent = add_model(float3(2.0f * (float)i, 3.0f, 2.0f * (float)j), float3(1.0),"m-96_mattock/scene.gltf");
-				auto c = ent->create_component<SimpleMovement3D>();
-				c->set_speed(10.0f);
-			}
+			World::EntityId cam_id = _world->create_entity();
+			framework::Entity* ent = _world->get_entity(cam_id);
+			ent->set_name("MainCamera");
+			auto comp = ent->create_component<CameraComponent>();
+			ent->set_local_position(float3(0.0f, 0.0f, -2.0f));
 		}
 
+		{
+			namespace fs = std::filesystem;
+			auto add_model = [&](float3 pos, float3 scale, fs::path const& model_path) {
+				World::EntityId model = _world->create_entity();
 
-		World::EntityId ent = _world->create_entity();
-		ent->set_name("Sun");
-		ent->set_rotation(hlslpp::euler(float3(-0.33f, -0.33f, 0.0f)));
-		ent->set_local_position(float3(0.0, 10.0, 0.0));
-		auto comp = ent->create_component<LightComponent>();
-		auto mesh_comp = ent->create_component<SimpleMeshComponent>();
-		mesh_comp->set_model((fs::path{ "Resources/Models/axes/axes.gltf" }).string());
+				model->set_name(model_path.string());
+				model->set_local_position(pos);
+				model->set_local_scale(scale);
+				auto comp = model->create_component<SimpleMeshComponent>();
+				comp->set_model_path((fs::path{ "Resources/Models/" } / model_path).string());
 
-		add_model(float3(50.0, 0.0, 0.0f), float3(1.0), "Tower/scene.gltf");
+				return model;
+			};
+
+			add_model(float3(0.0), float3(1.0), "plane/planes.gltf");
+
+			for (int i = 0; i < 1; ++i) {
+				for (int j = 0; j < 1; ++j) {
+					World::EntityId ent = add_model(float3(2.0f * (float)i, 3.0f, 2.0f * (float)j), float3(1.0), "m-96_mattock/scene.gltf");
+					auto c = ent->create_component<SimpleMovement3D>();
+					c->set_speed(10.0f);
+				}
+			}
+
+			World::EntityId ent = _world->create_entity();
+			ent->set_name("Sun");
+			ent->set_rotation(hlslpp::euler(float3(-0.33f, -0.33f, 0.0f)));
+			ent->set_local_position(float3(0.0, 10.0, 0.0));
+			auto comp = ent->create_component<LightComponent>();
+			auto mesh_comp = ent->create_component<SimpleMeshComponent>();
+			mesh_comp->set_model_path((fs::path{ "Resources/Models/axes/axes.gltf" }).string());
+
+			add_model(float3(50.0, 0.0, 0.0f), float3(1.0), "Tower/scene.gltf");
+		}
 	}
 
 
@@ -183,8 +184,6 @@ void SceneViewer::start()
 	CD3D11_SAMPLER_DESC sampler{ CD3D11_DEFAULT() };
 	sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	SUCCEEDED(device->CreateSamplerState(&sampler, m_Samplers[uint32_t(Samplers::AllLinear)].GetAddressOf()));
-
-	save_world();
 }
 
 void SceneViewer::end()
@@ -219,6 +218,27 @@ void SceneViewer::debug_ui()
 	};
 
 	ImGui::Combo("Debug Mode", &g_DebugMode, items, std::size(items));
+
+	ImGui::PushID("#SceneName");
+	static char buff[512] = "test.scene";
+	ImGui::InputText("", buff, 512);
+	ImGui::PopID();
+	ImGui::SameLine();
+
+	if (ImGui::Button("Save")) {
+		std::string p = "Scenes/";
+		p += buff;
+		save_world(p.c_str());	
+	}
+
+	ImGui::SameLine();
+	if (ImGui::Button("Load")) {
+		std::string p = "Scenes/";
+		p += buff;
+
+		_world->clear();
+		load_world(p.c_str());
+	}
 	ImGui::End();
 
 }
@@ -327,31 +347,80 @@ void SceneViewer::render_3d()
 }
 
 static const char* s_world_path = "Scenes/test_world.scene";
-void SceneViewer::load_world() {
+bool SceneViewer::load_world(const char* path) {
 
 	auto io = GameEngine::instance()->io();
-	if (io->exists(s_world_path)) {
+	if (io->exists(path)) {
 
-		FILE* file = fopen(s_world_path, "rb");
+		auto file = io->open(path, IO::Mode::Read, true);
 
-		// Read the world data
+		uint32_t number_of_entites = 0;
+		file->read(&number_of_entites, sizeof(uint32_t));
 
-		fclose(file);
+		for (uint32_t i = 0; i < number_of_entites; ++i) {
+
+			// Skip root
+			framework::Entity* local = nullptr;
+			if(i >= 1) {
+				framework::EntityHandle ent = _world->create_entity();
+				local = &*ent;
+				serialization::read_instance(file, *ent);
+
+				uint32_t n_components;
+				file->read(&n_components, sizeof(uint32_t));
+
+				for (uint32_t j = 0; j < n_components; ++j) {
+					std::string type_name = serialization::read<std::string>(file);
+
+					//ent->_components.push_back(comp); 
+					rttr::type obj_type = rttr::type::get_by_name(type_name);
+					rttr::variant object = obj_type.create();
+
+					serialization::read_instance(file, object);
+
+					if(object.can_convert<Component*>()) {
+						object.convert<Component*>();
+					}
+					Component* comp = object.get_value<Component*>();
+					_world->attach_to(ent, comp);
+
+					object.clear();
+
+					std::cout << obj_type.get_name() << std::endl;
+
+
+
+
+				}
+
+
+			
+
+			} else {
+				framework::Entity ent{};
+				serialization::read_instance(file, ent);
+
+				uint32_t n_components;
+				file->read(&n_components, sizeof(uint32_t));
+			}
+
+
+		}
+		return true;
 	} 
+	return false;
 }
 
 
-void SceneViewer::save_world() {
+void SceneViewer::save_world(const char* path) {
 	using namespace serialization;
 
 	auto io = GameEngine::instance()->io();
-	std::shared_ptr<IO::IPlatformFile> file = io->open(s_world_path, IO::Mode::Write, true);
-
-	struct SceneHeader {
-		uint32_t number_of_entities;
-	};
+	std::shared_ptr<IO::IPlatformFile> file = io->open(path, IO::Mode::Write, true);
 
 	std::vector<Entity*> all_entities = _world->get_entities();
+	uint32_t number_of_entities = all_entities.size();
+	file->write(&number_of_entities, sizeof(uint32_t));
 
 	for (Entity const* ent : all_entities) {
 		rttr::instance obj = rttr::instance(*ent);
@@ -359,18 +428,16 @@ void SceneViewer::save_world() {
 
 		serialization::write_instance(file, obj);
 
-		//for (auto const& p : type.get_properties()) {
-		//	rttr::variant val = p.get_value(obj);
-		//	if (val.get_type().is_arithmetic()) {
-		//	
-		//	}
-		//	auto id = val.get_type().get_id();
-		//	val.get_type().get_name().to_string().c_str();
-		//}
-
-		//// Write out each component
-		//for (auto const& comp : ent->get_components()) {
-		//}
+		// Write components manually
+		uint32_t n_components = ent->get_components().size();
+		write(file, n_components);
+		for (Component* comp : ent->get_components()) {
+			rttr::instance inst = comp;
+			// Write out the type name so we can create the component at runtime
+			std::string n = inst.get_derived_type().get_name().to_string();
+			serialization::write(file, n);
+			serialization::write_instance(file, inst);
+		}
 	}
 }
 

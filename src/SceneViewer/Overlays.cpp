@@ -7,10 +7,10 @@ namespace framework {
 EntityDebugOverlay::EntityDebugOverlay(framework::World* world)
 		: DebugOverlay(true, "EntityDebugOverlay")
 		, _world(world)
-		, _selected(nullptr) {
+		, _selected() {
 }
 
-void EntityDebugOverlay::render_tree(framework::Entity* ent) {
+void EntityDebugOverlay::render_tree(framework::EntityHandle ent) {
 	ImGuiTreeNodeFlags flags = (_selected == ent ? ImGuiTreeNodeFlags_Selected : 0) | ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_SpanFullWidth;
 
 	if (ent->_children.size() == 0)
@@ -24,8 +24,9 @@ void EntityDebugOverlay::render_tree(framework::Entity* ent) {
 			_selected = ent;
 		}
 
-		for (framework::Entity* child : ent->_children) {
-			render_tree(child);
+		for (framework::EntityHandle child : ent->_children) {
+			if(child.is_valid())
+				render_tree(child);
 		}
 
 		ImGui::TreePop();
@@ -80,8 +81,8 @@ void EntityDebugOverlay::render_object(rttr::instance& obj) {
 				char buff[512]{};
 				assert(v.size() < 512);
 				memcpy(buff, v.data(), v.size());
-				if (ImGui::InputText(name.c_str(), buff, 512)) {
-					p.set_value(obj, buff);
+				if (ImGui::InputText(name.c_str(), buff, 512, ImGuiInputTextFlags_EnterReturnsTrue)) {
+					p.set_value(obj, std::string(buff));
 				}
 			}
 			ImGui::PopID();
@@ -103,11 +104,23 @@ void EntityDebugOverlay::render_overlay() {
 	if (ImGui::Begin("Scene Outliner", &_isOpen)) {
 		ImGui::Text("Number Of Entities: %d", _world->_entities.size());
 
+		static char tmp[255]{};
+		ImGui::PushID("#EntityName");
+		ImGui::InputText("", tmp, 255, ImGuiInputTextFlags_EnterReturnsTrue);
+		ImGui::PopID();
+		ImGui::SameLine();
+		if (ImGui::Button("Create")) {
+			auto handle = _world->create_entity();
+			handle->set_name(tmp);
+		}
+
 		std::vector<const char*> names{};
 		std::vector<framework::Entity*> entities{};
 		for (framework::Entity* ent : _world->_entities) {
-			names.push_back(ent->get_name());
-			entities.push_back(ent);
+			if(ent) {
+				names.push_back(ent->get_name());
+				entities.push_back(ent);
+			}
 		}
 
 		render_tree(_world->_root);
@@ -122,9 +135,27 @@ void EntityDebugOverlay::render_overlay() {
 			framework::Entity* rot = _selected;
 			rttr::type const& i = rttr::type::get(*rot);
 
-			ImGui::LabelText("Entity:", rot->get_name());
+			ImGui::LabelText("Entity", rot->get_name());
+			ImGui::LabelText("Id", "%d", _selected.id);
+			ImGui::LabelText("Generation", "%d", _selected.generation);
 			rttr::instance ent_inst = *rot;
 			render_object(ent_inst);
+
+			auto types = rttr::type::get<Component>().get_derived_classes();
+			std::vector<const char*> type_names;
+			for (auto t : types) {
+				type_names.push_back(t.get_name().data());
+			}
+			static int s_selected_type = 0;
+			ImGui::PushID("Type");
+			ImGui::Combo("",&s_selected_type, type_names.data(), type_names.size());
+			ImGui::PopID();
+			ImGui::SameLine();
+			if (ImGui::Button("+")) {
+				auto t = rttr::type::get_by_name(type_names[s_selected_type]);
+				rttr::variant obj = t.create();
+				rot->create_component(t);
+			}
 
 			ImGui::Indent();
 			for (framework::Component* comp : rot->_components) {

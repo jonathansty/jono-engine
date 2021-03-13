@@ -23,9 +23,25 @@ inline void write(IO::IPlatformFileRef const& f, std::string const& obj) {
 }
 
 template<typename T>
-inline void read(IO::IPlatformFileRef const& f, T& obj) {
-	f->read((void*)&obj, sizeof(T));
+inline T read(IO::IPlatformFileRef const& f) {
+	T el{};
+	f->read((void*)&el, sizeof(T));
+	return el;
 }
+
+template <>
+inline std::string read(IO::IPlatformFileRef const& f) {
+	uint32_t size;
+	f->read(&size, sizeof(uint32_t));
+
+	char tmp[512];
+	memset(tmp, 0, sizeof(char) * 512);
+	assert(size < 512);
+	f->read((void*)tmp, sizeof(char) * size);
+	return tmp;
+}
+
+
 
 
 // Writing of atomic types to binary
@@ -36,7 +52,9 @@ bool write_variant(IO::IPlatformFileRef const& file, rttr::variant const& varian
 bool write_instance(IO::IPlatformFileRef const& file, rttr::instance const& instance);
 
 // Loading of atomic types from binary
-bool load_instance(IO::IPlatformFileRef const& file, rttr::instance const& instance);
+rttr::variant read_atomic_types(IO::IPlatformFileRef const& file, rttr::type const& type);
+
+bool read_instance(IO::IPlatformFileRef const& file, rttr::instance instance);
 
 }
 

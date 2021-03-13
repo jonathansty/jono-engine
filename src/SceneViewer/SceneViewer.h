@@ -21,8 +21,8 @@ public:
 
 private:
 
-	void load_world();
-	void save_world();
+	bool load_world(const char* path);
+	void save_world(const char* path);
 
 	// Initial scene path to view 
 	std::string _scene_path;
@@ -35,6 +35,8 @@ private:
 	ComPtr<ID3D11DepthStencilState> _depth_state;
 	ComPtr<ID3D11BlendState> _blend_state;
 	ComPtr<ID3D11RasterizerState> _raster_state;
+
+	framework::EntityDebugOverlay* _overlay;
 
 	enum class Samplers
 	{

@@ -11,14 +11,14 @@ public:
 	EntityDebugOverlay(framework::World* world);
 	~EntityDebugOverlay() {}
 
-	void render_tree(framework::Entity* ent);
+	void render_tree(framework::EntityHandle ent);
 
 	void render_object(rttr::instance& obj);
 
 	virtual void render_overlay() override;
 
 private:
-	framework::Entity* _selected;
+	framework::EntityHandle _selected;
 	framework::World* _world;
 };
 

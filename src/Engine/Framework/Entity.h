@@ -29,8 +29,13 @@ namespace framework
 		// #TODO: This should be managed by systems instead
 		virtual void update(float dt);
 
+		// Create a component from a type
+		Component* create_component(rttr::type const& t);
+
 		template<typename T, typename...Args>
 		T* create_component( Args...args);
+
+		void add_component(Component* component);
 
 		Component* get_component(rttr::type const& t) const;
 
@@ -76,6 +81,8 @@ namespace framework
 		std::vector<EntityHandle> _children;
 		std::vector<Component*> _components;
 
+		friend class SceneViewer;
+
 		hlslpp::quaternion _rot;
 
 		WrapperFloat4 get_pos() {
@@ -120,6 +127,7 @@ namespace framework
 
 		return comp;
 	}
+
 
 	template<typename T>
 	T* Entity::get_component() const

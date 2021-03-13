@@ -50,8 +50,10 @@ public:
 		return _resource.get();
 	}
 
-protected:
+	public:
 	init_type const& get_init_parameters() const { return _init; }
+
+protected:
 
 	std::shared_ptr<resource_type> _resource;
 private:

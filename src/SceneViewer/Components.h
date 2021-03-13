@@ -107,7 +107,9 @@ public:
 	virtual void render() override;
 
 	bool is_loaded() const;
-	void set_model(std::string const& mesh);
+	void set_model_path(std::string mesh);
+
+	std::string get_model_path();
 
 	std::shared_ptr<ModelResource> get_model_resource() const { return _resource; };
 
@@ -123,6 +125,13 @@ class LightComponent final : public framework::Component
 
 public:
 	using Entity = framework::Entity;
+
+	LightComponent()
+			: _color({ float3(0.0, 0.0, 0.0) })
+			, _intensity(0.0)
+	{}
+
+	virtual ~LightComponent() {}
 
 	hlslpp::float3 get_color() { return _color; }
 
@@ -143,7 +152,6 @@ public:
 	CameraComponent();
 	~CameraComponent();
 
-	CameraComponent(CameraComponent const&) = delete;
 	CameraComponent& operator=(CameraComponent const&) = delete;
 
 	void update(float dt) override;

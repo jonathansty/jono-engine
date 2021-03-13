@@ -7,6 +7,7 @@ namespace framework
 
 	class Component
 	{
+		friend class World;
 		RTTR_REGISTRATION_FRIEND
 		RTTR_ENABLE()
 	public:
@@ -25,7 +26,6 @@ namespace framework
 		{
 			return _parent;
 		}
-
 
 	private:
 		bool _active;

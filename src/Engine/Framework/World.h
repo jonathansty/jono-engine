@@ -14,6 +14,10 @@ namespace framework
 		uint64_t id;
 		uint64_t generation;
 
+		bool operator==(EntityHandle const& rhs) {
+			return this->id == rhs.id&& this->generation == rhs.generation;
+		}
+
 
 		operator bool() const {
 			return is_valid();
@@ -74,12 +78,15 @@ namespace framework
 
 		bool remove_entity(EntityHandle const& handle);
 
+		void clear();
+
 		std::vector<Entity*> get_entities() const
 		{
 			return _entities;
 		}
 
 		bool attach_to(EntityHandle const& attach_to, EntityHandle const& child);
+		bool attach_to(EntityHandle const& attach_to, Component* child);
 
 	private:
 
@@ -107,6 +114,10 @@ namespace framework
 		{
 			id = _free_list[_free_list.size() - 1];
 			_free_list.pop_back();
+
+			// If we end up asserting here this means something hasn't properly cleared our entity list
+			assert(_entities[id] == nullptr);
+			_entities[id] = obj;
 		}
 		// No free slots means we need to create some
 		else

@@ -120,6 +120,24 @@ float4 Entity::get_local_position() const {
 	return _pos;
 }
 
+framework::Component* Entity::create_component(rttr::type const& t) {
+	assert(t.is_derived_from(rttr::type::get<Component>()));
+	rttr::variant obj = t.create();
+	if (obj.can_convert<Component*>()) {
+		obj.convert<Component*>();
+	}
+	Component* comp = obj.get_value<Component*>();
+	_components.push_back(comp);
+
+	comp->on_attach(this);
+
+	return comp;
+}
+
+void Entity::add_component(Component* component) {
+	_components.push_back(component);
+}
+
 Component* Entity::get_component(rttr::type const& t) const {
 	for (Component* c : _components) {
 		rttr::type info = rttr::type::get(*c);

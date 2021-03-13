@@ -2,6 +2,7 @@
 #include "World.h"
 
 #include "Entity.h"
+#include "Component.h"
 
 using namespace framework;
 
@@ -97,9 +98,11 @@ Component* World::find_first_component(rttr::type const& info) const
 {
 	for (std::size_t i = 0; i < _entities.size(); ++i)
 	{
-		if (auto comp = _entities[i]->get_component(info); comp)
-		{
-			return comp;
+		if(_entities[i]) {
+			if (auto comp = _entities[i]->get_component(info); comp)
+			{
+				return comp;
+			}
 		}
 	}
 
@@ -132,6 +135,21 @@ bool framework::World::attach_to(EntityHandle const& attach_to, EntityHandle con
 	return true;
 }
 
+bool framework::World::attach_to(EntityHandle const& attach_to, Component* child) {
+
+	if(child->_parent) {
+		child->on_detach(child->_parent);
+	}
+
+	_entities[attach_to.id]->add_component(child);
+
+	// attach to new parent
+	child->_parent = _entities[attach_to.id];
+	child->on_attach(_entities[attach_to.id]);
+
+	return true;
+}
+
 void framework::World::init() {
 
 	// Create the root entity 
@@ -159,4 +177,24 @@ void framework::World::init() {
 	auto handle = EntityHandle(id, _generation[id], w);
 	_root = handle;
 	_root->set_name("Root");
+}
+
+void framework::World::clear() {
+	// Process deletion list?
+	assert(_deletion_list.size() == 0);
+
+	_root->_children.clear();
+
+	// Clear all entities except the root
+	for (uint64_t id = 1; id < _entities.size(); ++id) {
+
+		// Free the entity
+		delete _entities[id];
+		_entities[id] = nullptr;
+
+		// Invalidate the generation for all entities
+		++_generation[id];
+
+		_free_list.push_back(id);
+	}
 }

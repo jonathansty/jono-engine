@@ -46,20 +46,24 @@ public:
 	}
 
 	virtual bool exists(const char* path) override {
-		return std::filesystem::exists(path);
+		std::string tmp = resolve_path(path);
+		return std::filesystem::exists(tmp);
 	}
 
 	virtual void mount(const char* path) override {
 		_root = path;
 	}
 
-	virtual std::shared_ptr<IPlatformFile> open(const char* path, Mode mode, bool binary) override {
-
+	std::string resolve_path(std::string const& path) {
 		// resolve path
 		char tmp[512];
-		sprintf(tmp, "%s/%s", _root.c_str(), path);
+		sprintf_s(tmp, "%s/%s", _root.c_str(), path.c_str());
+		return tmp;
+	}
 
-		if(exists(tmp) || mode == Mode::Write) {
+	virtual std::shared_ptr<IPlatformFile> open(const char* path, Mode mode, bool binary) override {
+
+		if(exists(path) || mode == Mode::Write) {
 			std::string t = "";
 			switch (mode) {
 				case Mode::Read:
@@ -75,9 +79,11 @@ public:
 			if (binary) {
 				t += "b";
 			}
+
+			std::string tmp = resolve_path(path);
 			FILE* s;
-			fopen_s(&s, tmp, t.c_str());
-			return std::make_shared<PlatformFile>(tmp, s, mode, binary);
+			fopen_s(&s, tmp.c_str(), t.c_str());
+			return std::make_shared<PlatformFile>(tmp.c_str(), s, mode, binary);
 		}
 
 		return nullptr;
