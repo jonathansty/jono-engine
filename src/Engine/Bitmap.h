@@ -1,7 +1,6 @@
 #pragma once
 
 #include "EString.h"
-#include "Structs.h"
 
 struct ID2D1Bitmap;
 

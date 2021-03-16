@@ -82,8 +82,9 @@ using hlslpp::float3x3;
 using hlslpp::double2;
 
 
+#include "Core/Types.h"
+
 #include "Engine/EString.h"
-#include "Engine/Structs.h"
 #include "Engine/Box2DDebugRenderer.h"
 #include "Engine/InputManager.h"
 #include "Engine/PrecisionTimer.h"

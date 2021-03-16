@@ -4,7 +4,6 @@
 #include <string>
 #include <d2d1.h>
 
-#include "Structs.h"
 #include "EString.h"
 
 struct ID2D1Factory;

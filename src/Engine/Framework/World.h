@@ -8,7 +8,9 @@ namespace framework
 
 	struct EntityHandle
 	{
-		EntityHandle() : id(-1), generation(-1) {};
+		static constexpr uint64_t invalid_id = std::numeric_limits<uint64_t>::max();
+
+		EntityHandle() : id(invalid_id), generation(invalid_id) {};
 		~EntityHandle() = default;
 
 		uint64_t id;
@@ -48,7 +50,9 @@ namespace framework
 		using EntityId = EntityHandle;
 
 		static std::shared_ptr<World> create() {
-			return std::make_shared<World>();
+			auto world = std::make_shared<World>();
+			world->init();
+			return world;
 		}
 
 		World();
@@ -61,6 +65,8 @@ namespace framework
 		void update(float dt);
 
 		bool is_handle_valid(EntityHandle const& handle);
+
+		EntityHandle get_root() const { return _root; }
 
 		template<typename T = Entity, typename...Args>
 		EntityHandle create_entity(Args ... args);

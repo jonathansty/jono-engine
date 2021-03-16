@@ -1,7 +1,21 @@
-#include "testbed.stdafx.h"
+#include <rttr/registration>
+#include <rttr/type>
+#include <rttr/registration_friend>
+#include <hlsl++.h>
+#include <fmt/core.h>
+
+#include <iostream>
+
+#include "Types.h"
+#include "Identifier.h"
+
 #include "Serialization.h"
 
-bool serialization::write_atomic_types(IO::IPlatformFileRef const& file, rttr::variant const& variant) {
+using hlslpp::float4;
+using hlslpp::float3;
+
+
+bool serialization::write_atomic_types(IO::IFileRef const& file, rttr::variant const& variant) {
 	auto const& t = variant.get_type();
 	auto const& var = variant;
 
@@ -62,40 +76,32 @@ bool serialization::write_atomic_types(IO::IPlatformFileRef const& file, rttr::v
 	return false;
 }
 
-
-
-bool serialization::write_variant(IO::IPlatformFileRef const& file, rttr::variant const& variant) {
-	rttr::type const& value_type = variant.get_type();
-	rttr::type const& wrapped_type = value_type.is_wrapper() ? value_type.get_wrapped_type() : value_type;
-
-	bool is_wrapper = wrapped_type != value_type;
-
-	if (write_atomic_types(file, is_wrapper ? variant.extract_wrapped_value() : variant)) {
-	} else if (variant.is_sequential_container()) {
-		throw std::exception("Sequential containers are unsupported.");
-	} else if (variant.is_associative_container()) {
-		throw std::exception("Associative containers are unsupported");
-	} else {
-		throw std::exception("Non atomic types are unsupported");
-	}
-
-	return true;
-}
-
-bool serialization::write_instance(IO::IPlatformFileRef const& file, rttr::instance const& instance) {
+bool serialization::write_instance(IO::IFileRef const& file, rttr::instance const& instance) {
 	rttr::instance obj = instance.get_type().get_raw_type().is_wrapper() ? instance.get_wrapped_instance() : instance;
+	rttr::type t = obj.get_type().get_raw_type();
 	rttr::array_range<rttr::property> properties = obj.get_derived_type().get_properties();
+
+	// Hash our type and serialize the hash into the binary for lookup later
+	Identifier64 type_hash = Identifier64(t.get_name().begin());
+	uint32_t n_properties = properties.size();
+
+	write(file, type_hash.get_hash());
+	write(file, n_properties);
+
 	for (auto const& prop : properties) {
 		rttr::variant prop_value = prop.get_value(instance);
-		if (!prop_value)
-			continue;
+		assert(prop_value.is_valid() && "Property does not have a value on this instance of the object. Check passed in instance for correctness!" );
 
-		const auto name = prop.get_name();
+		// Write out the property name
+		const auto prop_name = prop.get_name();
+		write(file, prop_name.to_string());
 
 		try {
-			if (!write_variant(file, prop_value)) {
+			if (write_atomic_types(file, prop_value)) {} 
+			else if (write_instance(file, prop_value)) {}
+			else
 				throw std::exception("Failed to serialize property.");
-			}
+
 		} catch (std::exception e) {
 			std::cerr << e.what() << std::endl;
 		}
@@ -104,9 +110,7 @@ bool serialization::write_instance(IO::IPlatformFileRef const& file, rttr::insta
 	return true;
 }
 
-
-
-rttr::variant serialization::read_atomic_types(IO::IPlatformFileRef const& file, rttr::type const& t) {
+rttr::variant serialization::read_atomic_types(IO::IFileRef const& file, rttr::type const& t) {
 	rttr::variant variant;
 
 	using namespace rttr;
@@ -162,26 +166,45 @@ rttr::variant serialization::read_atomic_types(IO::IPlatformFileRef const& file,
 	return variant;
 }
 
-bool serialization::read_instance(IO::IPlatformFileRef const& file, rttr::instance instance) {
+bool serialization::read_instance(IO::IFileRef const& file, rttr::instance instance) {
+
+	// Read type hash of the instance
+	u64 type_hash = read<u64>(file);
+	u32 n_properties = read<u32>(file);
+
 	rttr::instance obj = instance.get_type().get_raw_type().is_wrapper() ? instance.get_wrapped_instance() : instance;
-	rttr::array_range<rttr::property> properties = obj.get_derived_type().get_properties();
-	for (auto const& prop : properties) {
-		rttr::variant prop_value = prop.get_value(instance);
-		if (!prop_value)
+	rttr::type t = obj.get_type().get_raw_type();
+
+	// Make sure that the ID matches
+	Identifier64 id = Identifier64(t.get_name().begin());
+	assert(type_hash == id.get_hash());
+
+	for (u32 i = 0; i < n_properties; ++i) {
+
+		std::string name = read<std::string>(file);
+
+		// Check that our runtime type contains the property
+		rttr::property prop = t.get_property(name);
+		if (!prop.is_valid()) {
 			continue;
+		}
 
-		auto name = prop.get_name();
-
-		const auto val = prop.get_value(obj);
-
-		std::cout << name << std::endl;
-		rttr::variant basic_type = read_atomic_types(file, prop.get_type());
-		if (basic_type.convert(prop.get_type())) {
-			std::string result = basic_type.to_string();
-			prop.set_value(obj, basic_type);
+		// Extract atomic types first
+		rttr::type const& t_prop = prop.get_type();
+		if (rttr::variant value = read_atomic_types(file, t_prop);  value.is_valid()) {
+			if (value.convert(t_prop)) {
+				prop.set_value(obj, value);
+			}
+			continue;
+		} else { // Handle the properties
+			rttr::variant val = prop.get_value(obj);
+			read_instance(file, val);
+			prop.set_value(obj, val);
 		}
 
 	}
 
-	return false;
+
+	return true;
 }
+

@@ -1,11 +1,52 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015 
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
-
 #pragma once
+/*!
+ * \file Types.h
+ * \date 2021/03/14 19:24
+ *
+ * \author Jonathan Steyfkens
+ *
+ * \brief typedefs for commonly used types across the engine
+ *
+ * \note
+*/
+#include <hlsl++.h>
+
+#include <stdint.h>
+#include <string>
+#include <memory.h>
+#include <mutex>
+
+#include <rttr/registration>
+#include <rttr/registration_friend>
+#include <rttr/type>
+
+#include <Identifier.h>
+
+using u8 = uint8_t;
+using u16 = uint16_t;
+using u32 = uint32_t;
+using u64 = uint64_t;
+
+using s8 = int8_t;
+using s16 = int16_t;
+using s32 = int32_t;
+using s64 = int64_t;
+
+using f32 = float;
+using f64 = double;
+
+using hlslpp::double2;
+using hlslpp::float1;
+using hlslpp::float2;
+using hlslpp::float3;
+using hlslpp::float3x3;
+using hlslpp::float4;
+using hlslpp::float4x4;
+
+// Default C++ types
+using std::shared_ptr;
+using std::string;
+using std::weak_ptr;
 
 // Store Box2D contactdata retrieved from userData pointers
 struct ContactData
@@ -125,3 +166,10 @@ struct WrapperFloat3 {
 
 using helpers::WrapperFloat3;
 using helpers::WrapperFloat4;
+
+namespace helpers {
+
+
+	rttr::type const& get_type_by_id(u64 id);
+
+}

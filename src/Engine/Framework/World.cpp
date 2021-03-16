@@ -64,9 +64,6 @@ void World::update(float dt)
 		delete _entities[id];
 		_entities[id] = nullptr;
 
-		// Invalidate the generation
-		++_generation[id];
-
 		// Add this slot to the free list
 		_free_list.push_back(id);
 	}
@@ -116,6 +113,8 @@ bool World::remove_entity(EntityHandle const& handle)
 	auto it = std::find(_deletion_list.begin(), _deletion_list.end(), handle.id);
 	assert(it == _deletion_list.end());
 	_deletion_list.push_back(handle.id);
+
+	++_generation[handle.id];
 
 	return true;
 }
@@ -180,12 +179,11 @@ void framework::World::init() {
 }
 
 void framework::World::clear() {
-	// Process deletion list?
-	assert(_deletion_list.size() == 0);
 
+	// Clear all the children of our root
 	_root->_children.clear();
 
-	// Clear all entities except the root
+	// process each entity except our root
 	for (uint64_t id = 1; id < _entities.size(); ++id) {
 
 		// Free the entity
@@ -194,7 +192,7 @@ void framework::World::clear() {
 
 		// Invalidate the generation for all entities
 		++_generation[id];
-
-		_free_list.push_back(id);
 	}
+
+	_entities.resize(1);
 }

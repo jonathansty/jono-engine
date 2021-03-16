@@ -3,148 +3,40 @@
 
 #include "Framework/World.h"
 #include "Framework/Entity.h"
-#include "rtti/rtti.h"
+#include "Serialization.h"
+#include "core/PlatformIO.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 
-namespace Core
+namespace FrameworkTests
 {
-	class MockTypeA
-	{
-		REFLECT(MockTypeA);
+	using namespace framework;
 
-	public:
-		int _a;
-		int _b;
-	};
-
-	class MockTypeB : public MockTypeA
-	{
-		REFLECT(MockTypeB);
-
-	public:
-		void add(double d) {
-			_c += d;
-		}
-
-		double _c;
-	};
-
-	IMPL_REFLECT(MockTypeA)
-	{
-		type.register_property("a", &MockTypeA::_a);
-		type.register_property("b", &MockTypeA::_b);
-	}
-
-	IMPL_REFLECT(MockTypeB)
-	{
-		type.bind_parent<MockTypeA>();
-		type.register_property("c", &MockTypeB::_c);
-
-		type.register_property<MockTypeB, double>("custom_c", 
-			[](MockTypeB* obj, double const* val) 
-			{
-				obj->_c = (*val) * 20.0; 
-			}, 
-			[](MockTypeB* obj, double** val) 
-			{
-				*val = &obj->_c;
-			}
-		);
-	}
-
-	TEST_CLASS(RTTITests)
-	{
-		TEST_METHOD(registry_retrieve_primitive_type)
-		{
-			rtti::TypeInfo* type = rtti::Registry::get<int>();
-			Assert::IsNotNull(type);
-
-			Assert::AreEqual(sizeof(int), type->get_size(), L"Type information has unexpected size!");
-			Assert::AreEqual("int", type->get_name(), L"Type name is incorrect!");
-		}
-
-		TEST_METHOD(registry_retrieve_mock_type_a)
-		{
-			auto type = rtti::Registry::get<MockTypeA>();
-			Assert::IsNotNull(type);
-			Assert::AreEqual(sizeof(MockTypeA), type->get_size());
-		}
-
-		TEST_METHOD(registry_retrieve_mock_type_b)
-		{
-			auto type = rtti::Registry::get<MockTypeB>();
-			Assert::AreEqual(sizeof(MockTypeB), type->get_size());
-			Assert::IsTrue(type->inherits(MockTypeA::get_static_type()));
-		}
-
-		TEST_METHOD(MockTypeA_get_static_type)
-		{
-			auto type = MockTypeA::get_static_type();
-			Assert::IsNotNull(type);
-		}
-
-		TEST_METHOD(MockTypeB_get_static_type)
-		{
-			auto type = MockTypeB::get_static_type();
-			Assert::IsNotNull(type);
-		}
-
-		TEST_METHOD(MockTypeB_Inherits_MockTypeA)
-		{
-			rtti::TypeInfo* info = rtti::Registry::get<MockTypeB>();
-			Assert::IsTrue(info->inherits(rtti::Registry::get<MockTypeA>()));
-		}
-
-		TEST_METHOD(MockTypeB_HasInheritedProperties)
-		{
-			rtti::TypeInfo* info = rtti::Registry::get<MockTypeB>();
-			Assert::IsNotNull(info->find_property("a"));
-			Assert::IsNotNull(info->find_property("b"));
-			Assert::IsNotNull(info->find_property("c"));
-			Assert::IsNotNull(info->find_property("custom_c"));
-		}
-
-		TEST_METHOD(MockTypeB_SetUsingCustomProperty)
-		{
-			MockTypeB obj{};
-			rtti::Object dynamic_obj = rtti::Object::create_as_ref(&obj);
-
-			rtti::TypeInfo* info = rtti::Registry::get<MockTypeB>();
-			dynamic_obj.set_property("custom_c", -1.0);
-			double value = dynamic_obj.get_property<double>("custom_c");
-			Assert::AreEqual(value, -20.0, 0.01);
-		}
-
-
-	};
-}
-
-namespace GameFrameworkTests
-{
 	TEST_CLASS(WorldTests)
 	{
 	public:
-		TEST_METHOD(create_empty_world)
+
+		TEST_METHOD(world_create)
 		{
-			auto world = framework::World::create();
-			Assert::AreEqual(int(world->get_entities().size()), 0, L"An empty world expects zero entities!");
+			auto world = World::create();
+			Assert::IsTrue(world->get_root().is_valid());
+
+			auto ent = world->get_entities();
+			Assert::AreEqual<size_t>(ent.size(), 1, L"An empty world expects 1 entity (root)!");
 		}
 
-		TEST_METHOD(create_world_and_entities)
+		TEST_METHOD(world_create_entity)
 		{
-			auto world = framework::World::create();
-			Assert::AreEqual(int(world->get_entities().size()), 0, L"An empty world expects zero entities!");
+			auto world = World::create();
 
 			framework::EntityHandle entity = world->create_entity();
-			Assert::IsNotNull(entity.get());
+			Assert::IsTrue(entity.is_valid() && world->get_entities().size() == 2);
 		}
 
-		TEST_METHOD(add_remove_entities)
+		TEST_METHOD(world_entities_add_remove)
 		{
 			auto world = framework::World::create();
-			Assert::AreEqual(int(world->get_entities().size()), 0, L"An empty world expects zero entities!");
 
 			framework::EntityHandle ent0 = world->create_entity();
 			framework::EntityHandle ent1 = world->create_entity();
@@ -155,12 +47,131 @@ namespace GameFrameworkTests
 			world->update(0.33f);
 
 			auto ent3 = world->create_entity();
-			Assert::AreEqual<uint64_t>(1, ent3.id, L"Unexpected Entity ID!");
+			Assert::AreEqual<uint64_t>(2, ent3.id, L"Unexpected Entity ID!");
 			Assert::AreEqual<uint64_t>(1, ent3.generation, L"Unexpected generation!");
 		}
 
+		TEST_METHOD(world_clear) {
+			auto world = World::create();
 
+			std::vector<EntityHandle> handles;
+			for (int i = 0; i < 50; ++i) {
+				handles.push_back(world->create_entity());
+			}
+
+			world->clear();
+
+			for (int i = 0; i < 50; ++i) {
+				Assert::IsFalse(handles[i].is_valid());
+
+				EntityHandle n = world->create_entity();
+				Assert::IsTrue(n.is_valid());
+			}
+
+		}
 	};
 
+	TEST_CLASS(EntityHandleTests) {
+
+		TEST_METHOD(handle_create_invalid) {
+			EntityHandle handle{};
+			Assert::IsFalse(handle.is_valid());
+		}
+
+		TEST_METHOD(handle_create_valid) {
+			auto w = World::create();
+
+			EntityHandle handle = w->create_entity();
+			Assert::IsTrue(handle.is_valid());
+			Assert::IsTrue(handle.id == 1);
+
+			handle = w->create_entity();
+			Assert::IsTrue(handle.is_valid());
+			Assert::IsTrue(handle.id == 2);
+		}
+
+		TEST_METHOD(handle_invalid_after_destroy) {
+			auto w = World::create();
+			EntityHandle handle = w->create_entity();
+
+			Assert::IsTrue(w->remove_entity(handle));
+
+			Assert::IsFalse(handle.is_valid());
+
+		}
+	};
+
+	struct MockA {
+		MockA() = default;
+		MockA(MockA const& rhs)
+				: a(rhs.a), d(rhs.d) 
+		{}
+
+		int a;
+		float d;
+	};
+
+	struct MockB {
+		MockB() = default;
+		MockB(MockB const& rhs) : value(rhs.value), data(data) {
+
+		}
+
+		MockA value;
+		std::string data;
+	};
+	RTTR_REGISTRATION{
+		using namespace rttr;
+
+		registration::class_<MockA>("MockA")
+			.constructor<>()()
+			.property("a", &MockA::a)
+			.property("d", &MockA::d);
+		
+		registration::class_<MockB>("MockB")
+			.constructor<>()()
+			.property("value", &MockB::value)
+			.property("data", &MockB::data);
+
+	}
+
+	TEST_CLASS(SerializationBinaryTests) {
+		TEST_METHOD(serialize_simple) {
+
+				rttr::type t = rttr::type::get<MockA>().create().get_type();
+
+				MockB data{};
+				data.value.a = 100.0f;
+				data.value.d = -75.0f;
+				data.data = "Test123@";
+
+				char path[512];
+				GetCurrentDirectoryA(512, path);
+
+				auto io = IO::create();
+				io->mount("./");
+				if (auto file = io->open("tests.bin", IO::Mode::Write, true); file) {
+					serialization::serialize_instance<IO::Mode::Write>(file, data);
+				}
+
+				if (auto file = io->open("tests.bin", IO::Mode::Read, true); file) {
+
+					u64 hash = serialization::read<u64>(file);
+					file->seek(0, IO::SeekMode::FromBeginning);
+
+					rttr::type t = helpers::get_type_by_id(hash);
+					rttr::variant obj = t.create();
+
+
+					bool result = serialization::serialize_instance<IO::Mode::Read>(file, obj);
+
+					std::shared_ptr<MockB> read_data = obj.get_value<std::shared_ptr<MockB>>();
+					Assert::AreEqual(data.value.a, read_data->value.a);
+					Assert::AreEqual(data.value.d, read_data->value.d);
+					Assert::AreEqual(data.data, read_data->data);
+				
+				}
+		}
+	};
 
 }

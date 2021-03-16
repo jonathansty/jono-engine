@@ -1,13 +1,16 @@
 #include "PlatformIO.h"
 
+#include <fmt/core.h>
 #include <filesystem>
 #include <cassert>
 
 namespace IO {
 
-class PlatformFile final : public IPlatformFile {
+#ifdef WIN64
+
+class Win64File final : public IFile {
 public:
-	PlatformFile(const char* path, FILE* s, Mode m, bool binary) 
+	Win64File(const char* path, FILE* s, Mode m, bool binary) 
 		: _path(path)
 		, _stream(s)
 		, _mode(m)
@@ -15,7 +18,7 @@ public:
 	{
 	}
 
-	virtual ~PlatformFile() {
+	virtual ~Win64File() {
 		fclose(_stream);
 	}
 
@@ -24,12 +27,22 @@ public:
 	virtual Mode get_mode() const { return _mode; }
 
 	virtual uint32_t write(void* src, uint32_t size) {
-		return fwrite(src, size, 1, _stream);
+		return static_cast<uint32_t>(fwrite(src, size, 1, _stream));
 	}
 
-	virtual uint32_t read(void* dst, uint32_t size) {
-		return fread(dst, size, 1, _stream);
+	virtual u32 read(void* dst, u32 size) {
+		return static_cast<uint32_t>(fread(dst, size, 1, _stream));
 	}
+
+	virtual void seek(s64 offset, SeekMode mode) {
+		int m = SEEK_CUR;
+		if (mode == SeekMode::FromBeginning) {
+			m = SEEK_SET;
+		}
+		fseek(_stream, long(offset), m);
+	}
+
+	virtual u64 tell() const { return ftell(_stream); }
 
 	std::string _path;
 	Mode _mode;
@@ -37,7 +50,7 @@ public:
 	bool _binary;
 };
 
-class PlatformIO final : public IPlatformIO {
+class Win64IO final : public IPlatformIO {
 public:
 
 	virtual bool create_directory(const char* path) override {
@@ -61,7 +74,7 @@ public:
 		return tmp;
 	}
 
-	virtual std::shared_ptr<IPlatformFile> open(const char* path, Mode mode, bool binary) override {
+	virtual std::shared_ptr<IFile> open(const char* path, Mode mode, bool binary) override {
 
 		if(exists(path) || mode == Mode::Write) {
 			std::string t = "";
@@ -82,8 +95,12 @@ public:
 
 			std::string tmp = resolve_path(path);
 			FILE* s;
-			fopen_s(&s, tmp.c_str(), t.c_str());
-			return std::make_shared<PlatformFile>(tmp.c_str(), s, mode, binary);
+			auto err = fopen_s(&s, tmp.c_str(), t.c_str());
+			if (s == nullptr) {
+				fmt::print("Failed to open file. Error: {}",strerror(err));
+				return nullptr;
+			}
+			return std::make_shared<Win64File>(tmp.c_str(), s, mode, binary);
 		}
 
 		return nullptr;
@@ -93,9 +110,11 @@ public:
 		std::string _root;
 };
 
-std::shared_ptr<IPlatformIO> create() {
+#endif
+
+IPlatformIORef create() {
 #if defined(WIN64)
-	return std::make_shared<PlatformIO>();
+	return std::make_shared<Win64IO>();
 #else 
 	throw std::exception("Platform not supported!");
 	return nullptr;

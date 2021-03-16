@@ -32,6 +32,7 @@ public:
 	//{
 	//	return _hash == rhs._hash;
 	//}
+	T get_hash() const { return _hash; }
 
 private:
 	T _hash;

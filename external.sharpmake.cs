@@ -67,18 +67,38 @@ public class Assimp : VCPKG
 }
 
 
-[Export]
-public class RTTR : VCPKG
+[Generate]
+public class RTTR : ExternalProject
 {
+
+    public RTTR() : base()
+    {
+        Name = "RTTR";
+        SourceRootPath = Path.Combine(ExternalDir, "rttr/src/rttr");
+        //SourceFilesFiltersRegex = new Strings();
+        //SourceFilesFiltersRegex.Add(@"rttr\\\w*\.(h|cpp)");
+    }
+
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        conf.IncludePaths.Add(@"[project.SourceRootPath]/..");
+
+        conf.Output = Configuration.OutputType.Lib;
+
+    }
     public override void ConfigureRelease(Configuration conf, Target target)
     {
         base.ConfigureRelease(conf, target);
+        //conf.ExportDefines.Add(@"RTTR_DLL=[project.VcpkgDir]/bin;");
         conf.LibraryFiles.Add(@"rttr_core");
     }
 
     public override void ConfigureDebug(Configuration conf, Target target)
     {
         base.ConfigureDebug(conf, target);
+        //conf.ExportDefines.Add(@"RTTR_DLL=[project.VcpkgDir]/debug/bin;");
         conf.LibraryFiles.Add(@"rttr_core_d");
     }
 

@@ -1,6 +1,5 @@
 #pragma once
 #include "EString.h"
-#include "Structs.h"
 
 class Font;
 namespace graphics {

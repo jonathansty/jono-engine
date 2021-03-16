@@ -70,6 +70,7 @@ public abstract class JonaBaseProject : Project
         ));
 
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
+        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]");
 
     }
 

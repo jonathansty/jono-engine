@@ -18,7 +18,7 @@ RTTR_REGISTRATION{
 	using namespace framework; 
 
 
-	registration::class_<Entity>("Entity")
+	registration::class_<Entity>("Entity")(Versioning::version(1))
 			.property("name", &Entity::_name)
 			.property("position", &Entity::get_pos, &Entity::set_pos)
 			.property("rotation", &Entity::get_rot_euler, &Entity::set_rot_euler)

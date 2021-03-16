@@ -40,6 +40,8 @@ public class CoreProject : JonaBaseProject
         conf.Output = Configuration.OutputType.Lib;
 
         conf.AddPrivateDependency<Fmt>(target);
+        conf.AddPrivateDependency<HLSLPP>(target);
+        conf.AddPrivateDependency<RTTR>(target);
     }
 }
 
@@ -94,7 +96,6 @@ public class EngineProject : JonaBaseProject
 
         // Own public libraries
         conf.AddPublicDependency<CliProject>(target);
-        // conf.AddPublicDependency<RttiProject>(target);
         conf.AddPublicDependency<CoreProject>(target);
         conf.AddPublicDependency<RTTR>(target);
 
@@ -129,6 +130,7 @@ public class EngineProject : JonaBaseProject
 
         //conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
         //conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
+        conf.IncludePaths.Add(@"[project.SourceRootPath]/..");
     }
 
     protected override void ExcludeOutputFiles()
@@ -152,16 +154,13 @@ public class EngineTestProject : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        conf.SolutionFolder = "engine";
+        conf.SolutionFolder = "tests";
 
         // Private dependencies
         conf.AddPrivateDependency<EngineProject>(target, DependencySetting.DefaultWithoutBuildSteps);
 
         // Compile C++17 
         conf.Output = Configuration.OutputType.Dll;
-        conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
-        conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
-        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
 
         // Add engine include path
         conf.IncludeSystemPaths.Add(@"[project.SharpmakeCsPath]/src/");
@@ -244,7 +243,7 @@ public class EngineSolution : Solution
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]_[target.Platform]";
         conf.AddProject<EngineProject>(target);
         conf.AddProject<SceneViewerProject>(target);
-        //conf.AddProject<EngineTestProject>(target);
+        conf.AddProject<EngineTestProject>(target);
     }
 }
 

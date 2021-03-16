@@ -73,23 +73,4 @@ using Microsoft::WRL::ComPtr;
 #include <TaskScheduler.h>
 #include <tinyxml2/tinyxml2.h>
 
-// HLSLPP
-#include <hlsl++.h>
-using hlslpp::double2;
-using hlslpp::float1;
-using hlslpp::float2;
-using hlslpp::float3;
-using hlslpp::float3x3;
-using hlslpp::float4;
-using hlslpp::float4x4;
-using hlslpp::double2;
-
-// Default C++ types
-using std::string;
-using std::shared_ptr;
-using std::weak_ptr;
-
-
-
-// This is the only engine header that should be in the precompiled header to allow standard type usages across the project 
-#include "core/types.h"
+#include "Core/Types.h"

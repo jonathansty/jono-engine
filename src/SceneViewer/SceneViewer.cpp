@@ -348,67 +348,37 @@ void SceneViewer::render_3d()
 
 static const char* s_world_path = "Scenes/test_world.scene";
 bool SceneViewer::load_world(const char* path) {
-
 	auto io = GameEngine::instance()->io();
 	if (io->exists(path)) {
+		auto io = GameEngine::instance()->io();
+		std::shared_ptr<IO::IFile> file = io->open(path, IO::Mode::Read, true);
+		assert(file);
 
-		auto file = io->open(path, IO::Mode::Read, true);
+		u32 number_of_entities = serialization::read<u32>(file);
 
-		uint32_t number_of_entites = 0;
-		file->read(&number_of_entites, sizeof(uint32_t));
+		// Skip the root entity
+		for (u32 i = 1; i < number_of_entities; ++i) {
+			framework::EntityHandle ent = _world->create_entity();
+			rttr::instance obj = ent.get();
+			serialization::serialize_instance<IO::Mode::Read>(file, obj);
 
-		for (uint32_t i = 0; i < number_of_entites; ++i) {
+			// Write components manually
+			u32 n_components = serialization::read<u32>(file);
+			for (int i =0; i < n_components; ++i) {
+				u64 pos = file->tell();
+				u64 hash = serialization::read<u64>(file);
+				file->seek(pos, IO::SeekMode::FromBeginning);
 
-			// Skip root
-			framework::Entity* local = nullptr;
-			if(i >= 1) {
-				framework::EntityHandle ent = _world->create_entity();
-				local = &*ent;
-				serialization::read_instance(file, *ent);
+				auto t = helpers::get_type_by_id(hash);
+				rttr::variant inst = t.create();
+				serialization::serialize_instance<IO::Mode::Read>(file, inst);
 
-				uint32_t n_components;
-				file->read(&n_components, sizeof(uint32_t));
-
-				for (uint32_t j = 0; j < n_components; ++j) {
-					std::string type_name = serialization::read<std::string>(file);
-
-					//ent->_components.push_back(comp); 
-					rttr::type obj_type = rttr::type::get_by_name(type_name);
-					rttr::variant object = obj_type.create();
-
-					serialization::read_instance(file, object);
-
-					if(object.can_convert<Component*>()) {
-						object.convert<Component*>();
-					}
-					Component* comp = object.get_value<Component*>();
-					_world->attach_to(ent, comp);
-
-					object.clear();
-
-					std::cout << obj_type.get_name() << std::endl;
-
-
-
-
-				}
-
-
-			
-
-			} else {
-				framework::Entity ent{};
-				serialization::read_instance(file, ent);
-
-				uint32_t n_components;
-				file->read(&n_components, sizeof(uint32_t));
+				Component* comp = inst.get_value<Component*>();
+				_world->attach_to(ent, inst.get_value<Component*>());
 			}
-
-
 		}
-		return true;
-	} 
-	return false;
+	}
+	return true;
 }
 
 
@@ -416,27 +386,26 @@ void SceneViewer::save_world(const char* path) {
 	using namespace serialization;
 
 	auto io = GameEngine::instance()->io();
-	std::shared_ptr<IO::IPlatformFile> file = io->open(path, IO::Mode::Write, true);
+	std::shared_ptr<IO::IFile> file = io->open(path, IO::Mode::Write, true);
+	assert(file);
 
 	std::vector<Entity*> all_entities = _world->get_entities();
-	uint32_t number_of_entities = all_entities.size();
-	file->write(&number_of_entities, sizeof(uint32_t));
 
-	for (Entity const* ent : all_entities) {
-		rttr::instance obj = rttr::instance(*ent);
-		rttr::type type = rttr::type::get(*ent);
+	u32 number_of_entities = all_entities.size();
+	serialization::write<u32>(file, number_of_entities);
 
-		serialization::write_instance(file, obj);
+	// Skip the root entity
+	for (u32 i = 1; i < all_entities.size(); ++i) {
+
+		rttr::instance obj = all_entities[i];
+		serialization::serialize_instance<IO::Mode::Write>(file, obj);
 
 		// Write components manually
-		uint32_t n_components = ent->get_components().size();
-		write(file, n_components);
-		for (Component* comp : ent->get_components()) {
+		u32 n_components = all_entities[i]->get_components().size();
+		write<u32>(file, n_components);
+		for (Component* comp : all_entities[i]->get_components()) {
 			rttr::instance inst = comp;
-			// Write out the type name so we can create the component at runtime
-			std::string n = inst.get_derived_type().get_name().to_string();
-			serialization::write(file, n);
-			serialization::write_instance(file, inst);
+			serialization::serialize_instance<IO::Mode::Write>(file, inst);
 		}
 	}
 }

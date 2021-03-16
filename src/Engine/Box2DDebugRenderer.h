@@ -1,7 +1,5 @@
 #pragma once
 
-#include "Structs.h"
-
 namespace graphics {
 	class D2DRenderContext;
 }

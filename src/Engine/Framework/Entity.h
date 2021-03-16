@@ -1,10 +1,19 @@
 #pragma once
 
-#include "Structs.h"
+#include "core/Types.h"
 
 #include <rttr/registration>
 
 #include "framework/World.h"
+
+// Component versioning helper
+struct Versioning {
+	static rttr::detail::metadata version(uint32_t id) {
+		return rttr::detail::metadata(Versioning::get_key(), id);
+	}
+
+	static const char* get_key() { return "version"; }
+};
 
 
 namespace framework

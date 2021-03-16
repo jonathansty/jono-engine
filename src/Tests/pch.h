@@ -7,6 +7,7 @@
 #ifndef PCH_H
 #define PCH_H
 
+#define NOMINMAX
 #include <Windows.h>
 
 #include <vector>
@@ -15,6 +16,17 @@
 #include <DirectXMath.h>
 #include <dxgi.h>
 #include <d3d11.h>
+
+#include <rttr/type>
+#include <rttr/registration>
+#include <rttr/registration_friend>
+
+#include <hlsl++.h>
+using hlslpp::float4;
+using hlslpp::float3;
+using hlslpp::float2;
+using hlslpp::float4x4;
+using hlslpp::float3x3;
 
 using namespace DirectX;
 
