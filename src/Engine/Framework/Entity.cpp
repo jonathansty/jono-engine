@@ -1,4 +1,4 @@
-#include "engine.stdafx.h"
+#include "engine.pch.h"
 #include "Entity.h"
 
 #include "Component.h"
@@ -34,7 +34,8 @@ Entity::Entity(float3 pos)
 		, _pos(pos.x, pos.y, pos.z, 1.0f)
 		, _scale(float3{ 1.0f, 1.0f, 1.0f })
 		, _rot(hlslpp::quaternion::identity())
-		, _rot_euler(float3{ 0.0f, 0.0f, 0.0f }) {
+		, _id()
+{ 
 }
 
 Entity::Entity()
@@ -58,7 +59,6 @@ void Entity::set_local_scale(float3 scale) {
 
 void Entity::set_rotation(hlslpp::quaternion quat) {
 	_rot = quat;
-	_rot_euler = hlslpp_helpers::to_euler(_rot);
 }
 
 void Entity::set_rotation(float angle) {

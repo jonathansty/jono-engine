@@ -1,3 +1,4 @@
+#include "core.pch.h"
 #include "PlatformIO.h"
 
 #include <fmt/core.h>

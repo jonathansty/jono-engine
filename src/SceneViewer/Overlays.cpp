@@ -1,6 +1,8 @@
-#include "testbed.stdafx.h"
+#include "sceneviewer.pch.h"
 #include "Overlays.h"
 #include <fmt/core.h>
+
+#include "core/Math.h"
 
 namespace framework {
 
@@ -17,9 +19,6 @@ void EntityDebugOverlay::render_tree(framework::EntityHandle ent) {
 		flags |= ImGuiTreeNodeFlags_Leaf;
 
 	if (ImGui::TreeNodeEx(ent, flags, ent->get_name())) {
-		if (ImGui::IsItemToggledOpen()) {
-		}
-
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
 			_selected = ent;
 		}
@@ -34,6 +33,11 @@ void EntityDebugOverlay::render_tree(framework::EntityHandle ent) {
 		if (ImGui::IsItemClicked(ImGuiMouseButton_Left)) {
 			_selected = ent;
 		}
+	}
+
+	if (_selected && _selected.get() != _world->_root && ImGui::IsKeyPressed(ImGui::GetKeyIndex(ImGuiKey_Delete))) {
+		
+		_world->remove_entity(_selected);
 	}
 }
 
@@ -55,17 +59,24 @@ void EntityDebugOverlay::render_object(rttr::instance& obj) {
 			rttr::property const& p = prop;
 			std::string name = p.get_name().to_string();
 			
-			if (p.get_type() == rttr::type::get<WrapperFloat3>()) {
+			auto t = p.get_type();
+			if (t == rttr::type::get<WrapperFloat3>()) {
 				float3 pos = p.get_value(obj).convert<WrapperFloat3>().value;
 				if (ImGui::InputFloat3(name.c_str(), (float*)&pos, 2)) {
 					p.set_value(obj, WrapperFloat3{ pos });
 				}
-			} else if (p.get_type() == rttr::type::get<WrapperFloat4>()) {
+			} else if (t == rttr::type::get<WrapperFloat4>()) {
 				float4 v = p.get_value(obj).convert<WrapperFloat4>().value;
 				if (ImGui::InputFloat4(name.c_str(), (float*)&v, 2)) {
 					p.set_value(obj, WrapperFloat4{ v });
 				}
-			} else  if (p.get_type() == rttr::type::get<float>()) {
+			} else if (t == rttr::type::get<WrapperQuat>()) {
+				hlslpp::quaternion quat = p.get_value(obj).convert<WrapperQuat>().value;
+				hlslpp::float3 euler = hlslpp::degrees(hlslpp_helpers::to_euler(quat));
+				if (ImGui::InputFloat3(name.c_str(), (float*)&euler, 2)) {
+					p.set_value(obj, WrapperQuat{ hlslpp::euler(hlslpp::radians(euler)) });
+				}
+			} else if (t == rttr::type::get<float>()) {
 				float v = p.get_value(obj).convert<float>();
 				if (ImGui::InputFloat(p.get_name().to_string().c_str(), &v, 0.01f, 0.1f, 2)) {
 					p.set_value(obj, v);
@@ -112,6 +123,10 @@ void EntityDebugOverlay::render_overlay() {
 		if (ImGui::Button("Create")) {
 			auto handle = _world->create_entity();
 			handle->set_name(tmp);
+
+			if (_selected) {
+				_world->attach_to(_selected, handle);
+			}
 		}
 
 		std::vector<const char*> names{};

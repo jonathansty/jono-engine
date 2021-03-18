@@ -1,4 +1,4 @@
-#include "testbed.stdafx.h"
+#include "sceneviewer.pch.h"
 #include "HelloWorld.h"
 
 #include "Engine/Framework/framework.h"
@@ -61,7 +61,8 @@ void HelloWorldGame::start()
 	_world->init();
 	GameEngine::instance()->get_overlay_manager()->register_overlay(new framework::EntityDebugOverlay(_world.get()));
 
-	_parentEntity = _world->create_entity(float2(100, 100));
+	_parentEntity = _world->create_entity();
+	_parentEntity->set_local_position(float2(100.0f, 100.0f));
 	_parentEntity->create_component<BitmapComponent>(ResourcePaths::bmp_coin_silver);
 	_parentEntity->create_component<SimpleMovement2D>();
 	_parentEntity->set_name("Center");

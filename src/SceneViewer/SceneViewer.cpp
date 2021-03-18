@@ -1,4 +1,4 @@
-#include "testbed.stdafx.h"
+#include "sceneviewer.pch.h"
 #include <hlsl++.h>
 #include "SceneViewer.h"
 
@@ -99,11 +99,11 @@ void SceneViewer::start()
 	if (!has_loaded) {
 		// Create the world camera
 		{
-			World::EntityId cam_id = _world->create_entity();
-			framework::Entity* ent = _world->get_entity(cam_id);
-			ent->set_name("MainCamera");
-			auto comp = ent->create_component<CameraComponent>();
-			ent->set_local_position(float3(0.0f, 0.0f, -2.0f));
+			World::EntityId camera = _world->create_entity();
+			camera->set_name("MainCamera");
+			auto comp = camera->create_component<CameraComponent>();
+			camera->set_local_position(float3(0.0f, 0.0f, -2.0f));
+			_world->attach_to_root(camera);
 		}
 
 		{
@@ -116,6 +116,9 @@ void SceneViewer::start()
 				model->set_local_scale(scale);
 				auto comp = model->create_component<SimpleMeshComponent>();
 				comp->set_model_path((fs::path{ "Resources/Models/" } / model_path).string());
+
+				_world->attach_to_root(model);
+
 
 				return model;
 			};
@@ -137,6 +140,7 @@ void SceneViewer::start()
 			auto comp = ent->create_component<LightComponent>();
 			auto mesh_comp = ent->create_component<SimpleMeshComponent>();
 			mesh_comp->set_model_path((fs::path{ "Resources/Models/axes/axes.gltf" }).string());
+			_world->attach_to_root(ent);
 
 			add_model(float3(50.0, 0.0, 0.0f), float3(1.0), "Tower/scene.gltf");
 		}
@@ -317,6 +321,9 @@ void SceneViewer::render_3d()
 
 	for (auto& ent : _world->get_entities())
 	{
+		if (ent == nullptr)
+			continue;
+
 		// If the entity has a mesh component and is done loading
 		if (SimpleMeshComponent* mesh_comp = ent->get_component<SimpleMeshComponent>(); mesh_comp && mesh_comp->is_loaded() && mesh_comp->is_active())
 		{
@@ -356,10 +363,16 @@ bool SceneViewer::load_world(const char* path) {
 
 		u32 number_of_entities = serialization::read<u32>(file);
 
-		// Skip the root entity
+		// Phase 1: Read in the entire world
+		std::vector<std::pair<framework::EntityHandle, Identifier64>> handles;
 		for (u32 i = 1; i < number_of_entities; ++i) {
-			framework::EntityHandle ent = _world->create_entity();
+					
+			Identifier64 id = serialization::read<Identifier64>(file);
+			Identifier64 parent_id = serialization::read<Identifier64>(file);
+
+			framework::EntityHandle ent = _world->create_entity(id);
 			rttr::instance obj = ent.get();
+
 			serialization::serialize_instance<IO::Mode::Read>(file, obj);
 
 			// Write components manually
@@ -376,7 +389,19 @@ bool SceneViewer::load_world(const char* path) {
 				Component* comp = inst.get_value<Component*>();
 				_world->attach_to(ent, inst.get_value<Component*>());
 			}
+
+			handles.push_back({ ent, parent_id });
 		}
+
+		// Phase 2: Fixup the parent IDs
+		std::for_each(handles.begin(), handles.end(), [&](auto const& h) {
+
+			framework::EntityHandle parent = _world->find_by_id(std::get<1>(h));
+			if (!parent.is_valid()) {
+				parent = _world->get_root();
+			}
+			_world->attach_to(parent, std::get<0>(h));
+		});
 	}
 	return true;
 }
@@ -391,14 +416,32 @@ void SceneViewer::save_world(const char* path) {
 
 	std::vector<Entity*> all_entities = _world->get_entities();
 
-	u32 number_of_entities = all_entities.size();
+	u32 number_of_entities = _world->get_number_of_entities();
 	serialization::write<u32>(file, number_of_entities);
 
 	// Skip the root entity
 	for (u32 i = 1; i < all_entities.size(); ++i) {
 
+		if (!all_entities[i]) {
+			continue;
+		}
+
 		rttr::instance obj = all_entities[i];
+
+		Entity* ent = all_entities[i];
+
+		serialization::write(file, ent->get_id());
+
+		// Serialize parent id
+		Identifier64 parent_id;
+		if(ent->_parent && ent->_parent != _world->get_root()) {
+			parent_id = ent->_parent->get_id();
+		}
+		serialization::write<Identifier64>(file, parent_id);
+
 		serialization::serialize_instance<IO::Mode::Write>(file, obj);
+
+
 
 		// Write components manually
 		u32 n_components = all_entities[i]->get_components().size();

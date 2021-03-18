@@ -1,3 +1,4 @@
+#include "cli.pch.h"
 #include "Process.h"
 
 #include <fmt/core.h>

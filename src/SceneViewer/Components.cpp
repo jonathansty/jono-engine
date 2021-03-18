@@ -1,4 +1,4 @@
-#include "testbed.stdafx.h"
+#include "sceneviewer.pch.h"
 #include "Components.h"
 
 #include "Core/TextureResource.h"

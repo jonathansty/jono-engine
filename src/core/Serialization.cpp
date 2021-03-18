@@ -1,3 +1,4 @@
+#include "core.pch.h"
 #include <rttr/registration>
 #include <rttr/type>
 #include <rttr/registration_friend>

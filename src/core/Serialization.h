@@ -12,6 +12,12 @@ inline void write(IO::IFileRef const& f, T const& obj) {
 	f->write((void*)&obj, sizeof(T));
 }
 
+template<typename T>
+inline void write(IO::IFileRef const& f, Identifier<T> const& obj) {
+	T v = obj.get_hash();
+	f->write(&v, sizeof(T));
+}
+
 template <typename T>
 inline void write(IO::IFileRef const& f, std::vector<T> const& obj) {
 	uint32_t size = obj.size();
@@ -31,6 +37,12 @@ inline T read(IO::IFileRef const& f) {
 	T el{};
 	f->read((void*)&el, sizeof(T));
 	return el;
+}
+
+inline Identifier64 read(IO::IFileRef const& f) {
+	u64 val;
+	f->read(&val, sizeof(u64));
+	return Identifier64(val);
 }
 
 template <>

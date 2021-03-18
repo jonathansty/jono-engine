@@ -83,8 +83,10 @@ namespace framework
 
 		friend class EntityDebugOverlay;
 
+		Identifier64 get_id() const { return _id; }
 	protected:
 		std::string _name;
+		Identifier64 _id;
 		EntityHandle _parent;
 
 		std::vector<EntityHandle> _children;
@@ -110,19 +112,19 @@ namespace framework
 			_scale = v;
 		};
 
-		WrapperFloat3 get_rot_euler() const {
-			return { _rot_euler };
+		WrapperQuat get_rot_euler() const {
+			return { _rot };
 		};
-		void set_rot_euler(WrapperFloat3 v) {
-			_rot_euler = v;
-			_rot = hlslpp::euler({ _rot_euler.x, _rot_euler.y, _rot_euler.z });
+		void set_rot_euler(WrapperQuat v) {
+			//_rot_euler = v;
+			//_rot = hlslpp::euler({ _rot_euler.x, _rot_euler.y, _rot_euler.z });
+			_rot = v.value;
 		};
 
 
 
 		hlslpp::float4 _pos;
 		hlslpp::float3 _scale;
-		hlslpp::float3 _rot_euler;
 
 	};
 

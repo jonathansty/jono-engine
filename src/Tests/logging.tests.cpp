@@ -1,12 +1,7 @@
-#include "pch.h"
-#include "CppUnitTest.h"
-
-#include "Core/logging.h"
-
-using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+#include "tests.pch.h"
 
 
-namespace Core
+namespace core
 {
 	TEST_CLASS(Logging)
 	{

@@ -21,6 +21,7 @@
 #include <rttr/type>
 
 #include <Identifier.h>
+#include <windows.h>
 
 using u8 = uint8_t;
 using u16 = uint16_t;
@@ -139,6 +140,24 @@ private:
 	void set_w(float v) { value.w = v; }
 };
 
+struct WrapperQuat {
+	hlslpp::quaternion value;
+	operator hlslpp::quaternion() {
+		return value;
+	}
+
+	RTTR_REGISTRATION_FRIEND;
+	float get_x() { return value.x; }
+	float get_y() { return value.y; }
+	float get_z() { return value.z; }
+	float get_w() { return value.w; }
+
+	void set_x(float v) { value.x = v; }
+	void set_y(float v) { value.y = v; }
+	void set_z(float v) { value.z = v; }
+	void set_w(float v) { value.w = v; }
+};
+
 // Wraps around hlslpp float3 to provide support for RTTR
 struct WrapperFloat3 {
 	hlslpp::float3 value;
@@ -166,6 +185,7 @@ struct WrapperFloat3 {
 
 using helpers::WrapperFloat3;
 using helpers::WrapperFloat4;
+using helpers::WrapperQuat;
 
 namespace helpers {
 
@@ -173,3 +193,9 @@ namespace helpers {
 	rttr::type const& get_type_by_id(u64 id);
 
 }
+
+
+GUID StringToGuid(const std::string& str);
+
+std::string GuidToString(GUID guid);
+

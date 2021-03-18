@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Identifier.h"
+
 namespace framework
 {
 	class EntityDebugOverlay;
@@ -18,6 +20,14 @@ namespace framework
 
 		bool operator==(EntityHandle const& rhs) {
 			return this->id == rhs.id&& this->generation == rhs.generation;
+		}
+
+		bool operator!=(EntityHandle const& rhs) {
+			return !(*this == rhs);
+		}
+
+		void clear() {
+			*this = EntityHandle();
 		}
 
 
@@ -66,10 +76,11 @@ namespace framework
 
 		bool is_handle_valid(EntityHandle const& handle);
 
+		EntityHandle find_by_id(Identifier64 const& id) const;
+
 		EntityHandle get_root() const { return _root; }
 
-		template<typename T = Entity, typename...Args>
-		EntityHandle create_entity(Args ... args);
+		EntityHandle create_entity(Identifier64 id = Identifier64::create_guid());
 
 		Entity* get_entity(EntityHandle const& id);
 
@@ -91,8 +102,14 @@ namespace framework
 			return _entities;
 		}
 
+		u32 get_number_of_entities() const;
+
 		bool attach_to(EntityHandle const& attach_to, EntityHandle const& child);
 		bool attach_to(EntityHandle const& attach_to, Component* child);
+
+		inline bool attach_to_root(EntityHandle const& ent) {
+			return attach_to(_root, ent);
+		}
 
 	private:
 
@@ -101,48 +118,13 @@ namespace framework
 		std::vector<uint64_t> _free_list;
 		std::vector<uint64_t> _deletion_list;
 
+
 		// Storage
 		std::vector<Entity*>  _entities;
 		std::vector<uint64_t> _generation;
 
+		std::unordered_map<Identifier64, EntityHandle> _entities_by_id;
+
 		friend class EntityDebugOverlay;
 	};
-
-	template <typename T, typename ... Args>
-	EntityHandle World::create_entity(Args ... args)
-	{
-		T* obj = new T(args...);
-
-		std::size_t id = _entities.size();
-
-		// If we have free slots
-		if(!_free_list.empty())
-		{
-			id = _free_list[_free_list.size() - 1];
-			_free_list.pop_back();
-
-			// If we end up asserting here this means something hasn't properly cleared our entity list
-			assert(_entities[id] == nullptr);
-			_entities[id] = obj;
-		}
-		// No free slots means we need to create some
-		else
-		{
-			_entities.push_back(obj);
-		}
-
-
-		// Update our generation it's size
-		if(_generation.size() <= id)
-		{
-			//TODO: Abstract vector resizing to be more robust
-			_generation.resize(id + 1000, 0);
-		}
-
-		auto w = shared_from_this();
-		auto handle = EntityHandle(id, _generation[id], w);
-		attach_to(_root, handle);
-
-		return handle;
-	}
 }

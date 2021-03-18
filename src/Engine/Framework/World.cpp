@@ -1,4 +1,4 @@
-#include "engine.stdafx.h"
+#include "engine.pch.h"
 #include "World.h"
 
 #include "Entity.h"
@@ -67,6 +67,7 @@ void World::update(float dt)
 		// Add this slot to the free list
 		_free_list.push_back(id);
 	}
+	_deletion_list.clear();
 
 	for (auto it : _entities)
 	{
@@ -79,7 +80,7 @@ void World::update(float dt)
 
 bool World::is_handle_valid(EntityHandle const& handle)
 {
-	return _generation[handle.id] == handle.generation;
+	return handle.id < _generation.size() && _generation[handle.id] == handle.generation;
 }
 
 Entity* World::get_entity(EntityHandle const& id)
@@ -113,6 +114,8 @@ bool World::remove_entity(EntityHandle const& handle)
 	auto it = std::find(_deletion_list.begin(), _deletion_list.end(), handle.id);
 	assert(it == _deletion_list.end());
 	_deletion_list.push_back(handle.id);
+
+	_entities_by_id[handle->get_id()].clear();
 
 	++_generation[handle.id];
 
@@ -180,6 +183,9 @@ void framework::World::init() {
 
 void framework::World::clear() {
 
+	_deletion_list.clear();
+	_free_list.clear();
+
 	// Clear all the children of our root
 	_root->_children.clear();
 
@@ -194,5 +200,52 @@ void framework::World::clear() {
 		++_generation[id];
 	}
 
+	_entities_by_id.clear();
 	_entities.resize(1);
+}
+
+EntityHandle framework::World::create_entity(Identifier64 id) {
+	Entity* obj = new Entity();
+	obj->_id = id;
+
+	std::size_t idx = _entities.size();
+
+	// If we have free slots
+	if (!_free_list.empty()) {
+		idx = _free_list[_free_list.size() - 1];
+		_free_list.pop_back();
+
+		// If we end up asserting here this means something hasn't properly cleared our entity list
+		assert(_entities[idx] == nullptr);
+		_entities[idx] = obj;
+	}
+	// No free slots means we need to create some
+	else {
+		_entities.push_back(obj);
+	}
+
+
+	// Update our generation it's size
+	if (_generation.size() <= idx) {
+		_generation.resize(idx + 1000, 0);
+	}
+
+	auto w = shared_from_this();
+	auto handle = EntityHandle(idx, _generation[idx], w);
+
+	_entities_by_id[obj->get_id()] = handle;
+
+	return handle;
+}
+
+EntityHandle framework::World::find_by_id(Identifier64 const& id) const {
+	auto it = _entities_by_id.find(id);
+	if (it != _entities_by_id.end()) {
+		return it->second;	
+	}
+	return {};
+}
+
+u32 framework::World::get_number_of_entities() const {
+	return std::count_if(_entities.begin(), _entities.end(), [](Entity* ent) { return ent; });
 }

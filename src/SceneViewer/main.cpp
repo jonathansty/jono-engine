@@ -1,4 +1,4 @@
-#include "testbed.stdafx.h"
+#include "sceneviewer.pch.h"
 
 #include "HelloWorld.h"
 #include "SceneViewer.h"

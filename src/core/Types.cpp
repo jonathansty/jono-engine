@@ -1,7 +1,4 @@
-#include <rttr/registration>
-#include <rttr/registration_friend>
-#include <rttr/type>
-#include <hlsl++.h>
+#include "core.pch.h"
 using hlslpp::float3;
 using hlslpp::float4;
 
@@ -16,6 +13,13 @@ RTTR_REGISTRATION{
 		.property("Y", &WrapperFloat4::get_y, &WrapperFloat4::set_y)
 		.property("Z", &WrapperFloat4::get_z, &WrapperFloat4::set_z)
 		.property("W", &WrapperFloat4::get_w, &WrapperFloat4::set_w);
+
+		registration::class_<WrapperQuat>("quaternion")
+			.property("X", &WrapperQuat::get_x, &WrapperQuat::set_x)
+			.property("Y", &WrapperQuat::get_y, &WrapperQuat::set_y)
+			.property("Z", &WrapperQuat::get_z, &WrapperQuat::set_z)
+			.property("W", &WrapperQuat::get_w, &WrapperQuat::set_w);
+
 
 	registration::class_<WrapperFloat3>("float3")
 		.property("X", &WrapperFloat3::get_x, &WrapperFloat3::set_x)
@@ -46,6 +50,28 @@ struct GlobalData {
 	std::unordered_map<u64, rttr::type const*> mappings;
 };
 GlobalData g_data{};
+
+GUID StringToGuid(const std::string& str) {
+	GUID guid;
+	sscanf(str.c_str(),
+			"{%8x-%4hx-%4hx-%2hhx%2hhx-%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx}",
+			&guid.Data1, &guid.Data2, &guid.Data3,
+			&guid.Data4[0], &guid.Data4[1], &guid.Data4[2], &guid.Data4[3],
+			&guid.Data4[4], &guid.Data4[5], &guid.Data4[6], &guid.Data4[7]);
+
+	return guid;
+}
+
+std::string GuidToString(GUID guid) {
+	char guid_cstr[39];
+	snprintf(guid_cstr, sizeof(guid_cstr),
+			"{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+			guid.Data1, guid.Data2, guid.Data3,
+			guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3],
+			guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
+
+	return std::string(guid_cstr);
+}
 
 rttr::type const& helpers::get_type_by_id(u64 id) {
 	if (!g_data.initialised) {

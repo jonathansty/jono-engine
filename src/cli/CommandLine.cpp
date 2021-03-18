@@ -1,3 +1,4 @@
+#include "cli.pch.h"
 #include "CommandLine.h"
 
 #include <algorithm>
