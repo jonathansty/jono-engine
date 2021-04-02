@@ -113,6 +113,7 @@ public class ImGui : ExternalProject
     {
         Name = "ImGui";
         SourceRootPath = Path.Combine(ExternalDir, "imgui/");
+        // SourceFilesExcludeRegex.Add("examples");
     }
     override public void ConfigureAll(Configuration conf, Target target)
     {
@@ -157,6 +158,7 @@ public class EnkiTS : ExternalProject
     {
         Name = "EnkiTS";
         SourceRootPath = Path.Combine(ExternalDir, "enkiTS/");
+        SourceFilesExcludeRegex.Add("example");
 
     }
 

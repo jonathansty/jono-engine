@@ -20,6 +20,8 @@ public class Utils
         }
     }
 
+    public static string SourceFolderName = "Source";
+
     public static void ConfigureProjectName(Project.Configuration conf, Target target)
     {
         conf.ProjectFileName = "[project.Name]_[target.DevEnv]_[target.Platform]";
@@ -39,7 +41,7 @@ public abstract class JonaBaseProject : Project
         string rootDirectory = Path.Combine(fileInfo.DirectoryName, ".");
         RootPath = Util.SimplifyPath(rootDirectory);
 
-        SourceRootPath = @"[project.SharpmakeCsPath]\src\[project.Name]";
+        SourceRootPath = $"[project.SharpmakeCsPath]/{Utils.SourceFolderName}/[project.Name]";
 
         AddTargets(Utils.Targets);
     }
@@ -50,9 +52,14 @@ public abstract class JonaBaseProject : Project
         Utils.ConfigureProjectName(conf, target);
 
         conf.Options.Add(Options.Vc.General.WindowsTargetPlatformVersion.Latest);
-        // conf.Options.Add(Options.Vc.General.PlatformToolset.ClangCL);
         conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
         conf.Options.Add(Options.Vc.Compiler.MinimalRebuild.Enable);
+
+        conf.PrecompHeader = "[project.Name].pch.h";
+        conf.PrecompSource = "[project.Name].pch.cpp";
+
+        // conf.Defines.Add("WIN32_LEAN_AND_MEAN");
+        conf.Defines.Add("NOMINMAX");
 
         // conf.AdditionalCompilerOptions.Add("-Wno-unused-parameter");
         // conf.AdditionalCompilerOptions.Add("-Wno-reorder-ctor");
@@ -70,6 +77,7 @@ public abstract class JonaBaseProject : Project
         ));
 
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
+        conf.IncludePaths.Add(@"[project.SourceRootPath]/" + Utils.SourceFolderName);
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]");
 
     }
@@ -138,6 +146,10 @@ public abstract class ExternalProject : JonaBaseProject
         base.ConfigureAll(conf, target);
 
         conf.SolutionFolder = "libraries";
+
+        conf.PrecompHeader = null;
+        conf.PrecompSource = null;
+
     }
 }
 

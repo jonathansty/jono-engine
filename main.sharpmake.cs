@@ -73,7 +73,6 @@ public class EngineProject : JonaBaseProject
 	{
 
         Name = "Engine";
-        SourceRootPath = @"[project.SharpmakeCsPath]/src/Engine";
 
         // Hlsl files are source files
         SourceFilesExtensions.Add(".hlsl");
@@ -148,7 +147,6 @@ public class EngineTestProject : JonaBaseProject
          : base()
     {
         Name = "tests";
-        SourceRootPath = @"[project.SharpmakeCsPath]/src/tests";
     }
 
     public override void ConfigureAll(Configuration conf, Target target)
@@ -163,10 +161,10 @@ public class EngineTestProject : JonaBaseProject
         conf.Output = Configuration.OutputType.Dll;
 
         // Add engine include path
-        conf.IncludeSystemPaths.Add(@"[project.SharpmakeCsPath]/src/");
+        conf.IncludeSystemPaths.Add($"[project.SharpmakeCsPath]/{Utils.SourceFolderName}");
         conf.IncludePrivatePaths.Add(@"[project.SourceRootPath]");
 
-        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/[project.Name]/");
+        // conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/[project.Name]/");
     }
 }
 
@@ -176,7 +174,6 @@ public class SceneViewerProject : JonaBaseProject
     public SceneViewerProject() : base()
     {
         Name = "SceneViewer";
-        SourceRootPath = @"[project.SharpmakeCsPath]/src/SceneViewer";
     }
 
     public override void ConfigureAll(Configuration conf, Target target)
@@ -192,7 +189,6 @@ public class SceneViewerProject : JonaBaseProject
         conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
         conf.Output = Configuration.OutputType.Exe;
 
-        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/src/");
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
     }
 }
