@@ -5,13 +5,11 @@ struct ID2D1Bitmap;
 class Bitmap
 {
 public:
-	// -------------------------
-	// Constructors & Destructor
-	// -------------------------
-	//! Load an Bitmap using a filename
-	Bitmap(string const& fileNameRef);
-
+	Bitmap();
 	virtual ~Bitmap();
+
+	static unique_ptr<Bitmap> load(string const& filename);
+
 
 	// C++11 make the class non-copyable
 	Bitmap(const Bitmap&) = delete;
@@ -24,10 +22,10 @@ public:
 	ID2D1Bitmap*	GetBitmapPtr() const;
 
 	//! Returns the width of this image
-	int	GetWidth() const;
+	int	get_width() const;
 
 	//! Returns the height of this image
-	int	GetHeight() const;
+	int	get_height() const;
 
 	//! Returns the opacity of this image
 	double GetOpacity() const;
@@ -39,18 +37,18 @@ public:
 	//! Scans all pixels and turns the pixels with the given color transparent.
 	//! Be carefull!! this is a very expensive operation. Use it in the GameStart only.
 	//! alpha is ignored
-	void SetTransparencyColor(COLOR transparentColor);
+	void SetTransparencyColor(u32 transparentColor);
 
     //! Gets the filename of the bitmap.
     string GetFileName();
 private:
-	HRESULT LoadBitmapFromFile(ID2D1RenderTarget* renderTargetPtr, IWICImagingFactory* wICFactoryPtr, const string& uriRef, UINT destinationWidth, UINT destinationHeight, IWICFormatConverter** formatConvertorPtrPtr);
+	static HRESULT LoadBitmapFromFile(ID2D1RenderTarget* renderTargetPtr, IWICImagingFactory* wICFactoryPtr, const string& uriRef, UINT destinationWidth, UINT destinationHeight, IWICFormatConverter** formatConvertorPtrPtr);
 
 	//-------------------------------------------------
 	// Datamembers								
 	//-------------------------------------------------
-	ID2D1Bitmap*			m_BitmapPtr;
-	IWICFormatConverter*	m_ConvertorPtr;
+	ComPtr<ID2D1Bitmap>			m_BitmapPtr;
+	ComPtr<IWICFormatConverter>	m_ConvertorPtr;
 	double					m_Opacity;//range: between 0 and 1
 	string					m_FileName;
 	int						m_ResourceID;

@@ -41,8 +41,8 @@ bool D2DRenderContext::end_paint() {
 	return true;
 }
 
-bool D2DRenderContext::draw_background(COLOR backgroundColor) {
-	_rt->Clear(D2D1::ColorF((FLOAT)(backgroundColor.red / 255.0), (FLOAT)(backgroundColor.green / 255.0), (FLOAT)(backgroundColor.blue / 255.0), (FLOAT)(backgroundColor.alpha)));
+bool D2DRenderContext::draw_background(u32 color) {
+	_rt->Clear(D2D1::ColorF(color, 1.0));
 	return true;
 }
 
@@ -182,7 +182,7 @@ bool D2DRenderContext::fill_polygon(const std::vector<POINT> &ptsArr, unsigned i
 	return false;
 }
 
-bool D2DRenderContext::draw_rect(RECT2 rect, double strokeWidth /*= 1*/) {
+bool D2DRenderContext::draw_rect(Rect rect, double strokeWidth /*= 1*/) {
 	if ((rect.right < rect.left) || (rect.bottom < rect.top)) {
 		return false;
 	}
@@ -193,21 +193,21 @@ bool D2DRenderContext::draw_rect(RECT2 rect, double strokeWidth /*= 1*/) {
 }
 
 bool D2DRenderContext::draw_rect(float2 topLeft, float2 rightbottom, double strokeWidth /*= 1.0*/) {
-	RECT2 rect2(topLeft.x, topLeft.y, rightbottom.x, rightbottom.y);
+	Rect rect2{float(topLeft.x), float(topLeft.y), rightbottom.x, rightbottom.y};
 	return draw_rect(rect2, strokeWidth);
 }
 
 bool D2DRenderContext::draw_rect(RECT rect) {
-	RECT2 rect2(rect.left, rect.top, rect.right, rect.bottom);
+	Rect rect2{float(rect.left), float(rect.top), float(rect.right), float(rect.bottom)};
 	return draw_rect(rect2, 1.0);
 }
 
 bool D2DRenderContext::draw_rect(int left, int top, int right, int bottom) {
-	RECT2 rect2(left, top, right, bottom);
+	Rect rect2{float(left), float(top), float(right), float(bottom)};
 	return draw_rect(rect2, 1.0);
 }
 
-bool D2DRenderContext::fill_rect(RECT2 rect) {
+bool D2DRenderContext::fill_rect(Rect rect) {
 	if ((rect.right < rect.left) || (rect.bottom < rect.top)) {
 		return false;
 	}
@@ -219,21 +219,21 @@ bool D2DRenderContext::fill_rect(RECT2 rect) {
 }
 
 bool D2DRenderContext::fill_rect(float2 topLeft, float2 rightbottom) {
-	RECT2 rect2(topLeft.x, topLeft.y, rightbottom.x, rightbottom.y);
+	Rect rect2{topLeft.x, topLeft.y, rightbottom.x, rightbottom.y};
 	return fill_rect(rect2);
 }
 
 bool D2DRenderContext::fill_rect(RECT rect) {
-	RECT2 rect2(rect.left, rect.top, rect.right, rect.bottom);
+	Rect rect2{float(rect.left), float(rect.top), float(rect.right), float(rect.bottom)};
 	return fill_rect(rect2);
 }
 
 bool D2DRenderContext::fill_rect(int left, int top, int right, int bottom) {
-	RECT2 rect2(left, top, right, bottom);
+	Rect rect2{float(left), float(top), float(right), float(bottom)};
 	return fill_rect(rect2);
 }
 
-bool D2DRenderContext::draw_rounded_rect(RECT2 rect, int radiusX, int radiusY, double strokeWidth /*= 1.0*/) {
+bool D2DRenderContext::draw_rounded_rect(Rect rect, int radiusX, int radiusY, double strokeWidth /*= 1.0*/) {
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
 	_rt->DrawRoundedRectangle(d2dRoundedRect, _brush, 1.0);
@@ -261,7 +261,7 @@ bool D2DRenderContext::draw_rounded_rect(int left, int top, int right, int botto
 	return true;
 }
 
-bool D2DRenderContext::fill_rounded_rect(RECT2 rect, int radiusX, int radiusY) {
+bool D2DRenderContext::fill_rounded_rect(Rect rect, int radiusX, int radiusY) {
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
 	_rt->FillRoundedRectangle(d2dRoundedRect, _brush);
@@ -333,7 +333,7 @@ bool D2DRenderContext::draw_string(const string &textRef, RECT boundingRect) {
 	return draw_string(textRef, boundingRect.left, boundingRect.top, boundingRect.right, boundingRect.bottom);
 }
 
-bool D2DRenderContext::draw_string(const string &textRef, RECT2 boundingRect) {
+bool D2DRenderContext::draw_string(const string &textRef, Rect boundingRect) {
 	return draw_string(textRef, (int)boundingRect.left, (int)boundingRect.top, (int)boundingRect.right, (int)boundingRect.bottom);
 }
 
@@ -341,7 +341,7 @@ bool D2DRenderContext::draw_string(const string &textRef, int xPos, int yPos, in
 	return draw_string(textRef, float2(xPos, yPos), right, bottom);
 }
 
-bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, float2 position, RECT2 srcRect) {
+bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, float2 position, Rect srcRect) {
 	if (imagePtr == nullptr) {
 		return false;
 	}
@@ -370,41 +370,43 @@ bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, float2 position, RECT2 srcR
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, float2 position) {
 	assert(imagePtr);
 
-	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
+	Rect srcRect2{0, 0, imagePtr->get_width(), imagePtr->get_height()};
 	return draw_bitmap(imagePtr, position, srcRect2);
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, int x, int y, RECT srcRect) {
-	RECT2 srcRect2(srcRect.left, srcRect.top, srcRect.right, srcRect.bottom);
+	Rect srcRect2{srcRect.left, srcRect.top, srcRect.right, srcRect.bottom};
 	return draw_bitmap(imagePtr, float2(x, y), srcRect2);
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, int x, int y) {
 	assert(imagePtr);
 
-	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
+	Rect srcRect2{0, 0, imagePtr->get_width(), imagePtr->get_height()};
 	return draw_bitmap(imagePtr, float2(x, y), srcRect2);
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr, RECT srcRect) {
-	RECT2 srcRect2(srcRect.left, srcRect.top, srcRect.right, srcRect.bottom);
+	Rect srcRect2{srcRect.left, srcRect.top, srcRect.right, srcRect.bottom};
 	return draw_bitmap(imagePtr, float2(0, 0), srcRect2);
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap *imagePtr) {
 	assert(imagePtr);
 
-	RECT2 srcRect2(0, 0, imagePtr->GetWidth(), imagePtr->GetHeight());
+	Rect srcRect2{0, 0, imagePtr->get_width(), imagePtr->get_height()};
 	return draw_bitmap(imagePtr, float2(0, 0), srcRect2);
 }
 
-void D2DRenderContext::set_color(COLOR color) {
-	_brush->SetColor(D2D1::ColorF((FLOAT)(color.red / 255.0), (FLOAT)(color.green / 255.0), (FLOAT)(color.blue / 255.0), (FLOAT)(color.alpha / 255.0)));
+void D2DRenderContext::set_color(u32 color) {
+	u8 a = color & 0xff;
+	u32 fshift = color >> 8;
+	_brush->SetColor(D2D1::ColorF(color >> 8, a / 255.0f));
 }
 
-COLOR D2DRenderContext::get_color() const {
+u32 D2DRenderContext::get_color() const {
 	D2D1_COLOR_F dColor = _brush->GetColor();
-	return COLOR((unsigned char)(dColor.r * 255), (unsigned char)(dColor.g * 255), (unsigned char)(dColor.b * 255), (unsigned char)(dColor.a * 255));
+	return MK_COLOR((unsigned char)(dColor.r * 255), (unsigned char)(dColor.g * 255), (unsigned char)(dColor.b * 255), (unsigned char)(dColor.a * 255));
 }
 
 void D2DRenderContext::set_world_matrix(float3x3 const& mat) {

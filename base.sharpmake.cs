@@ -25,8 +25,8 @@ public class Utils
     public static void ConfigureProjectName(Project.Configuration conf, Target target)
     {
         conf.ProjectFileName = "[project.Name]_[target.DevEnv]_[target.Platform]";
-        conf.ProjectPath = @"[project.SharpmakeCsPath]\generated\projects";
-        conf.IntermediatePath = @"[project.SharpmakeCsPath]\build\[project.Name]_[target.DevEnv]_[target.Platform]";
+        conf.ProjectPath = @"[project.SharpmakeCsPath]\build\projects";
+        conf.IntermediatePath = @"[project.SharpmakeCsPath]\build\intermediate\[target.Optimization]\[project.Name]_[target.DevEnv]_[target.Platform]";
         conf.VcxprojUserFile = new Project.Configuration.VcxprojUserFileSettings();
         conf.VcxprojUserFile.LocalDebuggerWorkingDirectory = @"[project.SharpmakeCsPath]";
     }
@@ -58,14 +58,8 @@ public abstract class JonaBaseProject : Project
         conf.PrecompHeader = "[project.Name].pch.h";
         conf.PrecompSource = "[project.Name].pch.cpp";
 
-        // conf.Defines.Add("WIN32_LEAN_AND_MEAN");
-        conf.Defines.Add("NOMINMAX");
-
-        // conf.AdditionalCompilerOptions.Add("-Wno-unused-parameter");
-        // conf.AdditionalCompilerOptions.Add("-Wno-reorder-ctor");
-        // conf.AdditionalCompilerOptions.Add("-Wno-unused-variable");
-        // conf.AdditionalCompilerOptions.Add("-Wno-unused-private-field");
-        // conf.AdditionalCompilerOptions.Add("-Wno-format-security");
+        //conf.Defines.Add("WIN32_LEAN_AND_MEAN");
+        //conf.Defines.Add("NOMINMAX");
 
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
@@ -76,10 +70,16 @@ public abstract class JonaBaseProject : Project
             "4189"  // Unused local variables
         ));
 
+        conf.Options.Add(new Options.Vc.Linker.DisableSpecificWarnings(
+            "4099" // No PDB with library.
+        ));
+
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
         conf.IncludePaths.Add(@"[project.SourceRootPath]/" + Utils.SourceFolderName);
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]");
 
+        // Handle all conan packages
+        conf.AddPublicDependency<ConanDependencies>(target);
     }
 
     [Configure(Blob.Blob)]
@@ -175,7 +175,7 @@ public class CompileHLSL : Project.Configuration.CustomFileBuildStep
 
     public static void ConfigureShaderIncludes(Project.Configuration conf)
     {
-        string outputDir = $"{conf.Project.RootPath}/obj/{conf.Project.Name}_{conf.Target.GetOptimization()}";
+        string outputDir = $"{conf.Project.RootPath}\\build\\shaders\\{conf.Target.GetOptimization()}\\{conf.Project.Name}";
         conf.IncludePaths.Add(outputDir);
 
     }
@@ -198,7 +198,7 @@ public class CompileHLSL : Project.Configuration.CustomFileBuildStep
 
                 foreach (string file in hlslFiles)
                 {
-                    string outputDir = string.Format(@"{0}\obj\{1}_{2}\shaders\", project.SharpmakeCsPath, project.Name, conf.Target.GetOptimization());
+                    string outputDir = string.Format(@"{0}\build\shaders\{2}\{1}\", project.SharpmakeCsPath, project.Name, conf.Target.GetOptimization());
                     CompileHLSL compileTask = new CompileHLSL(conf, profile, outputDir, targetName, Project.GetCapitalizedFile(file));
                     project.ResolvedSourceFiles.Add(compileTask.Output);
                     conf.CustomFileBuildSteps.Add(compileTask);

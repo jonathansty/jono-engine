@@ -76,20 +76,19 @@ public:
 	BitmapComponent(std::string const& path)
 		: framework::Component()
 	{
-		_bmp = new Bitmap(path);
+		_bmp = Bitmap::load(path);
 	}
 	~BitmapComponent()
 	{
-		delete _bmp;
 	}
 
 	void render()
 	{
-		GameEngine::instance()->_d2d_ctx->draw_bitmap(_bmp, (int)(-_bmp->GetWidth()/2.0), (int)(-_bmp->GetHeight() / 2.0));
+		GameEngine::instance()->_d2d_ctx->draw_bitmap(_bmp.get(), (int)(-_bmp->get_width()/2.0), (int)(-_bmp->get_height() / 2.0));
 	}
 
 
-	Bitmap* _bmp;
+	unique_ptr<Bitmap> _bmp;
 
 };
 

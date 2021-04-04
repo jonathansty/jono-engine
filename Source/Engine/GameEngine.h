@@ -2,7 +2,7 @@
 
 #include "singleton.h"
 
-#include "TaskScheduler.h"
+#include "EnkiTS/TaskScheduler.h"
 
 #include "Box2DDebugRenderer.h"
 
@@ -74,7 +74,7 @@ public:
 	GameEngine &operator=(const GameEngine &) = delete;
 
 	// entry point to run a specific game
-	static int run_game(HINSTANCE hInstance, cli::CommandLine const &cmdLine, int iCmdShow, class AbstractGame *game);
+	static int run_game(HINSTANCE hInstance, cli::CommandLine const &cmdLine, int iCmdShow, unique_ptr<class AbstractGame>&& game);
 
 public:
 	std::shared_ptr<IO::IPlatformIO> io() const { return _platform_io; };
@@ -131,12 +131,12 @@ public:
 	void set_default_font();
 
 	//! Sets the color of the brush that is used to draw and fill
-	//! Example: GameEngine::instance()->SetColor(COLOR(255,127,64));
-	void set_color(COLOR colorVal);
+	//! Example: GameEngine::instance()->SetColor(u32(255,127,64));
+	void set_color(u32 colorVal);
 
 	//! Returns the color of the brush used to draw and fill
-	//! Example: COLOR c = GameEngine::instance()->GetColor();
-	COLOR get_color();
+	//! Example: u32 c = GameEngine::instance()->GetColor();
+	u32 get_color();
 
 	// Accessor Methods
 	HINSTANCE get_instance() const;
@@ -167,7 +167,7 @@ public:
 	//! returns pointer to the Audio object
 	unique_ptr<AudioSystem> const& GetXAudio() const;
 	//! returns pointer to the box2D world object
-	b2World *GetBox2DWorld() { return _b2d_world; }
+	shared_ptr<b2World> const& GetBox2DWorld() const { return _b2d_world; }
 
 	void set_icon(WORD wIcon);
 	void set_small_icon(WORD wSmallIcon);
@@ -191,12 +191,14 @@ public:
 
 	ID2D1RenderTarget *get_2d_draw_ctx() const { return _d2d_rt; }
 
+	shared_ptr<IO::IPlatformIO> get_io() const { return _platform_io; }
+
 private:
 	// Internal run function called by GameEngine::run
 	int run(HINSTANCE hInstance, int iCmdShow);
 
 	// Sets the current game implementation
-	void set_game(AbstractGame *gamePtr);
+	void set_game(unique_ptr<AbstractGame>&& gamePtr);
 
 	// Sets the current command line
 	void set_command_line(cli::CommandLine const &cmdLine) { _command_line = cmdLine; }
@@ -242,6 +244,7 @@ private:
 
 	void build_ui();
 
+
 private:
 	cli::CommandLine _command_line;
 
@@ -252,7 +255,8 @@ private:
 	WORD _icon, _small_icon;
 	int _window_width, _window_height;
 	bool _should_sleep;
-	AbstractGame *_game;
+
+	unique_ptr<AbstractGame> _game;
 	HANDLE _console;
 
 	// DirectX resources
@@ -290,8 +294,9 @@ private:
 	Font *_default_font; 
 
 	// Box2D
-	b2World *_b2d_world = nullptr;
-	b2ContactFilter *_b2d_contact_filter = nullptr;
+	shared_ptr<b2World> _b2d_world;
+	shared_ptr<b2ContactFilter> _b2d_contact_filter;
+
 	double _b2d_time = 0;
 	Box2DDebugRenderer _b2d_debug_renderer;
 	std::vector<ContactData> _b2d_begin_contact_data;

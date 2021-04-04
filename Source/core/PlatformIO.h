@@ -42,6 +42,8 @@ using IFileRef = std::shared_ptr<IFile>;
 struct IPlatformIO {
 	virtual ~IPlatformIO() = default;
 
+	virtual string resolve_path(string const& path) = 0;
+
 	virtual bool create_directory(const char* path) = 0;
 
 	virtual bool exists(const char* path) = 0;

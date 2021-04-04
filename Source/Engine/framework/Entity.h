@@ -84,6 +84,7 @@ namespace framework
 		friend class EntityDebugOverlay;
 
 		Identifier64 get_id() const { return _id; }
+		EntityHandle get_parent() const { return _parent; }
 	protected:
 		std::string _name;
 		Identifier64 _id;
@@ -91,8 +92,6 @@ namespace framework
 
 		std::vector<EntityHandle> _children;
 		std::vector<Component*> _components;
-
-		friend class SceneViewer;
 
 		hlslpp::quaternion _rot;
 

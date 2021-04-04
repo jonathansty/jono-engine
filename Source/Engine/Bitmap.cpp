@@ -7,32 +7,34 @@
 // Bitmap methods
 //---------------------------
 // Load an Bitmap using a filename
-Bitmap::Bitmap(string const& fileName) : m_BitmapPtr(nullptr), m_ConvertorPtr(nullptr), m_Opacity(1.0), m_ResourceID(0)
+Bitmap::Bitmap() : m_BitmapPtr(nullptr), m_ConvertorPtr(nullptr), m_Opacity(1.0), m_ResourceID(0)
 {
-	m_FileName = fileName;
-	//IWICFormatConverter *convertorPtr=nullptr;
-	ID2D1RenderTarget *renderTargetPtr = GameEngine::instance()->GetHwndRenderTarget();
-	IWICImagingFactory *iWICFactoryPtr = GameEngine::instance()->GetWICImagingFactory();
-
-	HRESULT hr = LoadBitmapFromFile(renderTargetPtr, iWICFactoryPtr, m_FileName, 0, 0, &m_ConvertorPtr);
-	if (SUCCEEDED(hr))
-	{
-		// Create a Direct2D bitmap from the WIC bitmap.
-		hr = renderTargetPtr->CreateBitmapFromWicBitmap(m_ConvertorPtr, &m_BitmapPtr);
-	}
-
-	if (FAILED(hr))
-	{
-		//show messagebox and leave the program
-		FAILMSG("IMAGE LOADING ERROR File {}",fileName);
-		exit(-1);
-	}
 }
 
 Bitmap::~Bitmap()
 {
-	m_BitmapPtr->Release();
-	m_ConvertorPtr->Release();
+}
+
+unique_ptr<Bitmap> Bitmap::load(string const& filename) {
+	auto bmp = make_unique<Bitmap>();
+
+	string path = GameEngine::instance()->get_io()->resolve_path(filename);
+	bmp->m_FileName = path;
+	//IWICFormatConverter *convertorPtr=nullptr;
+	ID2D1RenderTarget* renderTargetPtr = GameEngine::instance()->GetHwndRenderTarget();
+	IWICImagingFactory* iWICFactoryPtr = GameEngine::instance()->GetWICImagingFactory();
+
+	HRESULT hr = bmp->LoadBitmapFromFile(renderTargetPtr, iWICFactoryPtr, bmp->m_FileName, 0, 0, &bmp->m_ConvertorPtr);
+	if (SUCCEEDED(hr)) {
+		// Create a Direct2D bitmap from the WIC bitmap.
+		hr = renderTargetPtr->CreateBitmapFromWicBitmap(bmp->m_ConvertorPtr.Get(), bmp->m_BitmapPtr.GetAddressOf());
+	}
+
+	if (FAILED(hr)) {
+		FAILMSG("IMAGE LOADING ERROR File {}", filename);
+	}
+
+	return bmp;
 }
 
 HRESULT Bitmap::LoadBitmapFromFile(ID2D1RenderTarget *renderTargetPtr, IWICImagingFactory *wICFactoryPtr, const string& uriRef, UINT destinationWidth, UINT destinationHeight, IWICFormatConverter **FormatConverterPtr)
@@ -104,38 +106,35 @@ HRESULT Bitmap::LoadBitmapFromFile(ID2D1RenderTarget *renderTargetPtr, IWICImagi
 
 ID2D1Bitmap* Bitmap::GetBitmapPtr() const
 {
-	return m_BitmapPtr;
+	return m_BitmapPtr.Get();
 }
 
-int Bitmap::GetWidth() const
+int Bitmap::get_width() const
 {
-	MessageBoxA(NULL, "Bitmap::GetWidth() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	return m_BitmapPtr->GetPixelSize().width;
 }
 
-int	Bitmap::GetHeight() const
+int	Bitmap::get_height() const
 {
-	MessageBoxA(NULL, "Bitmap::GetHeight() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	return m_BitmapPtr->GetPixelSize().height;
 }
 
 double Bitmap::GetOpacity() const
 {
-	MessageBoxA(NULL, "Bitmap::GetOpacity() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	return m_Opacity;
 }
 
 void Bitmap::SetOpacity(double opacity)
 {
-	MessageBoxA(NULL, "Bitmap::SetOpacity() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
 	m_Opacity = opacity;
 }
 
-void Bitmap::SetTransparencyColor(COLOR transparentColor)
+void Bitmap::SetTransparencyColor(u32 transparentColor)
 {
-	MessageBoxA(NULL, "Bitmap::SetTransparencyColor() called from a pointer that is a nullptr\nThe MessageBox that will appear after you close this MessageBox is the default error message from visual studio.", "GameEngine says NO", MB_OK);
-
-	COLORREF color = RGB(transparentColor.red, transparentColor.green, transparentColor.blue);
+	u8 r = COLOR_R(transparentColor);
+	u8 g = COLOR_G(transparentColor);
+	u8 b = COLOR_B(transparentColor);
+	COLORREF color = RGB(r, g, b);
 	UINT width = 0, height = 0;
 	WICPixelFormatGUID* pPixelFormatPtr = nullptr;
 	m_ConvertorPtr->GetPixelFormat(pPixelFormatPtr);

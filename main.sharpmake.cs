@@ -20,8 +20,6 @@ public class CliProject : JonaBaseProject
         base.ConfigureAll(conf, target);
         conf.SolutionFolder = "engine";
         conf.Output = Configuration.OutputType.Lib;
-
-        conf.AddPrivateDependency<Fmt>(target);
     }
 }
 
@@ -38,29 +36,6 @@ public class CoreProject : JonaBaseProject
         base.ConfigureAll(conf, target);
         conf.SolutionFolder = "engine";
         conf.Output = Configuration.OutputType.Lib;
-
-        conf.AddPrivateDependency<Fmt>(target);
-        conf.AddPrivateDependency<HLSLPP>(target);
-        conf.AddPrivateDependency<RTTR>(target);
-    }
-}
-
-
-[Generate]
-public class RttiProject : JonaBaseProject
-{
-    public RttiProject() : base()
-    {
-        Name = "rtti";
-    }
-
-    public override void ConfigureAll(Configuration conf, Target target)
-    {
-        base.ConfigureAll(conf, target);
-        conf.SolutionFolder = "engine";
-        conf.IncludePaths.Add(@"[project.SourceRootPath]\..");
-        conf.Output = Configuration.OutputType.Lib;
-        conf.AddPrivateDependency<HLSLPP>(target);
     }
 }
 
@@ -86,22 +61,11 @@ public class EngineProject : JonaBaseProject
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
-        conf.AddPublicDependency<DirectXTK>(target);
         conf.AddPublicDependency<ImGui>(target);
-        conf.AddPublicDependency<HLSLPP>(target);
-        conf.AddPublicDependency<EnkiTS>(target);
-        conf.AddPublicDependency<ClReflect>(target);
-        conf.AddPublicDependency<Fmt>(target);
 
         // Own public libraries
         conf.AddPublicDependency<CliProject>(target);
         conf.AddPublicDependency<CoreProject>(target);
-        conf.AddPublicDependency<RTTR>(target);
-
-        // Private dependencies
-        // Only visible to the engine layer
-        conf.AddPrivateDependency<Box2D>(target);
-        conf.AddPrivateDependency<Assimp>(target);
 
         // Compile C++17 
         conf.Output = Configuration.OutputType.Lib;
@@ -163,8 +127,6 @@ public class EngineTestProject : JonaBaseProject
         // Add engine include path
         conf.IncludeSystemPaths.Add($"[project.SharpmakeCsPath]/{Utils.SourceFolderName}");
         conf.IncludePrivatePaths.Add(@"[project.SourceRootPath]");
-
-        // conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/[project.Name]/");
     }
 }
 
@@ -235,11 +197,12 @@ public class EngineSolution : Solution
     public void ConfigureAll(Solution.Configuration conf, Target target)
     {
         // Puts the generated solution in the /generated folder too.
-        conf.SolutionPath = @"[solution.SharpmakeCsPath]/generated";
-        conf.SolutionFileName = "[solution.Name]_[target.DevEnv]_[target.Platform]";
+        conf.SolutionPath = @"[solution.SharpmakeCsPath]/build";
+        conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
         conf.AddProject<EngineProject>(target);
         conf.AddProject<SceneViewerProject>(target);
         conf.AddProject<EngineTestProject>(target);
+
     }
 }
 
@@ -264,8 +227,8 @@ public class ToolsOnlySolution : Solution
     public void ConfigureAll(Solution.Configuration conf, Target target)
     {
         // Puts the generated solution in the /generated folder too.
-        conf.SolutionPath = @"[solution.SharpmakeCsPath]/generated";
-        conf.SolutionFileName = "[solution.Name]_[target.DevEnv]_[target.Platform]";
+        conf.SolutionPath = @"[solution.SharpmakeCsPath]/build";
+        conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
 
         // Engine project
         var types = System.Reflection.Assembly.GetExecutingAssembly()
@@ -293,11 +256,19 @@ public static class Main
         // Post 'linking' we generate a list of files for tools to consume
         sharpmakeArgs.Builder.EventPostProjectLink += Builder_EventPostProjectLink;
 
+        sharpmakeArgs.Builder.EventPreSolutionConfigure += Builder_EventPreSolutionConfigure;
+
+
         // Generate the solution for our game (all)
         sharpmakeArgs.Generate<EngineSolution>();
 
         // Generate just tools projects
         sharpmakeArgs.Generate<ToolsOnlySolution>();
+    }
+
+    private static void Builder_EventPreSolutionConfigure(Solution solution)
+    {
+        ConanDependencies.ParseConanFile(solution);
     }
 
     private static void Builder_EventPostProjectLink(Project project)
@@ -306,7 +277,7 @@ public static class Main
         {
             Sharpmake.Resolver resolver = new Sharpmake.Resolver();
             resolver.SetParameter("project", project);
-            string outdir = @"[project.SharpmakeCsPath]\generated\reflection\dumps\[project.Name].txt";
+            string outdir = @"[project.SharpmakeCsPath]\build\reflection\dumps\[project.Name].txt";
             outdir = resolver.Resolve(outdir);
 
             if (!Directory.Exists(Path.GetDirectoryName(outdir)))

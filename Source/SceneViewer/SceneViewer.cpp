@@ -16,9 +16,9 @@ using framework::Entity;
 using framework::Component;
 
 namespace Shaders {
-#include "shaders/simple_px.h"
-#include "shaders/simple_vx.h"
-#include "shaders/debug_px.h"
+#include "simple_px.h"
+#include "simple_vx.h"
+#include "debug_px.h"
 }
 
 using hlslpp::float4x4;
@@ -439,8 +439,8 @@ void SceneViewer::save_world(const char* path) {
 
 		// Serialize parent id
 		Identifier64 parent_id;
-		if(ent->_parent && ent->_parent != _world->get_root()) {
-			parent_id = ent->_parent->get_id();
+		if(ent->get_parent() && ent->get_parent() != _world->get_root()) {
+			parent_id = ent->get_parent()->get_id();
 		}
 		serialization::write<Identifier64>(file, parent_id);
 

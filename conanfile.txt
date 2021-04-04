@@ -1,0 +1,11 @@
+[requires]
+hlslpp/3.0
+enkits/1.8
+rttr/0.9.6
+fmt/7.1.3
+box2d/2.4.0
+assimp/5.0.1
+freetype/2.10.4
+
+[generators]
+json

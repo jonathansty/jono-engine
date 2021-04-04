@@ -95,26 +95,17 @@ GameEngine::~GameEngine()
 	}
 
 	delete _default_font;
-    delete _b2d_contact_filter;
 
 	//Direct2D Device dependent related stuff
 	d3d_deinit();
 
-	//Direct2D Device independent related stuff
-	_d3d_device_ctx->Release();
-	_d3d_device->Release();
-	_dxgi_factory->Release();
-
-	_dwrite_factory->Release();
-	_wic_factory->Release();
-	_d2d_factory->Release();
 
 	CoUninitialize();
 }
 
-void GameEngine::set_game(AbstractGame* gamePtr)
+void GameEngine::set_game(unique_ptr<AbstractGame>&& gamePtr)
 {
-	_game = gamePtr;
+	_game = std::move(gamePtr);
 }
 
 void GameEngine::set_title(const string& titleRef)
@@ -226,11 +217,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	b2Vec2 gravity((float)_gravity.x, (float)_gravity.y);
 
 	// Construct a world object, which will hold and simulate the rigid bodies.
-	_b2d_world = new b2World(gravity);
-    _b2d_contact_filter = new b2ContactFilter();
+	_b2d_world = make_shared<b2World>(gravity);
+    _b2d_contact_filter = make_shared<b2ContactFilter>();
     
-    _b2d_world->SetContactFilter(_b2d_contact_filter);
-	//m_Box2DWorldPtr->SetContactListener(m_GamePtr);
+    _b2d_world->SetContactFilter(_b2d_contact_filter.get());
 	_b2d_world->SetContactListener(this);
 
 	_b2d_debug_renderer.SetFlags(b2Draw::e_shapeBit);
@@ -244,24 +234,27 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// User defined functions for start of the game
 	_game->start();
 
-	std::array<ID3D11Query*, 3> gpuTimings[2];
+	std::vector<ComPtr<ID3D11Query>> gpuTimings[2];
+	gpuTimings[0].resize(3);
+	gpuTimings[1].resize(3);
+
 	D3D11_QUERY_DESC desc{};
 	desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
-	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[0][0]);
-	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[1][0]);
+	GetD3DDevice()->CreateQuery(&desc, gpuTimings[0][0].GetAddressOf());
+	GetD3DDevice()->CreateQuery(&desc, gpuTimings[1][0].GetAddressOf());
 
 	desc.Query = D3D11_QUERY_TIMESTAMP;
-	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[0][1]);
-	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[0][2]);
-	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[1][1]);
-	GetD3DDevice()->CreateQuery(&desc, &gpuTimings[1][2]);
+	GetD3DDevice()->CreateQuery(&desc, gpuTimings[0][1].GetAddressOf());
+	GetD3DDevice()->CreateQuery(&desc, gpuTimings[0][2].GetAddressOf());
+	GetD3DDevice()->CreateQuery(&desc, gpuTimings[1][1].GetAddressOf());
+	GetD3DDevice()->CreateQuery(&desc, gpuTimings[1][2].GetAddressOf());
 
 	// get time and make sure GameTick is fired before GamePaint
 	double previous = _game_timer->GetGameTime() - _physics_timestep;
 	double lag = 0; // keep left over time
-	//static double timesum = 0, count = 1;
 	_running = true;
 	while (_running) {
+
 		// Process all window messages
 		MSG msg{};
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -269,6 +262,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			DispatchMessage(&msg);
 		}
 
+		// Running might have been updated by the windows message loop. Handle this here.
 		if (!_running) {
 			break;
 		}
@@ -326,28 +320,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				ImVec2 game_width = { get_width() / 2.0f, get_height() / 2.0f };
 				ImGui::SetNextWindowSize(game_width, ImGuiCond_FirstUseEver);
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-				//ImGui::Begin("Viewport", NULL, ImGuiWindowFlags_NoDecoration);
-				//{
-				//	m_ViewportFocused = ImGui::IsWindowFocused();
-				//	ImVec2 size = ImGui::GetContentRegionAvail();
-				//	if (_game_viewport_size.x != size.x || _game_viewport_size.y != size.y)
-				//	{
-				//		_recreate_game_texture = true;
-				//		_game_viewport_size.x = std::max(size.x, 4.f);
-				//		_game_viewport_size.y = std::max(size.y, 4.f);
-				//	}
-				//	RECT r;
-				//	::GetWindowRect(m_hWindow, &r);
-
-				//	float left = r.left; 
-				//	float top = r.top; 
-				//	_game_viewport_offset = { ImGui::GetWindowPos().x - left, ImGui::GetWindowPos().y - top};
-
-				//	ImGui::GetWindowDrawList()->AddImage(_game_output_srv, ImVec2(0.0, 0.0), ImVec2(1.0, 1.0));
-				//	ImVec2 actual_size{ ImGui::GetWindowContentRegionMax().x - ImGui::GetWindowContentRegionMin().x, ImGui::GetWindowContentRegionMax().y - ImGui::GetWindowContentRegionMin().y };
-				//	ImGui::Image(_game_output_srv, actual_size);
-				//}
-				//ImGui::End();
 				ImGui::PopStyleVar(1);
 
 				if (_frame_cnt >= 2)
@@ -367,9 +339,9 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				D3D11_QUERY_DATA_TIMESTAMP_DISJOINT timestampDisjoint;
 				UINT64 start;
 				UINT64 end;
-				while (S_OK != _d3d_device_ctx->GetData(gpuTimings[idx][0], &timestampDisjoint, sizeof(timestampDisjoint), 0)) {}
-				while (S_OK != _d3d_device_ctx->GetData(gpuTimings[idx][1], &start, sizeof(UINT64), 0)) {}
-				while (S_OK != _d3d_device_ctx->GetData(gpuTimings[idx][2], &end, sizeof(UINT64), 0)) {}
+				while (S_OK != _d3d_device_ctx->GetData(gpuTimings[idx][0].Get(), &timestampDisjoint, sizeof(timestampDisjoint), 0)) {}
+				while (S_OK != _d3d_device_ctx->GetData(gpuTimings[idx][1].Get(), &start, sizeof(UINT64), 0)) {}
+				while (S_OK != _d3d_device_ctx->GetData(gpuTimings[idx][2].Get(), &end, sizeof(UINT64), 0)) {}
 
 				double diff = (double)(end - start) / (double)timestampDisjoint.Frequency;
 				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::RenderGPU, (float)(diff * 1000.0));
@@ -381,8 +353,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Frame");
 		size_t idx = _frame_cnt % 2;
 
-		_d3d_device_ctx->Begin(gpuTimings[idx][0]);
-		_d3d_device_ctx->End(gpuTimings[idx][1]);
+		_d3d_device_ctx->Begin(gpuTimings[idx][0].Get());
+		_d3d_device_ctx->End(gpuTimings[idx][1].Get());
 
 		D3D11_VIEWPORT vp{};
 		vp.Width = static_cast<float>(this->get_viewport_size().x);
@@ -394,10 +366,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		_d3d_device_ctx->RSSetViewports(1, &vp);
 
 		FLOAT color[4] = { 0.25f,0.25f,0.25f,1.0f };
-		//m_D3DDeviceContextPtr->ClearRenderTargetView(_game_output_rtv, color);
-		//m_D3DDeviceContextPtr->ClearDepthStencilView(_game_output_dsv, D3D11_CLEAR_DEPTH, 0.0f, 0);
-		//m_D3DDeviceContextPtr->OMSetRenderTargets(1, &_game_output_rtv, _game_output_dsv);
-
 		_d3d_device_ctx->ClearRenderTargetView(_d3d_output_rtv, color);
 		_d3d_device_ctx->ClearDepthStencilView(_d3d_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0);
 		_d3d_device_ctx->OMSetRenderTargets(1, &_d3d_output_rtv, _d3d_output_dsv);
@@ -432,8 +400,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 
 
-		_d3d_device_ctx->End(gpuTimings[idx][2]);
-		_d3d_device_ctx->End(gpuTimings[idx][0]);
+		_d3d_device_ctx->End(gpuTimings[idx][2].Get());
+		_d3d_device_ctx->End(gpuTimings[idx][0].Get());
 
 		// Render all other imgui windows  
 		ImGui::RenderPlatformWindowsDefault();
@@ -444,7 +412,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 	// User defined code for exiting the game
 	_game->end();
-	delete _game;
+	_game.reset();
 
 	ResourceLoader::instance()->unload_all();
 	ResourceLoader::Shutdown();
@@ -453,10 +421,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	ImGui_ImplWin32_Shutdown();
 
 	ImGui::DestroyContext();
-
-	// Box2D
-	delete _b2d_world;
-
 	return 0;
 }
 
@@ -483,7 +447,7 @@ void GameEngine::d2d_render()
 		context.set_world_matrix(float3x3::identity());
 		float3x3 matView = context.get_view_matrix();
 		context.set_view_matrix(float3x3::identity());
-		set_color(COLOR(0, 0, 0, 127));
+		set_color(MK_COLOR(0, 0, 0, 127));
 		context.fill_rect(0, 0, get_width(), get_height());
 		context.set_view_matrix(matView);
 
@@ -502,8 +466,9 @@ void GameEngine::d2d_render()
 
 bool GameEngine::register_wnd_class()
 {
-	WNDCLASSEXA wndclass;
+	WNDCLASSEX wndclass;
 
+	std::wstring title{ _title.begin(), _title.end() };
 	// Create the window class for the main window
 	wndclass.cbSize = sizeof(wndclass);
 	wndclass.style = CS_HREDRAW | CS_VREDRAW;
@@ -516,10 +481,10 @@ bool GameEngine::register_wnd_class()
 	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
 	wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
 	wndclass.lpszMenuName = NULL;
-	wndclass.lpszClassName = _title.c_str();
+	wndclass.lpszClassName = title.c_str();
 
 	// Register the window class
-	if (!RegisterClassExA(&wndclass)) return false;
+	if (!RegisterClassEx(&wndclass)) return false;
 	return true;
 }
 
@@ -534,7 +499,8 @@ bool GameEngine::open_window(int iCmdShow)
 	int iXWindowPos = (GetSystemMetrics(SM_CXSCREEN) - iWindowWidth) / 2;
 	int iYWindowPos = (GetSystemMetrics(SM_CYSCREEN) - iWindowHeight) / 2;
 
-	_hwindow = CreateWindowA(_title.c_str(), _title.c_str(),
+	std::wstring title = std::wstring(_title.begin(), _title.end());
+	_hwindow = CreateWindow(title.c_str(), title.c_str(),
 		windowStyle,
 		iXWindowPos, iYWindowPos, iWindowWidth,
 		iWindowHeight, NULL, NULL, _hinstance, NULL);
@@ -711,12 +677,12 @@ bool GameEngine::is_paint_allowed() const
 	}
 }
 
-void GameEngine::set_color(COLOR color)
+void GameEngine::set_color(u32 color)
 {
 	_d2d_ctx->set_color(color);
 }
 
-COLOR GameEngine::get_color()
+u32 GameEngine::get_color()
 {
 	return _d2d_ctx->get_color();
 }
@@ -1138,6 +1104,13 @@ void GameEngine::d3d_init()
 	_initialized = true;
 }
 
+template <typename T>
+void SafeRelease(T*& obj) {
+	if(obj != nullptr) {
+		obj->Release();
+		obj = nullptr;
+	}
+}
 //
 //  Discard device-specific resources which need to be recreated
 //  when a Direct3D device is lost
@@ -1145,26 +1118,26 @@ void GameEngine::d3d_init()
 void GameEngine::d3d_deinit()
 {
 	_initialized = false;
-	if (_color_brush)
-	{
-		_color_brush->Release();
-		_color_brush = nullptr;
-	}
-	if (_d2d_rt)
-	{
-		_d2d_rt->Release();
-		_d2d_rt = nullptr;
-	}
 
-	_d3d_backbuffer_view->Release();
-	_d3d_backbuffer_view = nullptr;
+	SafeRelease(_color_brush);
+	SafeRelease(_d2d_rt);
+	SafeRelease(_d3d_backbuffer_view);
 
-	_d3d_output_tex->Release();
-	_d3d_output_rtv->Release();
-	
+	SafeRelease(_d3d_output_tex);
+	SafeRelease(_d3d_output_rtv);
+	SafeRelease(_d3d_output_depth);
+	SafeRelease(_d3d_output_dsv);
+	SafeRelease(_d3d_backbuffer_srv);
+	SafeRelease(_d3d_user_defined_annotation);
 
-	_dxgi_swapchain->Release();
-	_dxgi_swapchain = nullptr;
+	SafeRelease(_dxgi_swapchain);
+
+	SafeRelease(_d3d_device_ctx);
+	SafeRelease(_d3d_device);
+	SafeRelease(_dwrite_factory);
+	SafeRelease(_wic_factory);
+	SafeRelease(_d2d_factory);
+	SafeRelease(_dxgi_factory);
 }
 
 
@@ -1399,7 +1372,7 @@ void GameEngine::build_ui()
 	}
 }
 
-int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, AbstractGame* game)
+int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<AbstractGame>&& game)
 {
 	//notify user if heap is corrupt
 	//HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
@@ -1422,7 +1395,7 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 	GameEngine::instance()->set_command_line(cmdLine);
 
 	// Apply the game
-	GameEngine::instance()->set_game(game);
+	GameEngine::instance()->set_game(std::move(game));
 
 	// Startup the engine
 	result = GameEngine::instance()->run(hInstance, iCmdShow); // run the game engine and return the result

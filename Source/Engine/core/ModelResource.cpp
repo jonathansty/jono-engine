@@ -10,8 +10,8 @@
 // Inline shaders
 namespace Shaders
 {
-#include "shaders/simple_vx.h"
-#include "shaders/simple_px.h"
+#include "simple_vx.h"
+#include "simple_px.h"
 }
 
 
@@ -231,13 +231,15 @@ void ModelResource::load()
 #ifdef _DEBUG
 	char name[512];
 	sprintf_s(name, "%s - Index Buffer", path.c_str());
-	DirectX::SetDebugObjectName(_index_buffer.Get(), name);
+	helpers::SetDebugObjectName(_index_buffer.Get(), name);
 
 	sprintf_s(name, "%s - Vertex Buffer", path.c_str());
-	DirectX::SetDebugObjectName(_vert_buffer.Get(), name);
+	helpers::SetDebugObjectName(_vert_buffer.Get(), name);
 #endif
 
 }
+
+
 
 ModelResource::ModelResource(FromFileResourceParameters params) : TCachedResource(params)
 , _index_count(0)

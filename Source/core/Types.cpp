@@ -27,22 +27,6 @@ RTTR_REGISTRATION{
 		.property("Z", &WrapperFloat3::get_z, &WrapperFloat3::set_z);
 }
 
-//-----------------------------------------------------------------
-// COLOR Constructors
-//-----------------------------------------------------------------
-COLOR::COLOR() : red(255), green(255), blue(255), alpha(255)
-{}
-COLOR::COLOR(unsigned char redVal, unsigned char greenVal, unsigned char blueVal, unsigned char alphaVal) : red(redVal), green(greenVal), blue(blueVal), alpha(alphaVal)
-{}
-//-----------------------------------------------------------------
-// RECT2 Constructors
-//-----------------------------------------------------------------
-RECT2::RECT2() : left(0), top(0), right(0), bottom(0)
-{}
-
-RECT2::RECT2(double leftVal, double topVal, double rightVal, double bottomVal) : left(leftVal), top(topVal), right(rightVal), bottom(bottomVal)
-{}
-
 
 struct GlobalData {
 	std::atomic<bool> initialised = false;
@@ -73,6 +57,10 @@ std::string GuidToString(GUID guid) {
 			guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]);
 
 	return std::string(guid_cstr);
+}
+
+void SetDebugObjectName(ID3D11DeviceChild* res, std::string const& name) {
+	res->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
 }
 
 rttr::type const& helpers::get_type_by_id(u64 id) {

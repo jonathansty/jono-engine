@@ -9,6 +9,10 @@
  *
  * \note
 */
+
+#define NOMINMAX
+#define HLSLPP_FEATURE_TRANSFORM
+
 #include <hlsl++.h>
 
 #include <stdint.h>
@@ -19,6 +23,27 @@
 #include <mutex>
 #include <optional>
 
+#ifdef _WIN64
+// WindowsSDK
+#include <DirectXMath.h>
+#include <d2d1.h>
+#include <d2d1helper.h>
+#include <d3d11.h>
+#include <d3d11_1.h>
+#include <d3d11shader.h>
+#include <d3dcompiler.h>
+#include <dxgi.h>
+#include <dxgidebug.h>
+#include <dwrite.h> // Draw Text
+#include <dxgi.h>
+#include <wincodec.h> // WIC: image loading
+using namespace DirectX;
+#include <wrl.h>
+using Microsoft::WRL::ComPtr;
+using namespace D2D1;
+#endif
+
+
 #include <rttr/registration>
 #include <rttr/registration_friend>
 #include <rttr/type>
@@ -26,7 +51,6 @@
 #include <Identifier.h>
 
 #ifdef WIN64
-#define NOMINMAX
 #include <Windows.h>
 #endif
 
@@ -66,6 +90,12 @@ using std::make_unique;
 using std::make_optional;
 using std::optional;
 
+// Containers
+using std::vector;
+using std::array;
+using std::unordered_map;
+using std::unordered_set;
+
 
 // LEGACY - Unicode defs for svg parsing
 #ifdef _UNICODE
@@ -89,60 +119,6 @@ struct ImpulseData
 	double impulseA = 0, impulseB = 0;
 	void *actAPtr = nullptr, *actBPtr = nullptr;
 };
-
-//-----------------------------------------------------------------
-// COLOR Struct
-//-----------------------------------------------------------------
-//! @struct Color
-struct COLOR
-{
-	// -------------------------
-	// Constructors 
-	// -------------------------
-
-	//
-	//! Default constructor fills the struct with color values 255, resulting in a white color 
-	COLOR();
-
-	//! Constructor: params are color values from 0 to 255
-	//! Example: COLOR myColor(255,0,127);
-	//! @param redVal red color value from 0 to 255
-	//! @param greenVal red color value from 0 to 255
-	//! @param blueVal red color value from 0 to 255
-	//! @param alphaVal alpha color value from 0 to 255
-	COLOR(unsigned char redVal, unsigned char greenVal, unsigned char blueVal, unsigned char alphaVal = 255);
-
-	// -------------------------
-	// Datamembers 
-	// -------------------------	
-	unsigned char red, green, blue, alpha;
-};
-
-//-----------------------------------------------------------------
-// RECT2 Struct
-//-----------------------------------------------------------------
-struct RECT2
-{
-	// -------------------------
-	// Constructors 
-	// -------------------------	
-
-	//! Constructor: creates a RECT2 struct with 4 double values, used to hold floating point coordinates.
-	//! This default constructor sets these values to 0
-	//! Example: RECT2 myRECT2();
-	RECT2();
-
-	//! Constructor: creates a RECT2 struct with 4 double values, used to hold floating point coordinates.
-	//! Example: RECT2 myRECT2(1.5, 1.5, 254.2, 452.6);
-	RECT2(double leftVal, double topVal, double rightVal, double bottomVal);
-
-	// -------------------------
-	// Datamembers 
-	// -------------------------	
-	double left, top, right, bottom;
-};
-
-
 
 namespace helpers {
 
@@ -217,13 +193,19 @@ using helpers::WrapperQuat;
 namespace helpers {
 
 
-	rttr::type const& get_type_by_id(u64 id);
+rttr::type const& get_type_by_id(u64 id);
 
+GUID StringToGuid(const std::string& str);
+std::string GuidToString(GUID guid);
 
-	GUID StringToGuid(const std::string& str);
-	std::string GuidToString(GUID guid);
+void SetDebugObjectName(ID3D11DeviceChild* res, std::string const& name);
+
 }
 
 
-
+#define MK_COLOR(r, g, b, a) ((u32)((r & 0xFF) << 24 | (g & 0xFF) << 16 | (b & 0xFF) << 8 | a))
+#define COLOR_R(c) ( c & 0xFF000000)
+#define COLOR_G(c) ( c & 0x00FF0000)
+#define COLOR_B(c) ( c & 0x0000FF00)
+#define COLOR_A(c) ( c & 0x000000FF)
 

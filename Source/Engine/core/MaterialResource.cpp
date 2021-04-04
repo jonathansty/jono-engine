@@ -9,9 +9,9 @@
 
 namespace Shaders
 {
-#include "shaders/simple_px.h"
-#include "shaders/simple_vx.h"
-#include "shaders/debug_px.h"
+#include "simple_px.h"
+#include "simple_vx.h"
+#include "debug_px.h"
 }
 
 void MaterialResource::load()

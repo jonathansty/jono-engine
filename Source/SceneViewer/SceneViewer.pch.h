@@ -2,32 +2,7 @@
 
 #define NOMINMAX
 
-// std lib includes
-#include <vector>			// std lib vector
-#include <array>
-#include <unordered_map>
-#include <map>
-#include <string>			// std lib to_string
-#include <sstream>			// std lib stringstream
-#include <fstream>			// SVGParser
-#include <iostream>
-#include <iomanip>			// precision
-#include <io.h>				// console
-#include <deque>
-
-// WindowsSDK
-#include <dwrite.h>			// Draw Text
-#include <wincodec.h>		// WIC: image loading
-#include <d2d1.h>
-#include <d2d1helper.h>
-#include <d3d11.h>
-#include <d3d11_1.h>
-#include <dxgi.h>
-#include <d3d11shader.h>
-#include <DirectXMath.h>
-using namespace DirectX;
-#include <wrl.h>
-using Microsoft::WRL::ComPtr;
+#include "Core/Types.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -72,21 +47,11 @@ using namespace D2D1;
 
 #include "tinyxml2/tinyxml2.h"
 
-#include <hlsl++.h>
-using hlslpp::double2;
-using hlslpp::float2;
-using hlslpp::float3;
-using hlslpp::float4;
-using hlslpp::float4x4;
-using hlslpp::float3x3;
-using hlslpp::double2;
+#include "Core/identifier.h"
 
-
-#include "Core/Types.h"
-
-#include "GameEngine.h"
 #include "Engine/Bitmap.h"
+#include "Engine/Framework/framework.h"
+#include "Engine/GameEngine.h"
 
-using namespace DirectX;
 
 

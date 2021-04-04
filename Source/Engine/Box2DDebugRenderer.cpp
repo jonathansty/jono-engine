@@ -7,7 +7,7 @@
 
 Box2DDebugRenderer::Box2DDebugRenderer()
 {
-	m_Color = COLOR(255, 255, 255, 187);
+	m_Color = MK_COLOR(255, 255, 255, 187);
 	_mat_scale = float3x3::scale(PhysicsActor::SCALE);
 }
 
@@ -25,7 +25,7 @@ void Box2DDebugRenderer::DrawPolygon(const b2Vec2* vertices, int32 vertexCount, 
 		vertexsArr.push_back(float2(vertices[i].x, vertices[i].y));
 	}
 	_context->set_world_matrix(_mat_scale);
-	_context->set_color(COLOR((byte)color.r, (byte)color.g, (byte)color.b, m_Color.alpha));
+	_context->set_color(MK_COLOR((byte)color.r, (byte)color.g, (byte)color.b, (m_Color & 0xFF)));
 	_context->draw_polygon(vertexsArr, vertexCount, true, 1 / PhysicsActor::SCALE);
 }
 
@@ -85,18 +85,18 @@ void Box2DDebugRenderer::DrawTransform(const b2Transform& xf)
 	_context->set_world_matrix(_mat_scale);
 	_context->set_color(m_Color);
 	// the position
-	_context->set_color(COLOR(0, 0, 0));
+	_context->set_color(MK_COLOR(0, 0, 0, 255));
 	_context->draw_ellipse(float2(xf.p.x, xf.p.y), (double)2 / PhysicsActor::SCALE, (double)2 / PhysicsActor::SCALE, (double)1 / PhysicsActor::SCALE); // float2(p2.x, p2.y), (double)1 / PhysicsActor::SCALE);
 	// the x axis
 	float2 x(xf.q.GetXAxis().x, xf.q.GetXAxis().y);
 	x = x / PhysicsActor::SCALE * 20;
-	_context->set_color(COLOR(255,0,187));
+	_context->set_color(MK_COLOR(255, 0, 187,255));
 	_context->draw_line(float2(xf.p.x, xf.p.y), float2(xf.p.x, xf.p.y) + x, (double)1 / PhysicsActor::SCALE);
 
 	// the y axis
 	float2 y(xf.q.GetYAxis().x, xf.q.GetYAxis().y);
 	y = y / PhysicsActor::SCALE * 20;
-	_context->set_color(COLOR(0, 255, 187));
+	_context->set_color(MK_COLOR(0, 255, 187,255));
 	_context->draw_line(float2(xf.p.x, xf.p.y), float2(xf.p.x, xf.p.y) + y, (double)1 / PhysicsActor::SCALE);
 
 }

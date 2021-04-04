@@ -31,7 +31,7 @@ public:
 	bool begin_paint();
 	bool end_paint();
 
-	bool draw_background(COLOR backgroundColor);
+	bool draw_background(u32 backgroundColor);
 	//! Draws a line from p1 to p2 using the strokewidth
 	bool draw_line(float2 p1, float2 p2, double strokeWidth = 1.0);
 	//! Draws a line from the coordinate defined by x1 and y1 to the coordinate define by x2 and y2
@@ -57,8 +57,9 @@ public:
 	//! If close is true then it will connect the start and end coordinate
 	bool fill_polygon(const std::vector<POINT> &ptsArr, unsigned int count);
 
+	using Rect = D2D1_RECT_F;
 	//! Draws a rectangle defined by a RECT2 struct
-	bool draw_rect(RECT2 rect, double strokeWidth = 1);
+	bool draw_rect(Rect rect, double strokeWidth = 1);
 	//! Draws a rectangle defined by two coordinates: topleft and rightbottom
 	bool draw_rect(float2 topLeft, float2 rightbottom, double strokeWidth = 1.0);
 	//! Draws a rectangle defined by a RECT struct
@@ -67,7 +68,7 @@ public:
 	bool draw_rect(int left, int top, int right, int bottom);
 
 	//! Fills the interior of a rectangle defined by a RECT2 struct
-	bool fill_rect(RECT2 rect);
+	bool fill_rect(Rect rect);
 	//! Fills the interior of a rectangle defined by two coordinates: topleft and rightbottom
 	bool fill_rect(float2 topLeft, float2 rightbottom);
 	//! Fills the interior of a rectangle defined by a RECT struct
@@ -78,7 +79,7 @@ public:
 	//! Draws a rounded rectangle defined by a RECT2 struct,
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool draw_rounded_rect(RECT2 rect, int radiusX, int radiusY, double strokeWidth = 1.0);
+	bool draw_rounded_rect(Rect rect, int radiusX, int radiusY, double strokeWidth = 1.0);
 
 	//! Draws a rounded rectangle defined by two coordinates: topleft and rightbottom,
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
@@ -98,7 +99,7 @@ public:
 	//! Fills the interior of a rounded rectangle defined by a RECT2 struct,
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool fill_rounded_rect(RECT2 rect, int radiusX, int radiusY);
+	bool fill_rounded_rect(Rect rect, int radiusX, int radiusY);
 
 	//! Fills the interior of a rounded rectangle defined by two coordinates: topleft and rightbottom,
 	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
@@ -133,7 +134,7 @@ public:
 	bool draw_string(const string &textRef, RECT boundingRect);
 
 	//! Draws text in the specified rectangle
-	bool draw_string(const string &textRef, RECT2 boundingRect);
+	bool draw_string(const string &textRef, Rect boundingRect);
 
 	//! Draws text in the specified rectangle the topleft corner of the rectange is defined by the param topLeft
 	//! The params right and bottom are optional, if left out they are set to the max value of an float type
@@ -145,7 +146,7 @@ public:
 
 	//! Draws an image on the position
 	//! srcRect: defines the cliprect on the source image. Allows to draw a part of an image
-	bool draw_bitmap(Bitmap *imagePtr, float2 position, RECT2 srcRect);
+	bool draw_bitmap(Bitmap *imagePtr, float2 position, Rect srcRect);
 
 	//! Draws an image on the position
 	bool draw_bitmap(Bitmap *imagePtr, float2 position);
@@ -164,8 +165,8 @@ public:
 	//! Draws an image on position x:0, and y:0. Assuming that matrices are used to define the position.
 	bool draw_bitmap(Bitmap *imagePtr);
 
-	void set_color(COLOR color);
-	COLOR get_color() const;
+	void set_color(u32 color);
+	u32 get_color() const;
 
 	void set_world_matrix(const hlslpp::float3x3& mat); 
 	hlslpp::float3x3 get_world_matrix() const;

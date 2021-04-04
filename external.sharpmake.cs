@@ -1,110 +1,103 @@
 using Sharpmake;
 using System.IO;
+using System.Collections;
+using System.Collections.Generic;
 
 [Export]
-public class DirectXTK : VCPKG
-{
-    public override void ConfigureAll(Configuration conf, Target target)
-    {
-        base.ConfigureAll(conf, target);
-        conf.LibraryFiles.Add(@"DirectXTK.lib");
-    }
-}
-
-[Export]
-public class Box2D : VCPKG
-{
-    public Box2D() : base(false)
-    {
-    }
-
-    public override void ConfigureAll(Configuration conf, Target target)
-    {
-        conf.LibraryFiles.Add(@"box2d.lib");
-    }
-}
-
-
-[Export]
-public class FreeType : VCPKG
-{
-    public FreeType() : base()
-    {
-    }
-    public override void ConfigureAll(Configuration conf, Target target)
-    {
-        base.ConfigureAll(conf, target);
-    }
-
-    public override void ConfigureRelease(Configuration conf, Target target)
-    {
-        base.ConfigureRelease(conf, target);
-        conf.LibraryFiles.Add(@"freetype.lib");
-    }
-
-    public override void ConfigureDebug(Configuration conf, Target target)
-    {
-        base.ConfigureDebug(conf, target);
-        conf.LibraryFiles.Add(@"freetyped.lib");
-    }
-}
-
-[Export]
-public class Assimp : VCPKG
-{
-    public override void ConfigureRelease(Configuration conf, Target target)
-    {
-        base.ConfigureRelease(conf, target);
-        conf.LibraryFiles.Add(@"assimp-vc142-mt");
-    }
-
-    public override void ConfigureDebug(Configuration conf, Target target)
-    {
-        base.ConfigureDebug(conf, target);
-        conf.LibraryFiles.Add(@"assimp-vc142-mtd");
-    }
-
-}
-
-
-[Generate]
-public class RTTR : ExternalProject
+public class ConanDependencies : Sharpmake.Project
 {
 
-    public RTTR() : base()
+    struct Key
     {
-        Name = "RTTR";
-        SourceRootPath = Path.Combine(ExternalDir, "rttr/src/rttr");
-        //SourceFilesFiltersRegex = new Strings();
-        //SourceFilesFiltersRegex.Add(@"rttr\\\w*\.(h|cpp)");
+        public Key(string t, Optimization opt)
+        {
+            type = t;
+            optimization = opt;
+        }
+
+        public string type;
+        public Optimization optimization;
     }
 
-    public override void ConfigureAll(Configuration conf, Target target)
+    private static System.Threading.Mutex globalMutex = new System.Threading.Mutex();
+    private static Dictionary<Key, Strings> conanInformation = new Dictionary<Key, Strings>();
+    public static void ParseConanFile(Solution solution)
     {
-        base.ConfigureAll(conf, target);
+        lock (globalMutex)
+        {
+            foreach (var target in solution.Targets.TargetObjects)
+            {
+                string p = "Debug";
+                switch (target.GetOptimization())
+                {
+                    case Optimization.Debug:
+                        p = "Debug";
+                        break;
+                    case Optimization.Release:
+                        p = "Release";
+                        break;
+                }
 
-        conf.IncludePaths.Add(@"[project.SourceRootPath]/..");
+                string dir = Path.Combine("[solution.SharpmakeCsPath]\\build\\", p, "conanbuildinfo.txt");
 
-        conf.Output = Configuration.OutputType.Lib;
+                Sharpmake.Resolver resolver = new Sharpmake.Resolver();
+                resolver.SetParameter("solution", solution);
+                string outdir = resolver.Resolve(dir);
+
+                string mode = "";
+                foreach (var line in File.ReadLines(outdir))
+                {
+                    if (line.Length == 0)
+                        continue;
+
+
+                    if (line[0] == '[')
+                    {
+                        mode = line.Substring(1, line.Length - 2);
+                    }
+                    else
+                    {
+                        Key k = new Key();
+                        k.type = mode;
+                        k.optimization = target.GetOptimization();
+
+                        if (!conanInformation.ContainsKey(k))
+                        {
+                            conanInformation.Add(k, new Strings());
+                        }
+                        conanInformation[k].Add(line);
+                    }
+                }
+
+
+            }
+
+        }
+    }
+
+    public ConanDependencies()
+    {
+        Name = "ConanDependencies";
+        AddTargets(Utils.Targets);
 
     }
-    public override void ConfigureRelease(Configuration conf, Target target)
+
+    [Configure(Optimization.Debug)]
+    public void ConfigureDebug(Configuration conf, Target target)
     {
-        base.ConfigureRelease(conf, target);
-        //conf.ExportDefines.Add(@"RTTR_DLL=[project.VcpkgDir]/bin;");
-        conf.LibraryFiles.Add(@"rttr_core");
+        conf.IncludePaths.AddRange(conanInformation[new Key("includedirs", Optimization.Debug)]);
+        conf.LibraryPaths.AddRange(conanInformation[new Key("libdirs", Optimization.Debug)]);
+        conf.LibraryFiles.AddRange(conanInformation[new Key("libs", Optimization.Debug)]);
     }
 
-    public override void ConfigureDebug(Configuration conf, Target target)
+    [Configure(Optimization.Release)]
+    public void ConfigureRelease(Configuration conf, Target target)
     {
-        base.ConfigureDebug(conf, target);
-        //conf.ExportDefines.Add(@"RTTR_DLL=[project.VcpkgDir]/debug/bin;");
-        conf.LibraryFiles.Add(@"rttr_core_d");
+        conf.IncludePaths.AddRange(conanInformation[new Key("includedirs", Optimization.Release)]);
+        conf.LibraryPaths.AddRange(conanInformation[new Key("libdirs", Optimization.Release)]);
+        conf.LibraryFiles.AddRange(conanInformation[new Key("libs", Optimization.Release)]);
     }
-
 }
-
-
 
 [Generate]
 public class ImGui : ExternalProject
@@ -119,116 +112,8 @@ public class ImGui : ExternalProject
     {
         base.ConfigureAll(conf, target);
 
-        // FreeType is a dependency
-        conf.AddPrivateDependency<FreeType>(target, DependencySetting.DefaultWithoutLinking);
-
         conf.Output = Configuration.OutputType.Lib;
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]");
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]/examples");
     }
-}
-
-[Export]
-public class HLSLPP : ExternalProject
-{
-    public HLSLPP() : base()
-    {
-        Name = "hlslpp";
-        SourceRootPath = Path.Combine(ExternalDir, "hlslpp/");
-        NatvisFiles.Add(Path.Combine(SourceRootPath, "include/hlsl++.natvis"));
-    }
-
-    override public void ConfigureAll(Configuration conf, Target target)
-    {
-        base.ConfigureAll(conf, target);
-
-        conf.Output = Configuration.OutputType.None;
-        conf.IncludeSystemPaths.Add(Path.Combine(ExternalDir, "[project.Name]/include"));
-        conf.ExportDefines.Add("HLSLPP_FEATURE_TRANSFORM");
-    }
-
-
-}
-
-
-[Generate]
-public class EnkiTS : ExternalProject
-{
-    public EnkiTS()
-    {
-        Name = "EnkiTS";
-        SourceRootPath = Path.Combine(ExternalDir, "enkiTS/");
-        SourceFilesExcludeRegex.Add("example");
-
-    }
-
-    public override void ConfigureAll(Configuration conf, Target target)
-    {
-        base.ConfigureAll(conf, target);
-
-        conf.IncludePaths.Add(Path.Combine(ExternalDir, "enkiTS/src"));
-        conf.Output = Configuration.OutputType.Lib;
-    }
-}
-
-[Export]
-public class LibClang : VCPKG
-{
-    public LibClang()
-    {
-        Name = "LibClang";
-
-    }
-
-    public override void ConfigureRelease(Configuration config, Target target)
-    {
-        base.ConfigureRelease(config, target);
-        config.LibraryFiles.Add("libclang");
-    }
-    public override void ConfigureDebug(Configuration config, Target target)
-    {
-        base.ConfigureDebug(config, target);
-        config.LibraryFiles.Add("libclangd");
-    }
-
-}
-
-[Export]
-public class ClReflect : ExternalProject
-{
-    public ClReflect()
-    {
-        Name = "clReflect";
-        SourceRootPath = @"[project.ExternalDir]/clReflect";
-    }
-
-    override public void ConfigureAll(Configuration conf, Target target)
-    {
-        base.ConfigureAll(conf, target);
-
-        conf.Output = Configuration.OutputType.None;
-        conf.IncludeSystemPaths.Add(@"[project.ExternalDir]/[project.Name]/inc");
-    }
-}
-
-[Export]
-public class Fmt : VCPKG
-{
-    public Fmt() : base(false)
-    {
-    }
-
-    public override void ConfigureDebug(Configuration conf, Target target)
-    {
-        base.ConfigureDebug(conf, target);
-        conf.LibraryFiles.Add(@"fmtd");
-    }
-
-    public override void ConfigureRelease(Configuration conf, Target target)
-    {
-        base.ConfigureRelease(conf, target);
-        conf.LibraryFiles.Add(@"fmt");
-    }
-
-
 }

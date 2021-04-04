@@ -68,7 +68,7 @@ public:
 		_root = path;
 	}
 
-	std::string resolve_path(std::string const& path) {
+	virtual std::string resolve_path(std::string const& path) override {
 		// resolve path
 		char tmp[512];
 		sprintf_s(tmp, "%s/%s", _root.c_str(), path.c_str());

@@ -1,0 +1,63 @@
+#include "sceneviewer.pch.h"
+#include "GameTest2D.h"
+
+#include "Components.h"
+#include "Overlays.h"
+
+void GameTest2D::configure_engine(EngineSettings& engineSettings) {
+	engineSettings.d2d_use = true;
+	engineSettings.d2d_use_aa = true;
+}
+
+void GameTest2D::start()
+{
+	_bitmaps.reserve(100);
+	_bitmaps.push_back({ float3x3::identity(), Bitmap::load("Tests/Bitmaps/coinBronze.png") });
+	_bitmaps.push_back({ float3x3::identity(), Bitmap::load("Tests/Bitmaps/coinSilver.png") });
+	_bitmaps.push_back({ float3x3::identity(), Bitmap::load("Tests/Bitmaps/coinGold.png") });
+	_bitmaps.push_back({ float3x3::identity(), Bitmap::load("Tests/Bitmaps/character.png") });
+
+	float width_offset = 0;
+	float height_offset = 0;
+	float row_height = 0;
+	for (u32 i = 0; i < _bitmaps.size(); ++i) {
+		auto const& bmp = _bitmaps[i].bmp;
+		float3x3 c = float3x3::translation({ width_offset, height_offset });
+
+		float new_width_offset = width_offset + bmp->get_width();
+		if (new_width_offset > 200) {
+			height_offset += row_height;
+			row_height = 0;
+			width_offset = 0;
+
+			c = float3x3::translation({ width_offset, height_offset });
+		}
+
+		_bitmaps[i].matrix = c;
+
+		width_offset = new_width_offset;
+		row_height = std::max<float>(row_height, static_cast<float>(bmp->get_height()));
+	}
+
+}
+
+void GameTest2D::end()
+{
+
+}
+
+void GameTest2D::paint(graphics::D2DRenderContext& ctx)
+{
+	ctx.draw_background(MK_COLOR(153, 217, 234,255));
+
+	std::for_each(_bitmaps.begin(), _bitmaps.end(), [&ctx](auto const& el) {
+		ctx.set_world_matrix(el.matrix);
+		ctx.draw_bitmap(el.bmp.get());
+	});
+
+
+}
+
+void GameTest2D::tick(double deltaTime)
+{
+}
