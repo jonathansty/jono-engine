@@ -12,7 +12,6 @@
 #include "debug_overlays/ImGuiOverlays.h"
 
 #include "core/ResourceLoader.h"
-#include "core/logging.h"
 
 #include "InputManager.h"
 #include "PrecisionTimer.h"
@@ -206,7 +205,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	d3d_init();
 
 	ImGui::CreateContext();
-	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	ImGui_ImplWin32_Init(get_window());
@@ -305,7 +304,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 			if (_recreate_swapchain)
 			{
-				logging::logf("Recreating swapchain. New size: %dx%d\n", (uint32_t)_window_width, (uint32_t)_window_height);
+				fmt::printf("Recreating swapchain. New size: %dx%d\n", (uint32_t)_window_width, (uint32_t)_window_height);
 
 				this->resize_swapchain(_window_width, _window_height);
 				_recreate_swapchain = false;
@@ -396,9 +395,11 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 		// Present
 		GPU_MARKER(_d3d_user_defined_annotation, L"DrawEnd");
-		_dxgi_swapchain->Present(_vsync_enabled ? 1 : 0, 0);
-
-
+		u32 flags = 0;
+		if(!_vsync_enabled) {
+			flags |= DXGI_PRESENT_ALLOW_TEARING;
+		}
+		_dxgi_swapchain->Present(_vsync_enabled ? 1 : 0, flags);
 
 		_d3d_device_ctx->End(gpuTimings[idx][2].Get());
 		_d3d_device_ctx->End(gpuTimings[idx][0].Get());
@@ -552,33 +553,13 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 
 	// Release the textures before re-creating the swapchain
 	if (_dxgi_swapchain) {
-		_d3d_output_tex->Release();
-		_d3d_output_tex = nullptr;
-
-		_d3d_output_rtv->Release();
-		_d3d_output_rtv = nullptr;
-
-		_d3d_output_depth->Release();
-		_d3d_output_depth = nullptr;
-
-		_d3d_output_dsv->Release();
-		_d3d_output_dsv = nullptr;
-
-		// Resize the swapchain
-		if (_d3d_backbuffer_view) {
-			_d3d_backbuffer_view->Release();
-			_d3d_backbuffer_view = nullptr;
-		}
-
-		if (_d3d_backbuffer_srv) {
-			_d3d_backbuffer_srv->Release();
-			_d3d_backbuffer_srv = nullptr;
-		}
-
-		if (_d2d_rt) {
-			_d2d_rt->Release();
-			_d2d_rt = nullptr;
-		}
+		helpers::SafeRelease(_d3d_output_tex);
+		helpers::SafeRelease(_d3d_output_rtv);
+		helpers::SafeRelease(_d3d_output_depth);
+		helpers::SafeRelease(_d3d_output_dsv);
+		helpers::SafeRelease(_d3d_backbuffer_view);
+		helpers::SafeRelease(_d3d_backbuffer_srv);
+		helpers::SafeRelease(_d2d_rt);
 	}
 
 	// Create the 3D output target
@@ -623,6 +604,7 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 		}
 		desc.BufferCount = 2;
 		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+		desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 		SUCCEEDED(_dxgi_factory->CreateSwapChain(_d3d_device, &desc, &_dxgi_swapchain));
 
 		set_debug_name(_dxgi_swapchain, "DXGISwapchain");
@@ -1009,7 +991,7 @@ void GameEngine::create_factories()
 			creation_flag |= D3D11_CREATE_DEVICE_DEBUG;
 		}
 
-		SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, D3D11_CREATE_DEVICE_DEBUG | D3D11_CREATE_DEVICE_BGRA_SUPPORT, featureLevels, UINT(std::size(featureLevels)), D3D11_SDK_VERSION, &_d3d_device, &featureLevel, &_d3d_device_ctx));
+		SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flag, featureLevels, UINT(std::size(featureLevels)), D3D11_SDK_VERSION, &_d3d_device, &featureLevel, &_d3d_device_ctx));
 
 		if (debug_layer) {
 
@@ -1104,13 +1086,6 @@ void GameEngine::d3d_init()
 	_initialized = true;
 }
 
-template <typename T>
-void SafeRelease(T*& obj) {
-	if(obj != nullptr) {
-		obj->Release();
-		obj = nullptr;
-	}
-}
 //
 //  Discard device-specific resources which need to be recreated
 //  when a Direct3D device is lost
@@ -1118,6 +1093,8 @@ void SafeRelease(T*& obj) {
 void GameEngine::d3d_deinit()
 {
 	_initialized = false;
+
+	using helpers::SafeRelease;
 
 	SafeRelease(_color_brush);
 	SafeRelease(_d2d_rt);
@@ -1329,7 +1306,7 @@ void GameEngine::build_ui()
 				if (ImGui::MenuItem(s_should_simulate ? "Stop" : "Start", "", nullptr))
 				{
 					s_should_simulate = !s_should_simulate;
-					logging::logf("Toggling Simulation %s.\n", s_should_simulate ? "On" : "Off");
+					fmt::printf("Toggling Simulation %s.\n", s_should_simulate ? "On" : "Off");
 
 					this->set_sleep(!s_should_simulate);
 				}
@@ -1374,12 +1351,12 @@ void GameEngine::build_ui()
 
 int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<AbstractGame>&& game)
 {
+
+#if defined(DEBUG) | defined(_DEBUG)
 	//notify user if heap is corrupt
-	//HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
+	HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
 
 	// Enable run-time memory leak check for debug builds.
-#if defined(DEBUG) | defined(_DEBUG)
-
 	typedef HRESULT(__stdcall* fPtr)(const IID&, void**);
 	HMODULE const h_dll = LoadLibrary(L"dxgidebug.dll");
 	assert(h_dll);
@@ -1391,22 +1368,20 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 #endif
 
 	int result = 0;
-	// Apply the command line 
-	GameEngine::instance()->set_command_line(cmdLine);
 
-	// Apply the game
+	GameEngine::instance()->set_command_line(cmdLine);
 	GameEngine::instance()->set_game(std::move(game));
 
-	// Startup the engine
 	result = GameEngine::instance()->run(hInstance, iCmdShow); // run the game engine and return the result
 
 	// Shutdown the game engine to make sure there's no leaks left. 
 	GameEngine::Shutdown();
 
 #if defined(DEBUG) | defined(_DEBUG)
-	if (pDXGIDebug)
+	if (pDXGIDebug) {
 		pDXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
-	pDXGIDebug->Release();
+	}
+	helpers::SafeRelease(pDXGIDebug);
 #endif
 
 	return result;

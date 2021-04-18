@@ -113,7 +113,7 @@ void SimpleMeshComponent::render()
 	UINT offsets = { 0 };
 	ctx->IASetVertexBuffers(0, 1, _resource->_vert_buffer.GetAddressOf(), &strides, &offsets);
 
-	for (Meshlet const& m : _resource->_meshes)
+	for (Mesh const& m : _resource->_meshes)
 	{
 		std::shared_ptr<MaterialResource> material = _resource->_materials[m.materialID]; 
 		(*material)->apply();

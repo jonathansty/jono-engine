@@ -38,7 +38,7 @@ public class ConanDependencies : Sharpmake.Project
                         break;
                 }
 
-                string dir = Path.Combine("[solution.SharpmakeCsPath]\\build\\", p, "conanbuildinfo.txt");
+                string dir = Path.Combine("[solution.SharpmakeCsPath]\\build\\", "conan_"+p, "conanbuildinfo.txt");
 
                 Sharpmake.Resolver resolver = new Sharpmake.Resolver();
                 resolver.SetParameter("solution", solution);

@@ -169,15 +169,15 @@ void SceneViewer::start()
 	CD3D11_DEPTH_STENCIL_DESC ds_desc{ CD3D11_DEFAULT() };
 	ds_desc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL;
 	SUCCEEDED(device->CreateDepthStencilState(&ds_desc, _depth_state.GetAddressOf()));
-	DirectX::SetDebugObjectName(_depth_state.Get(), L"Default DepthStencilState");
+	helpers::SetDebugObjectName(_depth_state.Get(), "Default DepthStencilState");
 
 	CD3D11_BLEND_DESC bs_desc{ CD3D11_DEFAULT() };
 	SUCCEEDED(device->CreateBlendState(&bs_desc, _blend_state.GetAddressOf()));
-	DirectX::SetDebugObjectName(_blend_state.Get(), L"Default BlendState");
+	helpers::SetDebugObjectName(_blend_state.Get(), "Default BlendState");
 
 	CD3D11_RASTERIZER_DESC rs_desc{ CD3D11_DEFAULT() };
 	SUCCEEDED(device->CreateRasterizerState(&rs_desc, _raster_state.GetAddressOf()));
-	DirectX::SetDebugObjectName(_raster_state.Get(), L"Default RasterizerState");
+	helpers::SetDebugObjectName(_raster_state.Get(), "Default RasterizerState");
 
 
 

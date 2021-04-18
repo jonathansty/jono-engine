@@ -54,8 +54,6 @@ void GameTest2D::paint(graphics::D2DRenderContext& ctx)
 		ctx.set_world_matrix(el.matrix);
 		ctx.draw_bitmap(el.bmp.get());
 	});
-
-
 }
 
 void GameTest2D::tick(double deltaTime)

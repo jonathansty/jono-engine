@@ -28,20 +28,4 @@ float3 to_euler(hlslpp::quaternion q) {
 	return angles;
 }
 
-#ifdef USE_XMMATH
-DirectX::XMMATRIX XMLoadFloat4x4(hlslpp::float4x4 matrix) {
-	XMFLOAT4X4 i{};
-	hlslpp::store(matrix, reinterpret_cast<float*>(&i));
-
-	XMMATRIX result = DirectX::XMLoadFloat4x4(&i);
-	return result;
-}
-
-void XMStoreFloat4x4(XMMATRIX src, hlslpp::float4x4& result) {
-	XMFLOAT4X4 data{};
-	DirectX::XMStoreFloat4x4(&data, src);
-	hlslpp::load(result, reinterpret_cast<float*>(&data));
-}
-#endif
-
 }

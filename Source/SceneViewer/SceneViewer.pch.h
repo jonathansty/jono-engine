@@ -8,10 +8,6 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include <DirectXTK/DirectXHelpers.h>
-#include <DirectXTK/VertexTypes.h>
-#include <DirectXTK/Effects.h>
-
 #include <rttr/registration>
 #include <rttr/registration_friend>
 #include <rttr/type>

@@ -15,7 +15,7 @@ public:
 			ImGui::Begin("Types", &_isOpen);
 
 			using namespace rttr;
-			ImGui::Columns(4);
+			ImGui::Columns(5);
 			ImGui::Text("Key");
 			ImGui::NextColumn();
 

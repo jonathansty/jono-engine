@@ -32,7 +32,6 @@ using namespace DirectX;
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 
-#include "Core/logging.h"
 #include "Core/PlatformIO.h"
 #include "Core/Serialization.h"
 

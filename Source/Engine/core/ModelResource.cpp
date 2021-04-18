@@ -82,7 +82,7 @@ void ModelResource::load()
 			};
 
 
-			Meshlet meshlet{};
+			Mesh meshlet{};
 			meshlet.firstIndex = indices.size();
 			meshlet.firstVertex = vertices.size();
 			meshlet.indexCount = uint32_t(mesh->mNumFaces) * 3;
@@ -222,9 +222,9 @@ void ModelResource::load()
 			}
 
 
-			_materials.push_back(ResourceLoader::instance()->load<MaterialResource>(parameters, true));
+			auto handle = ResourceLoader::instance()->load<MaterialResource>(parameters, true);
+			_materials.push_back(handle);
 		}
-
 	}
 
 

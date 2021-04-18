@@ -17,7 +17,7 @@ struct ModelVertex
 };
 
 // Sub-mesh
-struct Meshlet
+struct Mesh
 {
 	uint64_t firstVertex;
 	uint64_t firstIndex;
@@ -30,6 +30,7 @@ struct Meshlet
 class Model
 {};
 
+// Render Model resource
 class ModelResource final : public TCachedResource<Model, FromFileResourceParameters>
 {
 public:
@@ -44,7 +45,7 @@ public:
 	uint64_t _index_count;
 
 	std::vector<MaterialRef> _materials;
-	std::vector<Meshlet> _meshes;
+	std::vector<Mesh> _meshes;
 
 	// Vert buffer and index buffer contain all the data for each meshlet.
 	ComPtr<ID3D11Buffer> _vert_buffer;

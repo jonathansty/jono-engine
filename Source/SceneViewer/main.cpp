@@ -19,6 +19,7 @@ int main(const int argcs, const char** argvs)
 		} 
 	}
 
+	// If no game was specified fallback to the sceneviewer.
 	if(game_ptr == nullptr) {
 		std::string scene;
 		cli::get_string(cmd, "scene", scene);

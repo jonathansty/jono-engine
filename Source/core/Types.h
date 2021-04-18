@@ -200,8 +200,15 @@ std::string GuidToString(GUID guid);
 
 void SetDebugObjectName(ID3D11DeviceChild* res, std::string const& name);
 
+template <typename T>
+void SafeRelease(T*& obj) {
+	if (obj != nullptr) {
+		obj->Release();
+		obj = nullptr;
+	}
 }
 
+}
 
 #define MK_COLOR(r, g, b, a) ((u32)((r & 0xFF) << 24 | (g & 0xFF) << 16 | (b & 0xFF) << 8 | a))
 #define COLOR_R(c) ( c & 0xFF000000)
