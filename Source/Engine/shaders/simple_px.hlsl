@@ -31,7 +31,7 @@ float4 main(VS_OUT vout) : SV_Target
 	float2 uv = vout.uv;
 
 	Material material = CreateMaterial();
-	material.albedo = g_albedo.Sample(g_all_linear_sampler, uv);
+	material.albedo = g_albedo.Sample(g_all_linear_sampler, uv).rgb;
 	material.tangentNormal = (g_normal.Sample(g_all_linear_sampler, uv).rgb * 2.0 - 1.0);
 
 	float4 data = g_data.Sample(g_all_linear_sampler, uv);

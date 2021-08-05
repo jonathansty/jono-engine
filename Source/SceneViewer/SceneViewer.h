@@ -38,14 +38,6 @@ private:
 
 	framework::EntityDebugOverlay* _overlay;
 
-	enum class Samplers
-	{
-		AllLinear,
-		AllPoint,
-		Count
-	};
-	std::array<ComPtr<ID3D11SamplerState>, uint32_t(Samplers::Count)> m_Samplers;
-
 	float _timer;
 };
 

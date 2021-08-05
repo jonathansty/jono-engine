@@ -131,9 +131,9 @@ void Bitmap::SetOpacity(double opacity)
 
 void Bitmap::SetTransparencyColor(u32 transparentColor)
 {
-	u8 r = COLOR_R(transparentColor);
-	u8 g = COLOR_G(transparentColor);
-	u8 b = COLOR_B(transparentColor);
+	u32 r = COLOR_R(transparentColor);
+	u32 g = COLOR_G(transparentColor);
+	u32 b = COLOR_B(transparentColor);
 	COLORREF color = RGB(r, g, b);
 	UINT width = 0, height = 0;
 	WICPixelFormatGUID* pPixelFormatPtr = nullptr;

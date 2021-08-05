@@ -17,6 +17,7 @@
 #include "PrecisionTimer.h"
 #include "AudioSystem.h"
 #include "Font.h"
+#include "Graphics/Graphics.h"
 
 
 static constexpr uint32_t max_task_threads = 4;
@@ -134,6 +135,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 	// Create DirectX rendering factory
 	create_factories();
+
+	Graphics::init(_d3d_device);
 
 	// Setup our default overlays
 	_overlay_manager = std::make_shared<OverlayManager>();

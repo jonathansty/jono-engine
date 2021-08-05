@@ -28,7 +28,7 @@ float4 main(VS_OUT vout) : SV_Target
 	float2 uv = vout.uv;
 
 	Material material = CreateMaterial();
-	material.albedo = g_albedo.Sample(g_AllLinearSampler, uv);
+	material.albedo = g_albedo.Sample(g_AllLinearSampler, uv).rgb;
 	material.tangentNormal = (g_Normal.Sample(g_AllLinearSampler, uv).rgb * 2.0 - 1.0);
 
 	float4 data = g_Data.Sample(g_AllLinearSampler, uv);
@@ -38,7 +38,7 @@ float4 main(VS_OUT vout) : SV_Target
 
 	float3 output = float3(1.0, 0.0, 0.0);
 	if (g_VisualizeMode == VisualizeMode_VertexColour) {
-		output = vout.colour;
+		output = vout.colour.rgb;
 	}
 	else if (g_VisualizeMode == VisualizeMode_Albedo)
 	{

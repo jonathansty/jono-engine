@@ -16,7 +16,7 @@ float3 to_euler(hlslpp::quaternion q) {
 	// pitch (y-axis rotation)
 	float1 sinp = 2 * (q.w * q.y - q.z * q.x);
 	if (hlslpp::all(hlslpp::abs(sinp) >= float1(1)))
-		angles.y = std::copysign(3.1415 / 2, float(sinp)); // use 90 degrees if out of range
+		angles.y = std::copysign(3.1415f / 2, float(sinp)); // use 90 degrees if out of range
 	else
 		angles.y = hlslpp::asin(sinp);
 
