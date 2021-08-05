@@ -19,6 +19,8 @@
 #include "Font.h"
 #include "Graphics/Graphics.h"
 
+#include "Engine/Core/TextureResource.h"
+
 
 static constexpr uint32_t max_task_threads = 4;
 
@@ -133,10 +135,14 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// initialize d2d for WIC
 	SUCCEEDED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED));
 
+	// create the game engine object, exit if failure
+	ASSERT(GameEngine::instance());
+
 	// Create DirectX rendering factory
 	create_factories();
 
 	Graphics::init(_d3d_device);
+	TextureResource::initialise_default();
 
 	// Setup our default overlays
 	_overlay_manager = std::make_shared<OverlayManager>();
@@ -148,8 +154,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_overlay_manager->register_overlay(new ImGuiAboutOverlay());
 
 
-	// create the game engine object, exit if failure
-	ASSERT(GameEngine::instance());
 
 	// set the instance member variable of the game engine
 	this->_hinstance = hInstance;

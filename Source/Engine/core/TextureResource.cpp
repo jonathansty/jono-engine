@@ -14,6 +14,13 @@ TextureResource::TextureResource(FromFileResourceParameters params) : TCachedRes
 
 }
 
+void TextureResource::initialise_default() {
+	TextureResource::black();
+	TextureResource::white();
+	TextureResource::default_normal();
+	TextureResource::default_roughness();
+}
+
 std::shared_ptr<TextureResource> TextureResource::black() {
 	return invalid();
 }

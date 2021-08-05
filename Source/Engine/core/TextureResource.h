@@ -20,6 +20,7 @@ public:
 		return s_invalid;
 	}
 
+	static void initialise_default();
 	static std::shared_ptr<TextureResource> black();
 
 	static std::shared_ptr<TextureResource> white();
