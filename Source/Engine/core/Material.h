@@ -50,7 +50,10 @@ public:
 
 	void apply();
 
+	bool is_double_sided() const { return _double_sided; }
+
 private:
+	bool _double_sided;
 	//TODO: Use pipelines?
 	std::unique_ptr<Shader> _vertex_shader;
 

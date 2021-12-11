@@ -40,7 +40,6 @@ SimpleMovement2D::SimpleMovement2D(XMFLOAT2 pos, float speed) : Component()
 , _speed(speed)
 , _elapsed(0.0)
 , _offset(float4{ pos.x, pos.y, 0.0f, 1.0f })
-
 {
 
 }

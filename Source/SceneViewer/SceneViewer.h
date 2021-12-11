@@ -2,11 +2,15 @@
 
 #include "AbstractGame.h"
 #include "Framework/World.h"
+#include "Graphics/Graphics.h"
 
 class SceneViewer final : public AbstractGame
 {
 public:
-	SceneViewer(std::string const& path) : _scene_path(path)
+	SceneViewer(std::string const& path)
+			: _scene_path(path)
+			, _timer(0.0f)
+			, _light_tick(0.0f)
 	{}
 	virtual ~SceneViewer() {}
 
@@ -17,7 +21,6 @@ public:
 	virtual void paint(graphics::D2DRenderContext& ctx) override;
 	virtual void tick(double deltaTime) override;
 	virtual void debug_ui() override;
-	virtual void render_3d() override;
 
 private:
 
@@ -29,16 +32,13 @@ private:
 
 	// World to store our scene data in
 	std::shared_ptr<framework::World> _world;
-
-	ComPtr<ID3D11Buffer> _cb_MVP;
-	ComPtr<ID3D11Buffer> _cb_Debug;
-	ComPtr<ID3D11DepthStencilState> _depth_state;
-	ComPtr<ID3D11BlendState> _blend_state;
-	ComPtr<ID3D11RasterizerState> _raster_state;
+	shared_ptr<RenderWorldCamera> _camera;
+	shared_ptr<RenderWorldLight> _light;
 
 	framework::EntityDebugOverlay* _overlay;
 
 	float _timer;
+	float _light_tick;
 };
 
 

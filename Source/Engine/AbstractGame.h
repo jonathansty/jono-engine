@@ -30,7 +30,6 @@ public :
 	virtual void paint(graphics::D2DRenderContext& ctx) { UNREFERENCED_PARAMETER(ctx); }														// empty definition
 	virtual void tick(double deltaTime) { UNREFERENCED_PARAMETER(deltaTime); }													// empty definition
 	virtual void debug_ui() {}
-	virtual void render_3d() {};
 };
 
 

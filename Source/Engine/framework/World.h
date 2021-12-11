@@ -102,7 +102,7 @@ namespace framework
 			return _entities;
 		}
 
-		u32 get_number_of_entities() const;
+		u64 get_number_of_entities() const;
 
 		bool attach_to(EntityHandle const& attach_to, EntityHandle const& child);
 		bool attach_to(EntityHandle const& attach_to, Component* child);

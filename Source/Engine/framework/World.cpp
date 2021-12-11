@@ -246,6 +246,6 @@ EntityHandle framework::World::find_by_id(Identifier64 const& id) const {
 	return {};
 }
 
-u32 framework::World::get_number_of_entities() const {
+u64 framework::World::get_number_of_entities() const {
 	return std::count_if(_entities.begin(), _entities.end(), [](Entity* ent) { return ent; });
 }

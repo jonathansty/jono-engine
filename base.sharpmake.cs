@@ -13,7 +13,7 @@ public class Utils
             return new Target[]{
                 new Target(
                   Platform.win64,
-                  DevEnv.vs2019,
+                  DevEnv.vs2022,
                   Optimization.Debug | Optimization.Release,
                   OutputType.Lib),
             };

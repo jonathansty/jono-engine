@@ -10,6 +10,7 @@
 #include "Components.h"
 #include "Overlays.h"
 #include "Engine/Graphics/Graphics.h"
+#include "Engine/Core/Material.h"
 
 #include "Serialization.h"
 
@@ -72,8 +73,8 @@ void SceneViewer::configure_engine(EngineSettings &engineSettings) {
 void SceneViewer::initialize(GameSettings& gameSettings)
 {
 	gameSettings.m_FullscreenMode = GameSettings::FullScreenMode::Windowed;
-	gameSettings.m_WindowWidth = 1800;
-	gameSettings.m_WindowHeight = 900;
+	gameSettings.m_WindowWidth = 800;
+	gameSettings.m_WindowHeight = 800;
 }
 
 
@@ -82,17 +83,62 @@ void SceneViewer::start()
 	auto device = GameEngine::instance()->GetD3DDevice();
 	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
 
-	TextureResource::black();
-	TextureResource::white();
-	TextureResource::default_normal();
-
+	// Capture the mouse in the window
 	::SetCapture(GameEngine::instance()->get_window());
 
+	// Setup the game world
 	using namespace framework;
-	_world = std::make_shared<World>();
-	_world->init();
+	_world = GameEngine::instance()->get_world();
+	
+	auto render_world = GameEngine::instance()->get_render_world();
+	render_world->create_instance(float4x4::identity(), "Resources/Models/plane.glb");
+	render_world->create_instance(float4x4::identity(), "Resources/Models/cube.glb");
+
+	ImVec2 size = GameEngine::instance()->get_viewport_size();
+	const float aspect = (float)size.x / (float)size.y;
+	const float near_plane = 0.01f;
+	const float far_plane = 1000.0f;
+
+	auto rw_cam = render_world->create_camera();
+	_camera = rw_cam;
+	RenderWorldCamera::CameraSettings settings{};
+	settings.aspect = aspect;
+	settings.far_clip = far_plane;
+	settings.near_clip = near_plane;
+	settings.fov = 33.0f;
+	settings.reverse_z = true;
+	settings.projection_type = RenderWorldCamera::Projection::Perspective;
+	rw_cam->set_settings(settings);
+	rw_cam->set_position({ 0.0f, 50.0f, -100.0f });
+	rw_cam->look_at({ 0.0f, 0.0f, 0.0f });
+
+	auto l = render_world->create_light(RenderWorldLight::LightType::Directional);
+	settings.aspect = 1.0f;
+	settings.fov = 3.0f;
+	settings.projection_type = RenderWorldCamera::Projection::Ortographic;
+	settings.reverse_z = true;
+	l->set_settings(settings);
+	l->set_colour({ 1.0f, 1.0f, 1.0f });
+	l->set_casts_shadow(true);
+	l->set_position(rw_cam->get_position());
+	l->look_at(float3{ 0.0f, 0.0f, 0.0f });
+	_light = l;
+
+	//_timer += 1.5f;
+	//_light_tick += M_PI_2;
+
+	float4 f = float4{ 1.0f, 5.0f, 100.0f, 1.0f };
+
+	float4 projected_cam = hlslpp::mul(rw_cam->get_vp(), f);
+	projected_cam.xyz = projected_cam.xyz / projected_cam.w;
+	float4 projected_light = hlslpp::mul(l->get_vp(), f);
+	projected_light.xyz = projected_light.xyz / projected_light.w;
 
 
+
+
+#if 0
+	// Manually register the entity debug overlay
 	framework::EntityDebugOverlay *overlay = new framework::EntityDebugOverlay(_world.get());
 	GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
@@ -101,9 +147,10 @@ void SceneViewer::start()
 		World::EntityId camera = _world->create_entity();
 		camera->set_name("MainCamera");
 		auto comp = camera->create_component<CameraComponent>();
-		camera->set_local_position(float3(0.0f, 0.0f, -2.0f));
+		camera->set_local_position(float3(0.0f, 0.0f, -50.0f));
 		_world->attach_to_root(camera);
 	}
+
 
 	{
 		namespace fs = std::filesystem;
@@ -122,15 +169,15 @@ void SceneViewer::start()
 			return model;
 		};
 
-		add_model(float3(0.0), float3(1.0), "plane/planes.gltf");
+		//add_model(float3(0.0), float3(1.0), "plane/planes.gltf");
 
-		for (int i = 0; i < 1; ++i) {
-			for (int j = 0; j < 1; ++j) {
-				World::EntityId ent = add_model(float3(2.0f * (float)i, 3.0f, 2.0f * (float)j), float3(1.0), "m-96_mattock/scene.gltf");
-				auto c = ent->create_component<SimpleMovement3D>();
-				c->set_speed(10.0f);
-			}
-		}
+		//for (int i = 0; i < 1; ++i) {
+		//	for (int j = 0; j < 1; ++j) {
+		//		World::EntityId ent = add_model(float3(2.0f * (float)i, 3.0f, 2.0f * (float)j), float3(1.0), "m-96_mattock/scene.gltf");
+		//		auto c = ent->create_component<SimpleMovement3D>();
+		//		c->set_speed(10.0f);
+		//	}
+		//}
 
 		World::EntityId ent = _world->create_entity();
 		ent->set_name("Sun");
@@ -141,36 +188,9 @@ void SceneViewer::start()
 		mesh_comp->set_model_path((fs::path{ "Resources/Models/axes/axes.gltf" }).string());
 		_world->attach_to_root(ent);
 
-		add_model(float3(50.0, 0.0, 0.0f), float3(1.0), "Tower/scene.gltf");
+		add_model(float3(0.0f, 0.0f, 0.0f), float3(1.0), "Tower/scene.gltf");
 	}
-
-
-	// Initialize our rendering buffer
-	{
-		D3D11_BUFFER_DESC buff{};
-		buff.ByteWidth = sizeof(MVPConstantBuffer);
-		buff.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-		buff.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-		buff.Usage = D3D11_USAGE_DYNAMIC;
-		buff.StructureByteStride = 0;
-		buff.MiscFlags = 0;
-
-		MVPConstantBuffer mvp_data{};
-		D3D11_SUBRESOURCE_DATA data{};
-		data.pSysMem = &mvp_data;
-		SUCCEEDED(device->CreateBuffer(&buff, &data, _cb_MVP.GetAddressOf()));
-
-		DebugCB debugData{};
-		data.pSysMem = &debugData;
-		buff.ByteWidth = sizeof(DebugCB);
-		SUCCEEDED(device->CreateBuffer(&buff, &data, _cb_Debug.GetAddressOf()));
-
-	}
-
-	// #TODO: Move this into the engine
-	_depth_state = Graphics::GetDepthStencilState(DepthStencilState::Default);
-	_raster_state = Graphics::GetRasterizerState(RasterizerState::Default);
-	_blend_state = Graphics::GetBlendState(BlendState::Default);
+#endif
 }
 
 void SceneViewer::end()
@@ -184,15 +204,43 @@ void SceneViewer::paint(graphics::D2DRenderContext& ctx)
 
 void SceneViewer::tick(double deltaTime)
 {
+	//_timer += (float)deltaTime;
+	if (GameEngine::instance()->is_key_pressed(VK_RIGHT))
+		_timer -= 0.5f;
+	if (GameEngine::instance()->is_key_pressed(VK_LEFT))
+		_timer += 0.5f;
+
+	if (GameEngine::instance()->is_key_pressed(VK_UP))
+		_light_tick += 0.5f;
+	if (GameEngine::instance()->is_key_pressed(VK_DOWN))
+		_light_tick -= 0.5f;
+
+	float3 pos = _camera->get_position();
+	float radius = 50.0f;
+	_camera->set_position(float3{ radius * sin( _timer), pos.y, radius * cos(_timer) });
+	_camera->look_at(float3{ 0.0f, 0.0f, 0.0f });
+
+	_light->set_position(float3{ radius * sin(_light_tick), pos.y, radius * cos(_light_tick) });
+	_light->look_at(float3{ 0.0f, 0.0f, 0.0f });
+
 	_world->update((float)deltaTime);
 
-	_timer += (float)deltaTime;
 }
 
 void SceneViewer::debug_ui()
 {
+	if(GameEngine::instance()->_shadow_map_srv) {
+		ImGui::Begin("Shadow Map");
+		ImGui::Image(GameEngine::instance()->_shadow_map_srv.Get(), { 400, 400 });
+		ImGui::End();
+	}
+
 	static bool s_open = true;
 	ImGui::Begin("Game", &s_open);
+
+	ImGui::Text("Light: %.2f", _light_tick);
+	ImGui::Text("Camera: %.2f", _timer);
+
 	const char* items[] = {
 		"Default",
 		"Base Color",
@@ -205,6 +253,7 @@ void SceneViewer::debug_ui()
 	};
 
 	ImGui::Combo("Debug Mode", &g_DebugMode, items, std::size(items));
+
 
 	ImGui::PushID("#SceneName");
 	static char buff[512] = "test.scene";
@@ -226,114 +275,10 @@ void SceneViewer::debug_ui()
 		_world->clear();
 		load_world(p.c_str());
 	}
+
+
 	ImGui::End();
 
-}
-
-void SceneViewer::render_3d()
-{
-	auto device = GameEngine::instance()->GetD3DDevice();
-	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
-
-	// Use RH system so that we can directly export from blender
-	//_timer = 0.0f;
-	using namespace hlslpp;
-	float4 view_direction = float4(0.0f, 0.0f, -2.0f, 0.0f);
-	float4 light_direction = float4(0.0, -1.0, -1.0f,0.0f);
-	float3 light_color = float3(1.0, 1.0, 1.0);
-	LightComponent* comp = (LightComponent*)_world->find_first_component<LightComponent>();
-	if (comp)
-	{
-		float4x4 worldTransform = comp->get_entity()->get_world_transform();
-		float3 fwd = float3(0.0f, 0.0f, 1.0f);
-		light_direction = hlslpp::mul(worldTransform, float4(fwd, 0.0));
-		light_color = comp->get_color();
-	}
-
-	float4x4 View = float4x4::identity();
-
-	ImVec2 size = GameEngine::instance()->get_viewport_size();
-	const float aspect = (float)size.x / (float)size.y;
-	const float near_plane = 0.01f;
-	const float far_plane = 100.0f;
-
-	hlslpp::projection proj(frustum::field_of_view_x(XMConvertToRadians(45.0f),aspect, far_plane, near_plane), zclip::zero);
-	float4x4 Projection = float4x4::perspective(proj);
-
-
-	ctx->OMSetDepthStencilState(_depth_state.Get(), 0);
-	ctx->OMSetBlendState(_blend_state.Get(), NULL, 0xffffffff);
-	ctx->RSSetState(_raster_state.Get());
-
-	ID3D11SamplerState const* samplers[1] = {
-		Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get()
-	};
-	ctx->PSSetSamplers(0, 1, (ID3D11SamplerState**)samplers);
-
-	// Find our camera and use the matrices
-	CameraComponent* camera = _world->find_first_component<CameraComponent>();
-	View = hlslpp::float4x4::look_at(view_direction.xyz, { 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f });
-	if (camera)
-	{
-		float4x4 cameraTransform = camera->get_entity()->get_world_transform();
-		View = inverse(cameraTransform);
-
-		hlslpp::projection proj(frustum::field_of_view_x(camera->get_fov(), aspect, camera->get_far_plane(), camera->get_near_plane()), zclip::zero);
-		Projection = float4x4::perspective(proj);
-
-		// +Y is forward
-		float4 world_fwd{ 0.0f, 0.0f, 1.0f, 0.0f };
-		view_direction = mul(cameraTransform, world_fwd);
-	}
-	float4x4 invView = inverse(View);
-
-
-	// Update debug mode
-	if (g_DebugMode != DebugVisualizeMode::Default)
-	{
-		D3D11_MAPPED_SUBRESOURCE resource{};
-		ctx->Map(_cb_Debug.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-
-		DebugCB* buffer = (DebugCB*)resource.pData;
-		buffer->m_VisualizeMode = g_DebugMode;
-		ctx->Unmap(_cb_Debug.Get(), 0);
-
-		ctx->PSSetConstantBuffers(1, 1, _cb_Debug.GetAddressOf());
-	}
-
-
-	for (auto& ent : _world->get_entities())
-	{
-		if (ent == nullptr)
-			continue;
-
-		// If the entity has a mesh component and is done loading
-		if (SimpleMeshComponent* mesh_comp = ent->get_component<SimpleMeshComponent>(); mesh_comp && mesh_comp->is_loaded() && mesh_comp->is_active())
-		{
-			float4x4 world = ent->get_world_transform();
-			float4x4 MVP = mul(world, mul(View, Projection));
-
-			D3D11_MAPPED_SUBRESOURCE resource{};
-			ctx->Map(_cb_MVP.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-			MVPConstantBuffer* buffer = (MVPConstantBuffer*)resource.pData;
-			buffer->world = world;
-			buffer->wvp = MVP;
-			buffer->world_view = mul(world, View);
-			buffer->proj = Projection;
-			buffer->inv_view = invView;
-			buffer->view = View;
-			buffer->view_direction = view_direction;
-			buffer->light_direction = light_direction;
-			buffer->light_color = float4(light_color, 1.0);
-			ctx->Unmap(_cb_MVP.Get(), 0);
-
-			// TODO: Implement materials supplying buffers?
-			ctx->VSSetConstantBuffers(0, 1, _cb_MVP.GetAddressOf());
-			ctx->PSSetConstantBuffers(0, 1, _cb_MVP.GetAddressOf());
-
-			mesh_comp->render();
-		}
-	}
 }
 
 static const char* s_world_path = "Scenes/test_world.scene";

@@ -53,8 +53,8 @@ void EntityDebugOverlay::render_object(rttr::instance& obj) {
 	chain.push_back(parent);
 
 	std::reverse(chain.begin(), chain.end());
-	for (rttr::type const& t : chain) {
-		for (auto const& prop : t.get_properties()) {
+	for (rttr::type const& chainType : chain) {
+		for (auto const& prop : chainType.get_properties()) {
 			ImGui::PushID(&prop);
 
 			rttr::property const& p = prop;
@@ -100,7 +100,7 @@ void EntityDebugOverlay::render_object(rttr::instance& obj) {
 			ImGui::PopID();
 		}
 
-		for (auto& fn : t.get_methods()) {
+		for (auto& fn : chainType.get_methods()) {
 			ImGui::PushID(&fn);
 			if (ImGui::Button(fn.get_name().to_string().c_str())) {
 				fn.invoke(obj);
@@ -164,7 +164,7 @@ void EntityDebugOverlay::render_overlay() {
 			}
 			static int s_selected_type = 0;
 			ImGui::PushID("Type");
-			ImGui::Combo("",&s_selected_type, type_names.data(), type_names.size());
+			ImGui::Combo("",&s_selected_type, type_names.data(), int(type_names.size()));
 			ImGui::PopID();
 			ImGui::SameLine();
 			if (ImGui::Button("+")) {

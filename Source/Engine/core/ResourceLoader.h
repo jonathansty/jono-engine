@@ -2,9 +2,13 @@
 
 #include "singleton.h"
 
+#include <fmt/core.h>
+
 struct FromFileResourceParameters
 {
 	std::string path;
+
+	std::string to_string() const { return path; }
 };
 
 // template resource class
@@ -49,6 +53,8 @@ public:
 	resource_type* operator->() {
 		return _resource.get();
 	}
+
+	resource_type* get() const { return _resource.get(); }
 
 	public:
 	init_type const& get_init_parameters() const { return _init; }
@@ -117,9 +123,11 @@ namespace std
 template<typename T>
 std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool blocking )
 {
+	fmt::print("[LOAD] Load request {}\n", params.to_string());
 	std::size_t  h = std::hash<typename T::init_parameters>{}(params);
 	if (auto it = _cache.find(h); it != _cache.end())
 	{
+		fmt::print("[LOAD] Returned cached copy for {}\n", params.to_string());
 		return std::static_pointer_cast<T>(it->second);
 	}
 
@@ -130,6 +138,7 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 	{
 		res->load();
 		res->_loaded = true;
+		fmt::print("[LOAD] {} finished\n", params.to_string());
 	}
 	else 
 	{
@@ -137,6 +146,7 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 			res->_loaded = false;
 			res->load();
 			res->_loaded = true;
+			fmt::print("[LOAD] {} finished\n", params.to_string());
 		});
 
 		{
