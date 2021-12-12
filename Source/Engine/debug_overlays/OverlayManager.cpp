@@ -13,6 +13,10 @@ void OverlayManager::unregister_overlay(DebugOverlay* overlay)
 	_overlays.erase(overlay->get_name());
 }
 
+DebugOverlay* OverlayManager::get_overlay(std::string const& name) {
+	return _overlays[name];
+}
+
 OverlayManager::~OverlayManager() 
 {
 	for (auto& overlay : _overlays)

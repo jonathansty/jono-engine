@@ -63,23 +63,23 @@ void EntityDebugOverlay::render_object(rttr::instance& obj) {
 			auto t = p.get_type();
 			if (t == rttr::type::get<WrapperFloat3>()) {
 				float3 pos = p.get_value(obj).convert<WrapperFloat3>().value;
-				if (ImGui::InputFloat3(name.c_str(), (float*)&pos, 2)) {
+				if (ImGui::InputScalarN(name.c_str(),ImGuiDataType_Float, (float*)&pos, 3)) {
 					p.set_value(obj, WrapperFloat3{ pos });
 				}
 			} else if (t == rttr::type::get<WrapperFloat4>()) {
 				float4 v = p.get_value(obj).convert<WrapperFloat4>().value;
-				if (ImGui::InputFloat4(name.c_str(), (float*)&v, 2)) {
+				if (ImGui::InputScalarN(name.c_str(), ImGuiDataType_Float, (float*)&v, 4)) {
 					p.set_value(obj, WrapperFloat4{ v });
 				}
 			} else if (t == rttr::type::get<WrapperQuat>()) {
 				hlslpp::quaternion quat = p.get_value(obj).convert<WrapperQuat>().value;
 				hlslpp::float3 euler = hlslpp::degrees(hlslpp_helpers::to_euler(quat));
-				if (ImGui::InputFloat3(name.c_str(), (float*)&euler, 2)) {
+				if (ImGui::InputScalarN(name.c_str(), ImGuiDataType_Float, (float*)&euler, 3)) {
 					p.set_value(obj, WrapperQuat{ hlslpp::euler(hlslpp::radians(euler)) });
 				}
 			} else if (t == rttr::type::get<float>()) {
 				float v = p.get_value(obj).convert<float>();
-				if (ImGui::InputFloat(p.get_name().to_string().c_str(), &v, 0.01f, 0.1f, 2)) {
+				if (ImGui::InputFloat(p.get_name().to_string().c_str(), &v, 0.01f, 0.1f)) {
 					p.set_value(obj, v);
 				}
 			} else if (p.get_type() == rttr::type::get<int>()) {

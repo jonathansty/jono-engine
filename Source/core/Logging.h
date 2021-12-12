@@ -1,6 +1,7 @@
 #pragma once
 
 #include "singleton.h"
+#include "RingBuffer.h"
 
 // Severity levels used for logging
 enum class LogSeverity {
@@ -10,120 +11,58 @@ enum class LogSeverity {
 	Error
 };
 
+// Namespace that contains helper functions related to logging
+namespace Logging {
+template <typename S, typename... Args>
+void log(const char* file, int line, LogSeverity severity, const S& format, Args&&... args) {
+	std::string msg = fmt::vformat(format, fmt::make_args_checked<Args...>(format, args...));
+	LogEntry entry{};
+	entry._severity = severity;
+	entry._message = msg;
+	entry._file = file;
+	entry._line = line;
+	Logger::instance()->Log(entry);
+}
 
-template<typename _Ty, size_t _Size>
-class CircularBuffer {
-
-public:
-	using SelfType  = CircularBuffer<_Ty, _Size>;
-	CircularBuffer() 
-		: _start(0)
-		, _end(0)
-		, _data()
-	{
-	}
-
-	~CircularBuffer() {}
-
-	void push(_Ty val) {
-		// Copy the value to the end value 
-		_data[_end] = val;
-
-		// Update our variables. If end runs over start we move start and overwrite the data
-		_end = (_end + 1) % _Size;
-		if(_end == _start) {
-			_start = (_start + 1) % _Size;
-		}
-
-	}
-
-	void clear() 
-	{
-		_start = 0;
-		_end = 0;
-	}
-
-	bool empty() const { return _start == _end; }
+} // namespace Logging
 
 
-	template<typename _Ty, size_t _Size>
-	struct Iterator {
-		using iterator_category = std::forward_iterator_tag;
-		using difference_type   = std::atomic_ptrdiff_t;
-		using value_type        = _Ty;
-		using pointer           = _Ty const*;
-		using reference         = _Ty&;
-
-		Iterator(CircularBuffer<_Ty, _Size> const* owner, size_t idx)
-		: _idx(idx)
-		, _owner(owner)
-		{
-
-		}
-
-		Iterator& operator++() {
-			_idx = (_idx + 1) % _Size;
-		}
-
-		Iterator operator++(int) {
-			Iterator tmp = *this;
-			++(*this); 
-			return tmp;
-		}
-
-		pointer operator->() {
-			return &_owner->_data[_idx];
-		}
-
-		pointer operator*() {
-			return &_owner->_data[_idx];
-		}
 
 
-		friend bool operator==(const Iterator& lhs, const Iterator& rhs) { return lhs._idx == rhs._idx; }
-		friend bool operator!=(const Iterator& lhs, const Iterator& rhs) { return lhs._idx != rhs._idx; }
-
-		private:
-			size_t _idx;
-			CircularBuffer<_Ty, _Size> const* _owner;
-	};
-
-	Iterator<_Ty, _Size> begin() const { return Iterator<_Ty, _Size>(this, _start); }
-	Iterator<_Ty, _Size> end() const { return Iterator<_Ty, _Size>(this, _end); }
-
-
-private:
-	size_t _start;
-	size_t _end;
-	std::array<_Ty, _Size> _data;
-
+// Entry used to store log information
+struct LogEntry {
+	LogSeverity _severity;
+	std::string _message;
+	const char* _file;
+	int _line;
 };
 
-class Logging : public TSingleton<Logging> 
+// Log manager that allows storing log entries in memory
+class Logger : public TSingleton<Logger> 
 {
 public:
 	static constexpr int c_buffer_size = 2048;
 
 	using Severity = LogSeverity;
 
-	struct LogEntry {
-		Severity _severity;
-		std::string _message;
-	};
 
-	void Log(Severity severity, std::string const& msg) {
-		Log({ severity, msg });
-	}
+	void Log(Severity severity, std::string const& msg);
+	void Log(Severity severity, std::string const& category, std::string const& msg);
+	void Log(LogEntry const& entry);
 
-	void Log(LogEntry const& entry) {
-		_hasNewMessages = true;
-		_buffer.push(entry);
-	}
+	RingBuffer<LogEntry, c_buffer_size> const& GetBuffer() const { return _buffer; }
 
-	CircularBuffer<LogEntry, c_buffer_size> const& GetBuffer() const { return _buffer; }
-
+	// Hack to scroll down to bottom if new data was received
 	bool _hasNewMessages = false;
 
 private:
-	CircularBuffer < LogEntry, c_buffer_size> _buffer;
+	std::mutex _lock;
+	RingBuffer< LogEntry, c_buffer_size> _buffer;
 };
+
+// Expose some logging macros 
+#define LOG(severity, message, ...) Logging::log(__FILE__, __LINE__,severity, message, __VA_ARGS__)
+#define LOG_ERROR(message, ...) LOG(LogSeverity::Error, message, __VA_ARGS__)
+#define LOG_INFO(message, ...) LOG(LogSeverity::Info, message, __VA_ARGS__)
+#define LOG_VERBOSE(message, ...) LOG(LogSeverity::Verbose, message, __VA_ARGS__)
+#define LOG_WARNING(message, ...) LOG(LogSeverity::Warning, message, __VA_ARGS__)

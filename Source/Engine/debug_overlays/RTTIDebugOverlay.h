@@ -41,11 +41,11 @@ public:
 				ImGui::NextColumn();
 
 				bool is_class = info.is_class();
-				ImGui::Checkbox("", &is_class);
+				ImGui::Checkbox("##is_class", &is_class);
 				ImGui::NextColumn();
 
 				bool is_arithmetic = info.is_arithmetic();
-				ImGui::Checkbox("", &is_arithmetic);
+				ImGui::Checkbox("##is_arithmetic", &is_arithmetic);
 				ImGui::NextColumn();
 			});
 			ImGui::End();

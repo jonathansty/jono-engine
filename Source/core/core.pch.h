@@ -6,6 +6,10 @@
 #include <Windows.h>
 #endif
 
+#include <mutex>
+#include <vector>
+#include <array>
+
 #include <rttr/registration>
 #include <rttr/registration_friend>
 #include <rttr/type>

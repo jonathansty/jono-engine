@@ -52,6 +52,8 @@ public:
 	void register_overlay(DebugOverlay* overlay);
 	void unregister_overlay(DebugOverlay* overlay);
 
+	DebugOverlay* get_overlay(std::string const& name);
+
 private:
 	std::unordered_map<std::string, DebugOverlay*> _overlays;
 

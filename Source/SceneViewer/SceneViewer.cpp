@@ -136,6 +136,8 @@ void SceneViewer::start()
 
 
 
+	framework::EntityDebugOverlay* overlay = new framework::EntityDebugOverlay(_world.get());
+	GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
 #if 0
 	// Manually register the entity debug overlay
@@ -205,15 +207,23 @@ void SceneViewer::paint(graphics::D2DRenderContext& ctx)
 void SceneViewer::tick(double deltaTime)
 {
 	//_timer += (float)deltaTime;
-	if (GameEngine::instance()->is_key_pressed(VK_RIGHT))
+	if (GameEngine::instance()->is_key_pressed(VK_RIGHT)) {
 		_timer -= 0.5f;
-	if (GameEngine::instance()->is_key_pressed(VK_LEFT))
+		LOG_VERBOSE("Advancing timer with -0.5f ({})", _timer);
+	}
+	if (GameEngine::instance()->is_key_pressed(VK_LEFT)) {
 		_timer += 0.5f;
+		LOG_VERBOSE("Advancing timer with 0.5f ({})", _timer);
+	}
 
-	if (GameEngine::instance()->is_key_pressed(VK_UP))
+	if (GameEngine::instance()->is_key_pressed(VK_UP)) {
 		_light_tick += 0.5f;
-	if (GameEngine::instance()->is_key_pressed(VK_DOWN))
+		LOG_VERBOSE("Moving light tick with 0.5f ({})", _light_tick);
+	}
+	if (GameEngine::instance()->is_key_pressed(VK_DOWN)) {
 		_light_tick -= 0.5f;
+		LOG_VERBOSE("Moving light tick with -0.5f ({})", _light_tick);
+	}
 
 	float3 pos = _camera->get_position();
 	float radius = 50.0f;

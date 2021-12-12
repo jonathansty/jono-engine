@@ -4,8 +4,8 @@
 #include "ContactListener.h"
 #include "AbstractGame.h"
 
-#include <imgui_impl_dx11.h>
-#include <imgui_impl_win32.h>
+#include <backends/imgui_impl_dx11.h>
+#include <backends/imgui_impl_win32.h>
 
 #include "debug_overlays/MetricsOverlay.h"
 #include "debug_overlays/RTTIDebugOverlay.h"
@@ -185,7 +185,12 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 #endif
 
 	// create the render world
-	fmt::printf("[WORLD] Initializing worlds...\n");
+	LOG_VERBOSE("Test verbose message");
+	LOG_INFO("Test info message");
+	LOG_WARNING("Test warning message");
+	LOG_ERROR("Test error message");
+
+	LOG_INFO("Initialising worlds...");
 	{
 		_world = std::make_shared<framework::World>();
 		_world->init();
@@ -195,7 +200,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 		_cb_global = ConstantBuffer::create(_d3d_device, sizeof(GlobalDataCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 	}
-	fmt::printf("[WORLD] Finished worlds\n");
+	LOG_INFO("Finished initialising worlds.");
 
 	// Game Initialization
 	_game->initialize(_game_settings);
@@ -218,7 +223,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	d3d_init();
 
 	ImGui::CreateContext();
-	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	ImGui_ImplWin32_Init(get_window());
@@ -330,16 +335,16 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 			build_ui();
 			//{
-			//	ImVec2 game_width = { get_width() / 2.0f, get_height() / 2.0f };
-			//	ImGui::SetNextWindowSize(game_width, ImGuiCond_FirstUseEver);
-			//	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-			//	ImGui::PopStyleVar(1);
+				ImVec2 game_width = { get_width() / 2.0f, get_height() / 2.0f };
+				ImGui::SetNextWindowSize(game_width, ImGuiCond_FirstUseEver);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+				ImGui::PopStyleVar(1);
 
 			//	if (_frame_cnt >= 2)
 			//	{
 			//		_game->debug_ui();
 			//	}
-			//	_overlay_manager->render_overlay();
+				_overlay_manager->render_overlay();
 			//}
 			ImGui::EndFrame();
 			ImGui::UpdatePlatformWindows();
@@ -585,7 +590,7 @@ bool GameEngine::open_window(int iCmdShow)
 }
 
 void GameEngine::resize_swapchain(uint32_t width, uint32_t height) {
-	Logging::instance()->Log(Logging::Severity::Info, fmt::format("Resizing swapchain to {}x{} {}\n", width, height, __FILE__));
+	Logger::instance()->Log(Logger::Severity::Info, fmt::format("Resizing swapchain to {}x{} {}\n", width, height, __FILE__));
 	DXGI_FORMAT swapchain_format = DXGI_FORMAT_B8G8R8A8_UNORM;
 
 	// Create MSAA render target that resolves to non-msaa swapchain
@@ -1362,8 +1367,8 @@ void GameEngine::build_ui()
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 		{
 			ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(viewport->GetWorkPos());
-			ImGui::SetNextWindowSize(viewport->GetWorkSize());
+			ImGui::SetNextWindowPos(viewport->WorkPos);
+			ImGui::SetNextWindowSize(viewport->WorkSize);
 			ImGui::SetNextWindowViewport(viewport->ID);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -1410,6 +1415,7 @@ void GameEngine::build_ui()
 				if(ImGui::MenuItem("Scene Hierarchy"))
 				{
 					s_show_scene_hierarchy = !s_show_scene_hierarchy;
+					get_overlay_manager()->get_overlay("EntityDebugOverlay")->set_visible(s_show_scene_hierarchy);
 				}
 
 				if (ImGui::MenuItem("Properties"))
@@ -1428,11 +1434,12 @@ void GameEngine::build_ui()
 			ImVec2 current_size = ImGui::GetContentRegionAvail();
 
 			if(s_vp_size.x != current_size.x || s_vp_size.y != current_size.y) {
+				LOG_VERBOSE("Viewport resize detected! From {}x{} to {}x{}", current_size.x, current_size.y, s_vp_size.x, s_vp_size.y);
+
+				// Update the viewport sizes
+				s_vp_size = current_size;
 				m_ViewportWidth = (u32)s_vp_size.x;
 				m_ViewportHeight = (u32)s_vp_size.y;
-				std::string msg = fmt::format("Resizing viewport {}x{}\n", m_ViewportWidth, m_ViewportHeight);
-				Logging::instance()->Log(Logging::Severity::Error, msg.c_str());
-				s_vp_size = current_size;
 			}
 
 			ImVec2 max_uv = {};
@@ -1444,14 +1451,19 @@ void GameEngine::build_ui()
 
 		if (ImGui::Begin("Output Log", &s_show_debuglog))
 		{
+			static bool s_scroll_to_bottom = true;
+			static bool s_shorten_file = true;
 			static char s_filter[256] = {};
 			ImGui::InputText("Filter", s_filter, 512);
+			ImGui::SameLine();
+			ImGui::Checkbox("Scroll To Bottom", &s_scroll_to_bottom);
 
-			ImGui::BeginChild("OutputLogScroll");
-			auto const& buffer = Logging::instance()->GetBuffer();
+			//ImGui::BeginTable("LogData", 3);
+			ImGui::BeginChild("123");
+			auto const& buffer = Logger::instance()->GetBuffer();
 			for(auto it = buffer.begin(); it != buffer.end(); ++it) {
 
-				Logging::LogEntry const* entry = *it;
+				LogEntry const* entry = *it;
 				if (s_filter[0] != '\0') {
 					bool bPassed = (entry->_message.find(s_filter) != std::string::npos);
 					if (!bPassed)
@@ -1460,32 +1472,39 @@ void GameEngine::build_ui()
 
 				std::string prefix = "[]";
 				switch (entry->_severity) {
-					case Logging::Severity::Info:
+					case Logger::Severity::Info:
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3, 0.3, 1.0, 1.0));
 						prefix = "Info";
 						break;
-					case Logging::Severity::Warning:
+					case Logger::Severity::Warning:
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7, 0.7, 0.1, 1.0));
 						prefix = "Warning";
 						break;
-					case Logging::Severity::Error:
+					case Logger::Severity::Error:
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9, 0.1, 0.1, 1.0));
 						prefix = "Error";
 						break;
-					case Logging::Severity::Verbose: 
+					case Logger::Severity::Verbose: 
 						prefix = "Verbose";
 						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1.0));
 					default:
 						break;
-
 				}
-				ImGui::Text("[%s]: %s", prefix.c_str(), it->_message.c_str());
+
+				std::string filename = entry->_file ? entry->_file : "null";
+				if(s_shorten_file && entry->_file) {
+					auto path = std::filesystem::path(filename);
+					filename = fmt::format("{}", path.filename().string());
+				
+				}
+				ImGui::Text("[%s(%d)][%s] %s",filename.c_str(), it->_line, prefix.c_str(), it->_message.c_str());
 				ImGui::PopStyleColor();
 			}
-			if(Logging::instance()->_hasNewMessages) {
-				Logging::instance()->_hasNewMessages = false;
+			if (Logger::instance()->_hasNewMessages && s_scroll_to_bottom) {
+				Logger::instance()->_hasNewMessages = false;
 				ImGui::SetScrollHereY();
 			}
+			//ImGui::EndTable();
 			ImGui::EndChild();
 		}
 		ImGui::End();
