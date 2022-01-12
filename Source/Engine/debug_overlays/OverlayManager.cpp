@@ -28,18 +28,20 @@ OverlayManager::~OverlayManager()
 
 void OverlayManager::render_overlay() 
 {
-	if (ImGui::Begin(_name.c_str(), &_isOpen)) {
-		for (auto& overlay : _overlays) {
-			ImGui::PushID(overlay.second);
-			ImGui::Checkbox("", &overlay.second->_isOpen);
-			ImGui::SameLine();
-			char const* const d = overlay.second->get_name();
-			ImGui::Text(d);
-			ImGui::PopID();
+	if(_isOpen) {
+		if (ImGui::Begin(_name.c_str(), &_isOpen)) {
+			for (auto& overlay : _overlays) {
+				ImGui::PushID(overlay.second);
+				ImGui::Checkbox("", &overlay.second->_isOpen);
+				ImGui::SameLine();
+				char const* const d = overlay.second->get_name();
+				ImGui::Text(d);
+				ImGui::PopID();
+			}
+			//
 		}
-		//
+		ImGui::End();
 	}
-	ImGui::End();
 
 	for (auto& overlay : _overlays)
 	{

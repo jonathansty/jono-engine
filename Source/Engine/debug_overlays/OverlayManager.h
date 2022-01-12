@@ -54,6 +54,14 @@ public:
 
 	DebugOverlay* get_overlay(std::string const& name);
 
+	std::vector<DebugOverlay*> get_overlays() const {
+		std::vector<DebugOverlay*> overlays;
+		std::transform(_overlays.begin(), _overlays.end(), std::back_inserter(overlays), [](std::pair<std::string, DebugOverlay*> const& element) {
+			return element.second;
+		});
+		return overlays;
+	}
+
 private:
 	std::unordered_map<std::string, DebugOverlay*> _overlays;
 
