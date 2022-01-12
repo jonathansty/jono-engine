@@ -1,5 +1,5 @@
 [requires]
-hlslpp/3.0
+hlslpp/3.1
 enkits/1.8
 rttr/0.9.6
 fmt/7.1.3

@@ -14,6 +14,7 @@ struct MaterialInitParameters
 	};
 	LoadType load_type;
 
+	std::string name;
 	std::string vs_shader_path;
 	std::string ps_shader_path;
 
@@ -21,6 +22,8 @@ struct MaterialInitParameters
 	uint32_t vs_shader_bytecode_size;
 	const char* ps_shader_bytecode;
 	uint32_t ps_shader_bytecode_size;
+
+	bool double_sided;
 
 	// Textures
 	enum TextureType
@@ -32,6 +35,8 @@ struct MaterialInitParameters
 	};
 
 	std::array<std::string, TextureType_Count> m_texture_paths;
+
+	std::string to_string() const;
 };
 
 namespace std

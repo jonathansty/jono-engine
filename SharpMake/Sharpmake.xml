@@ -365,6 +365,14 @@
             <param name="directory">The path to the directory to scan for assemblies.</param>
             <returns>A <see cref="T:System.Collections.Generic.IEnumerable`1"/> that contains the loaded <see cref="T:System.Reflection.Assembly"/>.</returns>
         </member>
+        <member name="M:Sharpmake.ExtensionMethods.GetMSBuildVCDirVersion(Sharpmake.DevEnv)">
+            <summary>
+            Will return the name of the root directory in MSBuild under Microsoft/VC for a particular devenv,
+            since it uses yet another versioning pattern than the toolchain
+            </summary>
+            <param name="visualVersion">The visual studio version to convert</param>
+            <returns>The name of the directory for that version</returns>
+        </member>
         <member name="M:Sharpmake.ExtensionMethods.IsVisualStudio(Sharpmake.DevEnv)">
             <summary>
             Gets whether a <see cref="T:Sharpmake.DevEnv"/> is a Visual Studio version.
@@ -415,6 +423,18 @@
             <param name="inputHeadPath">The subpath in the head of fullInputPath to replace.</param>
             <param name="replacementHeadPath">The subpath that will replace the inputHeadPath</param>
             <returns></returns>
+        </member>
+        <member name="M:Sharpmake.Util.GetDeterministicHashCode(System.String)">
+            <summary>
+            This method will return a deterministic hash for a string.
+            </summary>
+            <remarks>
+            With net core the regular GetHashCode() is now
+            seeded for security reasons.
+            </remarks>
+            <see href="https://andrewlock.net/why-is-string-gethashcode-different-each-time-i-run-my-program-in-net-core/"/>
+            <param name="str">The input string</param>
+            <returns>A deterministic hash</returns>
         </member>
         <!-- Badly formed XML comment ignored for member "M:Sharpmake.Util.GetTextTemplateDirectiveParam(System.String,System.String,System.String)" -->
         <!-- Badly formed XML comment ignored for member "M:Sharpmake.Util.ExecuteFilesAutoCleanup" -->
@@ -621,6 +641,17 @@
             <summary>
             Additional settings to add to the Compiler node, keyed by compiler name.
             </summary>
+            
+        </member>
+        <member name="F:Sharpmake.FastBuildSettings.AdditionalCompilerPropertyGroups">
+            <summary>
+            Additional Section referred by a compiler node, keyed by compiler name
+            </summary>
+        </member>
+        <member name="F:Sharpmake.FastBuildSettings.AdditionalPropertyGroups">
+            <summary>
+            Additional custom property groups. Only those referred will be written to the bff files.
+            </summary>
         </member>
         <member name="T:Sharpmake.FileSystemStringComparer">
             <summary>
@@ -768,7 +799,7 @@
         <member name="M:Sharpmake.MSBuildGlobalSettings.SetAdditionalVCTargetsPath(Sharpmake.DevEnv,System.String,System.String)">
             <summary>
             Allows setting MSBuild vc target path used for a custom platform passed as a string and Visual Studio version.
-            This is typically used if you want to add platform specific files with vs2019 as the older way of doing it through _PlatformFolder is deprecated.
+            This is typically used if you want to add platform specific files with vs2019+ as the older way of doing it through _PlatformFolder is deprecated.
             </summary>
             <param name="devEnv">Visual studio version affected</param>
             <param name="platform">Platform affected</param>
@@ -785,7 +816,7 @@
         <member name="M:Sharpmake.MSBuildGlobalSettings.GetAdditionalVCTargetsPath(Sharpmake.DevEnv,Sharpmake.Platform)">
             <summary>
             Get the MSBuild Additional VC targets path used for a known sharpmake platform and Visual studio version.
-            This is typically used if you want to add platform specific files with vs2019 as the older way of doing it through _PlatformFolder is deprecated.
+            This is typically used if you want to add platform specific files with vs2019+ as the older way of doing it through _PlatformFolder is deprecated.
             </summary>
             <param name="devEnv">Visual studio version affected</param>
             <param name="platform">Platform affected</param>
@@ -794,7 +825,7 @@
         <member name="M:Sharpmake.MSBuildGlobalSettings.GetAdditionalVCTargetsPath(Sharpmake.DevEnv,System.String)">
             <summary>
             Get the MSBuild Additional VC targets path used for a custom platform passed as a string and Visual studio version.
-            This is typically used if you want to add platform specific files with vs2019 as the older way of doing it through _PlatformFolder is deprecated.
+            This is typically used if you want to add platform specific files with vs2019+ as the older way of doing it through _PlatformFolder is deprecated.
             </summary>
             <param name="devEnv">Visual studio version affected</param>
             <param name="platform">Platform affected</param>
@@ -836,6 +867,17 @@
             Application Type Revision
             This must be a valid version string, of the form major.minor[.build[.revision]].
             Examples: 1.0, 10.0.0.0
+            </summary>
+        </member>
+        <member name="T:Sharpmake.Options.Android.General.AndroidGradleBuildDir">
+            <summary>
+            This is applicable for AGDE only
+            The full path to the directory containing the top-level build.gradle file.
+            </summary>
+        </member>
+        <member name="T:Sharpmake.Options.Android.General.AndroidApkName">
+            <summary>
+            Output Apk name for AGDE project which can be set per configuration.
             </summary>
         </member>
         <member name="T:Sharpmake.Options.Android.General.ShowAndroidPathsVerbosity">
@@ -889,6 +931,12 @@
             Exclude from SonarQube C# static analysis
             </summary>
         </member>
+        <member name="T:Sharpmake.Options.CSharp.IsPublishable">
+            <summary>
+            Controls whether the project is published when running a publish command
+            Only affects processes that use the Publish target, such as the dotnet sdk projects
+            </summary>
+        </member>
         <!-- Badly formed XML comment ignored for member "M:Sharpmake.Options.Clang.GetTargetTriple(System.String,System.String,System.String,System.String,System.String)" -->
         <member name="T:Sharpmake.Options.Clang.Compiler.LLVMVcPlatformToolset">
             <summary>
@@ -911,6 +959,14 @@
             </summary>
             <remarks>
             Specifies which version of the Windows SDK to use.
+            </remarks>
+        </member>
+        <member name="T:Sharpmake.Options.Vc.General.TranslateIncludes">
+            <summary>
+            Translate Includes to Imports
+            </summary>
+            <remarks>
+            Enables the compiler to translate #include directives into import directives for the available header units.  (/translateInclude)
             </remarks>
         </member>
         <member name="T:Sharpmake.Options.Vc.General.CharacterSet">
@@ -1088,6 +1144,63 @@
             <summary>
             Retains the prior, concise diagnostic messages with the line number.
             </summary>
+        </member>
+        <member name="T:Sharpmake.Options.Vc.General.TreatAngleIncludeAsExternal">
+            <summary>
+            Treat Files Included with Angle Brackets as External
+            </summary>
+            <remarks>
+            Specifies whether to treat files included with angle brackets as external.   (/external:anglebrackets)
+            </remarks>
+        </member>
+        <member name="T:Sharpmake.Options.Vc.General.ExternalWarningLevel">
+            <summary>
+            External Header Warning Level
+            </summary>
+            <remarks>
+            Select how strict you want the compiler to be about code errors in external headers.     (/external:W0 - /external:W4)
+            </remarks>
+        </member>
+        <member name="F:Sharpmake.Options.Vc.General.ExternalWarningLevel.Level0">
+            <summary>
+            Turn Off All Warnings
+            </summary>
+            <remarks>
+            Level 0 disables all warnings.
+            </remarks>
+        </member>
+        <member name="F:Sharpmake.Options.Vc.General.ExternalWarningLevel.Level1">
+            <summary>
+            Level 1 displays severe warnings. Level 1 is the default warning level at the command line.
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Options.Vc.General.ExternalWarningLevel.Level2">
+            <summary>
+            Level 2 displays all level 1 warnings and warnings less severe than level 1.
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Options.Vc.General.ExternalWarningLevel.Level3">
+            <summary>
+            Level 3 displays all level 2 warnings and all other warnings recommended for production purposes.
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Options.Vc.General.ExternalWarningLevel.Level4">
+            <summary>
+            Level 4 displays all level 3 warnings plus informational warnings, which in most cases can be safely ignored.
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Options.Vc.General.ExternalWarningLevel.InheritWarningLevel">
+            <summary>
+            Inherit Project Warning Level
+            </summary>
+        </member>
+        <member name="T:Sharpmake.Options.Vc.General.ExternalTemplatesDiagnostics">
+            <summary>
+            Template Diagnostics in External Headers
+            </summary>
+            <remarks>
+            Specifies whether to evaluate warning level across template instantiation chain.   (/external:templates-)
+            </remarks>
         </member>
         <member name="T:Sharpmake.Options.Vc.General.EnableManagedIncrementalBuild">
             <summary>
@@ -1658,7 +1771,7 @@
             C++ Language Standard
             </summary>
             <remarks>
-            Determines the C++ language standard the compiler will enforce. It is recommended to use the latest version when possible. (/std:c++14, /std:c++17, /std:c++latest)
+            Determines the C++ language standard the compiler will enforce. It is recommended to use the latest version when possible. (/std:c++14, /std:c++17, /std:c++20, /std:c++latest)
             </remarks>
         </member>
         <member name="F:Sharpmake.Options.Vc.Compiler.CppLanguageStandard.CPP14">
@@ -1669,6 +1782,11 @@
         <member name="F:Sharpmake.Options.Vc.Compiler.CppLanguageStandard.CPP17">
             <summary>
             ISO C++17 Standard
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Options.Vc.Compiler.CppLanguageStandard.CPP20">
+            <summary>
+            ISO C++20 Standard
             </summary>
         </member>
         <member name="F:Sharpmake.Options.Vc.Compiler.CppLanguageStandard.Latest">
@@ -2682,18 +2800,25 @@
             <summary>
             Sets up the library paths when adding a dependency on a static library.
             </summary>
-            <param name="configuration">The <see cref="T:Sharpmake.Project.Configuration"/> instance on which to 
+            <param name="configuration">The <see cref="T:Sharpmake.Project.Configuration"/> instance on which to
                    set the paths.</param>
             <param name="dependencySetting">The <see cref="T:Sharpmake.DependencySetting"/> bitflags
                    that specify the properties of the dependency relationship.</param>
             <param name="dependency">The <see cref="T:Sharpmake.Project.Configuration"/> instance of the dependency.</param>
         </member>
-        <member name="M:Sharpmake.Project.Configuration.IConfigurationTasks.GetDefaultOutputExtension(Sharpmake.Project.Configuration.OutputType)">
+        <member name="M:Sharpmake.Project.Configuration.IConfigurationTasks.GetDefaultOutputFullExtension(Sharpmake.Project.Configuration.OutputType)">
             <summary>
             Gets the default file extension for a given output type.
             </summary>
             <param name="outputType">The <see cref="T:Sharpmake.Project.Configuration.OutputType"/> whose default file extension we are seeking.</param>
-            <returns>A string, containing the file extension (not including the dot (.) prefix).</returns>
+            <returns>A string, containing the file extension (could be empty on some platforms, like exe on linux).</returns>
+        </member>
+        <member name="M:Sharpmake.Project.Configuration.IConfigurationTasks.GetOutputFileNamePrefix(Sharpmake.Project.Configuration.OutputType)">
+            <summary>
+            Gets the default file prefix for a given output type.
+            </summary>
+            <param name="outputType">The <see cref="T:Sharpmake.Project.Configuration.OutputType"/> whose default file prefix we are seeking.</param>
+            <returns>A string, containing the file prefix (for instance lib on linux).</returns>
         </member>
         <member name="M:Sharpmake.Project.Configuration.IConfigurationTasks.GetPlatformLibraryPaths(Sharpmake.Project.Configuration)">
             <summary>
@@ -2821,7 +2946,7 @@
         <member name="F:Sharpmake.Project.Configuration.DeoptimizationWritableFiles.DeoptimizeWritableFilesWithToken">
             <summary>
             When the <c>FASTBUILD_DEOPTIMIZE_OBJECT</c> token is specified,
-            deoptimize files with writable status. 
+            deoptimize files with writable status.
             </summary>
             <remarks>
             This is useful when using Perforce, since files that have not been modified are
@@ -2876,7 +3001,7 @@
             <remarks>
             This setting is provided for libraries, because they are usually intermediate
             artifacts during the compilation process and do not need to be in the final output
-            directory unless it's necessary. 
+            directory unless it's necessary.
             <para>
             The default is <c>false</c>. Setting this to <c>true</c> will force the generators
             to copy the library artifacts.
@@ -2887,6 +3012,26 @@
             always copy the results.
             </para>
             </remarks>
+        </member>
+        <member name="F:Sharpmake.Project.Configuration.AllowOutputDllCopy">
+            <summary>
+            Gets or sets whether the configuration output dll file will be copied in the target path of the projects depending on it.
+            </summary>
+            <remarks>
+            This setting only apply with <see cref="F:Sharpmake.Project.Configuration.OutputType.Dll"/>
+            This setting is usefull for dlls that are dynamically loaded:
+            The dll do not need to be put along the executable.
+            <para>
+            The default is <c>true</c>. Setting this to <c>false</c> will prevent the generators
+            to copy the library artifact in the exe directory.
+            </para>
+            </remarks>
+        </member>
+        <member name="F:Sharpmake.Project.Configuration.CopyLinkerPdbToDependentTargets">
+            <summary>
+            Gets or sets whether dependent projects will copy their dll debugging database to the
+            target path of their dependency projects. The default value is <c>true</c>.
+            </summary>
         </member>
         <member name="F:Sharpmake.Project.Configuration.CopyCompilerPdbToDependentTargets">
             <summary>
@@ -2967,6 +3112,24 @@
             To place the project in a sub-directory, use a `/` as a directory separator.
             </para>
             </remarks>
+        </member>
+        <member name="M:Sharpmake.Project.Configuration.AddSolutionFolder(System.String,System.String)">
+            <summary>
+            Set the solution folder associated with a solution name
+            </summary>
+            <remarks>
+            Ignored unless generating for Visual Studio
+            This property allows to get the same project being in different folder dependeng on the solution name. Ex. In Engine.sln the project Physic is at root, while in Tools.sln it is in a Engine/ directory
+            Use the property SolutionFolder if not found inside the dictionary.
+            <para>
+            To place the project in a sub-directory, use a `/` as a directory separator.
+            </para>
+            </remarks>
+        </member>
+        <member name="M:Sharpmake.Project.Configuration.GetSolutionFolder(System.String)">
+            <summary>
+            Gets the solution folder associated with a solution name.
+            </summary>
         </member>
         <member name="F:Sharpmake.Project.Configuration.LinkerPdbSuffix">
             <summary>
@@ -3670,9 +3833,28 @@
             Gets or sets the prefix to prepend to the target name.
             </summary>
         </member>
-        <member name="F:Sharpmake.Project.Configuration.TargetFileFullName">
+        <member name="F:Sharpmake.Project.Configuration.TargetFilePlatformPrefix">
             <summary>
-            Gets or sets the full file name of the target, without the path but with the suffix
+            Gets or set the platform dependent file prefix (for instance "lib" for libraries on linux).
+            If left null, sharpmake will set it to the default for the platform
+            according to the output type when the conf is resolved.
+            </summary>
+        </member>
+        <member name="P:Sharpmake.Project.Configuration.TargetFileFullName">
+            <summary>
+            Gets the full file name of the target, without the path but with the prefix and suffix, and without the extension
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Project.Configuration.TargetFileFullExtension">
+            <summary>
+            Gets or sets the project's full extension (ie: .dll, .self, .exe, .dlu).
+            Set to an empty string you don't want any.
+            If left null, sharpmake will set it to the default for the platform according to the output type, when the conf is resolved.
+            </summary>
+        </member>
+        <member name="P:Sharpmake.Project.Configuration.TargetFileFullNameWithExtension">
+            <summary>
+            Gets the full file name of the target, without the path but with the suffix, and the extension
             and the prefix.
             </summary>
         </member>
@@ -3691,6 +3873,11 @@
         <member name="F:Sharpmake.Project.Configuration.TargetCopyFiles">
             <summary>
             Gets or sets the list of files to copy to the output directory.
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Project.Configuration.TargetCopyFilesPath">
+            <summary>
+            Target copy files path, where the TargetCopyFiles files will be copied
             </summary>
         </member>
         <member name="F:Sharpmake.Project.Configuration.TargetCopyFilesToSubDirectory">
@@ -3814,7 +4001,7 @@
             on a different input file that also depends on the real input file.
             <para>
             FASTBuild is key based, not file based. So it can have two different operations on the same file.
-            If you need support for FASTBuild, you can make two different custom build rules with one specific to BFF 
+            If you need support for FASTBuild, you can make two different custom build rules with one specific to BFF
             and the other excluding BFF.
             </para>
             </remarks>
@@ -3831,7 +4018,7 @@
         </member>
         <member name="F:Sharpmake.Project.Configuration.CustomFileBuildStepData.ProjectFilter.BFFOnly">
             <summary>
-            The custom build step is specific to BFF 
+            The custom build step is specific to BFF
             </summary>
         </member>
         <member name="F:Sharpmake.Project.Configuration.CustomFileBuildStepData.KeyInput">
@@ -3951,23 +4138,23 @@
             that a Windows resource file (.rc) is being used.
             </summary>
         </member>
-        <member name="P:Sharpmake.Project.Configuration.ExecutableExtension">
+        <member name="P:Sharpmake.Project.Configuration.ExecutableFullExtension">
             <summary>
             Gets the file extension for executables.
             </summary>
         </member>
-        <member name="P:Sharpmake.Project.Configuration.CompressedExecutableExtension">
+        <member name="P:Sharpmake.Project.Configuration.CompressedExecutableFullExtension">
             <summary>
             Gets the file extension for compressed executables, such as bundles, game packages
             for consoles, etc.
             </summary>
         </member>
-        <member name="P:Sharpmake.Project.Configuration.DllExtension">
+        <member name="P:Sharpmake.Project.Configuration.DllFullExtension">
             <summary>
             Gets the file extension for shared libraries.
             </summary>
         </member>
-        <member name="P:Sharpmake.Project.Configuration.ProgramDatabaseExtension">
+        <member name="P:Sharpmake.Project.Configuration.ProgramDatabaseFullExtension">
             <summary>
             Gets the file extension for program debug databases.
             </summary>
@@ -4071,6 +4258,12 @@
             Generate relative paths in places where it would be otherwise beneficial to use absolute paths.
             </summary>
         </member>
+        <member name="F:Sharpmake.Project.Configuration.DotNetOSVersion">
+            <summary>
+            Configuration OS version if not defined as Target fragment.
+            </summary>
+            <remarks>This allow adding OS version to specific DotNetFramework during configuration without altering Target's matching system</remarks>
+        </member>
         <member name="F:Sharpmake.Project.Configuration.DotNetOSVersionSuffix">
             <summary>
             Optional OS version at the end of the TargetFramework, for example, net5.0-ios13.0.
@@ -4084,6 +4277,16 @@
             <param name="projectType"> The project type.</param>
             <returns>The specified project's dependency settings with related flags activated.
             </returns>
+        </member>
+        <member name="M:Sharpmake.Project.Configuration.ProjectReferencesByPathContainer.Add(System.String,System.Guid,Sharpmake.Project.Configuration.ProjectReferencesByPathContainer.RefOptions,System.Guid)">
+            <summary>
+            Adds a new ProjectReferencesByPath path, with optionally the guid.
+            Adding the guid allows to set the reference without opening the project.
+            </summary>
+            <param name="projectFilePath">The project file path</param>
+            <param name="projectGuid">An optional project guid</param>
+            <param name="refOptions">Reference options</param>
+            <param name="projectTypeGuid">An optional project type guid, one member of ProjectTypeGuids. Deduced from file extension if not provided.</param>
         </member>
         <member name="M:Sharpmake.Project.XResourcesImgContainer.Add(System.String,System.String)">
             <summary>
@@ -4125,6 +4328,16 @@
         <member name="F:Sharpmake.CSharpProject.ExplicitNugetRestoreProjectStyle">
             <summary>
             If set to true. Will explicit the RestoreProjectStyle in the project file
+            </summary>
+        </member>
+        <member name="P:Sharpmake.CSharpProject.EnableDefaultItems">
+            <summary>
+            Enable or disable the property [EnableDefaultItems] in NetCore Project Schema
+            </summary>
+        </member>
+        <member name="F:Sharpmake.CSharpProject.GenerateDocumentationFile">
+            <summary>
+            Generate a file containing API documentation.
             </summary>
         </member>
         <member name="T:Sharpmake.AndroidPackageProject">
@@ -4317,21 +4530,6 @@
             This fragment is mandatory in every target.
             </remarks>
         </member>
-        <member name="F:Sharpmake.DevEnv.vs2010">
-            <summary>
-            Visual Studio 2010.
-            </summary>
-        </member>
-        <member name="F:Sharpmake.DevEnv.vs2012">
-            <summary>
-            Visual Studio 2012
-            </summary>
-        </member>
-        <member name="F:Sharpmake.DevEnv.vs2013">
-            <summary>
-            Visual Studio 2013
-            </summary>
-        </member>
         <member name="F:Sharpmake.DevEnv.vs2015">
             <summary>
             Visual Studio 2015
@@ -4345,6 +4543,11 @@
         <member name="F:Sharpmake.DevEnv.vs2019">
             <summary>
             Visual Studio 2019
+            </summary>
+        </member>
+        <member name="F:Sharpmake.DevEnv.vs2022">
+            <summary>
+            Visual Studio 2022
             </summary>
         </member>
         <member name="F:Sharpmake.DevEnv.xcode4ios">
@@ -4365,6 +4568,11 @@
         <member name="F:Sharpmake.DevEnv.VisualStudio">
             <summary>
             All supported Visual Studio versions.
+            </summary>
+        </member>
+        <member name="M:Sharpmake.Targets.ClearFragmentMasks">
+            <summary>
+            This method will remove all the masks that were added, if any
             </summary>
         </member>
         <member name="M:Sharpmake.Targets.SetGlobalFragmentMask(System.Object[])">

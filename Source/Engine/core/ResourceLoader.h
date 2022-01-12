@@ -2,9 +2,14 @@
 
 #include "singleton.h"
 
+#include <fmt/core.h>
+#include "Logging.h"
+
 struct FromFileResourceParameters
 {
 	std::string path;
+
+	std::string to_string() const { return path; }
 };
 
 // template resource class
@@ -50,6 +55,8 @@ public:
 		return _resource.get();
 	}
 
+	resource_type* get() const { return _resource.get(); }
+
 	public:
 	init_type const& get_init_parameters() const { return _init; }
 
@@ -64,6 +71,8 @@ private:
 class ResourceLoader final : public TSingleton<ResourceLoader>
 {
 public:
+	using ResourceCache = std::map<std::size_t, std::shared_ptr<Resource>>;
+
 	~ResourceLoader() {}
 
 	void unload_all()
@@ -88,6 +97,18 @@ public:
 		{
 			_tasks.erase(e);
 		}
+
+		std::vector<ResourceCache::iterator> models_to_remove;
+		for(auto it = _cache.begin(); it != _cache.end(); ++it) {
+	
+			if(it->second.use_count() == 1) {
+				models_to_remove.push_back(it);
+			}
+		}
+
+		for(auto it : models_to_remove) {
+			_cache.erase(it);
+		}
 	}
 
 	template<typename T>
@@ -95,7 +116,7 @@ public:
 
 
 private:
-	std::map<std::size_t, std::shared_ptr<Resource>> _cache;
+	ResourceCache _cache;
 
 	std::mutex _tasks_lock;
 	std::list<enki::ITaskSet*> _tasks;
@@ -117,26 +138,34 @@ namespace std
 template<typename T>
 std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool blocking )
 {
+	LOG_INFO(IO, "Load request {}", params.to_string());
 	std::size_t  h = std::hash<typename T::init_parameters>{}(params);
 	if (auto it = _cache.find(h); it != _cache.end())
 	{
+		LOG_INFO(IO, "Returned cached copy for {}", params.to_string());
 		return std::static_pointer_cast<T>(it->second);
 	}
 
 	std::shared_ptr<T> res = std::make_shared<T>(params);
 	_cache[h] = res;
 
-	if (blocking)
-	{
+	res->_loaded = false;
+
+	auto do_load = [res, params]() {
 		res->load();
 		res->_loaded = true;
+		LOG_INFO(IO, "{} finished", params.to_string());
+	};
+
+	if (blocking)
+	{
+		do_load();
 	}
 	else 
 	{
+
 		enki::TaskSet* set = new enki::TaskSet([=](enki::TaskSetPartition partition, uint32_t thread_num) {
-			res->_loaded = false;
-			res->load();
-			res->_loaded = true;
+			do_load();
 		});
 
 		{

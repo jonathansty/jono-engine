@@ -15,6 +15,8 @@
 
 #include "GameSettings.h"
 #include "PlatformIO.h"
+#include "framework/World.h"
+#include "Graphics/RenderWorld.h"
 
 class Bitmap;
 class Font;
@@ -26,15 +28,49 @@ class PrecisionTimer;
 class b2World;
 class ContactListener;
 
-
 using graphics::bitmap_interpolation_mode;
-
 
 enum class MSAAMode {
 	Off,
 	MSAA_2x,
 	MSAA_4x,
 };
+
+	struct RenderPass {
+	enum Value {
+		ZPrePass,
+		Opaque,
+		Shadow,
+		Post
+
+	};
+
+	static std::string ToString(RenderPass::Value pass) {
+		switch (pass) {
+			case Value::ZPrePass:
+				return "ZPrePass";
+			case Value::Opaque:
+				return "Opaque";
+			case Value::Post:
+				return "Post";
+			case Value::Shadow:
+				return "Shadow";
+			default:
+				return "Invalid";
+				break;
+		}
+	}
+};
+
+struct ViewParams {
+	float4x4 view;
+	float4x4 proj;
+	float3 view_direction;
+	D3D11_VIEWPORT viewport;
+	RenderPass::Value pass;
+	bool reverse_z = true;
+};
+
 
 struct EngineSettings {
 	// Allow 2D rendering
@@ -140,29 +176,31 @@ public:
 
 	// Accessor Methods
 	HINSTANCE get_instance() const;
-	HWND get_window() const;
-	string get_title() const;
-	WORD get_icon() const;
-	WORD get_small_icon() const;
-	ImVec2 get_viewport_size(int id = 0) const;
-	ImVec2 get_window_size() const;
-	int get_width() const;
-	int get_height() const;
-	bool get_sleep() const;
+	HWND      get_window() const;
+	string    get_title() const;
+	WORD      get_icon() const;
+	WORD      get_small_icon() const;
+	ImVec2    get_viewport_size(int id = 0) const;
+	ImVec2    get_window_size() const;
+	int       get_width() const;
+	int       get_height() const;
+	bool      get_sleep() const;
 
-	ID3D11Device *GetD3DDevice() const;
-	ID3D11DeviceContext *GetD3DDeviceContext() const;
-	ID3D11RenderTargetView *GetD3DBackBufferView() const;
+	// LEGACY D3D11 Code
+	ID3D11Device* GetD3DDevice() const;
+	ID3D11DeviceContext* GetD3DDeviceContext() const;
+	ID3D11RenderTargetView* GetD3DBackBufferView() const;
 
-	ID2D1Factory *GetD2DFactory() const;
-	IWICImagingFactory *GetWICImagingFactory() const;
-	ID2D1RenderTarget *GetHwndRenderTarget() const;
-	IDWriteFactory *GetDWriteFactory() const;
+	ID2D1Factory*      GetD2DFactory() const;
+	IWICImagingFactory* GetWICImagingFactory() const;
+	ID2D1RenderTarget*  GetHwndRenderTarget() const;
+	IDWriteFactory*     GetDWriteFactory() const;
 
 	// Returns a POINT containing the window coordinates of the mouse offset in the viewport
 	// Usage example:
 	// POINT mousePos = GameEngine::instance()->GetMousePosition();
 	float2 get_mouse_pos_in_viewport() const;
+	float2 get_mouse_pos_in_window() const;
 
 	//! returns pointer to the Audio object
 	unique_ptr<AudioSystem> const& GetXAudio() const;
@@ -177,10 +215,9 @@ public:
 	bool get_vsync();
 
 	// The overlay manager manages all active IMGUI debug overlays
-	std::shared_ptr<OverlayManager> const &get_overlay_manager() const {
-		return _overlay_manager;
-	}
+	shared_ptr<OverlayManager> const &get_overlay_manager() const;
 
+	// Task scheduler used during resource loading
 	static enki::TaskScheduler s_TaskScheduler;
 	static std::thread::id s_main_thread;
 
@@ -191,7 +228,21 @@ public:
 
 	ID2D1RenderTarget *get_2d_draw_ctx() const { return _d2d_rt; }
 
+
+	// Returns the platform IO interface
 	shared_ptr<IO::IPlatformIO> get_io() const { return _platform_io; }
+
+	// Returns the current render world
+	std::shared_ptr<RenderWorld> get_render_world() const { return _render_world; }
+
+	// Returns the current game world 
+	std::shared_ptr<framework::World> get_world() const { return _world; }
+
+	enum class BuildMenuOrder {
+		First,
+		Last
+	};
+	void set_build_menu_callback(std::function<void(BuildMenuOrder)> fn) { _build_menu = fn; }
 
 private:
 	// Internal run function called by GameEngine::run
@@ -244,6 +295,25 @@ private:
 
 	void build_ui();
 
+	// Renders the main view
+	void render_view(RenderPass::Value pass);
+
+	// Allows rendering the world with customizable view parameters
+	void render_world(ViewParams const& params);
+
+	void build_debug_log();
+	void build_viewport();
+	void build_menubar();
+
+	// State for debug tools
+	bool _show_debuglog;
+	bool _show_viewport;
+	bool _show_imgui_demo;
+	bool _show_implot_demo;
+	bool _show_entity_editor;
+
+	// Callback for applications to create custom menu 
+	std::function<void(BuildMenuOrder)> _build_menu;
 
 private:
 	cli::CommandLine _command_line;
@@ -257,10 +327,10 @@ private:
 	bool _should_sleep;
 
 	unique_ptr<AbstractGame> _game;
-	HANDLE _console;
 
 	// DirectX resources
 	bool _initialized;
+	DXGI_FORMAT _swapchain_format;
 	IDXGIFactory *_dxgi_factory;
 	ID3D11Device *_d3d_device;
 	ID3D11DeviceContext *_d3d_device_ctx;
@@ -272,9 +342,17 @@ private:
 	// Intermediate MSAA game output.
 	// these textures get resolved to the swapchain before presenting
 	ID3D11Texture2D *_d3d_output_tex;
+	ID3D11ShaderResourceView *_d3d_output_srv;
+	ID3D11Texture2D* _d3d_non_msaa_output_tex;
+	ID3D11ShaderResourceView* _d3d_non_msaa_output_srv;
 	ID3D11RenderTargetView *_d3d_output_rtv;
+	ID3D11RenderTargetView *_d3d_swapchain_rtv;
 	ID3D11Texture2D *_d3d_output_depth;
 	ID3D11DepthStencilView *_d3d_output_dsv;
+
+	ComPtr<ID3D11Texture2D> _shadow_map;
+	ComPtr<ID3D11DepthStencilView> _shadow_map_dsv;
+	ComPtr<ID3D11ShaderResourceView> _shadow_map_srv;
 
 
 	// Game viewport resources
@@ -291,7 +369,7 @@ private:
 	float3x3 _mat_view;
 
 	// Fonts used for text rendering
-	Font *_default_font; 
+	shared_ptr<Font> _default_font; 
 
 	// Box2D
 	shared_ptr<b2World> _b2d_world;
@@ -320,6 +398,35 @@ private:
 
 	std::shared_ptr<IO::IPlatformIO> _platform_io;
 
+	// Game world and render world should be in sync!
+	std::shared_ptr<RenderWorld> _render_world;
+	std::shared_ptr<framework::World> _world;
+
+	static constexpr u32 MAX_LIGHTS = 4;
+	struct LightInfo {
+		float4 colour;
+		float4 direction;
+		float4x4 light_space;
+	};
+
+	struct AmbientInfo {
+		float4 ambient;
+	};
+
+	struct GlobalDataCB {
+		float4x4 view;
+		float4x4 inv_view;
+		float4x4 proj;
+
+		float4 view_direction;
+
+		AmbientInfo ambient;
+
+		LightInfo lights[MAX_LIGHTS];
+		u32 num_lights;
+	};
+	ConstantBufferRef _cb_global;
+
 	// State
 	bool _can_paint;
 	bool _vsync_enabled;
@@ -329,30 +436,12 @@ private:
 	bool _recreate_swapchain;
 	bool _physics_step_enabled;
 	bool _running;
+
+	u32 m_ViewportWidth;
+	u32 m_ViewportHeight;
+	int2 m_ViewportPos;
+
+	friend class SceneViewer;
 };
 
 // Helper class for scoped gpu debugging
-#ifdef _DEBUG
-class scoped_gpu_event final {
-public:
-	scoped_gpu_event(ID3DUserDefinedAnnotation *annotation, std::wstring name) :
-			_name(name), _annotation(annotation) {
-		annotation->BeginEvent(name.c_str());
-	}
-	~scoped_gpu_event() {
-		_annotation->EndEvent();
-	}
-
-private:
-	std::wstring _name;
-	ID3DUserDefinedAnnotation *_annotation;
-};
-
-#define COMBINE1(X, Y) X##Y // helper macro
-#define COMBINE(X, Y) COMBINE1(X, Y)
-#define GPU_SCOPED_EVENT(ctx, name) scoped_gpu_event COMBINE(perfEvent, __LINE__) = scoped_gpu_event(ctx, name)
-#define GPU_MARKER(ctx, name) ctx->SetMarker(name);
-#else
-#define GPU_SCOPED_EVENT(ctx, name)
-#define GPU_MARKER(ctx, name)
-#endif

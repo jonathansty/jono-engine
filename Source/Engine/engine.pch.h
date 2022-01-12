@@ -20,7 +20,10 @@
 #include <box2d/box2d.h>
 #include <box2d/b2_world_callbacks.h>
 
+#define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
+#include <implot.h>
+#include <ImGuizmo.h>
 #include <enkiTS/TaskScheduler.h>
 #include <tinyxml2/tinyxml2.h>
 

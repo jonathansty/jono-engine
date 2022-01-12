@@ -4,8 +4,9 @@
 #include "ContactListener.h"
 #include "AbstractGame.h"
 
-#include <imgui_impl_dx11.h>
-#include <imgui_impl_win32.h>
+#include <backends/imgui_impl_dx11.h>
+#include <backends/imgui_impl_win32.h>
+#include <implot.h>
 
 #include "debug_overlays/MetricsOverlay.h"
 #include "debug_overlays/RTTIDebugOverlay.h"
@@ -20,6 +21,9 @@
 #include "Graphics/Graphics.h"
 
 #include "Engine/Core/TextureResource.h"
+#include "Engine/Core/MaterialResource.h"
+#include "Engine/Core/Material.h"
+#include "Core/Logging.h"
 
 
 static constexpr uint32_t max_task_threads = 4;
@@ -30,12 +34,12 @@ enki::TaskScheduler GameEngine::s_TaskScheduler;
 // Thread ID used to identify if we are on the main thread.
 std::thread::id GameEngine::s_main_thread;
 
+// Window procedure to forward events to the game engine
 LRESULT CALLBACK GameEngine::WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Route all Windows messages to the game engine
 	return GameEngine::instance()->handle_event(hWindow, msg, wParam, lParam);
 }
-
 
 // #TODO: Remove this once full 2D graphics has been refactored into it's own context
 using graphics::bitmap_interpolation_mode;
@@ -49,7 +53,6 @@ GameEngine::GameEngine()
 	, _window_height(0)
 	, _should_sleep(true)
 	, _game(nullptr)
-	, _console(NULL)
 	, _can_paint(false)
 	, _vsync_enabled(true)
 	, _initialized(false)
@@ -80,6 +83,11 @@ GameEngine::GameEngine()
 	, _d3d_output_tex(nullptr)
 	, _d3d_output_dsv(nullptr)
 	, _d3d_output_rtv(nullptr)
+	, _show_debuglog(true)
+	, _show_viewport(true)
+	, _show_imgui_demo(false)
+	, _show_implot_demo(false)
+	, _show_entity_editor(false)
 {
 
 	// Seed the random number generator
@@ -89,18 +97,10 @@ GameEngine::GameEngine()
 
 GameEngine::~GameEngine()
 {
-
-	//Free the console
-	if (_console)
-	{
-		_console = NULL;
-	}
-
-	delete _default_font;
+	_default_font.reset();
 
 	//Direct2D Device dependent related stuff
 	d3d_deinit();
-
 
 	CoUninitialize();
 }
@@ -118,9 +118,10 @@ void GameEngine::set_title(const string& titleRef)
 
 int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 {
-	_platform_io = IO::create();
+	// Mount our IO first to allow proper 
 
-	// NOTE(Jonathan): Make this smarter to allow more flexibility.
+	LOG_INFO(IO, "Mounting resources directory.");
+	_platform_io = IO::create();
 	_platform_io->mount("Resources");
 
 	ASSERTMSG(_game, "No game has been setup! Make sure to first create a game instance before launching the engine!");
@@ -130,7 +131,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	ASSERTMSG(!(_engine_settings.d2d_use && (_engine_settings.d3d_use && _engine_settings.d3d_msaa_mode != MSAAMode::Off)), " Currently the engine does not support rendering D2D with MSAA because DrawText does not respond correctly!");
 
 	s_main_thread = std::this_thread::get_id();
-
 
 	// initialize d2d for WIC
 	SUCCEEDED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED));
@@ -191,6 +191,24 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_xaudio_system->Initialize();
 #endif
 
+	// create the render world
+	LOG_VERBOSE(Unknown, "Test verbose message");
+	LOG_INFO(Unknown, "Test info message");
+	LOG_WARNING(Unknown, "Test warning message");
+	LOG_ERROR(Unknown, "Test error message");
+
+	LOG_INFO(System, "Initialising worlds...");
+	{
+		_world = std::make_shared<framework::World>();
+		_world->init();
+
+		_render_world = std::make_shared<RenderWorld>();
+		_render_world->init();
+
+		_cb_global = ConstantBuffer::create(_d3d_device, sizeof(GlobalDataCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
+	}
+	LOG_INFO(System, "Finished initialising worlds.");
+
 	// Game Initialization
 	_game->initialize(_game_settings);
 	apply_settings(_game_settings);
@@ -212,7 +230,9 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	d3d_init();
 
 	ImGui::CreateContext();
-	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+	ImPlot::CreateContext();
+
+	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
 	ImGui_ImplWin32_Init(get_window());
@@ -321,19 +341,21 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			ImGui_ImplDX11_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
-			//build_ui();
-			{
+			ImGuizmo::BeginFrame();
+
+			build_ui();
+			//{
 				ImVec2 game_width = { get_width() / 2.0f, get_height() / 2.0f };
 				ImGui::SetNextWindowSize(game_width, ImGuiCond_FirstUseEver);
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 				ImGui::PopStyleVar(1);
 
-				if (_frame_cnt >= 2)
-				{
-					_game->debug_ui();
-				}
+			//	if (_frame_cnt >= 2)
+			//	{
+			//		_game->debug_ui();
+			//	}
 				_overlay_manager->render_overlay();
-			}
+			//}
 			ImGui::EndFrame();
 			ImGui::UpdatePlatformWindows();
 			ImGui::Render();
@@ -371,17 +393,61 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		vp.MaxDepth = 1.0f;
 		_d3d_device_ctx->RSSetViewports(1, &vp);
 
-		FLOAT color[4] = { 0.25f,0.25f,0.25f,1.0f };
-		_d3d_device_ctx->ClearRenderTargetView(_d3d_output_rtv, color);
-		_d3d_device_ctx->ClearDepthStencilView(_d3d_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0);
-		_d3d_device_ctx->OMSetRenderTargets(1, &_d3d_output_rtv, _d3d_output_dsv);
 
 
 		// Render 3D before 2D
 		if(_engine_settings.d3d_use)
 		{
-			GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Render3D");
-			_game->render_3d();
+			GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Render");
+
+			FLOAT color[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+			_d3d_device_ctx->ClearRenderTargetView(_d3d_output_rtv, color);
+			_d3d_device_ctx->ClearDepthStencilView(_d3d_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0);
+
+			{
+				GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Shadows");
+
+				if(!_shadow_map) {
+				
+					auto res_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R32_TYPELESS, 2048, 2048);
+					res_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+					res_desc.MipLevels = 1;
+					if (FAILED(_d3d_device->CreateTexture2D(&res_desc, NULL, _shadow_map.ReleaseAndGetAddressOf())))
+					{
+						ASSERTMSG(false, "Failed to create the shadowmap texture");
+					}
+
+					auto view_desc = CD3D11_DEPTH_STENCIL_VIEW_DESC(_shadow_map.Get(), D3D11_DSV_DIMENSION_TEXTURE2D, DXGI_FORMAT_D32_FLOAT);
+					if (FAILED(_d3d_device->CreateDepthStencilView(_shadow_map.Get(), &view_desc, _shadow_map_dsv.ReleaseAndGetAddressOf())))
+					{
+						ASSERTMSG(false, "Failed to create the shadowmap DSV");
+					}
+
+					auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(_shadow_map.Get(), D3D11_SRV_DIMENSION_TEXTURE2D, DXGI_FORMAT_R32_FLOAT);
+					if (FAILED(_d3d_device->CreateShaderResourceView(_shadow_map.Get(), &srv_desc, _shadow_map_srv.ReleaseAndGetAddressOf()))) {
+						ASSERTMSG(false, "Failed to create the shadowmap SRV");
+					}
+				}
+				_d3d_device_ctx->OMSetRenderTargets(0, nullptr, _shadow_map_dsv.Get());
+				_d3d_device_ctx->ClearDepthStencilView(_shadow_map_dsv.Get(), D3D11_CLEAR_DEPTH, 0.0f, 0);
+
+				shared_ptr<RenderWorldLight> light =  _render_world->get_light(0);
+				if(light->get_casts_shadow()) {
+					ViewParams params{};
+					params.view = light->get_view();
+					params.proj = light->get_proj();
+					params.view_direction = light->get_view_direction().xyz;
+					params.pass = RenderPass::Shadow;
+					params.viewport = CD3D11_VIEWPORT(0.0f, 0.0f, 2048, 2048);
+					render_world(params);
+				}
+			}
+
+			_d3d_device_ctx->OMSetRenderTargets(0, NULL, _d3d_output_dsv);
+			render_view(RenderPass::ZPrePass);
+
+			_d3d_device_ctx->OMSetRenderTargets(1, &_d3d_output_rtv, _d3d_output_dsv);
+			render_view(RenderPass::Opaque);
 		}
 
 		// Render Direct2D to the swapchain
@@ -390,15 +456,19 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			d2d_render();
 		}
 
+		// Resolve msaa to non msaa for imgui render
+		_d3d_device_ctx->ResolveSubresource(_d3d_non_msaa_output_tex, 0, _d3d_output_tex, 0, _swapchain_format);
+
 		// Render main viewport ImGui
 		{
 			GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"ImGui");
+			_d3d_device_ctx->OMSetRenderTargets(1, &_d3d_backbuffer_view, nullptr);
 			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 		}
 
-		ComPtr<ID3D11Texture2D> backBuffer;
-		_dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-		_d3d_device_ctx->ResolveSubresource(backBuffer.Get(), 0, _d3d_output_tex, 0, DXGI_FORMAT_B8G8R8A8_UNORM);
+		//ComPtr<ID3D11Texture2D> backBuffer;
+		//_dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+		//_d3d_device_ctx->ResolveSubresource(backBuffer.Get(), 0, _d3d_output_tex, 0, DXGI_FORMAT_B8G8R8A8_UNORM);
 
 		// Present
 		GPU_MARKER(_d3d_user_defined_annotation, L"DrawEnd");
@@ -436,7 +506,7 @@ void GameEngine::d2d_render()
 {
 	GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Game2D");
 
-	graphics::D2DRenderContext context{ _d2d_factory, _d2d_rt, _color_brush, _default_font };
+	graphics::D2DRenderContext context{ _d2d_factory, _d2d_rt, _color_brush, _default_font.get() };
 	context.begin_paint();
 	_d2d_ctx = &context;
 
@@ -532,10 +602,10 @@ bool GameEngine::open_window(int iCmdShow)
 	return true;
 }
 
-void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
-{
-
+void GameEngine::resize_swapchain(uint32_t width, uint32_t height) {
+	LOG_VERBOSE(Graphics, "Resizing swapchain to {}x{}", width, height);
 	DXGI_FORMAT swapchain_format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	_swapchain_format = swapchain_format;
 
 	// Create MSAA render target that resolves to non-msaa swapchain
 	DXGI_SAMPLE_DESC aa_desc{};
@@ -551,7 +621,6 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 			break;
 		default:
 			break;
-
 	}
 
 	UINT qualityLevels;
@@ -562,39 +631,50 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 	if (_dxgi_swapchain) {
 		helpers::SafeRelease(_d3d_output_tex);
 		helpers::SafeRelease(_d3d_output_rtv);
+		helpers::SafeRelease(_d3d_output_srv);
+		helpers::SafeRelease(_d3d_non_msaa_output_tex);
+		helpers::SafeRelease(_d3d_non_msaa_output_srv);
 		helpers::SafeRelease(_d3d_output_depth);
 		helpers::SafeRelease(_d3d_output_dsv);
+		helpers::SafeRelease(_d2d_rt);
 		helpers::SafeRelease(_d3d_backbuffer_view);
 		helpers::SafeRelease(_d3d_backbuffer_srv);
-		helpers::SafeRelease(_d2d_rt);
 	}
 
 	// Create the 3D output target
 	auto output_desc = CD3D11_TEXTURE2D_DESC(
-		swapchain_format,
-		get_width(), 
-		get_height(), 
-		1, 
-		1,
-		D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-		D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality );
+			swapchain_format,
+			get_width(),
+			get_height(),
+			1,
+			1,
+			D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+			D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
 	SUCCEEDED(_d3d_device->CreateTexture2D(&output_desc, nullptr, &_d3d_output_tex));
 	SUCCEEDED(_d3d_device->CreateRenderTargetView(_d3d_output_tex, nullptr, &_d3d_output_rtv));
+	SUCCEEDED(_d3d_device->CreateShaderResourceView(_d3d_output_tex, nullptr, &_d3d_output_srv));
 
+
+	// This texture is used to output to a image in imgui
+	output_desc.SampleDesc.Count = 1;
+	output_desc.SampleDesc.Quality = 0;
+	SUCCEEDED(_d3d_device->CreateTexture2D(&output_desc, nullptr, &_d3d_non_msaa_output_tex));
+	SUCCEEDED(_d3d_device->CreateShaderResourceView(_d3d_non_msaa_output_tex, nullptr, &_d3d_non_msaa_output_srv));
 
 	// Create the 3D depth target
 	auto dsv_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_D24_UNORM_S8_UINT, get_width(), get_height(), 1, 1, D3D11_BIND_DEPTH_STENCIL, D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
 	SUCCEEDED(_d3d_device->CreateTexture2D(&dsv_desc, nullptr, &_d3d_output_depth));
 	SUCCEEDED(_d3d_device->CreateDepthStencilView(_d3d_output_depth, NULL, &_d3d_output_dsv));
 
+	set_debug_name(_d3d_output_tex, "Color Output");
+	set_debug_name(_d3d_output_depth, "Depth Output");
 
 	// Either create the swapchain or retrieve the existing description
 	DXGI_SWAP_CHAIN_DESC desc{};
-	if(_dxgi_swapchain) {
+	if (_dxgi_swapchain) {
 		_dxgi_swapchain->GetDesc(&desc);
 		_dxgi_swapchain->ResizeBuffers(desc.BufferCount, width, height, desc.BufferDesc.Format, desc.Flags);
-	}
-	else {
+	} else {
 		desc.BufferDesc.Width = get_width();
 		desc.BufferDesc.Height = get_height();
 		desc.BufferDesc.Format = swapchain_format;
@@ -615,7 +695,7 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 		SUCCEEDED(_dxgi_factory->CreateSwapChain(_d3d_device, &desc, &_dxgi_swapchain));
 
 		set_debug_name(_dxgi_swapchain, "DXGISwapchain");
-		set_debug_name(_dxgi_factory, "DXGIFactory");	
+		set_debug_name(_dxgi_factory, "DXGIFactory");
 	}
 
 	// Recreate the views
@@ -624,9 +704,6 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 	assert(backBuffer);
 	SUCCEEDED(_d3d_device->CreateRenderTargetView(backBuffer.Get(), NULL, &_d3d_backbuffer_view));
 	SUCCEEDED(_d3d_device->CreateShaderResourceView(backBuffer.Get(), NULL, &_d3d_backbuffer_srv));
-
-	set_debug_name(_d3d_output_tex, "Color Output");
-	set_debug_name(_d3d_output_depth, "Depth Output");
 	set_debug_name(backBuffer.Get(), "Swapchain::Output");
 
 	// Create the D2D target for 2D rendering
@@ -706,7 +783,7 @@ Font* GameEngine::get_font() const
 
 void GameEngine::set_default_font()
 {
-	return _d2d_ctx->set_font(_default_font);
+	return _d2d_ctx->set_font(_default_font.get());
 }
 
 HINSTANCE GameEngine::get_instance() const
@@ -794,9 +871,17 @@ IDWriteFactory* GameEngine::GetDWriteFactory() const
 	return _dwrite_factory;
 }
 
+float2 GameEngine::get_mouse_pos_in_window() const {
+	RECT rect;
+	if(GetWindowRect(get_window(), &rect)) {
+		return float2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y } + float2(rect.left, rect.top);
+	}
+	return {};
+}
+
 float2 GameEngine::get_mouse_pos_in_viewport() const
 {
-	return float2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y};
+	return float2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y } - m_ViewportPos;
 }
 
 unique_ptr<AudioSystem> const& GameEngine::GetXAudio() const
@@ -870,6 +955,10 @@ bool GameEngine::get_vsync()
 	return _vsync_enabled;
 }
 
+
+std::shared_ptr<OverlayManager> const& GameEngine::get_overlay_manager() const {
+	return _overlay_manager;
+}
 
 // Input methods
 bool GameEngine::is_key_down(int key) const
@@ -997,18 +1086,32 @@ void GameEngine::create_factories()
 		if(debug_layer) {
 			creation_flag |= D3D11_CREATE_DEVICE_DEBUG;
 		}
+	#if defined(_DEBUG)
+		else {
+			creation_flag |= D3D11_CREATE_DEVICE_DEBUG;
+			debug_layer = true;
+		}
+	#endif
 
 		SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flag, featureLevels, UINT(std::size(featureLevels)), D3D11_SDK_VERSION, &_d3d_device, &featureLevel, &_d3d_device_ctx));
 
 		if (debug_layer) {
-
-			if(cli::has_arg(_command_line, "-d3d-break")) {
-				ComPtr<ID3D11InfoQueue> info_queue;
-				_d3d_device->QueryInterface(IID_PPV_ARGS(&info_queue));
-				if (info_queue) {
+			bool do_breaks = cli::has_arg(_command_line, "-d3d-break");
+			ComPtr<ID3D11InfoQueue> info_queue;
+			_d3d_device->QueryInterface(IID_PPV_ARGS(&info_queue));
+			if (info_queue) {
+				if (do_breaks) {
 					info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
 					info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
 				}
+
+				D3D11_INFO_QUEUE_FILTER f{};
+				f.DenyList.NumSeverities = 1;
+				D3D11_MESSAGE_SEVERITY severities[] = {
+					D3D11_MESSAGE_SEVERITY_WARNING
+				};
+				f.DenyList.pSeverityList = severities;
+				info_queue->AddStorageFilterEntries(&f);
 			}
 		}
 	}
@@ -1082,6 +1185,9 @@ void GameEngine::write_create_factory()
 void GameEngine::d3d_init()
 {
 	resize_swapchain(get_width(), get_height());
+	m_ViewportWidth = get_width();
+	m_ViewportHeight = get_height();
+	m_ViewportPos = { 0, 0 };
 	//set alias mode
 	_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
 
@@ -1089,7 +1195,7 @@ void GameEngine::d3d_init()
 	_d2d_rt->CreateSolidColorBrush((D2D1::ColorF) D2D1::ColorF::Black, &_color_brush);
 
 	//Create a Font
-	_default_font = new Font("Consolas", 12);
+	_default_font = make_shared<Font>("Consolas", 12.0f);
 	_initialized = true;
 }
 
@@ -1109,6 +1215,7 @@ void GameEngine::d3d_deinit()
 
 	SafeRelease(_d3d_output_tex);
 	SafeRelease(_d3d_output_rtv);
+	SafeRelease(_d3d_output_srv);
 	SafeRelease(_d3d_output_depth);
 	SafeRelease(_d3d_output_dsv);
 	SafeRelease(_d3d_backbuffer_srv);
@@ -1281,78 +1388,362 @@ void GameEngine::CallListeners()
 	_b2d_impulse_data.clear();
 }
 
-void GameEngine::build_ui()
-{
+
+void GameEngine::render_view(RenderPass::Value pass) {
+
+	// Setup global constant buffer
+	std::shared_ptr<RenderWorldCamera> camera = _render_world->get_camera(0);
+
+	ViewParams params{};
+	D3D11_TEXTURE2D_DESC desc;
+	_d3d_output_tex->GetDesc(&desc);
+
+	params.proj = camera->get_proj(m_ViewportWidth, m_ViewportHeight);
+
+	params.view = camera->get_view();
+	params.view_direction = camera->get_view_direction().xyz;
+	params.pass = pass;
+
+	// Viewport depends on the actual imgui window  
+	params.viewport = CD3D11_VIEWPORT(_d3d_output_tex, _d3d_output_rtv);
+	params.viewport.Width = (f32)m_ViewportWidth;
+	params.viewport.Height = (f32)m_ViewportHeight;
+
+	render_world(params);
+}
+
+void GameEngine::render_world(ViewParams const& params) {
+
+#ifdef _DEBUG
+	std::string passName = RenderPass::ToString(params.pass);
+	GPU_SCOPED_EVENT(_d3d_user_defined_annotation, passName);
+#endif
+
+	// Setup some defaults. At the moment these are applied for each pass. However 
+	// ideally we would be able to have more detailed logic here to decided based on pass and mesh/material
+	{
+		DepthStencilState::Value depth_stencil_state = DepthStencilState::Equal;
+		if (params.pass == RenderPass::ZPrePass || params.pass == RenderPass::Shadow) {
+			depth_stencil_state = DepthStencilState::GreaterEqual;
+		}
+
+		ID3D11SamplerState* samplers[1] = {
+			Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get(),
+		};
+		_d3d_device_ctx->PSSetSamplers(0, 1, samplers);
+
+		_d3d_device_ctx->OMSetDepthStencilState(Graphics::GetDepthStencilState(depth_stencil_state).Get(), 0);
+		_d3d_device_ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
+		_d3d_device_ctx->OMSetBlendState(Graphics::GetBlendState(BlendState::Default).Get(), NULL, 0xffffffff);
+		_d3d_device_ctx->RSSetViewports(1, &params.viewport);
+	}
+
+
+
+	GlobalDataCB* global = (GlobalDataCB*)_cb_global->map(_d3d_device_ctx);
+	global->ambient.ambient = float4(0.02f, 0.02f, 0.02f, 1.0f);
+
+	global->proj = params.proj;
+	global->view = params.view;
+	global->inv_view = hlslpp::inverse(global->view);
+	global->view_direction = float4(params.view_direction.xyz,0.0f);
+
+	RenderWorld::LightCollection const& lights = _render_world->get_lights();
+	global->num_lights = std::min<u32>(u32(lights.size()), MAX_LIGHTS);
+	for (u32 i = 0; i < global->num_lights; ++i) {
+		LightInfo* info = global->lights + i;
+		shared_ptr<RenderWorldLight> l = lights[i];
+		if (l->is_directional()) {
+			info->direction = float4(l->get_view_direction().xyz, 0.0f);
+			info->colour = float4(l->get_colour(), 1.0f);
+			info->light_space = l->get_vp();
+		}
+	}
+
+	_cb_global->unmap(_d3d_device_ctx);
+
+	float4x4 vp = hlslpp::mul(params.view, params.proj);
+
+	RenderWorld::InstanceCollection const& instances = _render_world->get_instances();
+	for(std::shared_ptr<RenderWorldInstance> const& inst : instances) {
+
+		if (!inst->is_ready())
+			continue;
+
+		auto ctx = _d3d_device_ctx;
+
+		RenderWorldInstance::ConstantBufferData* data = (RenderWorldInstance::ConstantBufferData*)inst->_model_cb->map(_d3d_device_ctx);
+		data->world = inst->_transform;
+		data->wv = hlslpp::mul(data->world, params.view);
+		data->wvp = hlslpp::mul(data->world, vp);
+		inst->_model_cb->unmap(ctx);
+
+		ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		ctx->IASetIndexBuffer(inst->_mesh->_index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+		UINT strides = { sizeof(ModelResource::VertexType) };
+		UINT offsets = { 0 };
+		ctx->IASetVertexBuffers(0, 1, inst->_mesh->_vert_buffer.GetAddressOf(), &strides, &offsets);
+
+		ID3D11Buffer* buffers[2] = { 
+			_cb_global->Get(),
+			inst->_model_cb->Get()
+		};
+		ctx->VSSetConstantBuffers(0, 2, buffers);
+		ctx->PSSetConstantBuffers(0, 2, buffers);
+
+
+		for (Mesh const& m : inst->_mesh->_meshes) {
+			std::shared_ptr<MaterialResource> res = inst->_mesh->_materials[m.materialID];
+
+			Material* material = res->get();
+			if (material->is_double_sided())
+			{
+				ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullNone).Get());
+			} 
+			else 
+			{
+				ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
+			}
+
+			material->apply();
+
+			if(params.pass == RenderPass::Opaque) {
+				ID3D11ShaderResourceView* views[] ={_shadow_map_srv.Get()};
+				_d3d_device_ctx->PSSetShaderResources(3, 1, views);
+			}
+
+			ctx->DrawIndexed((UINT)m.indexCount, (UINT)m.firstIndex, (INT)m.firstVertex);
+		}
+
+		if (params.pass == RenderPass::Opaque) {
+			// unbind shader resource
+			ID3D11ShaderResourceView* views[] = { nullptr };
+			_d3d_device_ctx->PSSetShaderResources(3, 1, views);
+		}
+	}
+
+}
+
+
+void GameEngine::build_ui() {
+
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 		{
 			ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(viewport->GetWorkPos());
-			ImGui::SetNextWindowSize(viewport->GetWorkSize());
+			ImGui::SetNextWindowPos(viewport->WorkPos);
+			ImGui::SetNextWindowSize(viewport->WorkSize);
 			ImGui::SetNextWindowViewport(viewport->ID);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
 			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 		}
 
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::Begin("DockSpace Demo", nullptr, window_flags);
-		ImGui::PopStyleVar();
-		ImGui::PopStyleVar(2);
+		ImGui::Begin("Engine Editor", nullptr, window_flags);
+		ImGui::PopStyleVar(3);
 
 		// DockSpace
-		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+		ImGuiID dockspace_id = ImGui::GetID("Dockspace##Main");
 		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f));
 
-		if (ImGui::BeginMenuBar())
-		{
-			if (ImGui::BeginMenu("Simulation"))
-			{
-				static bool s_should_simulate = true;
-				if (ImGui::MenuItem(s_should_simulate ? "Stop" : "Start", "", nullptr))
-				{
-					s_should_simulate = !s_should_simulate;
-					fmt::printf("Toggling Simulation %s.\n", s_should_simulate ? "On" : "Off");
-
-					this->set_sleep(!s_should_simulate);
-				}
-
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("Windows"))
-			{
-				static bool s_show_debuglog = false;
-				static bool s_show_viewport = false;
-				static bool s_show_scene_hierarchy = false;
-				static bool s_show_properties = false;
-
-				if (ImGui::MenuItem("Debug Log"))
-				{
-					s_show_debuglog = !s_show_debuglog;
-				}
-				if (ImGui::MenuItem("Viewport"))
-				{
-					s_show_viewport = !s_show_viewport;
-				}
-				if(ImGui::MenuItem("Scene Hierarchy"))
-				{
-					s_show_scene_hierarchy = !s_show_scene_hierarchy;
-				}
-
-				if (ImGui::MenuItem("Properties"))
-				{
-					s_show_properties = !s_show_properties;
-				}
-
-				ImGui::EndMenu();
-			}
-
-			ImGui::EndMenuBar();
-		}
+		build_menubar();
+		build_debug_log();
+		build_viewport();
 
 		ImGui::End();
+	}
+
+	if (_show_implot_demo) {
+		ImPlot::ShowDemoWindow(&_show_implot_demo);
+	}
+}
+
+
+void GameEngine::build_debug_log() {
+	if (!_show_debuglog)
+		return;
+
+	if (ImGui::Begin("Output Log", &_show_debuglog)) {
+		static bool s_scroll_to_bottom = true;
+		static bool s_shorten_file = true;
+		static char s_filter[256] = {};
+		ImGui::InputText("Filter", s_filter, 512);
+		ImGui::SameLine();
+		ImGui::Checkbox("Scroll To Bottom", &s_scroll_to_bottom);
+
+		//ImGui::BeginTable("LogData", 3);
+		ImGui::BeginChild("123");
+		auto const& buffer = Logger::instance()->GetBuffer();
+		for (auto it = buffer.begin(); it != buffer.end(); ++it) {
+			LogEntry const* entry = *it;
+			if (s_filter[0] != '\0') {
+				std::string msg = entry->to_message();
+				bool bPassed = (msg.find(s_filter) != std::string::npos);
+				if (!bPassed)
+					continue;
+			}
+
+			switch (entry->_severity) {
+				case Logger::Severity::Info:
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3, 0.3, 1.0, 1.0));
+					break;
+				case Logger::Severity::Warning:
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7, 0.7, 0.1, 1.0));
+					break;
+				case Logger::Severity::Error:
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9, 0.1, 0.1, 1.0));
+					break;
+				case Logger::Severity::Verbose:
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1.0));
+				default:
+					break;
+			}
+
+			std::string filename = entry->_file ? entry->_file : "null";
+			if (s_shorten_file && entry->_file) {
+				auto path = std::filesystem::path(filename);
+				filename = fmt::format("{}", path.filename().string());
+			}
+			ImGui::Text("[%s(%d)][%s][%s] %s", filename.c_str(), it->_line, logging::to_string(it->_category), logging::to_string(it->_severity), it->_message.c_str());
+			ImGui::PopStyleColor();
+		}
+		if (Logger::instance()->_hasNewMessages && s_scroll_to_bottom) {
+			Logger::instance()->_hasNewMessages = false;
+			ImGui::SetScrollHereY();
+		}
+		//ImGui::EndTable();
+		ImGui::EndChild();
+	}
+	ImGui::End();
+}
+
+void GameEngine::build_viewport() {
+	if (!_show_viewport)
+		return;
+
+	if (ImGui::Begin("Viewport", &_show_viewport)) {
+		static ImVec2 s_vp_size = ImGui::GetContentRegionAvail();
+		ImVec2 current_size = ImGui::GetContentRegionAvail();
+
+		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+		ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+
+		{
+			auto min = vMin;
+			auto max = vMax;
+			min.x += ImGui::GetWindowPos().x;
+			min.y += ImGui::GetWindowPos().y;
+			max.x += ImGui::GetWindowPos().x;
+			max.y += ImGui::GetWindowPos().y;
+
+			m_ViewportPos.x = min.x;
+			m_ViewportPos.y = min.y;
+			ImGui::GetForegroundDrawList()->AddRect(min, max, IM_COL32(255, 255, 0, 255));
+		}
+
+		if (s_vp_size.x != current_size.x || s_vp_size.y != current_size.y) {
+			LOG_VERBOSE(Graphics, "Viewport resize detected! From {}x{} to {}x{}", current_size.x, current_size.y, s_vp_size.x, s_vp_size.y);
+
+			// Update the viewport sizes
+			s_vp_size = current_size;
+			m_ViewportWidth = (u32)s_vp_size.x;
+			m_ViewportHeight = (u32)s_vp_size.y;
+		}
+
+		// Draw the actual scene image
+		ImVec2 max_uv = {};
+		max_uv.x = s_vp_size.x / get_width();
+		max_uv.y = s_vp_size.y / get_height();
+
+		ImGui::Image(_d3d_non_msaa_output_srv, s_vp_size, ImVec2(0, 0), max_uv);
+
+		// Draw any gizmos
+		#if 0
+		ImGuizmo::SetDrawlist();
+		ImGuizmo::SetRect(m_ViewportPos.x, m_ViewportPos.y, float1(m_ViewportWidth), float1(m_ViewportHeight));
+		static ImGuiWindowFlags gizmoWindowFlags = 0;
+
+		constexpr f32 l = 0.f;
+		auto camera = _render_world->get_camera(0);
+		float4x4 view_mtx = camera->get_view();
+		float4x4 proj_mtx = camera->get_proj();
+		float view[16];
+		float proj[16];
+		hlslpp::store(view_mtx, view);
+		hlslpp::store(proj_mtx, proj);
+
+		// #TODO: Render gizmos for the selected entity
+		static float4x4 matrix = float4x4::identity();
+		ImGuizmo::Manipulate(view, proj, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::MODE::WORLD, (float*)&matrix);
+		#endif
+	}
+	ImGui::End();
+}
+
+void GameEngine::build_menubar() {
+	if (ImGui::BeginMenuBar()) {
+		if (_build_menu) {
+			_build_menu(BuildMenuOrder::First);
+		}
+
+		if (ImGui::BeginMenu("Simulation")) {
+			static bool s_should_simulate = true;
+			if (ImGui::MenuItem(s_should_simulate ? "Stop" : "Start", "", nullptr)) {
+				s_should_simulate = !s_should_simulate;
+				fmt::printf("Toggling Simulation %s.\n", s_should_simulate ? "On" : "Off");
+
+				this->set_sleep(!s_should_simulate);
+			}
+
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Windows")) {
+			if (ImGui::MenuItem("[DEMO] ImPlot")) {
+				_show_implot_demo = !_show_implot_demo;
+			}
+
+			if (ImGui::MenuItem("Debug Log")) {
+				_show_debuglog = !_show_debuglog;
+			}
+			if (ImGui::MenuItem("Viewport")) {
+				_show_viewport = !_show_viewport;
+			}
+			if (ImGui::MenuItem("Entity Editor")) {
+				_show_entity_editor = !_show_entity_editor;
+				get_overlay_manager()->get_overlay("EntityDebugOverlay")->set_visible(_show_entity_editor);
+			}
+
+			if (ImGui::BeginMenu("Overlays")) {
+				if (ImGui::IsItemClicked()) {
+					get_overlay_manager()->set_visible(!get_overlay_manager()->get_visible());
+				}
+
+				for (auto overlay : get_overlay_manager()->get_overlays()) {
+					bool enabled = overlay->get_visible();
+					if (ImGui::Checkbox(fmt::format("##{}", overlay->get_name()).c_str(), &enabled)) {
+						overlay->set_visible(enabled);
+					}
+
+					ImGui::SameLine();
+					if (ImGui::MenuItem(overlay->get_name())) {
+						overlay->set_visible(!overlay->get_visible());
+					}
+				}
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMenu();
+		}
+
+		if (_build_menu) {
+			_build_menu(BuildMenuOrder::Last);
+		}
+
+		ImGui::EndMenuBar();
 	}
 }
 

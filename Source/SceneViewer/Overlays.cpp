@@ -7,7 +7,7 @@
 namespace framework {
 
 EntityDebugOverlay::EntityDebugOverlay(framework::World* world)
-		: DebugOverlay(true, "EntityDebugOverlay")
+		: DebugOverlay(false, "EntityDebugOverlay")
 		, _world(world)
 		, _selected() {
 }
@@ -53,8 +53,8 @@ void EntityDebugOverlay::render_object(rttr::instance& obj) {
 	chain.push_back(parent);
 
 	std::reverse(chain.begin(), chain.end());
-	for (rttr::type const& t : chain) {
-		for (auto const& prop : t.get_properties()) {
+	for (rttr::type const& chainType : chain) {
+		for (auto const& prop : chainType.get_properties()) {
 			ImGui::PushID(&prop);
 
 			rttr::property const& p = prop;
@@ -63,23 +63,23 @@ void EntityDebugOverlay::render_object(rttr::instance& obj) {
 			auto t = p.get_type();
 			if (t == rttr::type::get<WrapperFloat3>()) {
 				float3 pos = p.get_value(obj).convert<WrapperFloat3>().value;
-				if (ImGui::InputFloat3(name.c_str(), (float*)&pos, 2)) {
+				if (ImGui::InputScalarN(name.c_str(),ImGuiDataType_Float, (float*)&pos, 3)) {
 					p.set_value(obj, WrapperFloat3{ pos });
 				}
 			} else if (t == rttr::type::get<WrapperFloat4>()) {
 				float4 v = p.get_value(obj).convert<WrapperFloat4>().value;
-				if (ImGui::InputFloat4(name.c_str(), (float*)&v, 2)) {
+				if (ImGui::InputScalarN(name.c_str(), ImGuiDataType_Float, (float*)&v, 4)) {
 					p.set_value(obj, WrapperFloat4{ v });
 				}
 			} else if (t == rttr::type::get<WrapperQuat>()) {
 				hlslpp::quaternion quat = p.get_value(obj).convert<WrapperQuat>().value;
 				hlslpp::float3 euler = hlslpp::degrees(hlslpp_helpers::to_euler(quat));
-				if (ImGui::InputFloat3(name.c_str(), (float*)&euler, 2)) {
+				if (ImGui::InputScalarN(name.c_str(), ImGuiDataType_Float, (float*)&euler, 3)) {
 					p.set_value(obj, WrapperQuat{ hlslpp::euler(hlslpp::radians(euler)) });
 				}
 			} else if (t == rttr::type::get<float>()) {
 				float v = p.get_value(obj).convert<float>();
-				if (ImGui::InputFloat(p.get_name().to_string().c_str(), &v, 0.01f, 0.1f, 2)) {
+				if (ImGui::InputFloat(p.get_name().to_string().c_str(), &v, 0.01f, 0.1f)) {
 					p.set_value(obj, v);
 				}
 			} else if (p.get_type() == rttr::type::get<int>()) {
@@ -100,7 +100,7 @@ void EntityDebugOverlay::render_object(rttr::instance& obj) {
 			ImGui::PopID();
 		}
 
-		for (auto& fn : t.get_methods()) {
+		for (auto& fn : chainType.get_methods()) {
 			ImGui::PushID(&fn);
 			if (ImGui::Button(fn.get_name().to_string().c_str())) {
 				fn.invoke(obj);
@@ -112,6 +112,9 @@ void EntityDebugOverlay::render_object(rttr::instance& obj) {
 }
 
 void EntityDebugOverlay::render_overlay() {
+	if (!_isOpen)
+		return;
+
 	static int s_current = 0;
 	if (ImGui::Begin("Scene Outliner", &_isOpen)) {
 		ImGui::Text("Number Of Entities: %d", _world->_entities.size());
@@ -164,7 +167,7 @@ void EntityDebugOverlay::render_overlay() {
 			}
 			static int s_selected_type = 0;
 			ImGui::PushID("Type");
-			ImGui::Combo("",&s_selected_type, type_names.data(), type_names.size());
+			ImGui::Combo("", &s_selected_type, type_names.data(), int(type_names.size()));
 			ImGui::PopID();
 			ImGui::SameLine();
 			if (ImGui::Button("+")) {

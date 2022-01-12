@@ -20,6 +20,7 @@ void MaterialResource::load()
 
 	_resource = Material::create((const char*)Shaders::cso_simple_vx, uint32_t(std::size(Shaders::cso_simple_vx)), (const char*)Shaders::cso_simple_px, uint32_t(std::size(Shaders::cso_simple_px)));
 	_resource->_debug_pixel_shader = Shader::create(ShaderType::Pixel, (const char*)Shaders::cso_debug_px, uint32_t(std::size(Shaders::cso_debug_px)));
+	_resource->_double_sided = get_init_parameters().double_sided;
 
 	// Initiate texture loads
 	auto paths = get_init_parameters().m_texture_paths;
@@ -47,4 +48,8 @@ void MaterialResource::load()
 			_resource->_textures.push_back(ResourceLoader::instance()->load<TextureResource>({ paths[textureType] }, true));
 		}
 	}
+}
+
+std::string MaterialInitParameters::to_string() const {
+	return name;
 }

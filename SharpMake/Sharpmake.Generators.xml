@@ -21,12 +21,38 @@
             <param name="dep">additional dependency clear of additional suffix</param>
             <returns>return boolean value of presence of a dep within the containing dependencies list</returns>
         </member>
-        <member name="M:Sharpmake.Generators.FastBuild.UtilityMethods.FBuildFormatList(System.Collections.Generic.List{System.String},System.Int32)">
+        <member name="T:Sharpmake.Generators.FastBuild.UtilityMethods.FBuildFormatListOptions">
+            <summary>
+            Format list options. Can combine many of them.
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Generators.FastBuild.UtilityMethods.FBuildFormatListOptions.None">
+            <summary>
+            No formatting option
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Generators.FastBuild.UtilityMethods.FBuildFormatListOptions.QuoteItems">
+            <summary>
+            Quote Items ?
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Generators.FastBuild.UtilityMethods.FBuildFormatListOptions.UseSingleElementShortFormat">
+            <summary>
+            Use single element short format ?
+            </summary>
+        </member>
+        <member name="F:Sharpmake.Generators.FastBuild.UtilityMethods.FBuildFormatListOptions.UseCommaBetweenElements">
+            <summary>
+            Use Comma between each element ? 
+            </summary>
+        </member>
+        <member name="M:Sharpmake.Generators.FastBuild.UtilityMethods.FBuildFormatList(System.Collections.Generic.List{System.String},System.Int32,Sharpmake.Generators.FastBuild.UtilityMethods.FBuildFormatListOptions)">
             <summary>
             Build a list of string in the format of BFF array, on multiple lines if needed, indenting using spaceLength spaces.
             </summary>
             <param name="items">The list of values to put in the BFF array.</param>
             <param name="spaceLength">The indentation size, in spaces, in case multiple lines are generated.</param>
+            <param name="options">output options</param>
             <returns>The formatted string, or <see cref="F:Sharpmake.Generators.FileGeneratorUtilities.RemoveLineTag"/> if the list is empty.</returns>
         </member>
         <member name="T:Sharpmake.Generators.FastBuild.IClangPlatformBff">
@@ -68,14 +94,6 @@
             Gets a configuration name for that platform in the .bff file for the code files that
             are written in native C++ code.
             </summary>
-        </member>
-        <member name="M:Sharpmake.Generators.FastBuild.IPlatformBff.AddLibPrefix(Sharpmake.Configuration)">
-            <summary>
-            Gets whether a library prefix (usually `lib`) is required on that platform when
-            building libraries.
-            </summary>
-            <param name="conf">The <see cref="T:Sharpmake.Configuration"/> under which the check is requested.</param>
-            <returns>`true` if a prefix is required, `false` otherwise.</returns>
         </member>
         <member name="M:Sharpmake.Generators.FastBuild.IPlatformBff.SetupExtraLinkerSettings(Sharpmake.Generators.IFileGenerator,Sharpmake.Project.Configuration,System.String)">
             <summary>

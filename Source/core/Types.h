@@ -79,6 +79,10 @@ using hlslpp::float3;
 using hlslpp::float3x3;
 using hlslpp::float4;
 using hlslpp::float4x4;
+using hlslpp::quaternion;
+using hlslpp::int4;
+using hlslpp::int3;
+using hlslpp::int2;
 
 // Default C++ types
 using std::shared_ptr;
@@ -215,4 +219,5 @@ void SafeRelease(T*& obj) {
 #define COLOR_G(c) ( c & 0x00FF0000)
 #define COLOR_B(c) ( c & 0x0000FF00)
 #define COLOR_A(c) ( c & 0x000000FF)
+
 

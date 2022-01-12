@@ -62,6 +62,8 @@ public class EngineProject : JonaBaseProject
         CompileHLSL.ConfigureShaderIncludes(conf);
 
         conf.AddPublicDependency<ImGui>(target);
+        conf.AddPublicDependency<ImPlot>(target);
+        conf.AddPublicDependency<ImGuizmo>(target);
 
         // Own public libraries
         conf.AddPublicDependency<CliProject>(target);

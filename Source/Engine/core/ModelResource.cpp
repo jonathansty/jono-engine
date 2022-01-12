@@ -75,6 +75,7 @@ void ModelResource::load()
 			aiMesh const* mesh = scene->mMeshes[i];
 			aiMatrix4x4 const& transform = transforms[i];
 
+
 			aiMatrix3x3 normalTransform = aiMatrix3x3{
 				transform.a1, transform.a2,transform.a3,
 				transform.b1, transform.b2,transform.b3,
@@ -201,6 +202,7 @@ void ModelResource::load()
 			aiString materialPath{};
 			MaterialInitParameters parameters{};
 			parameters.load_type = MaterialInitParameters::LoadType_FromMemory;
+			parameters.name = "[Built-in] Simple Shader";
 
 			parameters.vs_shader_bytecode = (const char*)Shaders::cso_simple_vx;
 			parameters.vs_shader_bytecode_size = uint32_t(std::size(Shaders::cso_simple_vx));
@@ -219,6 +221,11 @@ void ModelResource::load()
 			if (material->Get(AI_MATKEY_TEXTURE_NORMALS(0), materialPath) == aiReturn_SUCCESS)
 			{
 				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path + std::string(materialPath.C_Str());
+			}
+
+			bool double_sided;
+			if (material->Get(AI_MATKEY_TWOSIDED, double_sided) == aiReturn_SUCCESS) {
+				parameters.double_sided = double_sided;
 			}
 
 
