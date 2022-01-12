@@ -80,6 +80,9 @@ using hlslpp::float3x3;
 using hlslpp::float4;
 using hlslpp::float4x4;
 using hlslpp::quaternion;
+using hlslpp::int4;
+using hlslpp::int3;
+using hlslpp::int2;
 
 // Default C++ types
 using std::shared_ptr;
