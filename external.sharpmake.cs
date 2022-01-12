@@ -117,3 +117,45 @@ public class ImGui : ExternalProject
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]/examples");
     }
 }
+
+[Generate]
+public class ImGuizmo : ExternalProject
+{
+    public ImGuizmo() : base()
+    {
+        Name = "ImGuizmo";
+        SourceRootPath = Path.Combine(ExternalDir, "ImGuizmo/");
+        // SourceFilesExcludeRegex.Add("examples");
+    }
+    override public void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        conf.AddPrivateDependency<ImGui>(target);
+
+        conf.Output = Configuration.OutputType.Lib;
+        conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]");
+    }
+}
+
+[Generate]
+public class ImPlot : ExternalProject
+{
+    public ImPlot() : base()
+    {
+        Name = "ImPlot";
+        SourceRootPath = Path.Combine(ExternalDir, "ImPlot/");
+        // SourceFilesExcludeRegex.Add("examples");
+    }
+    override public void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        conf.AddPrivateDependency<ImGui>(target);
+
+        conf.Output = Configuration.OutputType.Lib;
+        conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]");
+    }
+}
+
+

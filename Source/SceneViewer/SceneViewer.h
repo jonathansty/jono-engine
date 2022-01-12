@@ -27,13 +27,17 @@ private:
 	bool load_world(const char* path);
 	void save_world(const char* path);
 
+	void swap_model(const char* path);
+
 	// Initial scene path to view 
 	std::string _scene_path;
 
 	// World to store our scene data in
 	std::shared_ptr<framework::World> _world;
+	shared_ptr<RenderWorld> _render_world;
 	shared_ptr<RenderWorldCamera> _camera;
 	shared_ptr<RenderWorldLight> _light;
+	shared_ptr<RenderWorldInstance> _model;
 
 	framework::EntityDebugOverlay* _overlay;
 

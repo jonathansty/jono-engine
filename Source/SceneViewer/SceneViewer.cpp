@@ -78,8 +78,47 @@ void SceneViewer::initialize(GameSettings& gameSettings)
 }
 
 
+std::string show_file_dialog(HWND owner) {
+	OPENFILENAMEA ofn;
+	char szFileName[MAX_PATH] = "";
+
+	ZeroMemory(&ofn, sizeof(ofn));
+
+	ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
+	ofn.hwndOwner = owner;
+	ofn.lpstrFilter = "Model Files (*.glb)\0*.glb\0Model Files (*.gltf)\0*.glb\0All Files (*.*)\0*.*\0\0";
+	ofn.lpstrFile = szFileName;
+	ofn.nMaxFile = MAX_PATH;
+	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT;
+	ofn.lpstrDefExt = "glb";
+
+	if (GetOpenFileNameA(&ofn)) {
+		return ofn.lpstrFile;
+	}
+
+	return {};
+}
 void SceneViewer::start()
 {
+	auto ge = GameEngine::instance();
+
+	ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order) {
+		if (order == GameEngine::BuildMenuOrder::First) {
+			if (ImGui::BeginMenu("File")){
+
+				if (ImGui::MenuItem("Open")) {
+					LOG_VERBOSE(UI, "Opening file...");
+					std::string file = show_file_dialog(ge->get_window());
+					if (!file.empty()) {
+						this->swap_model(file.c_str());
+					}
+				}
+				ImGui::EndMenu();
+			}
+		}
+
+	});
+
 	auto device = GameEngine::instance()->GetD3DDevice();
 	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
 
@@ -91,8 +130,9 @@ void SceneViewer::start()
 	_world = GameEngine::instance()->get_world();
 	
 	auto render_world = GameEngine::instance()->get_render_world();
+	_render_world = render_world;
 	render_world->create_instance(float4x4::identity(), "Resources/Models/plane.glb");
-	render_world->create_instance(float4x4::identity(), "Resources/Models/cube.glb");
+_model = render_world->create_instance(float4x4::identity(), "Resources/Models/cube.glb");
 
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
 	const float aspect = (float)size.x / (float)size.y;
@@ -139,12 +179,8 @@ void SceneViewer::start()
 	framework::EntityDebugOverlay* overlay = new framework::EntityDebugOverlay(_world.get());
 	GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
-#if 0
-	// Manually register the entity debug overlay
-	framework::EntityDebugOverlay *overlay = new framework::EntityDebugOverlay(_world.get());
-	GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
-
 	// Create the world camera
+	#if 0 
 	{
 		World::EntityId camera = _world->create_entity();
 		camera->set_name("MainCamera");
@@ -152,8 +188,10 @@ void SceneViewer::start()
 		camera->set_local_position(float3(0.0f, 0.0f, -50.0f));
 		_world->attach_to_root(camera);
 	}
+	#endif
 
 
+	#if 0
 	{
 		namespace fs = std::filesystem;
 		auto add_model = [&](float3 pos, float3 scale, fs::path const& model_path) {
@@ -192,7 +230,7 @@ void SceneViewer::start()
 
 		add_model(float3(0.0f, 0.0f, 0.0f), float3(1.0), "Tower/scene.gltf");
 	}
-#endif
+	#endif
 }
 
 void SceneViewer::end()
@@ -209,20 +247,20 @@ void SceneViewer::tick(double deltaTime)
 	//_timer += (float)deltaTime;
 	if (GameEngine::instance()->is_key_pressed(VK_RIGHT)) {
 		_timer -= 0.5f;
-		LOG_VERBOSE("Advancing timer with -0.5f ({})", _timer);
+		LOG_VERBOSE(Game, "Advancing timer with -0.5f ({})", _timer);
 	}
 	if (GameEngine::instance()->is_key_pressed(VK_LEFT)) {
 		_timer += 0.5f;
-		LOG_VERBOSE("Advancing timer with 0.5f ({})", _timer);
+		LOG_VERBOSE(Game,"Advancing timer with 0.5f ({})", _timer);
 	}
 
 	if (GameEngine::instance()->is_key_pressed(VK_UP)) {
 		_light_tick += 0.5f;
-		LOG_VERBOSE("Moving light tick with 0.5f ({})", _light_tick);
+		LOG_VERBOSE(Game,"Moving light tick with 0.5f ({})", _light_tick);
 	}
 	if (GameEngine::instance()->is_key_pressed(VK_DOWN)) {
 		_light_tick -= 0.5f;
-		LOG_VERBOSE("Moving light tick with -0.5f ({})", _light_tick);
+		LOG_VERBOSE(Game,"Moving light tick with -0.5f ({})", _light_tick);
 	}
 
 	float3 pos = _camera->get_position();
@@ -397,5 +435,12 @@ void SceneViewer::save_world(const char* path) {
 			serialization::serialize_instance<IO::Mode::Write>(file, inst);
 		}
 	}
+}
+
+void SceneViewer::swap_model(const char* path) {
+	_render_world->remove_instance(_model);
+
+	_model = _render_world->create_instance(float4x4::identity(), path);
+
 }
 

@@ -6,6 +6,7 @@
 
 #include <backends/imgui_impl_dx11.h>
 #include <backends/imgui_impl_win32.h>
+#include <implot.h>
 
 #include "debug_overlays/MetricsOverlay.h"
 #include "debug_overlays/RTTIDebugOverlay.h"
@@ -33,12 +34,12 @@ enki::TaskScheduler GameEngine::s_TaskScheduler;
 // Thread ID used to identify if we are on the main thread.
 std::thread::id GameEngine::s_main_thread;
 
+// Window procedure to forward events to the game engine
 LRESULT CALLBACK GameEngine::WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Route all Windows messages to the game engine
 	return GameEngine::instance()->handle_event(hWindow, msg, wParam, lParam);
 }
-
 
 // #TODO: Remove this once full 2D graphics has been refactored into it's own context
 using graphics::bitmap_interpolation_mode;
@@ -82,6 +83,11 @@ GameEngine::GameEngine()
 	, _d3d_output_tex(nullptr)
 	, _d3d_output_dsv(nullptr)
 	, _d3d_output_rtv(nullptr)
+	, _show_debuglog(true)
+	, _show_viewport(true)
+	, _show_imgui_demo(false)
+	, _show_implot_demo(false)
+	, _show_entity_editor(false)
 {
 
 	// Seed the random number generator
@@ -112,8 +118,9 @@ void GameEngine::set_title(const string& titleRef)
 
 int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 {
-
 	// Mount our IO first to allow proper 
+
+	LOG_INFO(IO, "Mounting resources directory.");
 	_platform_io = IO::create();
 	_platform_io->mount("Resources");
 
@@ -185,12 +192,12 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 #endif
 
 	// create the render world
-	LOG_VERBOSE("Test verbose message");
-	LOG_INFO("Test info message");
-	LOG_WARNING("Test warning message");
-	LOG_ERROR("Test error message");
+	LOG_VERBOSE(Unknown, "Test verbose message");
+	LOG_INFO(Unknown, "Test info message");
+	LOG_WARNING(Unknown, "Test warning message");
+	LOG_ERROR(Unknown, "Test error message");
 
-	LOG_INFO("Initialising worlds...");
+	LOG_INFO(System, "Initialising worlds...");
 	{
 		_world = std::make_shared<framework::World>();
 		_world->init();
@@ -200,7 +207,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 		_cb_global = ConstantBuffer::create(_d3d_device, sizeof(GlobalDataCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 	}
-	LOG_INFO("Finished initialising worlds.");
+	LOG_INFO(System, "Finished initialising worlds.");
 
 	// Game Initialization
 	_game->initialize(_game_settings);
@@ -223,6 +230,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	d3d_init();
 
 	ImGui::CreateContext();
+	ImPlot::CreateContext();
+
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 
@@ -332,6 +341,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			ImGui_ImplDX11_NewFrame();
 			ImGui_ImplWin32_NewFrame();
 			ImGui::NewFrame();
+			ImGuizmo::BeginFrame();
 
 			build_ui();
 			//{
@@ -445,6 +455,9 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		{
 			d2d_render();
 		}
+
+		// Resolve msaa to non msaa for imgui render
+		_d3d_device_ctx->ResolveSubresource(_d3d_non_msaa_output_tex, 0, _d3d_output_tex, 0, _swapchain_format);
 
 		// Render main viewport ImGui
 		{
@@ -590,8 +603,9 @@ bool GameEngine::open_window(int iCmdShow)
 }
 
 void GameEngine::resize_swapchain(uint32_t width, uint32_t height) {
-	Logger::instance()->Log(Logger::Severity::Info, fmt::format("Resizing swapchain to {}x{} {}\n", width, height, __FILE__));
+	LOG_VERBOSE(Graphics, "Resizing swapchain to {}x{}", width, height);
 	DXGI_FORMAT swapchain_format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	_swapchain_format = swapchain_format;
 
 	// Create MSAA render target that resolves to non-msaa swapchain
 	DXGI_SAMPLE_DESC aa_desc{};
@@ -618,6 +632,8 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height) {
 		helpers::SafeRelease(_d3d_output_tex);
 		helpers::SafeRelease(_d3d_output_rtv);
 		helpers::SafeRelease(_d3d_output_srv);
+		helpers::SafeRelease(_d3d_non_msaa_output_tex);
+		helpers::SafeRelease(_d3d_non_msaa_output_srv);
 		helpers::SafeRelease(_d3d_output_depth);
 		helpers::SafeRelease(_d3d_output_dsv);
 		helpers::SafeRelease(_d2d_rt);
@@ -637,6 +653,13 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height) {
 	SUCCEEDED(_d3d_device->CreateTexture2D(&output_desc, nullptr, &_d3d_output_tex));
 	SUCCEEDED(_d3d_device->CreateRenderTargetView(_d3d_output_tex, nullptr, &_d3d_output_rtv));
 	SUCCEEDED(_d3d_device->CreateShaderResourceView(_d3d_output_tex, nullptr, &_d3d_output_srv));
+
+
+	// This texture is used to output to a image in imgui
+	output_desc.SampleDesc.Count = 1;
+	output_desc.SampleDesc.Quality = 0;
+	SUCCEEDED(_d3d_device->CreateTexture2D(&output_desc, nullptr, &_d3d_non_msaa_output_tex));
+	SUCCEEDED(_d3d_device->CreateShaderResourceView(_d3d_non_msaa_output_tex, nullptr, &_d3d_non_msaa_output_srv));
 
 	// Create the 3D depth target
 	auto dsv_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_D24_UNORM_S8_UINT, get_width(), get_height(), 1, 1, D3D11_BIND_DEPTH_STENCIL, D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
@@ -848,9 +871,17 @@ IDWriteFactory* GameEngine::GetDWriteFactory() const
 	return _dwrite_factory;
 }
 
+float2 GameEngine::get_mouse_pos_in_window() const {
+	RECT rect;
+	if(GetWindowRect(get_window(), &rect)) {
+		return float2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y } + float2(rect.left, rect.top);
+	}
+	return {};
+}
+
 float2 GameEngine::get_mouse_pos_in_viewport() const
 {
-	return float2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y};
+	return float2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y } - m_ViewportPos;
 }
 
 unique_ptr<AudioSystem> const& GameEngine::GetXAudio() const
@@ -1156,6 +1187,7 @@ void GameEngine::d3d_init()
 	resize_swapchain(get_width(), get_height());
 	m_ViewportWidth = get_width();
 	m_ViewportHeight = get_height();
+	m_ViewportPos = { 0, 0 };
 	//set alias mode
 	_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
 
@@ -1356,162 +1388,6 @@ void GameEngine::CallListeners()
 	_b2d_impulse_data.clear();
 }
 
-void GameEngine::build_ui()
-{
-	static bool s_show_debuglog = true;
-	static bool s_show_viewport = true;
-	static bool s_show_scene_hierarchy = false;
-	static bool s_show_properties = false;
-
-	{
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-		{
-			ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(viewport->WorkPos);
-			ImGui::SetNextWindowSize(viewport->WorkSize);
-			ImGui::SetNextWindowViewport(viewport->ID);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-		}
-
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-		ImGui::Begin("DockSpace Demo", nullptr, window_flags);
-		ImGui::PopStyleVar();
-		ImGui::PopStyleVar(2);
-
-		// DockSpace
-		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f));
-
-		if (ImGui::BeginMenuBar())
-		{
-			if (ImGui::BeginMenu("Simulation"))
-			{
-				static bool s_should_simulate = true;
-				if (ImGui::MenuItem(s_should_simulate ? "Stop" : "Start", "", nullptr))
-				{
-					s_should_simulate = !s_should_simulate;
-					fmt::printf("Toggling Simulation %s.\n", s_should_simulate ? "On" : "Off");
-
-					this->set_sleep(!s_should_simulate);
-				}
-
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("Windows"))
-			{
-
-				if (ImGui::MenuItem("Debug Log"))
-				{
-					s_show_debuglog = !s_show_debuglog;
-				}
-				if (ImGui::MenuItem("Viewport"))
-				{
-					s_show_viewport = !s_show_viewport;
-				}
-				if(ImGui::MenuItem("Scene Hierarchy"))
-				{
-					s_show_scene_hierarchy = !s_show_scene_hierarchy;
-					get_overlay_manager()->get_overlay("EntityDebugOverlay")->set_visible(s_show_scene_hierarchy);
-				}
-
-				if (ImGui::MenuItem("Properties"))
-				{
-					s_show_properties = !s_show_properties;
-				}
-
-				ImGui::EndMenu();
-			}
-
-			ImGui::EndMenuBar();
-		}
-
-		if (ImGui::Begin("Viewport", &s_show_viewport)) {
-			static ImVec2 s_vp_size = ImGui::GetContentRegionAvail();
-			ImVec2 current_size = ImGui::GetContentRegionAvail();
-
-			if(s_vp_size.x != current_size.x || s_vp_size.y != current_size.y) {
-				LOG_VERBOSE("Viewport resize detected! From {}x{} to {}x{}", current_size.x, current_size.y, s_vp_size.x, s_vp_size.y);
-
-				// Update the viewport sizes
-				s_vp_size = current_size;
-				m_ViewportWidth = (u32)s_vp_size.x;
-				m_ViewportHeight = (u32)s_vp_size.y;
-			}
-
-			ImVec2 max_uv = {};
-			max_uv.x = s_vp_size.x / get_width();
-			max_uv.y = s_vp_size.y / get_height();
-			ImGui::Image(_d3d_output_srv, s_vp_size, ImVec2(0, 0), max_uv); 
-		}
-		ImGui::End();
-
-		if (ImGui::Begin("Output Log", &s_show_debuglog))
-		{
-			static bool s_scroll_to_bottom = true;
-			static bool s_shorten_file = true;
-			static char s_filter[256] = {};
-			ImGui::InputText("Filter", s_filter, 512);
-			ImGui::SameLine();
-			ImGui::Checkbox("Scroll To Bottom", &s_scroll_to_bottom);
-
-			//ImGui::BeginTable("LogData", 3);
-			ImGui::BeginChild("123");
-			auto const& buffer = Logger::instance()->GetBuffer();
-			for(auto it = buffer.begin(); it != buffer.end(); ++it) {
-
-				LogEntry const* entry = *it;
-				if (s_filter[0] != '\0') {
-					bool bPassed = (entry->_message.find(s_filter) != std::string::npos);
-					if (!bPassed)
-						continue;
-				}
-
-				std::string prefix = "[]";
-				switch (entry->_severity) {
-					case Logger::Severity::Info:
-						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3, 0.3, 1.0, 1.0));
-						prefix = "Info";
-						break;
-					case Logger::Severity::Warning:
-						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7, 0.7, 0.1, 1.0));
-						prefix = "Warning";
-						break;
-					case Logger::Severity::Error:
-						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9, 0.1, 0.1, 1.0));
-						prefix = "Error";
-						break;
-					case Logger::Severity::Verbose: 
-						prefix = "Verbose";
-						ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1.0));
-					default:
-						break;
-				}
-
-				std::string filename = entry->_file ? entry->_file : "null";
-				if(s_shorten_file && entry->_file) {
-					auto path = std::filesystem::path(filename);
-					filename = fmt::format("{}", path.filename().string());
-				
-				}
-				ImGui::Text("[%s(%d)][%s] %s",filename.c_str(), it->_line, prefix.c_str(), it->_message.c_str());
-				ImGui::PopStyleColor();
-			}
-			if (Logger::instance()->_hasNewMessages && s_scroll_to_bottom) {
-				Logger::instance()->_hasNewMessages = false;
-				ImGui::SetScrollHereY();
-			}
-			//ImGui::EndTable();
-			ImGui::EndChild();
-		}
-		ImGui::End();
-
-		ImGui::End();
-	}
-}
 
 void GameEngine::render_view(RenderPass::Value pass) {
 
@@ -1647,6 +1523,228 @@ void GameEngine::render_world(ViewParams const& params) {
 		}
 	}
 
+}
+
+
+void GameEngine::build_ui() {
+
+	{
+		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+		{
+			ImGuiViewport* viewport = ImGui::GetMainViewport();
+			ImGui::SetNextWindowPos(viewport->WorkPos);
+			ImGui::SetNextWindowSize(viewport->WorkSize);
+			ImGui::SetNextWindowViewport(viewport->ID);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+		}
+
+		ImGui::Begin("Engine Editor", nullptr, window_flags);
+		ImGui::PopStyleVar(3);
+
+		// DockSpace
+		ImGuiID dockspace_id = ImGui::GetID("Dockspace##Main");
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f));
+
+		build_menubar();
+		build_debug_log();
+		build_viewport();
+
+		ImGui::End();
+	}
+
+	if (_show_implot_demo) {
+		ImPlot::ShowDemoWindow(&_show_implot_demo);
+	}
+}
+
+
+void GameEngine::build_debug_log() {
+	if (!_show_debuglog)
+		return;
+
+	if (ImGui::Begin("Output Log", &_show_debuglog)) {
+		static bool s_scroll_to_bottom = true;
+		static bool s_shorten_file = true;
+		static char s_filter[256] = {};
+		ImGui::InputText("Filter", s_filter, 512);
+		ImGui::SameLine();
+		ImGui::Checkbox("Scroll To Bottom", &s_scroll_to_bottom);
+
+		//ImGui::BeginTable("LogData", 3);
+		ImGui::BeginChild("123");
+		auto const& buffer = Logger::instance()->GetBuffer();
+		for (auto it = buffer.begin(); it != buffer.end(); ++it) {
+			LogEntry const* entry = *it;
+			if (s_filter[0] != '\0') {
+				std::string msg = entry->to_message();
+				bool bPassed = (msg.find(s_filter) != std::string::npos);
+				if (!bPassed)
+					continue;
+			}
+
+			switch (entry->_severity) {
+				case Logger::Severity::Info:
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3, 0.3, 1.0, 1.0));
+					break;
+				case Logger::Severity::Warning:
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.7, 0.7, 0.1, 1.0));
+					break;
+				case Logger::Severity::Error:
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.9, 0.1, 0.1, 1.0));
+					break;
+				case Logger::Severity::Verbose:
+					ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5, 0.5, 0.5, 1.0));
+				default:
+					break;
+			}
+
+			std::string filename = entry->_file ? entry->_file : "null";
+			if (s_shorten_file && entry->_file) {
+				auto path = std::filesystem::path(filename);
+				filename = fmt::format("{}", path.filename().string());
+			}
+			ImGui::Text("[%s(%d)][%s][%s] %s", filename.c_str(), it->_line, logging::to_string(it->_category), logging::to_string(it->_severity), it->_message.c_str());
+			ImGui::PopStyleColor();
+		}
+		if (Logger::instance()->_hasNewMessages && s_scroll_to_bottom) {
+			Logger::instance()->_hasNewMessages = false;
+			ImGui::SetScrollHereY();
+		}
+		//ImGui::EndTable();
+		ImGui::EndChild();
+	}
+	ImGui::End();
+}
+
+void GameEngine::build_viewport() {
+	if (!_show_viewport)
+		return;
+
+	if (ImGui::Begin("Viewport", &_show_viewport)) {
+		static ImVec2 s_vp_size = ImGui::GetContentRegionAvail();
+		ImVec2 current_size = ImGui::GetContentRegionAvail();
+
+		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+		ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+
+		{
+			auto min = vMin;
+			auto max = vMax;
+			min.x += ImGui::GetWindowPos().x;
+			min.y += ImGui::GetWindowPos().y;
+			max.x += ImGui::GetWindowPos().x;
+			max.y += ImGui::GetWindowPos().y;
+
+			m_ViewportPos.x = min.x;
+			m_ViewportPos.y = min.y;
+			ImGui::GetForegroundDrawList()->AddRect(min, max, IM_COL32(255, 255, 0, 255));
+		}
+
+		if (s_vp_size.x != current_size.x || s_vp_size.y != current_size.y) {
+			LOG_VERBOSE(Graphics, "Viewport resize detected! From {}x{} to {}x{}", current_size.x, current_size.y, s_vp_size.x, s_vp_size.y);
+
+			// Update the viewport sizes
+			s_vp_size = current_size;
+			m_ViewportWidth = (u32)s_vp_size.x;
+			m_ViewportHeight = (u32)s_vp_size.y;
+		}
+
+		// Draw the actual scene image
+		ImVec2 max_uv = {};
+		max_uv.x = s_vp_size.x / get_width();
+		max_uv.y = s_vp_size.y / get_height();
+
+		ImGui::Image(_d3d_non_msaa_output_srv, s_vp_size, ImVec2(0, 0), max_uv);
+
+		// Draw any gizmos
+		#if 0
+		ImGuizmo::SetDrawlist();
+		ImGuizmo::SetRect(m_ViewportPos.x, m_ViewportPos.y, float1(m_ViewportWidth), float1(m_ViewportHeight));
+		static ImGuiWindowFlags gizmoWindowFlags = 0;
+
+		constexpr f32 l = 0.f;
+		auto camera = _render_world->get_camera(0);
+		float4x4 view_mtx = camera->get_view();
+		float4x4 proj_mtx = camera->get_proj();
+		float view[16];
+		float proj[16];
+		hlslpp::store(view_mtx, view);
+		hlslpp::store(proj_mtx, proj);
+
+		// #TODO: Render gizmos for the selected entity
+		static float4x4 matrix = float4x4::identity();
+		ImGuizmo::Manipulate(view, proj, ImGuizmo::OPERATION::TRANSLATE, ImGuizmo::MODE::WORLD, (float*)&matrix);
+		#endif
+	}
+	ImGui::End();
+}
+
+void GameEngine::build_menubar() {
+	if (ImGui::BeginMenuBar()) {
+		if (_build_menu) {
+			_build_menu(BuildMenuOrder::First);
+		}
+
+		if (ImGui::BeginMenu("Simulation")) {
+			static bool s_should_simulate = true;
+			if (ImGui::MenuItem(s_should_simulate ? "Stop" : "Start", "", nullptr)) {
+				s_should_simulate = !s_should_simulate;
+				fmt::printf("Toggling Simulation %s.\n", s_should_simulate ? "On" : "Off");
+
+				this->set_sleep(!s_should_simulate);
+			}
+
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Windows")) {
+			if (ImGui::MenuItem("[DEMO] ImPlot")) {
+				_show_implot_demo = !_show_implot_demo;
+			}
+
+			if (ImGui::MenuItem("Debug Log")) {
+				_show_debuglog = !_show_debuglog;
+			}
+			if (ImGui::MenuItem("Viewport")) {
+				_show_viewport = !_show_viewport;
+			}
+			if (ImGui::MenuItem("Entity Editor")) {
+				_show_entity_editor = !_show_entity_editor;
+				get_overlay_manager()->get_overlay("EntityDebugOverlay")->set_visible(_show_entity_editor);
+			}
+
+			if (ImGui::BeginMenu("Overlays")) {
+				if (ImGui::IsItemClicked()) {
+					get_overlay_manager()->set_visible(!get_overlay_manager()->get_visible());
+				}
+
+				for (auto overlay : get_overlay_manager()->get_overlays()) {
+					bool enabled = overlay->get_visible();
+					if (ImGui::Checkbox(fmt::format("##{}", overlay->get_name()).c_str(), &enabled)) {
+						overlay->set_visible(enabled);
+					}
+
+					ImGui::SameLine();
+					if (ImGui::MenuItem(overlay->get_name())) {
+						overlay->set_visible(!overlay->get_visible());
+					}
+				}
+				ImGui::EndMenu();
+			}
+
+			ImGui::EndMenu();
+		}
+
+		if (_build_menu) {
+			_build_menu(BuildMenuOrder::Last);
+		}
+
+		ImGui::EndMenuBar();
+	}
 }
 
 int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<AbstractGame>&& game)

@@ -7,7 +7,7 @@
 namespace framework {
 
 EntityDebugOverlay::EntityDebugOverlay(framework::World* world)
-		: DebugOverlay(true, "EntityDebugOverlay")
+		: DebugOverlay(false, "EntityDebugOverlay")
 		, _world(world)
 		, _selected() {
 }
@@ -112,6 +112,9 @@ void EntityDebugOverlay::render_object(rttr::instance& obj) {
 }
 
 void EntityDebugOverlay::render_overlay() {
+	if (!_isOpen)
+		return;
+
 	static int s_current = 0;
 	if (ImGui::Begin("Scene Outliner", &_isOpen)) {
 		ImGui::Text("Number Of Entities: %d", _world->_entities.size());
@@ -164,7 +167,7 @@ void EntityDebugOverlay::render_overlay() {
 			}
 			static int s_selected_type = 0;
 			ImGui::PushID("Type");
-			ImGui::Combo("",&s_selected_type, type_names.data(), int(type_names.size()));
+			ImGui::Combo("", &s_selected_type, type_names.data(), int(type_names.size()));
 			ImGui::PopID();
 			ImGui::SameLine();
 			if (ImGui::Button("+")) {

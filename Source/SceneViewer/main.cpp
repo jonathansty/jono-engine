@@ -6,8 +6,10 @@
 
 int main(const int argcs, const char** argvs)
 {
-
+	// Parses the command line for use with the game engine
 	cli::CommandLine cmd = cli::parse(argvs, argcs);
+
+	// Allows booting different game classes compiled into the executable
 	unique_ptr<AbstractGame> game_ptr;
 
 	if (cli::has_arg(cmd, "game")) {

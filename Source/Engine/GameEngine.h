@@ -187,9 +187,9 @@ public:
 	bool      get_sleep() const;
 
 	// LEGACY D3D11 Code
-	ID3D11Device *          GetD3DDevice() const;
-	ID3D11DeviceContext *   GetD3DDeviceContext() const;
-	ID3D11RenderTargetView *GetD3DBackBufferView() const;
+	ID3D11Device* GetD3DDevice() const;
+	ID3D11DeviceContext* GetD3DDeviceContext() const;
+	ID3D11RenderTargetView* GetD3DBackBufferView() const;
 
 	ID2D1Factory*      GetD2DFactory() const;
 	IWICImagingFactory* GetWICImagingFactory() const;
@@ -200,6 +200,7 @@ public:
 	// Usage example:
 	// POINT mousePos = GameEngine::instance()->GetMousePosition();
 	float2 get_mouse_pos_in_viewport() const;
+	float2 get_mouse_pos_in_window() const;
 
 	//! returns pointer to the Audio object
 	unique_ptr<AudioSystem> const& GetXAudio() const;
@@ -236,6 +237,12 @@ public:
 
 	// Returns the current game world 
 	std::shared_ptr<framework::World> get_world() const { return _world; }
+
+	enum class BuildMenuOrder {
+		First,
+		Last
+	};
+	void set_build_menu_callback(std::function<void(BuildMenuOrder)> fn) { _build_menu = fn; }
 
 private:
 	// Internal run function called by GameEngine::run
@@ -294,6 +301,20 @@ private:
 	// Allows rendering the world with customizable view parameters
 	void render_world(ViewParams const& params);
 
+	void build_debug_log();
+	void build_viewport();
+	void build_menubar();
+
+	// State for debug tools
+	bool _show_debuglog;
+	bool _show_viewport;
+	bool _show_imgui_demo;
+	bool _show_implot_demo;
+	bool _show_entity_editor;
+
+	// Callback for applications to create custom menu 
+	std::function<void(BuildMenuOrder)> _build_menu;
+
 private:
 	cli::CommandLine _command_line;
 
@@ -309,6 +330,7 @@ private:
 
 	// DirectX resources
 	bool _initialized;
+	DXGI_FORMAT _swapchain_format;
 	IDXGIFactory *_dxgi_factory;
 	ID3D11Device *_d3d_device;
 	ID3D11DeviceContext *_d3d_device_ctx;
@@ -321,6 +343,8 @@ private:
 	// these textures get resolved to the swapchain before presenting
 	ID3D11Texture2D *_d3d_output_tex;
 	ID3D11ShaderResourceView *_d3d_output_srv;
+	ID3D11Texture2D* _d3d_non_msaa_output_tex;
+	ID3D11ShaderResourceView* _d3d_non_msaa_output_srv;
 	ID3D11RenderTargetView *_d3d_output_rtv;
 	ID3D11RenderTargetView *_d3d_swapchain_rtv;
 	ID3D11Texture2D *_d3d_output_depth;
@@ -384,9 +408,11 @@ private:
 		float4 direction;
 		float4x4 light_space;
 	};
+
 	struct AmbientInfo {
 		float4 ambient;
 	};
+
 	struct GlobalDataCB {
 		float4x4 view;
 		float4x4 inv_view;
@@ -413,41 +439,9 @@ private:
 
 	u32 m_ViewportWidth;
 	u32 m_ViewportHeight;
+	int2 m_ViewportPos;
 
 	friend class SceneViewer;
 };
 
 // Helper class for scoped gpu debugging
-#ifdef _DEBUG
-class scoped_gpu_event final {
-public:
-	scoped_gpu_event(ID3DUserDefinedAnnotation *annotation, std::wstring name) :
-			_name(name), _annotation(annotation) {
-		annotation->BeginEvent(name.c_str());
-	}
-	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::string name) 
-		: _annotation(annotation)
-	{
-		_name = std::wstring(name.begin(), name.end());
-	}
-	~scoped_gpu_event() {
-		_annotation->EndEvent();
-	}
-
-private:
-	std::wstring _name;
-	ID3DUserDefinedAnnotation *_annotation;
-};
-
-#define COMBINE1(X, Y) X##Y // helper macro
-#define COMBINE(X, Y) COMBINE1(X, Y)
-#define GPU_SCOPED_EVENT(ctx, name) scoped_gpu_event COMBINE(perfEvent, __LINE__) = scoped_gpu_event(ctx, name)
-#define GPU_MARKER(ctx, name) ctx->SetMarker(name);
-#else
-#define GPU_SCOPED_EVENT(ctx, name)
-#define GPU_MARKER(ctx, name)
-#endif
-
-
-
-
