@@ -38,6 +38,14 @@ std::shared_ptr<RenderWorldLight> RenderWorld::create_light(RenderWorldLight::Li
 	return result;
 }
 
+void RenderWorld::remove_instance(std::shared_ptr<RenderWorldInstance> const& instance) {
+
+	auto it = std::find(_instances.begin(), _instances.end(), instance);
+	if(it != _instances.end()) {
+		_instances.erase(it);
+	}
+}
+
 RenderWorldCamera::RenderWorldCamera()
 		: _dirty(true)
 		, _position()
@@ -56,13 +64,16 @@ void RenderWorldCamera::update() const {
 	if (_dirty) {
 		auto t = float4x4::translation(_position);
 		auto r = float4x4(_rotation);
-		_world = hlslpp::mul(r, t);
-		_view = hlslpp::inverse(_world);
 
-		if (_use_target){
-			_view = float4x4::look_at(_position, _target, float3(0.0f, 1.0f, 0.0));
-			_world = hlslpp::inverse(_view);
-			_use_target = false;
+		if(!_is_direct_controlled) {
+			_world = hlslpp::mul(r, t);
+			_view = hlslpp::inverse(_world);
+
+			if (_use_target){
+				_view = float4x4::look_at(_position, _target, float3(0.0f, 1.0f, 0.0));
+				_world = hlslpp::inverse(_view);
+				_use_target = false;
+			}
 		}
 
 		bool reverse_z = _settings.reverse_z;

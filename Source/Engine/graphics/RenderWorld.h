@@ -202,6 +202,8 @@ class RenderWorld final {
 		std::shared_ptr<RenderWorldCamera> create_camera();
 		std::shared_ptr<RenderWorldLight> create_light(RenderWorldLight::LightType type);
 
+		void remove_instance(std::shared_ptr<RenderWorldInstance> const& instance);
+
 	private:
 		std::mutex _instance_cs;
 		InstanceCollection  _instances;
