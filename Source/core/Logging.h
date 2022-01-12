@@ -18,7 +18,8 @@ enum class LogCategory {
 	IO,
 	System,
 	Game,
-	UI
+	UI,
+	Input
 };
 
 namespace logging {

@@ -65,15 +65,13 @@ void RenderWorldCamera::update() const {
 		auto t = float4x4::translation(_position);
 		auto r = float4x4(_rotation);
 
-		if(!_is_direct_controlled) {
-			_world = hlslpp::mul(r, t);
-			_view = hlslpp::inverse(_world);
+		_world = hlslpp::mul(r, t);
+		_view = hlslpp::inverse(_world);
 
-			if (_use_target){
-				_view = float4x4::look_at(_position, _target, float3(0.0f, 1.0f, 0.0));
-				_world = hlslpp::inverse(_view);
-				_use_target = false;
-			}
+		if (_use_target) {
+			_view = float4x4::look_at(_position, _target, float3(0.0f, 1.0f, 0.0));
+			_world = hlslpp::inverse(_view);
+			_use_target = false;
 		}
 
 		bool reverse_z = _settings.reverse_z;
