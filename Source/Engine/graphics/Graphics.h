@@ -92,3 +92,36 @@ private:
 	BufferUsage _usage;
 };
 using ConstantBufferRef = shared_ptr<ConstantBuffer>;
+
+// --------------------------------------------------------------------------------- 
+// Debug 
+// --------------------------------------------------------------------------------- 
+
+#ifdef _DEBUG
+class scoped_gpu_event final {
+public:
+	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::wstring name)
+			: _name(name), _annotation(annotation) {
+		annotation->BeginEvent(name.c_str());
+	}
+	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::string name)
+			: _annotation(annotation) {
+		_name = std::wstring(name.begin(), name.end());
+	}
+	~scoped_gpu_event() {
+		_annotation->EndEvent();
+	}
+
+private:
+	std::wstring _name;
+	ID3DUserDefinedAnnotation* _annotation;
+};
+
+#define COMBINE1(X, Y) X##Y // helper macro
+#define COMBINE(X, Y) COMBINE1(X, Y)
+#define GPU_SCOPED_EVENT(ctx, name) scoped_gpu_event COMBINE(perfEvent, __LINE__) = scoped_gpu_event(ctx, name)
+#define GPU_MARKER(ctx, name) ctx->SetMarker(name);
+#else
+#define GPU_SCOPED_EVENT(ctx, name)
+#define GPU_MARKER(ctx, name)
+#endif
