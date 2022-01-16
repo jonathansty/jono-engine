@@ -1,10 +1,4 @@
 #include "core.pch.h"
-
-#include <iostream>
-
-#include "Types.h"
-#include "Identifier.h"
-
 #include "Serialization.h"
 
 using hlslpp::float4;

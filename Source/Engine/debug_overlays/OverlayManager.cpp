@@ -17,6 +17,14 @@ DebugOverlay* OverlayManager::get_overlay(std::string const& name) {
 	return _overlays[name];
 }
 
+std::vector<DebugOverlay*> OverlayManager::get_overlays() const {
+	std::vector<DebugOverlay*> overlays;
+	std::transform(_overlays.begin(), _overlays.end(), std::back_inserter(overlays), [](std::pair<std::string, DebugOverlay*> const& element) {
+		return element.second;
+	});
+	return overlays;
+}
+
 OverlayManager::~OverlayManager() 
 {
 	for (auto& overlay : _overlays)
@@ -49,4 +57,19 @@ void OverlayManager::render_overlay()
 			overlay.second->render_overlay();
 		}
 	}
+}
+
+void OverlayManager::render_viewport() {
+	for (auto& overlay : _overlays) {
+		if (overlay.second->_isOpen) {
+			overlay.second->render_viewport();
+		}
+	}
+}
+
+void DebugOverlay::set_visible(bool visible) {
+	if (!_isOpen) {
+		ImGui::SetWindowFocus("Overlays");
+	}
+	_isOpen = visible;
 }

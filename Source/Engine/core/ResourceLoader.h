@@ -9,7 +9,7 @@ struct FromFileResourceParameters
 {
 	std::string path;
 
-	std::string to_string() const { return path; }
+	std::string const& to_string() const { return path; }
 };
 
 // template resource class
@@ -30,6 +30,8 @@ public:
 	}
 
 	virtual void load() = 0;
+
+	virtual std::string get_name() const { return ""; }
 
 private:
 	std::atomic<bool> _loaded;
@@ -57,8 +59,10 @@ public:
 
 	resource_type* get() const { return _resource.get(); }
 
-	public:
+public:
 	init_type const& get_init_parameters() const { return _init; }
+
+	virtual std::string get_name() const { return _init.to_string(); }
 
 protected:
 
@@ -107,6 +111,7 @@ public:
 		}
 
 		for(auto it : models_to_remove) {
+			LOG_VERBOSE(IO, "Unloading \"{}\"", it->second->get_name());
 			_cache.erase(it);
 		}
 	}

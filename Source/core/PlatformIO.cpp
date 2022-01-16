@@ -1,9 +1,6 @@
 #include "core.pch.h"
 #include "PlatformIO.h"
 
-#include <fmt/core.h>
-#include <filesystem>
-#include <cassert>
 
 namespace IO {
 

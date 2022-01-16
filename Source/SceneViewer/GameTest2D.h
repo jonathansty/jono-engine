@@ -1,4 +1,5 @@
 #pragma once
+#if  FEATURE_D2D
 
 #include "AbstractGame.h"
 #include "Framework/World.h"
@@ -32,4 +33,4 @@ public:
 		vector<DrawElement> _bitmaps;
 };
 
-
+#endif

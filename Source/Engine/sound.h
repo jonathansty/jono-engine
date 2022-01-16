@@ -1,8 +1,6 @@
 #pragma once
 
-// not for Win7
-#if !defined(WINDOWS7) && false
-
+#if FEATURE_XAUDIO
 
 #include <Xaudio2.h>
 
@@ -42,7 +40,7 @@ class sound final
 public:
 	//! creates a playable sound.
 	//! @param filenameRef is the file to be loaded
-	sound(const String &filenameRef);
+	sound(const std::string &filenameRef);
 	//! creates a playable sound.
 	//! @param resourceID is the resource to be loaded
 	sound(int resourceID);
@@ -101,17 +99,18 @@ public:
 	double get_duration() const;
 
     //! returns the filePath
-    String GetPath();
+    std::string const& GetPath() const;
+
 	// Internal use only
 	friend void __stdcall VoiceCallback::OnStreamEnd();
 
 	PlayState GetPlayState() const;
 
 private:
-    String m_FilePath;
+    std::string m_FilePath;
 	void SetPlayState(PlayState playState);
-	void Create(const String& sFilename);
-	void Extract(int resourceID, const String& typeRef, String &resultingFilenameRef);
+	void Create(const std::string& sFilename);
+	void Extract(int resourceID, const std::string& typeRef, std::string& resultingFilenameRef);
 	VoiceCallback m_VoiceCallback;
 	XAUDIO2_BUFFER m_Buffer;
 	WAVEFORMATEXTENSIBLE m_Wfx;

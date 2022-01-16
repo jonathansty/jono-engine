@@ -1,5 +1,6 @@
 #pragma once
 
+#if FEATURE_D2D
 struct ID2D1Bitmap;
 
 class Bitmap
@@ -53,3 +54,4 @@ private:
 	string					m_FileName;
 	int						m_ResourceID;
 };
+#endif

@@ -3,6 +3,7 @@
 #include <fmt/core.h>
 
 #include "core/Math.h"
+#include "ImGuizmo.h"
 
 namespace framework {
 
@@ -194,6 +195,35 @@ void EntityDebugOverlay::render_overlay() {
 		}
 	}
 	ImGui::End();
+
+}
+
+void EntityDebugOverlay::render_viewport() {
+	static ImGuizmo::OPERATION op = ImGuizmo::OPERATION::TRANSLATE;
+	if (GameEngine::instance()->is_key_pressed('W')) op = ImGuizmo::OPERATION::TRANSLATE;
+	if (GameEngine::instance()->is_key_pressed('E')) op = ImGuizmo::OPERATION::ROTATE;
+	if (GameEngine::instance()->is_key_pressed('R')) op = ImGuizmo::OPERATION::SCALE;
+
+	if (_selected) {
+		auto world = GameEngine::instance()->get_render_world();
+		auto camera = world->get_view_camera();
+
+		f32 view[16], proj[16];
+		hlslpp::store(camera->get_view(), view);
+		hlslpp::store(camera->get_proj(), proj);
+
+		f32 matrix[16];
+		hlslpp::store(_selected->get_local_transform(), matrix);
+
+		ImGuizmo::Manipulate(view, proj, op, ImGuizmo::MODE::WORLD, matrix);
+
+		f32 translation[3], scale[3], rotation[3];
+		ImGuizmo::DecomposeMatrixToComponents(matrix, translation, rotation, scale);
+
+		float3 t;
+		hlslpp::load(t, translation);
+		_selected->set_local_position(t);
+	}
 }
 
 } // namespace framework

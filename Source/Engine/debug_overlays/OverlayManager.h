@@ -4,7 +4,12 @@
 struct IOverlay
 {
 	virtual ~IOverlay() = default;
+
+	// Render function called when building ImGui UI
 	virtual void render_overlay() = 0;
+
+	// Render function called when rendering the ImGui viewport
+	virtual void render_viewport() {}
 };
 
 class DebugOverlay : public IOverlay
@@ -23,14 +28,7 @@ public:
 	}
 
 	bool get_visible() const { return _isOpen; }
-	void set_visible(bool visible) 
-	{ 
-		if (!_isOpen)
-		{
-			ImGui::SetWindowFocus("Overlays");
-		}
-		_isOpen = visible; 
-	}
+	void set_visible(bool visible);
 
 protected:
 	bool _isOpen;
@@ -48,19 +46,14 @@ public:
 
 
 	void render_overlay() override;
+	void render_viewport() override;
 
 	void register_overlay(DebugOverlay* overlay);
 	void unregister_overlay(DebugOverlay* overlay);
 
 	DebugOverlay* get_overlay(std::string const& name);
 
-	std::vector<DebugOverlay*> get_overlays() const {
-		std::vector<DebugOverlay*> overlays;
-		std::transform(_overlays.begin(), _overlays.end(), std::back_inserter(overlays), [](std::pair<std::string, DebugOverlay*> const& element) {
-			return element.second;
-		});
-		return overlays;
-	}
+	std::vector<DebugOverlay*> get_overlays() const;
 
 private:
 	std::unordered_map<std::string, DebugOverlay*> _overlays;

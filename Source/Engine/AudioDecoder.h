@@ -1,18 +1,7 @@
-//-----------------------------------------------------------------
-// Game Engine Object
-// C++ Header - version v2_16 jan 2015 
-// Copyright DAE Programming Team
-// http://www.digitalartsandentertainment.be/
-//-----------------------------------------------------------------
-
 #pragma once
-// not for Win7
-#ifndef WINDOWS7
 
+#if FEATURE_XAUDIO
 
-//-----------------------------------------------------------------
-// AudioDecoder Class: decodes music files (including mp3, no mid)
-//-----------------------------------------------------------------
 #include <mfapi.h>
 #include <mfidl.h>
 #include <mfreadwrite.h>

@@ -2,6 +2,7 @@
 using hlslpp::float3;
 using hlslpp::float4;
 
+#include "Core.h"
 #include "Types.h"
 
 RTTR_REGISTRATION{

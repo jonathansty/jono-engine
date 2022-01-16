@@ -21,14 +21,17 @@
 class Bitmap;
 class Font;
 class InputManager;
-class AudioSystem;
+class XAudioSystem;
 class AbstractGame;
-class AudioSystem;
+class XAudioSystem;
 class PrecisionTimer;
 class b2World;
 class ContactListener;
+struct ImVec2;
 
+#if FEATURE_D2D
 using graphics::bitmap_interpolation_mode;
+#endif
 
 enum class MSAAMode {
 	Off,
@@ -155,25 +158,6 @@ public:
 	//! ConsolePrintString: Display a String on the current cursor position. A new line is appended automatically
 	void print_string(std::string const &msg);
 
-	void set_bitmap_interpolation_mode(graphics::bitmap_interpolation_mode mode);
-
-	//! Set the font that is used to render text
-	void set_font(Font *fontPtr);
-
-	//! Returns the font that is used to render text
-	Font *get_font() const;
-
-	//! Set the built-in font asthe one to be used to render text
-	void set_default_font();
-
-	//! Sets the color of the brush that is used to draw and fill
-	//! Example: GameEngine::instance()->SetColor(u32(255,127,64));
-	void set_color(u32 colorVal);
-
-	//! Returns the color of the brush used to draw and fill
-	//! Example: u32 c = GameEngine::instance()->GetColor();
-	u32 get_color();
-
 	// Accessor Methods
 	HINSTANCE get_instance() const;
 	HWND      get_window() const;
@@ -186,24 +170,26 @@ public:
 	int       get_height() const;
 	bool      get_sleep() const;
 
-	// LEGACY D3D11 Code
-	ID3D11Device* GetD3DDevice() const;
-	ID3D11DeviceContext* GetD3DDeviceContext() const;
-	ID3D11RenderTargetView* GetD3DBackBufferView() const;
 
-	ID2D1Factory*      GetD2DFactory() const;
-	IWICImagingFactory* GetWICImagingFactory() const;
-	ID2D1RenderTarget*  GetHwndRenderTarget() const;
-	IDWriteFactory*     GetDWriteFactory() const;
+	ID3D11Device*           GetD3DDevice() const { return _d3d_device; };
+	ID3D11DeviceContext*    GetD3DDeviceContext() const { return _d3d_device_ctx; };
+	ID3D11RenderTargetView* GetD3DBackBufferView() const { return _d3d_backbuffer_view; };
+	IWICImagingFactory*     GetWICImagingFactory() const { return _wic_factory; };
+#if FEATURE_D2D
+	ID2D1Factory*           GetD2DFactory() const { return _d2d_factory; };
+	ID2D1RenderTarget*      GetHwndRenderTarget() const { return _d2d_rt; };
+#endif
 
-	// Returns a POINT containing the window coordinates of the mouse offset in the viewport
-	// Usage example:
-	// POINT mousePos = GameEngine::instance()->GetMousePosition();
+	IDWriteFactory*         GetDWriteFactory() const { return _dwrite_factory; };
+
+	// Mouse position relative to the viewport position (Should be used in most cases for game logic)
 	float2 get_mouse_pos_in_viewport() const;
+
+	// Mouse position relative to the window
 	float2 get_mouse_pos_in_window() const;
 
 	//! returns pointer to the Audio object
-	unique_ptr<AudioSystem> const& GetXAudio() const;
+	unique_ptr<XAudioSystem> const& get_audio_system() const;
 	//! returns pointer to the box2D world object
 	shared_ptr<b2World> const& GetBox2DWorld() const { return _b2d_world; }
 
@@ -275,13 +261,14 @@ private:
 	void enable_vsync(bool bEnable = true);
 
 	void enable_aa(bool isEnabled);
-	bool is_paint_allowed() const;
 
+#if FEATURE_D2D
 	// Direct2D methods
 	void d2d_render();
+	void d2d_create_factory();
+#endif
 
 	void create_factories();
-	void d2d_create_factory();
 	void WIC_create_factory();
 	void write_create_factory();
 
@@ -346,7 +333,6 @@ private:
 	ID3D11Texture2D* _d3d_non_msaa_output_tex;
 	ID3D11ShaderResourceView* _d3d_non_msaa_output_srv;
 	ID3D11RenderTargetView *_d3d_output_rtv;
-	ID3D11RenderTargetView *_d3d_swapchain_rtv;
 	ID3D11Texture2D *_d3d_output_depth;
 	ID3D11DepthStencilView *_d3d_output_dsv;
 
@@ -376,7 +362,9 @@ private:
 	shared_ptr<b2ContactFilter> _b2d_contact_filter;
 
 	double _b2d_time = 0;
+	#if FEATURE_D2D
 	Box2DDebugRenderer _b2d_debug_renderer;
+	#endif
 	std::vector<ContactData> _b2d_begin_contact_data;
 	std::vector<ContactData> _b2d_end_contact_data;
 	std::vector<ImpulseData> _b2d_impulse_data;
@@ -387,14 +375,16 @@ private:
 	// Systems
 	unique_ptr<PrecisionTimer> _game_timer;
 	unique_ptr<InputManager> _input_manager;
-	unique_ptr<AudioSystem> _xaudio_system = nullptr;
+	unique_ptr<XAudioSystem> _xaudio_system = nullptr;
 
 	MetricsOverlay *_metrics_overlay;
 	std::shared_ptr<OverlayManager> _overlay_manager;
 	GameSettings _game_settings;
 	EngineSettings _engine_settings;
 
+	#if FEATURE_D2D
 	graphics::D2DRenderContext *_d2d_ctx;
+	#endif
 
 	std::shared_ptr<IO::IPlatformIO> _platform_io;
 

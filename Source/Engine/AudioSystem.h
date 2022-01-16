@@ -7,28 +7,36 @@
 
 #pragma once
 
-// not for Win7
-#ifndef WINDOWS7
+interface IAudioSystem
+{
+	HRESULT intialize();
 
+	// Placeholder API
+	HRESULT create_source_voice();
+};
+
+std::shared_ptr<IAudioSystem> create_audio_system();
 
 #include <Xaudio2.h>
 
-class AudioSystem final
-{
-
+#if FEATURE_XAUDIO
+class XAudioSystem final : public IAudioSystem {
 public:
-	AudioSystem();
-	virtual ~AudioSystem(void);
-	HRESULT Initialize();
-	IXAudio2* GetIXAudio(){ return m_pXAudio2; }
+	XAudioSystem() {}
+	virtual ~XAudioSystem(void) {}
+
+	XAudioSystem(const XAudioSystem& t) = delete;
+	XAudioSystem& operator=(const XAudioSystem& t) = delete;
+
+	HRESULT init();
+
+	void cleanup();
+
+	IXAudio2* get_xaudio() const { return m_pXAudio2; }
+
 private:
 	IXAudio2* m_pXAudio2;
 
 	IXAudio2MasteringVoice* m_pMasterVoice;
-	void Cleanup();
-
-	AudioSystem(const AudioSystem& t);
-	AudioSystem& operator=(const AudioSystem& t);
 };
-
 #endif

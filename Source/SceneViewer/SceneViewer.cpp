@@ -67,7 +67,7 @@ void SceneViewer::configure_engine(EngineSettings &engineSettings) {
 	engineSettings.d2d_use = false;
 
 	engineSettings.d3d_use = true;
-	engineSettings.d3d_msaa_mode = MSAAMode::MSAA_4x;
+	engineSettings.d3d_msaa_mode = MSAAMode::Off;
 }
 
 void SceneViewer::initialize(GameSettings& gameSettings)
@@ -238,9 +238,11 @@ void SceneViewer::end()
 
 }
 
+#if FEATURE_D2D
 void SceneViewer::paint(graphics::D2DRenderContext& ctx)
 {
 }
+#endif
 
 void SceneViewer::tick(double deltaTime)
 {
@@ -262,6 +264,7 @@ void SceneViewer::tick(double deltaTime)
 		_light_tick -= 0.5f;
 		LOG_VERBOSE(Game,"Moving light tick with -0.5f ({})", _light_tick);
 	}
+
 
 	float3 pos = _camera->get_position();
 	float radius = 50.0f;
@@ -300,8 +303,7 @@ void SceneViewer::debug_ui()
 		"Vertex Colours"
 	};
 
-	ImGui::Combo("Debug Mode", &g_DebugMode, items, std::size(items));
-
+	ImGui::Combo("Debug Mode", &g_DebugMode, items, static_cast<int>(std::size(items)));
 
 	ImGui::PushID("#SceneName");
 	static char buff[512] = "test.scene";

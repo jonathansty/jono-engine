@@ -34,6 +34,10 @@ inline const char* to_string(LogCategory category) {
 			return "System";
 		case LogCategory::Game:
 			return "Game";
+		case LogCategory::UI:
+			return "UI";
+		case LogCategory::Input:
+			return "Input";
 		case LogCategory::Unknown:
 		default:
 			return "Unknown";

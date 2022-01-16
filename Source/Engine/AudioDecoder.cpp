@@ -2,8 +2,7 @@
 
 #include "AudioDecoder.h"
 
-// not for Win7
-#ifndef WINDOWS7
+#if FEATURE_XAUDIO
 
 #include "Propvarutil.h"
 template <class T> void SafeRelease(T **ppT)

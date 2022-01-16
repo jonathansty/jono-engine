@@ -1,4 +1,6 @@
 #include "sceneviewer.pch.h"
+
+#if FEATURE_D2D
 #include "GameTest2D.h"
 
 #include "Components.h"
@@ -59,3 +61,4 @@ void GameTest2D::paint(graphics::D2DRenderContext& ctx)
 void GameTest2D::tick(double deltaTime)
 {
 }
+#endif

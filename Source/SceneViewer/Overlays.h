@@ -17,6 +17,8 @@ public:
 
 	virtual void render_overlay() override;
 
+	virtual void render_viewport() override;
+
 private:
 	framework::EntityHandle _selected;
 	framework::World* _world;

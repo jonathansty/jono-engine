@@ -1,19 +1,20 @@
 #include "engine.pch.h"    // for compiler
 
+
+#include "GameEngine.h"
+
 #include "sound.h"
-#include <locale>
-#include <codecvt>
+#include "AudioDecoder.h"
+#include "AudioSystem.h"
 
 // not for Win7
-#if !defined(WINDOWS7) && false
-
-
+#if FEATURE_XAUDIO
 
 
 //-----------------------------------------------------------------
 // Sound methods
 //-----------------------------------------------------------------
-sound::sound(const String &filenameRef)
+sound::sound(const std::string &filenameRef)
 {
 	Create(filenameRef);
     m_FilePath = filenameRef;
@@ -21,9 +22,9 @@ sound::sound(const String &filenameRef)
 
 sound::sound(int resourceID)
 {
-	String sType("MP3");
-	String fileName = String(resourceID) + String(".") + sType;
-	String resultingFilename;
+	std::string sType("MP3");
+	std::string fileName = std::to_string(resourceID) + "." + sType;
+	std::string resultingFilename;
 	Extract(resourceID, sType, resultingFilename);
 	Create(resultingFilename);
 }
@@ -41,25 +42,25 @@ sound::~sound()
 	}
 }
 
-void sound::Extract(int resourceID, const String& typeRef, String &resultingFilenameRef)
+void sound::Extract(int resourceID, const std::string& typeRef, std::string &resultingFilenameRef)
 {
-	HRSRC hrsrc = FindResource(NULL, MAKEINTRESOURCE(resourceID), typeRef.C_str());
+	HRSRC hrsrc = FindResourceA(NULL, MAKEINTRESOURCEA(resourceID), typeRef.c_str());
 	HGLOBAL hLoaded = LoadResource(NULL, hrsrc);
 	LPVOID lpLock = LockResource(hLoaded);
 	DWORD dwSize = SizeofResource(NULL, hrsrc);
 
-	String path("temp/");
-	CreateDirectory(path.C_str(), NULL);
+	std::string path("temp/");
+	CreateDirectoryA(path.c_str(), NULL);
 
-	resultingFilenameRef = path + String(resourceID) + String(".") + typeRef;
-	HANDLE hFile = CreateFile(resultingFilenameRef.C_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	resultingFilenameRef = path + std::to_string(resourceID) + "." + typeRef;
+	HANDLE hFile = CreateFileA(resultingFilenameRef.c_str(), GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 	DWORD dwByteWritten = 0;
 	WriteFile(hFile, lpLock, dwSize, &dwByteWritten, NULL);
 	CloseHandle(hFile);
 	FreeResource(hLoaded);
 }
 
-void sound::Create(const String& filenameRef)
+void sound::Create(const std::string& filenameRef)
 {
 	// catch endplay event
 	m_VoiceCallback.SetVoice(this);
@@ -69,14 +70,17 @@ void sound::Create(const String& filenameRef)
 	//XSoundLoader(filenameRef, m_Buffer, m_Wfx);
 
 	//from String to tstring
-	tstring tFilename(filenameRef.C_str());
+	std::string tFilename(filenameRef.c_str());
 
 	// load mp3 using media foundation architecture: sourcereader
-	AudioDecoder decoder = AudioDecoder(tFilename, m_Buffer, &m_Wfx);
+	std::wstring filename = std::wstring(tFilename.begin(), tFilename.end());
+	AudioDecoder decoder = AudioDecoder(filename, m_Buffer, &m_Wfx);
 
 	// 3. Create a source voice by calling the IXAudio2::CreateSourceVoice method on an instance of the XAudio2 engine.
 	// Bart: We are friends with AudioSystem class, could use game engine singleton instead
-	if (FAILED(hr = GameEngine::instance()->GetXAudio()->GetIXAudio()->CreateSourceVoice(&m_pSourceVoice, (WAVEFORMATEX*)&m_Wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &m_VoiceCallback, NULL, NULL)))
+	auto ge = GameEngine::instance();
+	auto xaudio = ge->get_audio_system()->get_xaudio(); 
+	if (FAILED(hr = GameEngine::instance()->get_audio_system()->get_xaudio()->CreateSourceVoice(&m_pSourceVoice, (WAVEFORMATEX*)&m_Wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &m_VoiceCallback, NULL, NULL)))
 		//if (FAILED(hr = AudioSystem::m_pXAudio2->CreateSourceVoice(&m_pSourceVoice, (WAVEFORMATEX*)&m_Wfx)))
 	{
 		MessageBoxA(NULL, "Error Creating the Sound", "GameEngine says NO", MB_OK);
@@ -129,7 +133,7 @@ bool sound::play(play_mode mode)
 		if (pSourceVoice == nullptr)
 		{
 
-			if (FAILED(hr = GameEngine::instance()->GetXAudio()->GetIXAudio()->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)&m_Wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &m_VoiceCallback, NULL, NULL)))
+			if (FAILED(hr = GameEngine::instance()->get_audio_system()->get_xaudio()->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)&m_Wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, &m_VoiceCallback, NULL, NULL)))
 				//if (FAILED(hr = AudioSystem::m_pXAudio2->CreateSourceVoice(&m_pSourceVoice, (WAVEFORMATEX*)&m_Wfx)))
 			{
 				MessageBoxA(NULL, "Error Creating the Sound", "GameEngine says NO", MB_OK);
@@ -230,7 +234,7 @@ double sound::get_duration() const
 	double duration = (double)m_Buffer.AudioBytes / (m_Wfx.Format.nSamplesPerSec * m_Wfx.Format.wBitsPerSample / 8 * m_Wfx.Format.nChannels);
 	return duration;
 }
-String sound::GetPath()
+std::string const& sound::GetPath() const
 {
     return m_FilePath;
 }
