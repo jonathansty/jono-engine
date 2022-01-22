@@ -25,7 +25,7 @@
 static constexpr uint32_t max_task_threads = 4;
 
 // Static task scheduler used for loading assets and executing multi threaded work loads
-enki::TaskScheduler GameEngine::s_TaskScheduler;
+enki::TaskScheduler* GameEngine::s_TaskScheduler;
 
 // Thread ID used to identify if we are on the main thread.
 std::thread::id GameEngine::s_main_thread;
@@ -158,7 +158,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	this->_hinstance = hInstance;
 
 	// Initialize enkiTS
-	s_TaskScheduler.Initialize(max_task_threads);
+	s_TaskScheduler = Tasks::get_scheduler();
+	Tasks::get_scheduler()->Initialize(max_task_threads);
 
 	struct InitTask : enki::IPinnedTask {
 		InitTask(uint32_t threadNum) :
@@ -170,12 +171,12 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	};
 
 	std::vector<std::unique_ptr<InitTask>> tasks;
-	for(uint32_t i = 0; i < s_TaskScheduler.GetNumTaskThreads(); ++i) {
+	for(uint32_t i = 0; i < s_TaskScheduler->GetNumTaskThreads(); ++i) {
 		tasks.push_back(std::make_unique<InitTask>( i));
-		s_TaskScheduler.AddPinnedTask(tasks[i].get());
+		s_TaskScheduler->AddPinnedTask(tasks[i].get());
 	}
-	s_TaskScheduler.RunPinnedTasks();
-	s_TaskScheduler.WaitforAll();
+	s_TaskScheduler->RunPinnedTasks();
+	s_TaskScheduler->WaitforAll();
 
 	//Initialize the high precision timers
 	_game_timer = make_unique<PrecisionTimer>();
@@ -499,7 +500,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	}
 
 	// Make sure all tasks have finished before shutting down
-	s_TaskScheduler.WaitforAllAndShutdown();
+	Tasks::get_scheduler()->WaitforAllAndShutdown();
 
 	// User defined code for exiting the game
 	_game->end();
@@ -516,6 +517,11 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// Teardown graphics resources and windows procedures
 	{
 		_default_font.reset();
+
+		// Deinit our global graphics API before killing the game engine API
+		Graphics::deinit();
+
+		// deinit the engine graphics layer
 		d3d_deinit();
 
 		::CoUninitialize();
@@ -756,7 +762,7 @@ void GameEngine::quit_game()
 
 void GameEngine::print_string(const string& textRef)
 {
-	fmt::print(textRef);
+	fmt::print("{}", textRef);
 	::OutputDebugStringA(textRef.c_str());
 }
 
@@ -1033,7 +1039,8 @@ void GameEngine::create_factories()
 {
 	// Create Direct3D 11 factory
 	{
-		CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&_dxgi_factory);
+		ENSURE_HR(CreateDXGIFactory(IID_PPV_ARGS(&_dxgi_factory)));
+		helpers::SetDebugObjectName(_dxgi_factory, "Main DXGI Factory");
 
 		// Define the ordering of feature levels that Direct3D attempts to create.
 		D3D_FEATURE_LEVEL featureLevels[] = {
@@ -1054,7 +1061,7 @@ void GameEngine::create_factories()
 		}
 	#endif
 
-		SUCCEEDED(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flag, featureLevels, UINT(std::size(featureLevels)), D3D11_SDK_VERSION, &_d3d_device, &featureLevel, &_d3d_device_ctx));
+		ENSURE_HR(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flag, featureLevels, UINT(std::size(featureLevels)), D3D11_SDK_VERSION, &_d3d_device, &featureLevel, &_d3d_device_ctx));
 
 		if (debug_layer) {
 			bool do_breaks = cli::has_arg(_command_line, "-d3d-break");

@@ -65,6 +65,18 @@ void init(ComPtr<ID3D11Device> device) {
 	}
 }
 
+void deinit() {
+	auto clear_fn = []<typename T>(T& ptr) {
+		ptr.Reset();
+	};
+	std::for_each(s_DepthStencilStates.begin(), s_DepthStencilStates.end(), clear_fn);
+	std::for_each(s_BlendStates.begin(), s_BlendStates.end(), clear_fn);
+	std::for_each(s_RasterizerStates.begin(), s_RasterizerStates.end(), clear_fn);
+	std::for_each(s_SamplerStates.begin(), s_SamplerStates.end(), clear_fn);
+	s_Device.Reset();
+
+}
+
 ComPtr<ID3D11Device> GetDevice() {
 	return s_Device;
 }

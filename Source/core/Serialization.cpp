@@ -238,8 +238,8 @@ bool serialization::write_container(IO::IFileRef const& file, rttr::variant cons
 
 bool serialization::write_sequential_container(IO::IFileRef const& file, rttr::variant const& variant) {
 
-	rttr::instance obj = variant.get_type().get_wrapped_type();
-	rttr::type t_obj = obj.get_type().get_raw_type();
+	rttr::type obj = variant.get_type().get_wrapped_type();
+	rttr::type t_obj = obj.get_raw_type();
 
 	// Write the type hash before doing the container
 	Identifier64 type_hash = Identifier64(variant.get_type().get_name().begin());
@@ -264,8 +264,8 @@ bool serialization::write_sequential_container(IO::IFileRef const& file, rttr::v
 }
 
 bool serialization::write_associative_container(IO::IFileRef const& file, rttr::variant const& variant) {
-	rttr::instance obj = variant.get_type().get_wrapped_type();
-	rttr::type t_obj = obj.get_type().get_raw_type();
+	rttr::type obj = variant.get_type().get_wrapped_type();
+	rttr::type t_obj = obj.get_raw_type();
 
 	Identifier64 type_hash = Identifier64(variant.get_type().get_name().begin());
 	write(file, type_hash.get_hash());

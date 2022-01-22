@@ -36,6 +36,8 @@ public class CoreProject : JonaBaseProject
         base.ConfigureAll(conf, target);
         conf.SolutionFolder = "engine";
         conf.Output = Configuration.OutputType.Lib;
+
+        conf.AddPublicDependency<Rttr>(target);
     }
 }
 
@@ -69,7 +71,6 @@ public class EngineProject : JonaBaseProject
         conf.AddPublicDependency<CliProject>(target);
         conf.AddPublicDependency<CoreProject>(target);
 
-        // Compile C++17 
         conf.Output = Configuration.OutputType.Lib;
         conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
             "4100", // Unused method variables

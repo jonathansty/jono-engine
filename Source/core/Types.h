@@ -156,6 +156,7 @@ GUID StringToGuid(const std::string& str);
 std::string GuidToString(GUID guid);
 
 void SetDebugObjectName(ID3D11DeviceChild* res, std::string const& name);
+void SetDebugObjectName(IDXGIObject* obj, std::string const& name);
 
 template <typename T>
 void SafeRelease(T*& obj) {
@@ -172,6 +173,13 @@ void SafeRelease(T*& obj) {
 #define COLOR_G(c) ( c & 0x00FF0000)
 #define COLOR_B(c) ( c & 0x0000FF00)
 #define COLOR_A(c) ( c & 0x000000FF)
+
+
+#define ENSURE_HR(result)     \
+	{                         \
+		HRESULT __COUNTER__##_result = result;  \
+		assert(SUCCEEDED(__COUNTER__##_result)); \
+	}
 
 
 

@@ -5,6 +5,8 @@ using hlslpp::float4;
 #include "Core.h"
 #include "Types.h"
 
+
+
 RTTR_REGISTRATION{
 	using namespace rttr;
 	using namespace helpers;
@@ -60,8 +62,12 @@ std::string GuidToString(GUID guid) {
 	return std::string(guid_cstr);
 }
 
+void SetDebugObjectName(IDXGIObject* obj, std::string const& name) {
+	ENSURE_HR(obj->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str()));
+}
+
 void SetDebugObjectName(ID3D11DeviceChild* res, std::string const& name) {
-	res->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str());
+	ENSURE_HR(res->SetPrivateData(WKPDID_D3DDebugObjectName, name.size(), name.c_str()));
 }
 
 rttr::type const& helpers::get_type_by_id(u64 id) {

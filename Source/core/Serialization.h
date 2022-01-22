@@ -64,6 +64,18 @@ bool write_instance(IO::IFileRef const& file, rttr::instance const& instance);
 bool read_atomic_types(IO::IFileRef const& file, rttr::variant& obj);
 bool read_instance(IO::IFileRef const& file, rttr::instance obj);
 
+bool read_container(IO::IFileRef const& file, rttr::instance variant);
+bool write_container(IO::IFileRef const& file, rttr::variant const& variant);
+
+// Write functions for sequential containers
+bool write_sequential_container(IO::IFileRef const& file, rttr::variant const& variant);
+bool write_associative_container(IO::IFileRef const& file, rttr::variant const& variant);
+
+// Read functions for sequential containers
+bool read_sequential_container(IO::IFileRef const& file, rttr::instance obj);
+bool read_associative_container(IO::IFileRef const& file, rttr::instance obj);
+
+
 
 /// <summary>
 /// Binary serialization construct that writes/reads directly to a binary file using raw memory copies.
@@ -160,16 +172,6 @@ bool serialize_instance(IO::IFileRef const& file, rttr::instance instance) {
 	return handled_all_props;
 }
 
-bool read_container(IO::IFileRef const& file, rttr::instance variant);
-bool write_container(IO::IFileRef const& file, rttr::variant const& variant);
-
-// Write functions for sequential containers
-bool write_sequential_container(IO::IFileRef const& file, rttr::variant const& variant);
-bool write_associative_container(IO::IFileRef const& file, rttr::variant const& variant);
-
-// Read functions for sequential containers
-bool read_sequential_container(IO::IFileRef const& file, rttr::instance obj);
-bool read_associative_container(IO::IFileRef const& file, rttr::instance obj);
 
 
 }

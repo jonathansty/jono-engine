@@ -88,6 +88,8 @@ using namespace D2D1;
 #include <box2d/b2_world_callbacks.h>
 #include <box2d/box2d.h>
 
+#include "enkiTS/TaskScheduler.h"
+
 #include <filesystem>
 #include <cassert>
 
@@ -99,4 +101,10 @@ using namespace D2D1;
 #define tstring std::string
 #define tstringstream std::stringstream
 #endif
+
+
+namespace Tasks {
+enki::TaskScheduler* get_scheduler();
+
+}
 
