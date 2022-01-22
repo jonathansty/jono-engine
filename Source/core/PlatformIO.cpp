@@ -17,7 +17,10 @@ public:
 	}
 
 	virtual ~Win64File() {
-		fclose(_stream);
+		// When a file goes out of scope force a close
+		if (!_stream) {
+			fclose(_stream);
+		}
 	}
 
 	virtual bool is_binary() const { return _binary; }
@@ -50,6 +53,10 @@ public:
 
 class Win64IO final : public IPlatformIO {
 public:
+	Win64IO()
+			: _root(".") {
+
+	}
 
 	virtual bool create_directory(const char* path) override {
 		std::error_code ec;
@@ -66,7 +73,15 @@ public:
 	}
 
 	virtual std::string resolve_path(std::string const& path) override {
-		// resolve path
+		// Check if path is relative
+		std::filesystem::path p{ path };
+
+		// Absolute paths just get resolved straight
+		if (p.is_absolute()) {
+			return path;
+		}
+
+		// Relative paths need to be resolved to the root
 		char tmp[512];
 		sprintf_s(tmp, "%s/%s", _root.c_str(), path.c_str());
 		return tmp;
@@ -95,7 +110,9 @@ public:
 			FILE* s;
 			auto err = fopen_s(&s, tmp.c_str(), t.c_str());
 			if (s == nullptr) {
-				fmt::print("Failed to open file. Error: {}",strerror(err));
+				char buffer[256];
+				strerror_s(buffer, err);
+				fmt::print("Failed to open file. Error: {}",buffer);
 				return nullptr;
 			}
 			return std::make_shared<Win64File>(tmp.c_str(), s, mode, binary);
@@ -103,6 +120,18 @@ public:
 
 		return nullptr;
 	}
+
+	virtual void close(IFileRef const& file) override {
+
+		Win64File* winFile = (Win64File*)file.get();
+		if(winFile->_stream) {
+			fclose(winFile->_stream);
+		}
+
+		// Clear out the stream on the file
+		winFile->_stream = nullptr;
+	}
+
 
 	private:
 		std::string _root;
@@ -118,5 +147,20 @@ IPlatformIORef create() {
 	return nullptr;
 #endif
 }
+
+static IPlatformIORef s_io;
+void set(IPlatformIORef io) 
+{
+	s_io = io;
+}
+
+IPlatformIORef const& get() {
+	// Create IO if it doesn't exist yet!
+	if (!s_io) {
+		s_io = create();
+	}
+	return s_io;
+}
+
 
 }

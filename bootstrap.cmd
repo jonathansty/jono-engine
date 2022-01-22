@@ -1,15 +1,15 @@
-echo off
+@echo off
 mkdir build
 pushd build
 
 REM debug dependencies
 echo Installing debug dependencies...
-conan install .. -s build_type=Debug -o *:shared=False -if debug > debug_install.log
+conan install .. -s build_type=Debug -o *:shared=False -if conan_debug 
 echo Done.
 
 REM release dependencies
 echo Installing release dependencies...
-conan install .. -s build_type=Release -o *:shared=False -if release > release_install.log
+conan install .. -s build_type=Release -o *:shared=False -if conan_release 
 echo Done.
 
 

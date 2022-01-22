@@ -1,13 +1,27 @@
 #pragma once
 
+#ifdef WIN64
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <Windows.h>
+#include <commdlg.h>
+#endif
+
+#include <array>
+#include <mutex>
+#include <vector>
+
+#include <rttr/registration>
+#include <rttr/registration_friend>
+#include <rttr/type>
+
+
 // Feature Defines used to control compile time behaviour
 #define FEATURE_D2D    true    // Flag to control if D2D can be used or not
 #define FEATURE_XAUDIO true    // Flag to control if XAudio can be used or not
 
-
 #define NOMINMAX
 #define HLSLPP_FEATURE_TRANSFORM
-
 #include <hlsl++.h>
 
 #include <stdint.h>
@@ -44,15 +58,7 @@ using namespace D2D1;
 #pragma comment(lib, "d3d11.lib")
 #endif
 
-#include <rttr/registration>
-#include <rttr/registration_friend>
-#include <rttr/type>
-
 #include <Identifier.h>
-
-#ifdef WIN64
-#include <Windows.h>
-#endif
 
 // Define M_PI and other constants
 #define _USE_MATH_DEFINES
@@ -67,6 +73,7 @@ using namespace D2D1;
 #include <fmt/core.h>
 #include <fmt/format.h>
 #include <fmt/printf.h>
+#include <fmt/ostream.h>
 
 #include <rttr/registration>
 #include <rttr/registration_friend>
@@ -92,3 +99,4 @@ using namespace D2D1;
 #define tstring std::string
 #define tstringstream std::stringstream
 #endif
+

@@ -3,6 +3,9 @@
 #include "singleton.h"
 #include "RingBuffer.h"
 #include <fmt/printf.h>
+#include <fstream>
+
+#include "PlatformIO.h"
 
 // Severity levels used for logging
 enum class LogSeverity {
@@ -70,7 +73,7 @@ void log(const char* file, int line, LogCategory category, LogSeverity severity,
 	entry._file = file;
 	entry._line = line;
 	entry._category = category;
-	Logger::instance()->Log(entry);
+	Logger::instance()->log(entry);
 }
 
 } // namespace Logging
@@ -91,15 +94,30 @@ struct LogEntry {
 	}
 };
 
+inline SYSTEMTIME get_system_time() {
+	SYSTEMTIME time{};
+	::GetSystemTime(&time);
+	return time;
+}
+
+inline std::string get_timestamp(SYSTEMTIME const& time) {
+	return fmt::format("{}{}{}{}{}{}", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
+}
+
 // Log manager that allows storing log entries in memory
 class Logger : public TSingleton<Logger> 
 {
 public:
+	Logger();
+	~Logger();
+
 	static constexpr int c_buffer_size = 2048;
 
 	using Severity = LogSeverity;
 
-	void Log(LogEntry const& entry);
+	void init();
+	void deinit();
+	void log(LogEntry const& entry);
 
 	RingBuffer<LogEntry, c_buffer_size> const& GetBuffer() const { return _buffer; }
 
@@ -107,8 +125,15 @@ public:
 	bool _hasNewMessages = false;
 
 private:
+	bool _initialized;
+
+	// Time we started the game and logging data 
+	SYSTEMTIME _time;
+
 	std::mutex _lock;
 	RingBuffer< LogEntry, c_buffer_size> _buffer;
+
+	IO::IFileRef _file;
 };
 
 // Expose some logging macros 

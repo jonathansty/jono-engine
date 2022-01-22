@@ -429,7 +429,7 @@ private:
 
 	u32 m_ViewportWidth;
 	u32 m_ViewportHeight;
-	int2 m_ViewportPos;
+	float2 m_ViewportPos;
 
 	friend class SceneViewer;
 };

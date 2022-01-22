@@ -110,11 +110,18 @@ void GameEngine::set_title(const string& titleRef)
 
 int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 {
-	// Mount our IO first to allow proper 
 
-	LOG_INFO(IO, "Mounting resources directory.");
+	// Create the IO first as our logging depends on creating the right folder
 	_platform_io = IO::create();
+	IO::set(_platform_io);
+
+	// Then we initialize the logger as this might create a log file
+	Logger::instance()->init();
+
+	// Now we can start logging information and we mount our resources volume.
+	LOG_INFO(IO, "Mounting resources directory.");
 	_platform_io->mount("Resources");
+
 
 	ASSERTMSG(_game, "No game has been setup! Make sure to first create a game instance before launching the engine!");
 	_game->configure_engine(this->_engine_settings);
