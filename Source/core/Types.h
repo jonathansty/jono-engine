@@ -10,53 +10,6 @@
  * \note
 */
 
-#define NOMINMAX
-#define HLSLPP_FEATURE_TRANSFORM
-
-#include <hlsl++.h>
-
-#include <stdint.h>
-#include <string>
-#include <sstream>
-#include <iostream>
-#include <memory>
-#include <mutex>
-#include <optional>
-
-#ifdef _WIN64
-// WindowsSDK
-#include <DirectXMath.h>
-#include <d2d1.h>
-#include <d2d1helper.h>
-#include <d3d11.h>
-#include <d3d11_1.h>
-#include <d3d11shader.h>
-#include <d3dcompiler.h>
-#include <dxgi.h>
-#include <dxgidebug.h>
-#include <dwrite.h> // Draw Text
-#include <dxgi.h>
-#include <wincodec.h> // WIC: image loading
-using namespace DirectX;
-#include <wrl.h>
-using Microsoft::WRL::ComPtr;
-using namespace D2D1;
-#endif
-
-
-#include <rttr/registration>
-#include <rttr/registration_friend>
-#include <rttr/type>
-
-#include <Identifier.h>
-
-#ifdef WIN64
-#include <Windows.h>
-#endif
-
-// Define M_PI and other constants
-#define _USE_MATH_DEFINES
-#include <math.h>
 
 
 using u8 = uint8_t;
@@ -219,5 +172,6 @@ void SafeRelease(T*& obj) {
 #define COLOR_G(c) ( c & 0x00FF0000)
 #define COLOR_B(c) ( c & 0x0000FF00)
 #define COLOR_A(c) ( c & 0x000000FF)
+
 
 

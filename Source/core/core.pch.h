@@ -1,19 +1,5 @@
 #pragma once
 
-#ifdef WIN64
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <Windows.h>
-#endif
+// HACK: Technically you shouldn't really do this but for the core library we include the entire core header as these are common headers
+#include "Core.h"
 
-#include <mutex>
-#include <vector>
-#include <array>
-
-#include <rttr/registration>
-#include <rttr/registration_friend>
-#include <rttr/type>
-
-#include <hlsl++.h>
-
-#include <fmt/core.h>

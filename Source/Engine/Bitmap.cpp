@@ -3,6 +3,7 @@
 #include "Bitmap.h"
 #include "GameEngine.h"
 
+#if FEATURE_D2D
 //---------------------------
 // Bitmap methods
 //---------------------------
@@ -170,3 +171,5 @@ string Bitmap::GetFileName()
 {
     return m_FileName;
 }
+
+#endif

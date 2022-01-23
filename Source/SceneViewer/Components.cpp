@@ -19,8 +19,10 @@ RTTR_REGISTRATION{
 		.property("Elapsed", &SimpleMovement3D::_elapsed)
 		;
 
+	#if FEATURE_D2D
 	registration::class_<BitmapComponent>("BitmapComponent")(Versioning::version(2))
 		.constructor()(rttr::policy::ctor::as_raw_ptr);
+	#endif
 
 	registration::class_<CameraComponent>("CameraComponent")(Versioning::version(2))
 		.constructor()(rttr::policy::ctor::as_raw_ptr)

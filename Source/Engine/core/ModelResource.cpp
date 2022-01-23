@@ -6,6 +6,8 @@
 
 #include "GameEngine.h"
 
+#include <assimp/pbrmaterial.h>
+
 
 // Inline shaders
 namespace Shaders
@@ -199,28 +201,37 @@ void ModelResource::load()
 			aiMaterial* material = scene->mMaterials[i];
 			aiString name = material->GetName();
 
-			aiString materialPath{};
 			MaterialInitParameters parameters{};
 			parameters.load_type = MaterialInitParameters::LoadType_FromMemory;
-			parameters.name = "[Built-in] Simple Shader";
+			parameters.name = "[Built-in] Material";
 
+			// Get the name of the material 
+			aiString materialName;
+			material->Get(AI_MATKEY_NAME, materialName);
+			parameters.name = name.C_Str();
+
+			// For now we rely on built-in hardcoded shaders but this should be refactored
+			// to allow more complicated shader selection (also probably load shader binaries from disk rather than compile them in)
+			// Runtime could compile/cache shaders on demand on disk
 			parameters.vs_shader_bytecode = (const char*)Shaders::cso_simple_vx;
 			parameters.vs_shader_bytecode_size = uint32_t(std::size(Shaders::cso_simple_vx));
 
 			parameters.ps_shader_bytecode = (const char*)Shaders::cso_simple_px;
 			parameters.ps_shader_bytecode_size = uint32_t(std::size(Shaders::cso_simple_px));
 
-			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_BASE_COLOR_TEXTURE, &materialPath) == aiReturn_SUCCESS)
+			// Load the required textures from the assimp imported file
+			aiString texturePath;
+			if (material->GetTexture(aiTextureType_BASE_COLOR, 0, &texturePath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path + std::string(materialPath.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path + std::string(texturePath.C_Str());
 			}
-			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &materialPath) == aiReturn_SUCCESS)
+			if (material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS,0, &texturePath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path + std::string(materialPath.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path + std::string(texturePath.C_Str());
 			}
-			if (material->Get(AI_MATKEY_TEXTURE_NORMALS(0), materialPath) == aiReturn_SUCCESS)
+			if (material->GetTexture(aiTextureType_NORMAL_CAMERA, 0, &texturePath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path + std::string(materialPath.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path + std::string(texturePath.C_Str());
 			}
 
 			bool double_sided;

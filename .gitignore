@@ -20,5 +20,6 @@ generated/
 Properties/
 
 
+Logs/
 Resources
 imgui.ini

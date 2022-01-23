@@ -64,6 +64,7 @@ public:
 };
 
 
+#if FEATURE_D2D
 class BitmapComponent final : public framework::Component
 {
 	RTTR_ENABLE(framework::Component);
@@ -91,6 +92,7 @@ public:
 	unique_ptr<Bitmap> _bmp;
 
 };
+#endif
 
 class SimpleMeshComponent final : public framework::Component
 {

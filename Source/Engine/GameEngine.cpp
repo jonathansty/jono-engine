@@ -4,10 +4,6 @@
 #include "ContactListener.h"
 #include "AbstractGame.h"
 
-#include <backends/imgui_impl_dx11.h>
-#include <backends/imgui_impl_win32.h>
-#include <implot.h>
-
 #include "debug_overlays/MetricsOverlay.h"
 #include "debug_overlays/RTTIDebugOverlay.h"
 #include "debug_overlays/ImGuiOverlays.h"
@@ -42,7 +38,9 @@ LRESULT CALLBACK GameEngine::WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPAR
 }
 
 // #TODO: Remove this once full 2D graphics has been refactored into it's own context
+#if FEATURE_D2D
 using graphics::bitmap_interpolation_mode;
+#endif
 
 GameEngine::GameEngine() 
 	: _hinstance(0)
@@ -97,12 +95,6 @@ GameEngine::GameEngine()
 
 GameEngine::~GameEngine()
 {
-	_default_font.reset();
-
-	//Direct2D Device dependent related stuff
-	d3d_deinit();
-
-	CoUninitialize();
 }
 
 void GameEngine::set_game(unique_ptr<AbstractGame>&& gamePtr)
@@ -118,11 +110,18 @@ void GameEngine::set_title(const string& titleRef)
 
 int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 {
-	// Mount our IO first to allow proper 
 
-	LOG_INFO(IO, "Mounting resources directory.");
+	// Create the IO first as our logging depends on creating the right folder
 	_platform_io = IO::create();
+	IO::set(_platform_io);
+
+	// Then we initialize the logger as this might create a log file
+	Logger::instance()->init();
+
+	// Now we can start logging information and we mount our resources volume.
+	LOG_INFO(IO, "Mounting resources directory.");
 	_platform_io->mount("Resources");
+
 
 	ASSERTMSG(_game, "No game has been setup! Make sure to first create a game instance before launching the engine!");
 	_game->configure_engine(this->_engine_settings);
@@ -186,16 +185,18 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_input_manager->Initialize();
 
 	// Sound system
-#ifndef WINDOWS7
-	_xaudio_system = make_unique<AudioSystem>();
-	_xaudio_system->Initialize();
+#if FEATURE_XAUDIO
+	_xaudio_system = make_unique<XAudioSystem>();
+	_xaudio_system->init();
 #endif
 
-	// create the render world
+#ifdef _DEBUG 
+	// Log out some test messages to make sure our logging is working
 	LOG_VERBOSE(Unknown, "Test verbose message");
 	LOG_INFO(Unknown, "Test info message");
 	LOG_WARNING(Unknown, "Test warning message");
 	LOG_ERROR(Unknown, "Test error message");
+#endif
 
 	LOG_INFO(System, "Initialising worlds...");
 	{
@@ -225,7 +226,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		return false;
 	}
 
-
 	// Initialize the Graphics Engine
 	d3d_init();
 
@@ -249,13 +249,14 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
     _b2d_world->SetContactFilter(_b2d_contact_filter.get());
 	_b2d_world->SetContactListener(this);
 
+	#if FEATURE_D2D
 	_b2d_debug_renderer.SetFlags(b2Draw::e_shapeBit);
 	_b2d_debug_renderer.AppendFlags(b2Draw::e_centerOfMassBit);
 	_b2d_debug_renderer.AppendFlags(b2Draw::e_jointBit);
 	_b2d_debug_renderer.AppendFlags(b2Draw::e_pairBit);
 	_b2d_world->SetDebugDraw(&_b2d_debug_renderer);
+	#endif
 #pragma endregion
-
 
 	// User defined functions for start of the game
 	_game->start();
@@ -333,6 +334,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			{
 				fmt::printf("Recreating swapchain. New size: %dx%d\n", (uint32_t)_window_width, (uint32_t)_window_height);
 
+
 				this->resize_swapchain(_window_width, _window_height);
 				_recreate_swapchain = false;
 			}
@@ -394,6 +396,11 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		_d3d_device_ctx->RSSetViewports(1, &vp);
 
 
+		if (_render_world->get_view_camera()) {
+			//_render_world->get_view_camera()->set_aspect((f32)vp.Width / (f32)vp.Height);
+			//_render_world->get_view_camera()->update();
+		}
+
 
 		// Render 3D before 2D
 		if(_engine_settings.d3d_use)
@@ -443,8 +450,12 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				}
 			}
 
+			// Adding the following 2  lines introduces uncontrolled flickering!
+			_render_world->get_view_camera()->set_aspect((f32)m_ViewportWidth / (f32)m_ViewportHeight);
+			_render_world->get_view_camera()->update();
+
 			_d3d_device_ctx->OMSetRenderTargets(0, NULL, _d3d_output_dsv);
-			render_view(RenderPass::ZPrePass);
+			//render_view(RenderPass::ZPrePass);
 
 			_d3d_device_ctx->OMSetRenderTargets(1, &_d3d_output_rtv, _d3d_output_dsv);
 			render_view(RenderPass::Opaque);
@@ -453,7 +464,12 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		// Render Direct2D to the swapchain
 		if(_engine_settings.d2d_use)
 		{
+			#if FEATURE_D2D
 			d2d_render();
+			#else
+			LOG_ERROR(System, "Trying to use D2D but the build isn't compiled with D2D enabled!");
+			DebugBreak();
+			#endif
 		}
 
 		// Resolve msaa to non msaa for imgui render
@@ -466,9 +482,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 		}
 
-		//ComPtr<ID3D11Texture2D> backBuffer;
-		//_dxgi_swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
-		//_d3d_device_ctx->ResolveSubresource(backBuffer.Get(), 0, _d3d_output_tex, 0, DXGI_FORMAT_B8G8R8A8_UNORM);
 
 		// Present
 		GPU_MARKER(_d3d_user_defined_annotation, L"DrawEnd");
@@ -499,9 +512,19 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	ImGui_ImplWin32_Shutdown();
 
 	ImGui::DestroyContext();
+
+	// Teardown graphics resources and windows procedures
+	{
+		_default_font.reset();
+		d3d_deinit();
+
+		::CoUninitialize();
+	}
+
 	return 0;
 }
 
+#if FEATURE_D2D
 void GameEngine::d2d_render()
 {
 	GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Game2D");
@@ -513,7 +536,7 @@ void GameEngine::d2d_render()
 	auto size = this->get_viewport_size();
 
 	_can_paint = true;
-	// make sure the view matrix is taken in account
+	// make sure tvp.Heighthe view matrix is taken in account
 	context.set_world_matrix(float3x3::identity());
 	_game->paint(context);
 
@@ -525,7 +548,7 @@ void GameEngine::d2d_render()
 		context.set_world_matrix(float3x3::identity());
 		float3x3 matView = context.get_view_matrix();
 		context.set_view_matrix(float3x3::identity());
-		set_color(MK_COLOR(0, 0, 0, 127));
+		context.set_color(MK_COLOR(0, 0, 0, 127));
 		context.fill_rect(0, 0, get_width(), get_height());
 		context.set_view_matrix(matView);
 
@@ -541,6 +564,7 @@ void GameEngine::d2d_render()
 	// if drawing failed, terminate the game
 	if (!result) PostMessage(GameEngine::get_window(), WM_DESTROY, 0, 0);
 }
+#endif
 
 bool GameEngine::register_wnd_class()
 {
@@ -629,11 +653,12 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height) {
 
 	// Release the textures before re-creating the swapchain
 	if (_dxgi_swapchain) {
+		helpers::SafeRelease(_d3d_non_msaa_output_tex);
+		helpers::SafeRelease(_d3d_non_msaa_output_srv);
 		helpers::SafeRelease(_d3d_output_tex);
 		helpers::SafeRelease(_d3d_output_rtv);
 		helpers::SafeRelease(_d3d_output_srv);
-		helpers::SafeRelease(_d3d_non_msaa_output_tex);
-		helpers::SafeRelease(_d3d_non_msaa_output_srv);
+
 		helpers::SafeRelease(_d3d_output_depth);
 		helpers::SafeRelease(_d3d_output_dsv);
 		helpers::SafeRelease(_d2d_rt);
@@ -642,24 +667,26 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height) {
 	}
 
 	// Create the 3D output target
-	auto output_desc = CD3D11_TEXTURE2D_DESC(
-			swapchain_format,
-			get_width(),
-			get_height(),
-			1,
-			1,
-			D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
-			D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
-	SUCCEEDED(_d3d_device->CreateTexture2D(&output_desc, nullptr, &_d3d_output_tex));
-	SUCCEEDED(_d3d_device->CreateRenderTargetView(_d3d_output_tex, nullptr, &_d3d_output_rtv));
-	SUCCEEDED(_d3d_device->CreateShaderResourceView(_d3d_output_tex, nullptr, &_d3d_output_srv));
+	{
+		auto output_desc = CD3D11_TEXTURE2D_DESC(
+				swapchain_format,
+				get_width(),
+				get_height(),
+				1,
+				1,
+				D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
+				D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
+		SUCCEEDED(_d3d_device->CreateTexture2D(&output_desc, nullptr, &_d3d_output_tex));
+		SUCCEEDED(_d3d_device->CreateRenderTargetView(_d3d_output_tex, nullptr, &_d3d_output_rtv));
+		SUCCEEDED(_d3d_device->CreateShaderResourceView(_d3d_output_tex, nullptr, &_d3d_output_srv));
 
+		// This texture is used to output to a image in imgui
+		output_desc.SampleDesc.Count = 1;
+		output_desc.SampleDesc.Quality = 0;
+		SUCCEEDED(_d3d_device->CreateTexture2D(&output_desc, nullptr, &_d3d_non_msaa_output_tex));
+		SUCCEEDED(_d3d_device->CreateShaderResourceView(_d3d_non_msaa_output_tex, nullptr, &_d3d_non_msaa_output_srv));
+	}
 
-	// This texture is used to output to a image in imgui
-	output_desc.SampleDesc.Count = 1;
-	output_desc.SampleDesc.Quality = 0;
-	SUCCEEDED(_d3d_device->CreateTexture2D(&output_desc, nullptr, &_d3d_non_msaa_output_tex));
-	SUCCEEDED(_d3d_device->CreateShaderResourceView(_d3d_non_msaa_output_tex, nullptr, &_d3d_non_msaa_output_srv));
 
 	// Create the 3D depth target
 	auto dsv_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_D24_UNORM_S8_UINT, get_width(), get_height(), 1, 1, D3D11_BIND_DEPTH_STENCIL, D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
@@ -713,10 +740,12 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height) {
 	ComPtr<IDXGISurface> surface;
 	_d3d_output_tex->QueryInterface(surface.GetAddressOf());
 
-	SUCCEEDED(_d2d_factory->CreateDxgiSurfaceRenderTarget(surface.Get(), rtp, &_d2d_rt));
-	set_debug_name(surface.Get(), "[D2D] Output");
+	if(_d2d_factory) {
+		SUCCEEDED(_d2d_factory->CreateDxgiSurfaceRenderTarget(surface.Get(), rtp, &_d2d_rt));
+		set_debug_name(surface.Get(), "[D2D] Output");
 
-	_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
+		_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
+	}
 }
 
 void GameEngine::quit_game()
@@ -731,59 +760,19 @@ void GameEngine::print_string(const string& textRef)
 	::OutputDebugStringA(textRef.c_str());
 }
 
-bool GameEngine::is_paint_allowed() const
-{
-	if (_d2d_ctx ) return true;
-	else
-	{
-#ifdef _DEBUG
-		MessageBoxA(NULL, "Painting from outside the GamePaint()...\n\nYOU SHALL NOT PASS!!!", "GameEngine says NO", MB_OK);
-#endif
-		return false;
-	}
-}
-
-void GameEngine::set_color(u32 color)
-{
-	_d2d_ctx->set_color(color);
-}
-
-u32 GameEngine::get_color()
-{
-	return _d2d_ctx->get_color();
-}
-
-void GameEngine::set_bitmap_interpolation_mode(bitmap_interpolation_mode mode)
-{
-	_d2d_ctx->set_bitmap_interpolation_mode(mode);
-}
-
 void GameEngine::enable_aa(bool isEnabled)
 {
 	_d2d_aa_mode = isEnabled ? D2D1_ANTIALIAS_MODE_ALIASED : D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
+	#if FEATURE_D2D
 	if (_d2d_rt) {
 		_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
 	}
+	#endif
 }
 
 void GameEngine::enable_physics_debug_rendering(bool isEnabled)
 {
 	_debug_physics_rendering = isEnabled;
-}
-
-void GameEngine::set_font(Font* fontPtr)
-{
-	_d2d_ctx->set_font(fontPtr);
-}
-
-Font* GameEngine::get_font() const
-{
-	return _d2d_ctx->get_font();
-}
-
-void GameEngine::set_default_font()
-{
-	return _d2d_ctx->set_font(_default_font.get());
 }
 
 HINSTANCE GameEngine::get_instance() const
@@ -818,7 +807,7 @@ ImVec2 GameEngine::get_window_size() const
 
 ImVec2 GameEngine::get_viewport_size(int) const
 {
-	return { (float)_window_width, (float)_window_height };
+	return { (float)m_ViewportWidth, (float)m_ViewportHeight };
 }
 
 int GameEngine::get_width() const
@@ -836,41 +825,6 @@ bool GameEngine::get_sleep() const
 	return _should_sleep ? true : false;
 }
 
-ID3D11Device* GameEngine::GetD3DDevice() const
-{
-	return _d3d_device;
-}
-
-ID3D11DeviceContext* GameEngine::GetD3DDeviceContext() const
-{
-	return _d3d_device_ctx;
-}
-
-ID3D11RenderTargetView* GameEngine::GetD3DBackBufferView() const
-{
-	return _d3d_backbuffer_view;
-}
-
-ID2D1Factory* GameEngine::GetD2DFactory() const
-{
-	return _d2d_factory;
-}
-
-IWICImagingFactory* GameEngine::GetWICImagingFactory() const
-{
-	return _wic_factory;
-}
-
-ID2D1RenderTarget* GameEngine::GetHwndRenderTarget() const
-{
-	return _d2d_rt;
-}
-
-IDWriteFactory* GameEngine::GetDWriteFactory() const
-{
-	return _dwrite_factory;
-}
-
 float2 GameEngine::get_mouse_pos_in_window() const {
 	RECT rect;
 	if(GetWindowRect(get_window(), &rect)) {
@@ -884,7 +838,7 @@ float2 GameEngine::get_mouse_pos_in_viewport() const
 	return float2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y } - m_ViewportPos;
 }
 
-unique_ptr<AudioSystem> const& GameEngine::GetXAudio() const
+unique_ptr<XAudioSystem> const& GameEngine::get_audio_system() const
 {
 	return _xaudio_system;
 }
@@ -1004,6 +958,19 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 	usedClientRect.right = get_width();
 	usedClientRect.bottom = get_height();
 
+	if (ImGui::GetCurrentContext() != nullptr) {
+		bool bWantImGuiCapture = ImGui::GetIO().WantCaptureKeyboard ||
+								 ImGui::GetIO().WantCaptureMouse;
+
+		if (bWantImGuiCapture) {
+			extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+			if (LRESULT v = ImGui_ImplWin32_WndProcHandler(hWindow, msg, wParam, lParam); v != 0) {
+				return v;
+			}
+		}
+	}
+
+
 	// Route Windows messages to game engine member functions
 	switch (msg)
 	{
@@ -1041,6 +1008,8 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 
 	// Posted to the window with the keyboard focus when a nonsystem key is pressed. A nonsystem key is a key that is pressed when the ALT key is not pressed.
 	case WM_KEYDOWN: 
+		//LOG_INFO(Input, "Pressed: %d", wParam);
+		//_input_manager->handle_event(msg, wParam, lParam);
 		//m_InputPtr->KeyboardKeyPressed(wParam);
 		break;
 	case WM_KEYUP:
@@ -1051,14 +1020,6 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 		}
 		break;
 	}
-
-	// Handle IMGUI
-	extern IMGUI_IMPL_API LRESULT  ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-	if (LRESULT v = ImGui_ImplWin32_WndProcHandler(hWindow, msg, wParam, lParam); v != 0)
-	{
-		return v;
-	}
-
 
 	return DefWindowProc(hWindow, msg, wParam, lParam);
 }
@@ -1107,8 +1068,8 @@ void GameEngine::create_factories()
 
 				D3D11_INFO_QUEUE_FILTER f{};
 				f.DenyList.NumSeverities = 1;
-				D3D11_MESSAGE_SEVERITY severities[] = {
-					D3D11_MESSAGE_SEVERITY_WARNING
+				D3D11_MESSAGE_SEVERITY severities[1] = {
+					//D3D11_MESSAGE_SEVERITY_WARNING
 				};
 				f.DenyList.pSeverityList = severities;
 				info_queue->AddStorageFilterEntries(&f);
@@ -1116,31 +1077,38 @@ void GameEngine::create_factories()
 		}
 	}
 
+#if FEATURE_D2D
 	d2d_create_factory();
+#endif
+
 	WIC_create_factory();
 	write_create_factory();
 
 	_d3d_device_ctx->QueryInterface(IID_PPV_ARGS(&_d3d_user_defined_annotation));
 }
 
+#if FEATURE_D2D
 void GameEngine::d2d_create_factory()
 {
-	HRESULT hr;
-	// Create a Direct2D factory.
-	ID2D1Factory* localD2DFactoryPtr = nullptr;
-	if (!_d2d_factory)
-	{
-		D2D1_FACTORY_OPTIONS options;
-		options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
-		hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED,options, &localD2DFactoryPtr);
-		if (FAILED(hr))
+	if (_engine_settings.d2d_use) {
+		HRESULT hr;
+		// Create a Direct2D factory.
+		ID2D1Factory* localD2DFactoryPtr = nullptr;
+		if (!_d2d_factory)
 		{
-			FAILMSG("Create D2D Factory Failed");
-			exit(-1);
+			D2D1_FACTORY_OPTIONS options;
+			options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
+			hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED,options, &localD2DFactoryPtr);
+			if (FAILED(hr))
+			{
+				FAILMSG("Create D2D Factory Failed");
+				exit(-1);
+			}
+			_d2d_factory = localD2DFactoryPtr;
 		}
-		_d2d_factory = localD2DFactoryPtr;
 	}
 }
+#endif
 
 void GameEngine::WIC_create_factory()
 {
@@ -1188,11 +1156,14 @@ void GameEngine::d3d_init()
 	m_ViewportWidth = get_width();
 	m_ViewportHeight = get_height();
 	m_ViewportPos = { 0, 0 };
-	//set alias mode
-	_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
 
-	// Create a brush.
-	_d2d_rt->CreateSolidColorBrush((D2D1::ColorF) D2D1::ColorF::Black, &_color_brush);
+	if(_d2d_rt) {
+		//set alias mode
+		_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
+
+		// Create a brush.
+		_d2d_rt->CreateSolidColorBrush((D2D1::ColorF) D2D1::ColorF::Black, &_color_brush);
+	}
 
 	//Create a Font
 	_default_font = make_shared<Font>("Consolas", 12.0f);
@@ -1389,18 +1360,51 @@ void GameEngine::CallListeners()
 }
 
 
+// String helpers for hlsl types
+template <>
+struct fmt::formatter<float4x4> : formatter<string_view> {
+
+	constexpr auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) {
+		auto it = ctx.begin();
+		++it;
+		return it;
+	}
+
+	template <typename FormatContext>
+	constexpr auto format(hlslpp::float4x4 const& m, FormatContext& ctx) {
+		return fmt::format_to(ctx.out(),
+				"[{:.1f} {:.1f} {:.1f} {:.1f}, {:.1f} {:.1f} {:.1f} {:.1f}, {:.1f} {:.1f} {:.1f} {:.1f}, {:.1f} {:.1f} {:.1f} {:.1f}]",
+				m.f32_128_0[0],
+				m.f32_128_0[1],
+				m.f32_128_0[2],
+				m.f32_128_0[3],
+				m.f32_128_1[0],
+				m.f32_128_1[1],
+				m.f32_128_1[2],
+				m.f32_128_1[3],
+				m.f32_128_2[0],
+				m.f32_128_2[1],
+				m.f32_128_2[2],
+				m.f32_128_2[3],
+				m.f32_128_3[0],
+				m.f32_128_3[1],
+				m.f32_128_3[2],
+				m.f32_128_3[3]);
+	}
+};
+
 void GameEngine::render_view(RenderPass::Value pass) {
 
 	// Setup global constant buffer
-	std::shared_ptr<RenderWorldCamera> camera = _render_world->get_camera(0);
+	std::shared_ptr<RenderWorldCamera> camera = _render_world->get_view_camera();
 
 	ViewParams params{};
 	D3D11_TEXTURE2D_DESC desc;
 	_d3d_output_tex->GetDesc(&desc);
 
-	params.proj = camera->get_proj(m_ViewportWidth, m_ViewportHeight);
-
+	params.proj = camera->get_proj();
 	params.view = camera->get_view();
+
 	params.view_direction = camera->get_view_direction().xyz;
 	params.pass = pass;
 
@@ -1422,7 +1426,7 @@ void GameEngine::render_world(ViewParams const& params) {
 	// Setup some defaults. At the moment these are applied for each pass. However 
 	// ideally we would be able to have more detailed logic here to decided based on pass and mesh/material
 	{
-		DepthStencilState::Value depth_stencil_state = DepthStencilState::Equal;
+		DepthStencilState::Value depth_stencil_state = DepthStencilState::GreaterEqual;
 		if (params.pass == RenderPass::ZPrePass || params.pass == RenderPass::Shadow) {
 			depth_stencil_state = DepthStencilState::GreaterEqual;
 		}
@@ -1445,7 +1449,7 @@ void GameEngine::render_world(ViewParams const& params) {
 
 	global->proj = params.proj;
 	global->view = params.view;
-	global->inv_view = hlslpp::inverse(global->view);
+	global->inv_view = hlslpp::inverse(params.view);
 	global->view_direction = float4(params.view_direction.xyz,0.0f);
 
 	RenderWorld::LightCollection const& lights = _render_world->get_lights();
@@ -1507,6 +1511,9 @@ void GameEngine::render_world(ViewParams const& params) {
 			}
 
 			material->apply();
+			if(params.pass != RenderPass::Opaque) {
+				_d3d_device_ctx->PSSetShader(nullptr, nullptr, 0);
+			}
 
 			if(params.pass == RenderPass::Opaque) {
 				ID3D11ShaderResourceView* views[] ={_shadow_map_srv.Get()};
@@ -1527,6 +1534,7 @@ void GameEngine::render_world(ViewParams const& params) {
 
 
 void GameEngine::build_ui() {
+
 
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
@@ -1651,6 +1659,8 @@ void GameEngine::build_viewport() {
 			s_vp_size = current_size;
 			m_ViewportWidth = (u32)s_vp_size.x;
 			m_ViewportHeight = (u32)s_vp_size.y;
+
+
 		}
 
 		// Draw the actual scene image
@@ -1660,11 +1670,13 @@ void GameEngine::build_viewport() {
 
 		ImGui::Image(_d3d_non_msaa_output_srv, s_vp_size, ImVec2(0, 0), max_uv);
 
-		// Draw any gizmos
-		#if 0
 		ImGuizmo::SetDrawlist();
 		ImGuizmo::SetRect(m_ViewportPos.x, m_ViewportPos.y, float1(m_ViewportWidth), float1(m_ViewportHeight));
-		static ImGuiWindowFlags gizmoWindowFlags = 0;
+
+		get_overlay_manager()->render_viewport();
+
+		// Draw any gizmos
+		#if 0
 
 		constexpr f32 l = 0.f;
 		auto camera = _render_world->get_camera(0);

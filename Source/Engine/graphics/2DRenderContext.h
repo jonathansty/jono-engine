@@ -1,8 +1,7 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <d2d1.h>
+#if FEATURE_D2D
+
 
 struct ID2D1Factory;
 struct ID2D1RenderTarget;
@@ -206,3 +205,4 @@ public:
 };
 
 } // namespace graphics
+#endif

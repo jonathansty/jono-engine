@@ -1,4 +1,5 @@
 #include "engine.pch.h"
+#if FEATURE_D2D
 #include "Box2DDebugRenderer.h"
 
 #include "PhysicsActor.h"
@@ -115,3 +116,4 @@ void Box2DDebugRenderer::DrawPoint(const b2Vec2 &pos, float size, const b2Color 
 void Box2DDebugRenderer::set_draw_ctx(class graphics::D2DRenderContext *context) {
 	_context = context;
 }
+#endif

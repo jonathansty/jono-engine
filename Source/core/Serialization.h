@@ -2,9 +2,6 @@
 
 #include "PlatformIO.h"
 
-#include <fmt/core.h>
-#include <cassert>
-
 namespace serialization {
 
 // Writing binary

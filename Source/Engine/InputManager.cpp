@@ -43,8 +43,11 @@ void InputManager::Initialize()
 		m_pKeyboardState0 = new BYTE[256];
 		m_pKeyboardState1 = new BYTE[256];
 
-		GetKeyboardState(m_pKeyboardState0);
-		GetKeyboardState(m_pKeyboardState1);
+		if( !GetKeyboardState(m_pKeyboardState0) || 
+			!GetKeyboardState(m_pKeyboardState1)) 
+		{
+			LOG_ERROR(Input, "Failed to retrieve keyboard state.");
+		}
 	}
 }
 
@@ -69,7 +72,7 @@ bool InputManager::UpdateKeyboardStates()
 
 	m_KeyboardState0Active = !m_KeyboardState0Active;
 
-	return true;// getKeyboardResult > 0 ? true : false;
+	return getKeyboardResult;
 }
 
 void InputManager::Update()

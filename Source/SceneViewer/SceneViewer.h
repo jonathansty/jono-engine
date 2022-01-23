@@ -18,7 +18,10 @@ public:
 	virtual void initialize(GameSettings& gameSettings);
 	virtual void start() override;
 	virtual void end() override;
+
+	#if FEATURE_D2D
 	virtual void paint(graphics::D2DRenderContext& ctx) override;
+	#endif
 	virtual void tick(double deltaTime) override;
 	virtual void debug_ui() override;
 

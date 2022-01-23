@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-#include "Types.h"
+#include "Core.h"
 
 namespace IO {
 
@@ -52,10 +52,17 @@ struct IPlatformIO {
 
 	virtual IFileRef open(const char* path, Mode mode, bool binary = false) = 0;
 
+	virtual void close(IFileRef const& file) = 0;
+
+
 };
 using IPlatformIORef = std::shared_ptr<IPlatformIO>;
 
 
 IPlatformIORef create();
+
+void set(IPlatformIORef io);
+
+IPlatformIORef const& get();
 
 } // namespace IO

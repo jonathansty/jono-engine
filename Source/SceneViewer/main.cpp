@@ -16,9 +16,11 @@ int main(const int argcs, const char** argvs)
 		std::string game;
 		cli::get_string(cmd, "game", game);
 
+		#if FEATURE_D2D
 		if (game.compare("2DTest")) {
 			game_ptr = make_unique<GameTest2D>();
 		} 
+		#endif
 	}
 
 	// If no game was specified fallback to the sceneviewer.

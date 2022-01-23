@@ -1,4 +1,6 @@
 #include "engine.pch.h"
+
+#if FEATURE_D2D
 #include "2DRenderContext.h"
 
 #include "Font.h"
@@ -447,3 +449,4 @@ void D2DRenderContext::update_transforms() {
 }
 
 } // namespace graphics
+#endif

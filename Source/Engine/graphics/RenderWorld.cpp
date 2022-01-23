@@ -60,20 +60,22 @@ RenderWorldCamera::RenderWorldCamera()
 RenderWorldCamera::~RenderWorldCamera() {
 }
 
+void RenderWorldCamera::set_aspect(f32 aspect) {
+	_settings.aspect = aspect;
+	_dirty = true;
+}
+
 void RenderWorldCamera::update() const {
 	if (_dirty) {
 		auto t = float4x4::translation(_position);
 		auto r = float4x4(_rotation);
 
-		if(!_is_direct_controlled) {
-			_world = hlslpp::mul(r, t);
-			_view = hlslpp::inverse(_world);
+		_world = hlslpp::mul(r, t);
+		_view = hlslpp::inverse(_world);
 
-			if (_use_target){
-				_view = float4x4::look_at(_position, _target, float3(0.0f, 1.0f, 0.0));
-				_world = hlslpp::inverse(_view);
-				_use_target = false;
-			}
+		if (_use_target) {
+			_view = float4x4::look_at(_position, _target, float3(0.0f, 1.0f, 0.0));
+			_world = hlslpp::inverse(_view);
 		}
 
 		bool reverse_z = _settings.reverse_z;

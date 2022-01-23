@@ -46,12 +46,6 @@ public:
 	~RenderWorldCamera();
 
 	// Retrieve the projection 
-	float4x4 get_proj(u32 width, u32 height) const {
-		bool reverse_z = _settings.reverse_z;
-		f32 near_clip = reverse_z ? _settings.far_clip : _settings.near_clip;
-		f32 far_clip = reverse_z ? _settings.near_clip : _settings.far_clip;
-		return float4x4::perspective(hlslpp::projection(hlslpp::frustum::field_of_view_x(hlslpp::radians(float1(_settings.fov)), (f32)width / (f32)height, near_clip, far_clip), hlslpp::zclip::zero));
-	}
 	float4x4 const& get_proj() const {
 		update();
 		return _proj;
@@ -64,13 +58,8 @@ public:
 		return _view; 
 	}
 
-	float4x4 const& get_view(f32 w, f32 h) const {
-		update();
-		return _view;
-	}
-
-
 	float4x4 const& get_world() const {
+		update();
 		return _world;
 	}
 
@@ -93,6 +82,7 @@ public:
 		_settings = settings;
 		_dirty = true;
 	}
+	void set_aspect(f32 aspect);
 
 
 	void set_position(float3 pos) {
@@ -114,8 +104,8 @@ public:
 		_dirty = true;
 	}
 
-protected:
 	void update() const;
+protected:
 
 	mutable bool _dirty;
 	float3 _position;
@@ -153,12 +143,6 @@ public:
 	float3 get_colour() const { return _colour; }
 	bool get_casts_shadow() const { return _shadow_settings.casts_shadow; }
 
-	void set_direction(float3 direction) {
-		float3 target = _position + direction;
-		this->look_at(target);
-
-		this->update();
-	}
 	void set_colour(float3 colour) { _colour = colour; }
 	void set_casts_shadow(bool cast) { _shadow_settings.casts_shadow = true; }
 
@@ -203,6 +187,8 @@ class RenderWorld final {
 		std::shared_ptr<RenderWorldLight> create_light(RenderWorldLight::LightType type);
 
 		void remove_instance(std::shared_ptr<RenderWorldInstance> const& instance);
+
+		std::shared_ptr<RenderWorldCamera> get_view_camera() const { return _cameras[0]; }
 
 	private:
 		std::mutex _instance_cs;

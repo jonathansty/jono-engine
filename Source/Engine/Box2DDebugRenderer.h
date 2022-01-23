@@ -1,5 +1,6 @@
 #pragma once
 
+#if FEATURE_D2D
 namespace graphics {
 	class D2DRenderContext;
 }
@@ -42,3 +43,4 @@ private:
 	u32 m_Color;
 	float3x3 _mat_scale;
 };
+#endif
