@@ -51,6 +51,6 @@ void Logger::log(LogEntry const& entry) {
 
 	if (_file){
 		std::string txt = fmt::format("{}\n", msg);
-		_file->write((void*)txt.c_str(), txt.size() * sizeof(char));
+		_file->write((void*)txt.c_str(), u32(txt.size()) * sizeof(char));
 	}
 }

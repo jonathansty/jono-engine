@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Types.h"
 #include <string>
 
 template <typename T> class Identifier;
@@ -64,7 +65,7 @@ Identifier<T> Identifier<T>::create_guid() {
 #if defined(WIN64)
 	GUID g;
 	::CoCreateGuid(&g);
-	return Identifier64(helpers::GuidToString(g));
+	return Identifier<T>(helpers::GuidToString(g));
 #else
 	static_assert("Undefined");
 #endif

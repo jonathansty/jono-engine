@@ -40,6 +40,8 @@ namespace Graphics {
 	// Entry point for the graphics. Initializes default D3D11 objects for usage later
 	void init(ComPtr<ID3D11Device> device);
 
+	void deinit();
+
 
 	ComPtr<ID3D11Device> GetDevice();
 

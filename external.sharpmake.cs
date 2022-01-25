@@ -159,3 +159,23 @@ public class ImPlot : ExternalProject
 }
 
 
+[Generate]
+public class Rttr : ExternalProject
+{
+    public Rttr() : base()
+    {
+        Name = "rttr";
+        SourceRootPath = Path.Combine(ExternalDir, "rttr/src/rttr/");
+    }
+    override public void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        conf.Output = Configuration.OutputType.Lib;
+        conf.IncludePaths.Add(Path.Combine(ExternalDir, "rttr/src"));
+        conf.IncludePaths.Add(Path.Combine(ExternalDir, "rttr/build/src"));
+    }
+}
+
+
+

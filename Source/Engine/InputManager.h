@@ -21,47 +21,52 @@ public:
 	void Initialize();
 	// Not intended to be used by students
 	void Update();
-	// Not intended to be used by students
-	static void SetEnabled(bool enabled) { m_Enabled = enabled; }
-	// Not intended to be used by students
-	POINT GetMousePosition(bool previousFrame = false) const { return (previousFrame) ? m_OldMousePosition : m_CurrMousePosition; }
-	// Not intended to be used by students
-	POINT GetMouseMovement() const { return m_MouseMovement; }
-	// Not intended to be used by students
-	void CursorVisible(bool visible) { ShowCursor(visible); }
-	// Not intended to be used by students
-	bool is_key_down(int key, bool previousFrame = false) const;
-	// Not intended to be used by students
-	bool is_mouse_button_down(int button, bool previousFrame = false) const;
-	// Not intended to be used by students
-	bool is_key_pressed(int key, bool previousFrame = false) const;
-	// Not intended to be used by students
-	bool IsMouseButtonPressed(int button, bool previousFrame = false) const;
-	// Not intended to be used by students
-	bool IsKeyboardKeyReleased(int key, bool previousFrame = false) const;
-	// Not intended to be used by students
-	bool is_mouse_button_released(int button, bool previousFrame = false) const;
+
+	int2 get_mouse_position(bool previousFrame = false) const;
+
+	// Returns the mouse movement change between this frame and previous frame
+	int2 get_mouse_delta() const { return _mouse_delta; }
+
+	bool is_key_down(int key) const;
+	bool is_key_pressed(int key) const;
+	bool is_key_released(int key) const;
+
+	bool is_mouse_button_down(int button) const;
+	bool is_mouse_button_pressed(int button) const;
+	bool is_mouse_button_released(int button) const;
+
+	// #TODO: Remove this from the input manager
+	void set_cursor_visible(bool visible) { ShowCursor(visible); }
+
 
 
 private:
+	static constexpr u32 s_curr_frame = 0;
+	static constexpr u32 s_prev_frame = 1;
+	static constexpr u32 s_frame_count = 2;
 
-	static BYTE *m_pCurrKeyboardState, *m_pOldKeyboardState, *m_pKeyboardState0, *m_pKeyboardState1;
-	static bool m_KeyboardState0Active;
-	static POINT m_CurrMousePosition, m_OldMousePosition, m_MouseMovement;
+	bool handle_events(UINT msg, WPARAM wParam, LPARAM lParam);
 
-	static bool m_Enabled;
+	using KeyState = bool[2];
 
-	// Not intended to be used by students
-	bool UpdateKeyboardStates();
-	// Not intended to be used by students
-	bool IsKeyboardKeyDown_unsafe(int key, bool previousFrame = false) const;
-	// Not intended to be used by students
-	bool IsMouseButtonDown_unsafe(int button, bool previousFrame = false) const;
+	using KeyHandler = std::function<void(WPARAM, LPARAM)>;
+	void register_key_handler(UINT msg, KeyHandler handler);
+
+	using MouseHandler = std::function<void(WPARAM, LPARAM)>;
+	void register_mouse_handler(UINT msg, MouseHandler handler);
+
+	std::array<int2,2> _mouse_pos;
+	std::array<f32, 2> _mouse_wheel;
+	std::array<KeyState, 5> _mouse_buttons;
+
+	std::array<KeyHandler, WM_KEYLAST - WM_KEYFIRST> _key_handlers;
+	std::array<MouseHandler, WM_MOUSELAST - WM_MOUSEFIRST> _mouse_handlers;
+
+	std::unordered_map<u32, KeyState> _keys;
+	std::unordered_map<int, u32> _vk_to_scan;
+	int2 _mouse_delta;
+
+	void update_keyboard();
 
 	friend class GameEngine;
-
-	// Game Engine captures windows messages and sends them to this manager
-	//void KeyboardKeyPressed(BYTE key);
-	// Game Engine captures windows messages and sends them to this manager
-	//void KeyboardKeyReleased(BYTE key);
 };

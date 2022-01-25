@@ -58,10 +58,7 @@ public abstract class JonaBaseProject : Project
         conf.PrecompHeader = "[project.Name].pch.h";
         conf.PrecompSource = "[project.Name].pch.cpp";
 
-        //conf.Defines.Add("WIN32_LEAN_AND_MEAN");
-        //conf.Defines.Add("NOMINMAX");
-
-        conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
+        conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP20);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
 
         conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);

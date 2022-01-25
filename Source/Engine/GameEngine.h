@@ -204,7 +204,7 @@ public:
 	shared_ptr<OverlayManager> const &get_overlay_manager() const;
 
 	// Task scheduler used during resource loading
-	static enki::TaskScheduler s_TaskScheduler;
+	static enki::TaskScheduler* s_TaskScheduler;
 	static std::thread::id s_main_thread;
 
 	// Enables/disables physics simulation stepping.

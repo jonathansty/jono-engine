@@ -12,7 +12,8 @@ enum class LogSeverity {
 	Verbose,
 	Info,
 	Warning,
-	Error
+	Error,
+	Fatal
 };
 
 enum class LogCategory {
@@ -57,26 +58,14 @@ inline const char* to_string(LogSeverity severity) {
 			return "Warning";
 		case LogSeverity::Error:
 			return "Error";
+		case LogSeverity::Fatal:
+			return "Fatal";
+
 	}
 }
 
 }
 
-// Namespace that contains helper functions related to logging
-namespace Logging {
-template <typename S, typename... Args>
-void log(const char* file, int line, LogCategory category, LogSeverity severity, const S& format, Args&&... args) {
-	std::string msg = fmt::vformat(format, fmt::make_args_checked<Args...>(format, args...));
-	LogEntry entry{};
-	entry._severity = severity;
-	entry._message = msg;
-	entry._file = file;
-	entry._line = line;
-	entry._category = category;
-	Logger::instance()->log(entry);
-}
-
-} // namespace Logging
 
 
 
@@ -136,9 +125,32 @@ private:
 	IO::IFileRef _file;
 };
 
+// Namespace that contains helper functions related to logging
+namespace Logging {
+template <typename S, typename... Args>
+void log(const char* file, int line, LogCategory category, LogSeverity severity, const S& format, Args&&... args) {
+	std::string msg = fmt::vformat(format, fmt::make_args_checked<Args...>(format, args...));
+	LogEntry entry = LogEntry();
+	entry._severity = severity;
+	entry._message = msg;
+	entry._file = file;
+	entry._line = line;
+	entry._category = category;
+	Logger::instance()->log(entry);
+}
+
+} // namespace Logging
+
+
 // Expose some logging macros 
 #define LOG(category, severity, message, ...) Logging::log(__FILE__, __LINE__, category, severity, message, __VA_ARGS__)
+
+#define LOG_FATAL(category, message, ...)                                 \
+	LOG(LogCategory::category, LogSeverity::Fatal, message, __VA_ARGS__); \
+	assert("Fatal error occurred! See log for more details.")
+
 #define LOG_ERROR(category, message, ...)   LOG(LogCategory::category, LogSeverity::Error, message, __VA_ARGS__)
 #define LOG_INFO(category, message, ...)    LOG(LogCategory::category, LogSeverity::Info, message, __VA_ARGS__)
 #define LOG_VERBOSE(category, message, ...) LOG(LogCategory::category, LogSeverity::Verbose, message, __VA_ARGS__)
 #define LOG_WARNING(category, message, ...) LOG(LogCategory::category, LogSeverity::Warning, message, __VA_ARGS__)
+

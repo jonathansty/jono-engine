@@ -45,6 +45,7 @@ public:
 
 		Iterator& operator++() {
 			_idx = (_idx + 1) % _Size;
+			return *this;
 		}
 
 		Iterator operator++(int) {

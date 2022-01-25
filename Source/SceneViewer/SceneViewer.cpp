@@ -333,9 +333,8 @@ void SceneViewer::debug_ui()
 
 static const char* s_world_path = "Scenes/test_world.scene";
 bool SceneViewer::load_world(const char* path) {
-	auto io = GameEngine::instance()->io();
+	auto io = IO::get();
 	if (io->exists(path)) {
-		auto io = GameEngine::instance()->io();
 		std::shared_ptr<IO::IFile> file = io->open(path, IO::Mode::Read, true);
 		assert(file);
 
@@ -356,7 +355,7 @@ bool SceneViewer::load_world(const char* path) {
 			Identifier64 parent_id = serialization::read<Identifier64>(file);
 
 			framework::EntityHandle ent = _world->create_entity(id);
-			rttr::instance obj = ent.get();
+			rttr::instance obj = rttr::instance(ent.get());
 
 			serialization::serialize_instance<IO::Mode::Read>(file, obj);
 

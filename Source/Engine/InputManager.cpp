@@ -3,210 +3,202 @@
 #include "GameEngine.h"
 #include "InputManager.h"
 
+#define VERBOSE_LOGGING 1
+
 //------------------------------------------------------------------------------
 // InputManager class definitions. Manages all input
 //------------------------------------------------------------------------------
 
-// Static initializaton
-PBYTE InputManager::m_pCurrKeyboardState = nullptr;
-PBYTE InputManager::m_pOldKeyboardState = nullptr;
-PBYTE InputManager::m_pKeyboardState0 = nullptr;
-PBYTE InputManager::m_pKeyboardState1 = nullptr;
-bool InputManager::m_KeyboardState0Active = true;
-POINT InputManager::m_OldMousePosition = POINT();
-POINT InputManager::m_CurrMousePosition = POINT();
-POINT InputManager::m_MouseMovement = POINT();
-bool InputManager::m_Enabled = true;
+bool is_mouse_event(UINT msg) {
+	return msg >= WM_MOUSEFIRST && msg < WM_MOUSELAST;
+
+}
+
+bool is_key_event(UINT msg) {
+	return msg >= WM_KEYFIRST && msg < WM_KEYLAST;
+}
+
+bool InputManager::handle_events(UINT msg, WPARAM wParam, LPARAM lParam) {
+
+	if(is_key_event(msg)) {
+		if (_key_handlers[msg - WM_KEYFIRST])
+			_key_handlers[msg - WM_KEYFIRST](wParam, lParam);
+
+		return false;
+	} else if (is_mouse_event(msg)) {
+		if (_mouse_handlers[msg - WM_MOUSEFIRST])
+			_mouse_handlers[msg - WM_MOUSEFIRST](wParam, lParam);
+
+		return false;
+	}
+
+	return false;
+}
+
+void InputManager::register_key_handler(UINT msg, KeyHandler handler) {
+	_key_handlers[msg - WM_KEYFIRST] = handler;
+}
+
+void InputManager::register_mouse_handler(UINT msg, MouseHandler handler) {
+	_mouse_handlers[msg - WM_MOUSEFIRST] = handler;
+}
 
 InputManager::InputManager(void)
+: _mouse_pos()
+, _mouse_delta()
+, _keys()
 {
 }
 
 InputManager::~InputManager(void)
 {
-	if (m_pKeyboardState0 != nullptr)
-	{
-		delete[] m_pKeyboardState0;
-		delete[] m_pKeyboardState1;
-
-		m_pKeyboardState0 = nullptr;
-		m_pKeyboardState1 = nullptr;
-		m_pCurrKeyboardState = nullptr;
-		m_pOldKeyboardState = nullptr;
-	}
 }
 
 void InputManager::Initialize()
 {
-	if (m_pKeyboardState0 == nullptr)
-	{
-		m_pKeyboardState0 = new BYTE[256];
-		m_pKeyboardState1 = new BYTE[256];
+	_keys.reserve(255);
 
-		if( !GetKeyboardState(m_pKeyboardState0) || 
-			!GetKeyboardState(m_pKeyboardState1)) 
-		{
-			LOG_ERROR(Input, "Failed to retrieve keyboard state.");
+	auto handle_base_keys = [this](WPARAM wParam, LPARAM lParam) {
+		WORD vk_code = LOWORD(wParam); // virtual-key code
+		BYTE scan_code = LOBYTE(HIWORD(lParam)); // scan code
+		BOOL scan_code_e0 = (HIWORD(lParam) & KF_EXTENDED) == KF_EXTENDED; // extended-key flag, 1 if scancode has 0xE0 prefix
+		BOOL up_flag = (HIWORD(lParam) & KF_UP) == KF_UP; // transition-state flag, 1 on keyup
+		BOOL repeat_flag = (HIWORD(lParam) & KF_REPEAT) == KF_REPEAT; // previous key-state flag, 1 on autorepeat
+		WORD repeat_count = LOWORD(lParam); // repeat count, > 0 if several keydown messages was combined into one message
+		BOOL alt_down_flag = (HIWORD(lParam) & KF_ALTDOWN) == KF_ALTDOWN; // ALT key was pressed
+		BOOL dlg_mode_flag = (HIWORD(lParam) & KF_DLGMODE) == KF_DLGMODE; // dialog box is active
+		BOOL menu_mode_flag = (HIWORD(lParam) & KF_MENUMODE) == KF_MENUMODE; // menu is active
+		#if VERBOSE_LOGGING
+		LOG_INFO(Input, "VK: {} | Scan: {} | repeat ({}): {} | up: {}", vk_code, scan_code, repeat_flag ? "Y" : "N", repeat_count, up_flag);
+		#endif
+		_keys[scan_code][s_curr_frame] = !up_flag;
+		_vk_to_scan[vk_code] = scan_code;
+	};
+	register_key_handler(WM_SYSKEYUP,    handle_base_keys);
+	register_key_handler(WM_SYSKEYDOWN,  handle_base_keys);
+	register_key_handler(WM_KEYUP,       handle_base_keys);
+	register_key_handler(WM_KEYDOWN,     handle_base_keys);
+
+	auto handle_mbuttons = [this](WPARAM wParam, LPARAM lParam) {
+		bool ctrl = wParam & MK_CONTROL;
+		bool shift = wParam & MK_SHIFT;
+		bool lbutton = wParam & MK_LBUTTON;
+		_mouse_buttons[0][s_curr_frame] = lbutton;
+
+		bool mbutton = wParam & MK_MBUTTON;
+		_mouse_buttons[1][s_curr_frame] = mbutton;
+
+		bool rbutton = wParam & MK_RBUTTON;
+		_mouse_buttons[2][s_curr_frame] = rbutton;
+
+		bool xbutton1 = wParam & MK_XBUTTON1;
+		_mouse_buttons[3][s_curr_frame] = xbutton1;
+
+		bool xbutton2 = wParam & MK_XBUTTON2;
+		_mouse_buttons[4][s_curr_frame] = xbutton2;
+
+		#if VERBOSE_LOGGING
+		LOG_INFO(Input, "B0: {} | B1: {} | B2: {} | B3: {} | B4: {}", 
+			_mouse_buttons[0][s_curr_frame],
+			_mouse_buttons[1][s_curr_frame],
+			_mouse_buttons[2][s_curr_frame],
+			_mouse_buttons[3][s_curr_frame],
+			_mouse_buttons[4][s_curr_frame]
+		);
+		#endif
+
+	};
+	register_mouse_handler(WM_MBUTTONDOWN, handle_mbuttons);
+	register_mouse_handler(WM_MBUTTONUP, handle_mbuttons);
+	register_mouse_handler(WM_LBUTTONDOWN, handle_mbuttons);
+	register_mouse_handler(WM_LBUTTONUP, handle_mbuttons);
+	register_mouse_handler(WM_RBUTTONDOWN, handle_mbuttons);
+	register_mouse_handler(WM_RBUTTONUP, handle_mbuttons);
+	register_mouse_handler(WM_XBUTTONDOWN, handle_mbuttons);
+	register_mouse_handler(WM_XBUTTONUP, handle_mbuttons);
+
+	register_mouse_handler(WM_MOUSEWHEEL, [this](WPARAM wParam, LPARAM lParam) {
+		f32 delta = GET_WHEEL_DELTA_WPARAM(wParam) / (f32)WHEEL_DELTA;
+		_mouse_wheel[s_curr_frame] = delta;
+		#if VERBOSE_LOGGING		
+		LOG_INFO(Input, "Wheel: {}", delta);
+		#endif
+
+	});
+}
+
+void InputManager::Update() {
+	for (std::pair<const u32, bool[2]>& it : _keys) {
+		it.second[s_prev_frame] = it.second[s_curr_frame];
+	}
+	
+	for (auto& button : _mouse_buttons) {
+		button[s_prev_frame] = button[s_curr_frame];
+	}
+
+	_mouse_wheel[s_prev_frame] = _mouse_wheel[s_curr_frame];
+
+	// Update the previous mouse position
+	_mouse_pos[s_prev_frame] = _mouse_pos[s_curr_frame];
+
+	// Update the current mouse position
+	POINT mouse_pos = {};
+	GetCursorPos(&mouse_pos);
+	_mouse_pos = { mouse_pos.x, mouse_pos.y };
+
+	// Calculate the delta
+	_mouse_delta = _mouse_pos[s_curr_frame] - _mouse_pos[s_prev_frame];
+}
+
+int2 InputManager::get_mouse_position(bool previousFrame) const {
+	return _mouse_pos[previousFrame ? 1 : 0];
+}
+
+bool InputManager::is_key_down(int key) const
+{
+	if (auto scan_code = _vk_to_scan.find(key); scan_code != _vk_to_scan.end()) {
+		if (auto it = _keys.find(scan_code->second); it != _keys.end()) {
+			return it->second[s_curr_frame];
 		}
 	}
-}
-
-bool InputManager::UpdateKeyboardStates()
-{
-	//Get Current KeyboardState and set Old KeyboardState
-	BOOL getKeyboardResult;
-	if (m_KeyboardState0Active)
-	{
-		// using windows messages
-		getKeyboardResult = GetKeyboardState(m_pKeyboardState1);
-		m_pOldKeyboardState = m_pKeyboardState0;
-		m_pCurrKeyboardState = m_pKeyboardState1;
-	}
-	else
-	{
-		// using windows messages
-		getKeyboardResult = GetKeyboardState(m_pKeyboardState0);
-		m_pOldKeyboardState = m_pKeyboardState1;
-		m_pCurrKeyboardState = m_pKeyboardState0;
-	}
-
-	m_KeyboardState0Active = !m_KeyboardState0Active;
-
-	return getKeyboardResult;
-}
-
-void InputManager::Update()
-{
-	if (!m_Enabled)
-		return;
-
-	UpdateKeyboardStates();
-
-	//Mouse Position
-	m_OldMousePosition = m_CurrMousePosition;
-
-	GetCursorPos(&m_CurrMousePosition);
-
-	m_MouseMovement.x = m_CurrMousePosition.x - m_OldMousePosition.x;
-	m_MouseMovement.y = m_CurrMousePosition.y - m_OldMousePosition.y;
-}
-
-bool InputManager::is_key_down(int key, bool previousFrame) const
-{
-	if (!m_pCurrKeyboardState || !m_pOldKeyboardState)
-		return false;
-
-	if (key > 0x07 && key <= 0xFE)
-		return IsKeyboardKeyDown_unsafe(key, previousFrame);
 
 	return false;
 }
 
-bool InputManager::is_mouse_button_down(int button, bool previousFrame) const
+bool InputManager::is_mouse_button_down(int button) const
 {
-	if (button > 0x00 && button <= 0x06)
-		return IsMouseButtonDown_unsafe(button, previousFrame);
-
-	return false;
+	return _mouse_buttons[button][s_curr_frame];
 }
 
-bool InputManager::is_key_pressed(int key, bool previousFrame) const
+bool InputManager::is_key_pressed(int key) const
 {
-	if (!m_pCurrKeyboardState || !m_pOldKeyboardState)
-		return false;
-
-	if (key > 0x07 && key <= 0xFE)
-	{
-		//previous frame not pressed, current frame pressed
-		if (!IsKeyboardKeyDown_unsafe(key, true) && IsKeyboardKeyDown_unsafe(key))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool InputManager::IsMouseButtonPressed(int button, bool previousFrame) const
-{
-	if (button > 0x00 && button <= 0x06)
-	{
-		//previous frame not pressed, current frame pressed
-		if (!IsMouseButtonDown_unsafe(button, true) && IsMouseButtonDown_unsafe(button))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool InputManager::IsKeyboardKeyReleased(int key, bool previousFrame) const
-{
-	if (!m_pCurrKeyboardState || !m_pOldKeyboardState)
-		return false;
-
-	if (key > 0x07 && key <= 0xFE)
-	{
-		//previous frame pressed, current frame not pressed
-		if (IsKeyboardKeyDown_unsafe(key, true) && !IsKeyboardKeyDown_unsafe(key))
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
-bool InputManager::is_mouse_button_released(int button, bool previousFrame) const
-{
-	if (button > 0x00 && button <= 0x06)
-	{
-		//previous frame pressed, current frame not pressed
-		if (IsMouseButtonDown_unsafe(button, true) && !IsMouseButtonDown_unsafe(button))
-		{
-			return true;
+	if (auto scan_code = _vk_to_scan.find(key); scan_code != _vk_to_scan.end()) {
+		if (auto it = _keys.find(scan_code->second); it != _keys.end()) {
+			return it->second[s_curr_frame] && !it->second[s_prev_frame];
 		}
 	}
 	return false;
 }
 
-//NO RANGE CHECKS
-bool InputManager::IsKeyboardKeyDown_unsafe(int key, bool previousFrame) const
+bool InputManager::is_mouse_button_pressed(int button) const
 {
-	if (previousFrame)
-		return (m_pOldKeyboardState[key] & 0xF0) != 0;
-	else
-		return (m_pCurrKeyboardState[key] & 0xF0) != 0;
+	KeyState const& button_state = _mouse_buttons[button];
+	return button_state[s_curr_frame] && !button_state[s_prev_frame];
 }
 
-//NO RANGE CHECKS
-bool InputManager::IsMouseButtonDown_unsafe(int button, bool previousFrame) const
+bool InputManager::is_key_released(int key) const
 {
-	if (previousFrame)
-		return (m_pOldKeyboardState[button] & 0xF0) != 0;
-	else
-		return (m_pCurrKeyboardState[button] & 0xF0) != 0;
+	if (auto scan_code = _vk_to_scan.find(key); scan_code != _vk_to_scan.end()) {
+		if (auto it = _keys.find(scan_code->second); it != _keys.end()) {
+			return !it->second[s_curr_frame] && it->second[s_prev_frame];
+		}
+	}
+
+	return false;
 }
 
-//void InputManager::KeyboardKeyPressed(BYTE key)
-//{
-//	if (m_KeyboardState0Active)
-//	{
-//		m_pKeyboardState1[key] |= 0xF0;
-//	}
-//	else
-//	{
-//		m_pKeyboardState0[key] |= 0xF0;
-//	}
-//}
-//
-//void InputManager::KeyboardKeyReleased(BYTE key)
-//{
-//	if (m_KeyboardState0Active)
-//	{
-//		m_pKeyboardState1[key] = 0;
-//	}
-//	else
-//	{
-//		m_pKeyboardState0[key] |= 0;
-//	}
-//}
-
+bool InputManager::is_mouse_button_released(int button) const
+{
+	KeyState const& button_state = _mouse_buttons[button];
+	return !button_state[s_curr_frame] && button_state[s_prev_frame];
+}
