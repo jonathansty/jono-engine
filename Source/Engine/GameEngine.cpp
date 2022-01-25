@@ -283,6 +283,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_running = true;
 	while (_running) {
 
+
 		// Process all window messages
 		MSG msg{};
 		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
@@ -310,9 +311,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				t.Start();
 				while (lag >= _physics_timestep)
 				{
-					// Check the state of keyboard and mouse
-					_input_manager->Update();
-
 					// Call the Game Tick method
 					_game->tick(_physics_timestep);
 
@@ -326,6 +324,9 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 					// Step generates contact lists, pass to Listeners and clear the vector
 					CallListeners();
 					lag -= _physics_timestep;
+
+					// Input manager update takes care of swapping the state
+					_input_manager->Update();
 				}
 				t.Stop();
 				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
@@ -834,14 +835,14 @@ bool GameEngine::get_sleep() const
 float2 GameEngine::get_mouse_pos_in_window() const {
 	RECT rect;
 	if(GetWindowRect(get_window(), &rect)) {
-		return float2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y } + float2(rect.left, rect.top);
+		return float2{ (float)_input_manager->get_mouse_position().x, (float)_input_manager->get_mouse_position().y } + float2(rect.left, rect.top);
 	}
 	return {};
 }
 
 float2 GameEngine::get_mouse_pos_in_viewport() const
 {
-	return float2{ (float)_input_manager->GetMousePosition().x, (float)_input_manager->GetMousePosition().y } - m_ViewportPos;
+	return float2{ (float)_input_manager->get_mouse_position().x, (float)_input_manager->get_mouse_position().y } - m_ViewportPos;
 }
 
 unique_ptr<XAudioSystem> const& GameEngine::get_audio_system() const
@@ -933,7 +934,7 @@ bool GameEngine::is_key_pressed(int key) const
 
 bool GameEngine::is_key_released(int key) const
 {
-	return _input_manager->IsKeyboardKeyReleased(key);
+	return _input_manager->is_key_released(key);
 }
 
 bool GameEngine::is_mouse_button_down(int button) const
@@ -943,7 +944,7 @@ bool GameEngine::is_mouse_button_down(int button) const
 
 bool GameEngine::is_mouse_button_pressed(int button) const
 {
-	return _input_manager->IsMouseButtonPressed(button);
+	return _input_manager->is_mouse_button_pressed(button);
 }
 
 bool GameEngine::is_mouse_button_released(int button) const
@@ -1013,19 +1014,20 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 
 
 	// Posted to the window with the keyboard focus when a nonsystem key is pressed. A nonsystem key is a key that is pressed when the ALT key is not pressed.
+	case WM_SYSKEYDOWN:
+	case WM_SYSKEYUP:
 	case WM_KEYDOWN: 
-		//LOG_INFO(Input, "Pressed: %d", wParam);
-		//_input_manager->handle_event(msg, wParam, lParam);
-		//m_InputPtr->KeyboardKeyPressed(wParam);
-		break;
 	case WM_KEYUP:
-		//m_InputPtr->KeyboardKeyReleased(wParam);
-		if (wParam == VK_F9)
-		{
+		if (wParam == VK_F9) {
 			_overlay_manager->set_visible(!_overlay_manager->get_visible());
 		}
 		break;
 	}
+
+	bool handled = false;
+	handled |= _input_manager->handle_events(msg, wParam, lParam);
+	if (handled)
+		return 0;
 
 	return DefWindowProc(hWindow, msg, wParam, lParam);
 }
