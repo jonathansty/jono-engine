@@ -11,6 +11,9 @@ public:
 			: _scene_path(path)
 			, _timer(0.0f)
 			, _light_tick(0.0f)
+			, _zoom(50.0f)
+		, _up_timer(0.0f)
+		,_center()
 	{}
 	virtual ~SceneViewer() {}
 
@@ -44,7 +47,10 @@ private:
 
 	framework::EntityDebugOverlay* _overlay;
 
+	float3 _center;
+	float _zoom;
 	float _timer;
+	float _up_timer;
 	float _light_tick;
 };
 

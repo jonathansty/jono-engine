@@ -11,6 +11,7 @@
 #include "Overlays.h"
 #include "Engine/Graphics/Graphics.h"
 #include "Engine/Core/Material.h"
+#include "InputManager.h"
 
 #include "Serialization.h"
 
@@ -246,32 +247,61 @@ void SceneViewer::paint(graphics::D2DRenderContext& ctx)
 
 void SceneViewer::tick(double deltaTime)
 {
-	//_timer += (float)deltaTime;
 	if (GameEngine::instance()->is_key_pressed(VK_RIGHT)) {
 		_timer -= 0.5f;
-		LOG_VERBOSE(Game, "Advancing timer with -0.5f ({})", _timer);
 	}
 	if (GameEngine::instance()->is_key_pressed(VK_LEFT)) {
 		_timer += 0.5f;
-		LOG_VERBOSE(Game,"Advancing timer with 0.5f ({})", _timer);
 	}
 
 	if (GameEngine::instance()->is_key_pressed(VK_UP)) {
 		_light_tick += 0.5f;
-		LOG_VERBOSE(Game,"Moving light tick with 0.5f ({})", _light_tick);
 	}
 	if (GameEngine::instance()->is_key_pressed(VK_DOWN)) {
 		_light_tick -= 0.5f;
-		LOG_VERBOSE(Game,"Moving light tick with -0.5f ({})", _light_tick);
 	}
 
+	auto& input_manager = GameEngine::instance()->get_input();
+	f32 scroll_delta = input_manager->get_scroll_delta();
+	f32 zoom_factor = _zoom * 0.05f;
+	if(scroll_delta != 0) {
+		_zoom -= scroll_delta * (zoom_factor) * 100.0f * deltaTime;
+	}
 
+	// Rotate camera
+	int2 mouse_delta = input_manager->get_mouse_delta();
+	if(input_manager->is_mouse_button_down(0)) {
+		_timer -= (f32)mouse_delta.x *deltaTime * 0.5;
+		_up_timer += (f32)mouse_delta.y * deltaTime * 0.5;
+	}
+
+	// rotate light
+	if (input_manager->is_mouse_button_down(2)) {
+		_light_tick -= (f32)mouse_delta.x *deltaTime * 0.5;
+	}
+
+	// pan
 	float3 pos = _camera->get_position();
-	float radius = 50.0f;
-	_camera->set_position(float3{ radius * sin( _timer), pos.y, radius * cos(_timer) });
-	_camera->look_at(float3{ 0.0f, 0.0f, 0.0f });
 
-	_light->set_position(float3{ radius * sin(_light_tick), pos.y, radius * cos(_light_tick) });
+	float3 localPan = float3(0.0f, 0.0f, 0.0f);
+	if(input_manager->is_mouse_button_down(1)) {
+		float4x4 view = _camera->get_view();
+
+		float4 right = hlslpp::mul(view, float4(1.0, 0.0, 0.0,0.0)) * -(f32)mouse_delta.x * deltaTime;
+		float4 up = hlslpp::mul(view, float4(0.0, 1.0, 0.0,0.0)) * (f32)mouse_delta.y * deltaTime;
+
+		localPan = (right + up).xyz * zoom_factor;
+	}
+	_center += localPan;
+
+
+	float radius = 50.0f;
+
+	float3 newUnitPos = float3{ cos(_timer) * sin(_up_timer), cos(_up_timer), sin(_timer) * sin(_up_timer) };
+	_camera->set_position(_center + _zoom*newUnitPos);
+	_camera->look_at(_center);
+
+	_light->set_position(float3{ radius * sin(_light_tick), 20.0f, radius * cos(_light_tick) });
 	_light->look_at(float3{ 0.0f, 0.0f, 0.0f });
 
 	_world->update((float)deltaTime);
