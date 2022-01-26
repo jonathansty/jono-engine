@@ -133,6 +133,8 @@ public:
 
 	// Input methods
 
+	unique_ptr<InputManager> const& get_input() const { return _input_manager; };
+
 	//! Returns true when button is down and was down the previous GG
 	//! Example values for key are: VK_LEFT, 'A'. ONLY CAPITALS.
 	bool is_key_down(int key) const;

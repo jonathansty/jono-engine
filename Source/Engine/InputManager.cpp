@@ -47,6 +47,8 @@ InputManager::InputManager(void)
 : _mouse_pos()
 , _mouse_delta()
 , _keys()
+, _mouse_wheel(0.0f)
+, _mouse_buttons()
 {
 }
 
@@ -119,7 +121,7 @@ void InputManager::Initialize()
 
 	register_mouse_handler(WM_MOUSEWHEEL, [this](WPARAM wParam, LPARAM lParam) {
 		f32 delta = GET_WHEEL_DELTA_WPARAM(wParam) / (f32)WHEEL_DELTA;
-		_mouse_wheel[s_curr_frame] = delta;
+		_mouse_wheel = delta;
 		#if VERBOSE_LOGGING		
 		LOG_INFO(Input, "Wheel: {}", delta);
 		#endif
@@ -136,7 +138,6 @@ void InputManager::Update() {
 		button[s_prev_frame] = button[s_curr_frame];
 	}
 
-	_mouse_wheel[s_prev_frame] = _mouse_wheel[s_curr_frame];
 
 	// Update the previous mouse position
 	_mouse_pos[s_prev_frame] = _mouse_pos[s_curr_frame];
@@ -144,10 +145,11 @@ void InputManager::Update() {
 	// Update the current mouse position
 	POINT mouse_pos = {};
 	GetCursorPos(&mouse_pos);
-	_mouse_pos = { mouse_pos.x, mouse_pos.y };
+	_mouse_pos[s_curr_frame] = { mouse_pos.x, mouse_pos.y };
+	_mouse_delta = _mouse_pos[s_curr_frame] - _mouse_pos[s_prev_frame];
 
 	// Calculate the delta
-	_mouse_delta = _mouse_pos[s_curr_frame] - _mouse_pos[s_prev_frame];
+	_mouse_wheel = 0;
 }
 
 int2 InputManager::get_mouse_position(bool previousFrame) const {

@@ -334,7 +334,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 			if (_recreate_swapchain)
 			{
-				fmt::printf("Recreating swapchain. New size: %dx%d\n", (uint32_t)_window_width, (uint32_t)_window_height);
+				LOG_VERBOSE(Graphics,"Recreating swapchain. New size: %dx%d\n", (uint32_t)_window_width, (uint32_t)_window_height);
 
 
 				this->resize_swapchain(_window_width, _window_height);
@@ -760,12 +760,6 @@ void GameEngine::quit_game()
 	this->_running = false;
 }
 
-
-void GameEngine::print_string(const string& textRef)
-{
-	fmt::print("{}", textRef);
-	::OutputDebugStringA(textRef.c_str());
-}
 
 void GameEngine::enable_aa(bool isEnabled)
 {

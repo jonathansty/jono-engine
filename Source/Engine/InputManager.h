@@ -27,6 +27,8 @@ public:
 	// Returns the mouse movement change between this frame and previous frame
 	int2 get_mouse_delta() const { return _mouse_delta; }
 
+	f32 get_scroll_delta() const { return _mouse_wheel; }
+
 	bool is_key_down(int key) const;
 	bool is_key_pressed(int key) const;
 	bool is_key_released(int key) const;
@@ -37,8 +39,6 @@ public:
 
 	// #TODO: Remove this from the input manager
 	void set_cursor_visible(bool visible) { ShowCursor(visible); }
-
-
 
 private:
 	static constexpr u32 s_curr_frame = 0;
@@ -56,7 +56,8 @@ private:
 	void register_mouse_handler(UINT msg, MouseHandler handler);
 
 	std::array<int2,2> _mouse_pos;
-	std::array<f32, 2> _mouse_wheel;
+	f32 _mouse_wheel;
+
 	std::array<KeyState, 5> _mouse_buttons;
 
 	std::array<KeyHandler, WM_KEYLAST - WM_KEYFIRST> _key_handlers;

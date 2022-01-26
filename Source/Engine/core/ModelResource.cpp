@@ -39,7 +39,7 @@ void ModelResource::load()
 	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded | aiProcess_CalcTangentSpace);
 	if (!scene)
 	{
-		GameEngine::instance()->print_string(importer.GetErrorString());
+		LOG_ERROR(IO, importer.GetErrorString());
 		return;
 	}
 
