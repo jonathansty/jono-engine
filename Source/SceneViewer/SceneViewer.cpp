@@ -247,56 +247,70 @@ void SceneViewer::paint(graphics::D2DRenderContext& ctx)
 
 void SceneViewer::tick(double deltaTime)
 {
-	if (GameEngine::instance()->is_key_pressed(VK_RIGHT)) {
+	f32 f32_dt = (f32)deltaTime;
+	auto& input_manager = GameEngine::instance()->get_input();
+	if (input_manager->is_key_pressed(KeyCode::Right)) {
 		_timer -= 0.5f;
 	}
-	if (GameEngine::instance()->is_key_pressed(VK_LEFT)) {
+	if (input_manager->is_key_pressed(KeyCode::Left)) {
 		_timer += 0.5f;
 	}
 
-	if (GameEngine::instance()->is_key_pressed(VK_UP)) {
+	if (input_manager->is_key_pressed(KeyCode::Up)) {
 		_light_tick += 0.5f;
 	}
-	if (GameEngine::instance()->is_key_pressed(VK_DOWN)) {
+	if (input_manager->is_key_pressed(KeyCode::Down)) {
 		_light_tick -= 0.5f;
 	}
 
-	auto& input_manager = GameEngine::instance()->get_input();
-	f32 scroll_delta = input_manager->get_scroll_delta();
-	f32 zoom_factor = _zoom * 0.05f;
-	if(scroll_delta != 0) {
-		_zoom -= scroll_delta * (zoom_factor) * 100.0f * deltaTime;
+
+
+	auto imgui = ImGui::GetIO();
+
+	bool has_viewport_focus = GameEngine::instance()->is_viewport_focused();
+	if (has_viewport_focus) {
+		f32 scroll_delta = input_manager->get_scroll_delta();
+		f32 zoom_factor = _zoom * 0.05f;
+		if (scroll_delta != 0) {
+			_zoom -= scroll_delta * (zoom_factor)*100.0f * f32_dt;
+		}
+
+		// Rotate camera
+		float2 mouse_delta = float2(input_manager->get_mouse_delta());
+		if (input_manager->is_mouse_button_down(0)) {
+			_timer -= mouse_delta.x * f32_dt * 0.5f;
+			_up_timer += mouse_delta.y * f32_dt * 0.5f;
+		}
+		_up_timer = std::clamp<f32>(_up_timer, -static_cast<f32>(M_PI) + std::numeric_limits<f32>::epsilon(), -std::numeric_limits<f32>::epsilon());
+
+		// rotate light
+		if (input_manager->is_mouse_button_down(2)) {
+			_light_tick -= mouse_delta.x * f32_dt * 0.5f;
+		}
+
+		// pan
+		float3 pos = _camera->get_position();
+
+		float3 localPan = float3(0.0f, 0.0f, 0.0f);
+		if (input_manager->is_mouse_button_down(1)) {
+			float4x4 view = _camera->get_view();
+
+			float4 right = hlslpp::mul(view, float4(1.0, 0.0, 0.0, 0.0)) * -(f32)mouse_delta.x * deltaTime;
+			float4 up = hlslpp::mul(view, float4(0.0, 1.0, 0.0, 0.0)) * (f32)mouse_delta.y * deltaTime;
+
+			localPan = (right + up).xyz * zoom_factor;
+		}
+		_center += localPan;
+
+		if (input_manager->is_key_pressed(KeyCode::Z)) {
+			LOG_INFO(Input, "Resetting view.");
+			_timer = 0.0f;
+			_up_timer = 0.0f;
+			_center = float3(0.0, 0.0, 0.0);
+		}
 	}
-
-	// Rotate camera
-	int2 mouse_delta = input_manager->get_mouse_delta();
-	if(input_manager->is_mouse_button_down(0)) {
-		_timer -= (f32)mouse_delta.x *deltaTime * 0.5;
-		_up_timer += (f32)mouse_delta.y * deltaTime * 0.5;
-	}
-
-	// rotate light
-	if (input_manager->is_mouse_button_down(2)) {
-		_light_tick -= (f32)mouse_delta.x *deltaTime * 0.5;
-	}
-
-	// pan
-	float3 pos = _camera->get_position();
-
-	float3 localPan = float3(0.0f, 0.0f, 0.0f);
-	if(input_manager->is_mouse_button_down(1)) {
-		float4x4 view = _camera->get_view();
-
-		float4 right = hlslpp::mul(view, float4(1.0, 0.0, 0.0,0.0)) * -(f32)mouse_delta.x * deltaTime;
-		float4 up = hlslpp::mul(view, float4(0.0, 1.0, 0.0,0.0)) * (f32)mouse_delta.y * deltaTime;
-
-		localPan = (right + up).xyz * zoom_factor;
-	}
-	_center += localPan;
-
 
 	float radius = 50.0f;
-
 	float3 newUnitPos = float3{ cos(_timer) * sin(_up_timer), cos(_up_timer), sin(_timer) * sin(_up_timer) };
 	_camera->set_position(_center + _zoom*newUnitPos);
 	_camera->look_at(_center);
@@ -391,7 +405,7 @@ bool SceneViewer::load_world(const char* path) {
 
 			// Write components manually
 			u32 n_components = serialization::read<u32>(file);
-			for (int i =0; i < n_components; ++i) {
+			for (u32 j =0; j < n_components; ++j) {
 				u64 pos = file->tell();
 				u64 hash = serialization::read<u64>(file);
 				file->seek(pos, IO::SeekMode::FromBeginning);
@@ -431,7 +445,7 @@ void SceneViewer::save_world(const char* path) {
 
 	std::vector<Entity*> all_entities = _world->get_entities();
 
-	u32 number_of_entities = _world->get_number_of_entities();
+	u32 number_of_entities = static_cast<u32>(_world->get_number_of_entities());
 	serialization::write<u32>(file, number_of_entities);
 
 	// Skip the root entity
@@ -459,7 +473,7 @@ void SceneViewer::save_world(const char* path) {
 
 
 		// Write components manually
-		u32 n_components = all_entities[i]->get_components().size();
+		u32 n_components = static_cast<u32>(all_entities[i]->get_components().size());
 		write<u32>(file, n_components);
 		for (Component* comp : all_entities[i]->get_components()) {
 			rttr::instance inst = comp;

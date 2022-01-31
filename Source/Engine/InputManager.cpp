@@ -3,11 +3,8 @@
 #include "GameEngine.h"
 #include "InputManager.h"
 
-#define VERBOSE_LOGGING 1
-
-//------------------------------------------------------------------------------
-// InputManager class definitions. Manages all input
-//------------------------------------------------------------------------------
+// Only enable when debugging the input manager
+#define VERBOSE_LOGGING 0
 
 bool is_mouse_event(UINT msg) {
 	return msg >= WM_MOUSEFIRST && msg < WM_MOUSELAST;
@@ -36,11 +33,23 @@ bool InputManager::handle_events(UINT msg, WPARAM wParam, LPARAM lParam) {
 }
 
 void InputManager::register_key_handler(UINT msg, KeyHandler handler) {
-	_key_handlers[msg - WM_KEYFIRST] = handler;
+	register_key_handler(std::vector<UINT>{ msg }, handler);
+}
+
+void InputManager::register_key_handler(std::vector<UINT> msgs, KeyHandler handler) {
+	std::for_each(msgs.begin(), msgs.end(), [this, handler](UINT msg) {
+		_key_handlers[msg - WM_KEYFIRST] = handler;
+	});
 }
 
 void InputManager::register_mouse_handler(UINT msg, MouseHandler handler) {
-	_mouse_handlers[msg - WM_MOUSEFIRST] = handler;
+	register_mouse_handler(std::vector<UINT>{ msg }, handler);
+}
+
+void InputManager::register_mouse_handler(std::vector<UINT> msgs, MouseHandler handler) {
+	std::for_each(msgs.begin(), msgs.end(), [this, handler](UINT msg) {
+		_mouse_handlers[msg - WM_MOUSEFIRST] = handler;
+	});
 }
 
 InputManager::InputManager(void)
@@ -56,7 +65,7 @@ InputManager::~InputManager(void)
 {
 }
 
-void InputManager::Initialize()
+void InputManager::init()
 {
 	_keys.reserve(255);
 
@@ -74,12 +83,10 @@ void InputManager::Initialize()
 		LOG_INFO(Input, "VK: {} | Scan: {} | repeat ({}): {} | up: {}", vk_code, scan_code, repeat_flag ? "Y" : "N", repeat_count, up_flag);
 		#endif
 		_keys[scan_code][s_curr_frame] = !up_flag;
-		_vk_to_scan[vk_code] = scan_code;
+
+		_vk_to_scan[(KeyCode)vk_code] = scan_code;
 	};
-	register_key_handler(WM_SYSKEYUP,    handle_base_keys);
-	register_key_handler(WM_SYSKEYDOWN,  handle_base_keys);
-	register_key_handler(WM_KEYUP,       handle_base_keys);
-	register_key_handler(WM_KEYDOWN,     handle_base_keys);
+	register_key_handler({ WM_SYSKEYUP, WM_SYSKEYUP, WM_KEYUP, WM_KEYDOWN }, handle_base_keys);
 
 	auto handle_mbuttons = [this](WPARAM wParam, LPARAM lParam) {
 		bool ctrl = wParam & MK_CONTROL;
@@ -110,14 +117,18 @@ void InputManager::Initialize()
 		#endif
 
 	};
-	register_mouse_handler(WM_MBUTTONDOWN, handle_mbuttons);
-	register_mouse_handler(WM_MBUTTONUP, handle_mbuttons);
-	register_mouse_handler(WM_LBUTTONDOWN, handle_mbuttons);
-	register_mouse_handler(WM_LBUTTONUP, handle_mbuttons);
-	register_mouse_handler(WM_RBUTTONDOWN, handle_mbuttons);
-	register_mouse_handler(WM_RBUTTONUP, handle_mbuttons);
-	register_mouse_handler(WM_XBUTTONDOWN, handle_mbuttons);
-	register_mouse_handler(WM_XBUTTONUP, handle_mbuttons);
+	register_mouse_handler(
+		{ 
+		   WM_MBUTTONDOWN,
+		   WM_MBUTTONUP,
+		   WM_LBUTTONDOWN,
+		   WM_LBUTTONUP,
+		   WM_RBUTTONDOWN,
+		   WM_RBUTTONUP,
+		   WM_XBUTTONDOWN,
+		   WM_XBUTTONUP 
+		},
+        handle_mbuttons);
 
 	register_mouse_handler(WM_MOUSEWHEEL, [this](WPARAM wParam, LPARAM lParam) {
 		f32 delta = GET_WHEEL_DELTA_WPARAM(wParam) / (f32)WHEEL_DELTA;
@@ -129,7 +140,7 @@ void InputManager::Initialize()
 	});
 }
 
-void InputManager::Update() {
+void InputManager::update() {
 	for (std::pair<const u32, bool[2]>& it : _keys) {
 		it.second[s_prev_frame] = it.second[s_curr_frame];
 	}
@@ -156,7 +167,7 @@ int2 InputManager::get_mouse_position(bool previousFrame) const {
 	return _mouse_pos[previousFrame ? 1 : 0];
 }
 
-bool InputManager::is_key_down(int key) const
+bool InputManager::is_key_down(KeyCode key) const
 {
 	if (auto scan_code = _vk_to_scan.find(key); scan_code != _vk_to_scan.end()) {
 		if (auto it = _keys.find(scan_code->second); it != _keys.end()) {
@@ -172,7 +183,7 @@ bool InputManager::is_mouse_button_down(int button) const
 	return _mouse_buttons[button][s_curr_frame];
 }
 
-bool InputManager::is_key_pressed(int key) const
+bool InputManager::is_key_pressed(KeyCode key) const
 {
 	if (auto scan_code = _vk_to_scan.find(key); scan_code != _vk_to_scan.end()) {
 		if (auto it = _keys.find(scan_code->second); it != _keys.end()) {
@@ -188,7 +199,7 @@ bool InputManager::is_mouse_button_pressed(int button) const
 	return button_state[s_curr_frame] && !button_state[s_prev_frame];
 }
 
-bool InputManager::is_key_released(int key) const
+bool InputManager::is_key_released(KeyCode key) const
 {
 	if (auto scan_code = _vk_to_scan.find(key); scan_code != _vk_to_scan.end()) {
 		if (auto it = _keys.find(scan_code->second); it != _keys.end()) {

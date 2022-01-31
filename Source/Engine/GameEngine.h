@@ -212,7 +212,7 @@ public:
 	// Enables/disables physics simulation stepping.
 	void set_physics_step(bool bEnabled);
 
-	bool is_viewport_focused() const { return _is_viewport_focused; }
+	bool is_viewport_focused() const;
 
 	ID2D1RenderTarget *get_2d_draw_ctx() const { return _d2d_rt; }
 
@@ -433,6 +433,7 @@ private:
 	u32 m_ViewportHeight;
 	float2 m_ViewportPos;
 
+	ImGuiID _viewport_id;
 	friend class SceneViewer;
 };
 

@@ -183,7 +183,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_game_timer->Reset();
 
 	_input_manager = make_unique<InputManager>();
-	_input_manager->Initialize();
+	_input_manager->init();
 
 	// Sound system
 #if FEATURE_XAUDIO
@@ -326,7 +326,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 					lag -= _physics_timestep;
 
 					// Input manager update takes care of swapping the state
-					_input_manager->Update();
+					_input_manager->update();
 				}
 				t.Stop();
 				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
@@ -356,7 +356,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 			//	if (_frame_cnt >= 2)
 			//	{
-			//		_game->debug_ui();
+					_game->debug_ui();
 			//	}
 				_overlay_manager->render_overlay();
 			//}
@@ -869,6 +869,10 @@ void GameEngine::set_physics_step(bool bEnabled)
 	_physics_step_enabled = bEnabled;
 }
 
+bool GameEngine::is_viewport_focused() const {
+	return _is_viewport_focused;
+}
+
 void GameEngine::set_sleep(bool bSleep)
 {
 	if (_game_timer == nullptr)
@@ -918,17 +922,17 @@ std::shared_ptr<OverlayManager> const& GameEngine::get_overlay_manager() const {
 // Input methods
 bool GameEngine::is_key_down(int key) const
 {
-	return _input_manager->is_key_down(key);
+	return _input_manager->is_key_down((KeyCode)key);
 }
 
 bool GameEngine::is_key_pressed(int key) const
 {
-	return _input_manager->is_key_pressed(key);
+	return _input_manager->is_key_pressed((KeyCode)key);
 }
 
 bool GameEngine::is_key_released(int key) const
 {
-	return _input_manager->is_key_released(key);
+	return _input_manager->is_key_released((KeyCode)key);
 }
 
 bool GameEngine::is_mouse_button_down(int button) const
@@ -959,17 +963,6 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 	usedClientRect.right = get_width();
 	usedClientRect.bottom = get_height();
 
-	if (ImGui::GetCurrentContext() != nullptr) {
-		bool bWantImGuiCapture = ImGui::GetIO().WantCaptureKeyboard ||
-								 ImGui::GetIO().WantCaptureMouse;
-
-		if (bWantImGuiCapture) {
-			extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-			if (LRESULT v = ImGui_ImplWin32_WndProcHandler(hWindow, msg, wParam, lParam); v != 0) {
-				return v;
-			}
-		}
-	}
 
 
 	// Route Windows messages to game engine member functions
@@ -1012,14 +1005,32 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 	case WM_SYSKEYUP:
 	case WM_KEYDOWN: 
 	case WM_KEYUP:
-		if (wParam == VK_F9) {
+		if (msg == WM_KEYUP && wParam == VK_F9) {
 			_overlay_manager->set_visible(!_overlay_manager->get_visible());
 		}
 		break;
 	}
 
 	bool handled = false;
-	handled |= _input_manager->handle_events(msg, wParam, lParam);
+
+
+	if (ImGui::GetCurrentContext() != nullptr) {
+		bool bWantImGuiCapture = ImGui::GetIO().WantCaptureKeyboard ||
+								 ImGui::GetIO().WantCaptureMouse;
+
+		if (bWantImGuiCapture) {
+			extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
+			if (LRESULT v = ImGui_ImplWin32_WndProcHandler(hWindow, msg, wParam, lParam); v != 0) {
+				handled |= (v != 0);
+			}
+		}
+	}
+
+	if(!handled) {
+		// Input manager doesn't consume the inputs
+		handled |= _input_manager->handle_events(msg, wParam, lParam);
+	}
+
 	if (handled)
 		return 0;
 
@@ -1635,12 +1646,14 @@ void GameEngine::build_viewport() {
 	if (!_show_viewport)
 		return;
 
-	if (ImGui::Begin("Viewport", &_show_viewport)) {
+	if (ImGui::Begin("Viewport##GameViewport", &_show_viewport)) {
 		static ImVec2 s_vp_size = ImGui::GetContentRegionAvail();
 		ImVec2 current_size = ImGui::GetContentRegionAvail();
 
 		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
 		ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+
+		_is_viewport_focused = ImGui::IsWindowHovered();
 
 		{
 			auto min = vMin;

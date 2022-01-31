@@ -47,10 +47,8 @@ namespace serialization {
 TEST_CLASS(SerializationBinaryTests) {
 	TEST_METHOD(serialize_simple) {
 
-			rttr::type t = rttr::type::get<MockA>().create().get_type();
-
 			MockB data{};
-			data.value.a = 100.0f;
+			data.value.a = 100;
 			data.value.d = -75.0f;
 			data.data = "Test123@";
 
@@ -68,8 +66,8 @@ TEST_CLASS(SerializationBinaryTests) {
 				u64 hash = serialization::read<u64>(file);
 				file->seek(0, IO::SeekMode::FromBeginning);
 
-				rttr::type t = helpers::get_type_by_id(hash);
-				rttr::variant obj = t.create();
+				rttr::type in_type = helpers::get_type_by_id(hash);
+				rttr::variant obj = in_type.create();
 
 
 				bool result = serialization::serialize_instance<IO::Mode::Read>(file, obj);
