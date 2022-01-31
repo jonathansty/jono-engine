@@ -208,6 +208,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		_render_world->init();
 
 		_cb_global = ConstantBuffer::create(_d3d_device, sizeof(GlobalDataCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
+		_cb_debug = ConstantBuffer::create(_d3d_device, sizeof(DebugCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 	}
 	LOG_INFO(System, "Finished initialising worlds.");
 
@@ -407,6 +408,14 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		// Render 3D before 2D
 		if(_engine_settings.d3d_use)
 		{
+			{
+				GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"PreRender");
+				extern int g_DebugMode;
+				DebugCB* debug_data = (DebugCB*)_cb_debug->map(_d3d_device_ctx);
+				debug_data->m_VisualizeMode = g_DebugMode;
+				_cb_debug->unmap(_d3d_device_ctx);
+			}
+
 			GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Render");
 
 			FLOAT color[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
@@ -1458,6 +1467,7 @@ void GameEngine::render_world(ViewParams const& params) {
 
 
 
+
 	GlobalDataCB* global = (GlobalDataCB*)_cb_global->map(_d3d_device_ctx);
 	global->ambient.ambient = float4(0.02f, 0.02f, 0.02f, 1.0f);
 
@@ -1503,12 +1513,25 @@ void GameEngine::render_world(ViewParams const& params) {
 		UINT offsets = { 0 };
 		ctx->IASetVertexBuffers(0, 1, inst->_mesh->_vert_buffer.GetAddressOf(), &strides, &offsets);
 
-		ID3D11Buffer* buffers[2] = { 
-			_cb_global->Get(),
-			inst->_model_cb->Get()
-		};
-		ctx->VSSetConstantBuffers(0, 2, buffers);
-		ctx->PSSetConstantBuffers(0, 2, buffers);
+		// #Hacky debug mode handling
+		extern int g_DebugMode;
+		if (g_DebugMode != 0) {
+			ID3D11Buffer* buffers[3] = {
+				_cb_global->Get(),
+				inst->_model_cb->Get(),
+				_cb_debug->Get(),
+			};
+			ctx->VSSetConstantBuffers(0, 3, buffers);
+			ctx->PSSetConstantBuffers(0, 3, buffers);
+		} else {
+			ID3D11Buffer* buffers[2] = {
+				_cb_global->Get(),
+				inst->_model_cb->Get()
+			};
+			ctx->VSSetConstantBuffers(0, 2, buffers);
+			ctx->PSSetConstantBuffers(0, 2, buffers);
+		}
+
 
 
 		for (Mesh const& m : inst->_mesh->_meshes) {

@@ -419,6 +419,14 @@ private:
 	};
 	ConstantBufferRef _cb_global;
 
+	__declspec(align(16)) 
+	struct DebugCB {
+		unsigned int m_VisualizeMode;
+		uint8_t pad[12];
+	};
+	ConstantBufferRef _cb_debug;
+
+
 	// State
 	bool _can_paint;
 	bool _vsync_enabled;

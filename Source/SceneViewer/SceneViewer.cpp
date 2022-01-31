@@ -27,22 +27,6 @@ namespace Shaders {
 using hlslpp::float4x4;
 using hlslpp::float4;
 
-__declspec(align(16))
-struct MVPConstantBuffer
-{
-	float4x4 world;
-	float4x4 world_view;
-	float4x4 proj;
-	float4x4 wvp;
-
-	float4x4 view;
-	float4x4 inv_view;
-
-	float4 view_direction;
-	float4 light_direction;
-	float4 light_color;
-};
-
 struct DebugVisualizeMode
 {
 	enum Enum {
@@ -55,12 +39,7 @@ struct DebugVisualizeMode
 		WorldNormals = 6
 	};
 };
-__declspec(align(16))
-struct DebugCB
-{
-	unsigned int m_VisualizeMode;
-	uint8_t pad[12];
-};
+
 
 int g_DebugMode = 0;
 
@@ -471,7 +450,6 @@ void SceneViewer::save_world(const char* path) {
 		serialization::serialize_instance<IO::Mode::Write>(file, obj);
 
 
-
 		// Write components manually
 		u32 n_components = static_cast<u32>(all_entities[i]->get_components().size());
 		write<u32>(file, n_components);
@@ -488,4 +466,3 @@ void SceneViewer::swap_model(const char* path) {
 	_model = _render_world->create_instance(float4x4::identity(), path);
 
 }
-
