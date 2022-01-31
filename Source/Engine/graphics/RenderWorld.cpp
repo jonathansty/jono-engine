@@ -13,7 +13,7 @@ std::shared_ptr<RenderWorldInstance> RenderWorld::create_instance(float4x4 trans
 
 	std::lock_guard l{ _instance_cs };
 	std::shared_ptr<RenderWorldInstance> inst = std::make_shared<RenderWorldInstance>(transform);
-	inst->_model_cb = ConstantBuffer::create(Graphics::GetDevice().Get(), sizeof(RenderWorldInstance::ConstantBufferData), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
+	inst->_model_cb = ConstantBuffer::create(Graphics::get_device().Get(), sizeof(RenderWorldInstance::ConstantBufferData), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 
 	ModelResource::init_parameters params{};
 	params.path = mesh;

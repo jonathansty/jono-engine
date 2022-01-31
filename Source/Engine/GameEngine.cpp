@@ -115,6 +115,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_platform_io = IO::create();
 	IO::set(_platform_io);
 
+	// Create all the singletons needed by the game, the game engine singleton is initialized from run_game
+	Logger::create();
+	ResourceLoader::create();
+
 	// Then we initialize the logger as this might create a log file
 	Logger::instance()->init();
 
@@ -134,13 +138,9 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// initialize d2d for WIC
 	SUCCEEDED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED));
 
-	// create the game engine object, exit if failure
-	ASSERT(GameEngine::instance());
-
-	// Create DirectX rendering factory
 	create_factories();
 
-	Graphics::init(_d3d_device);
+	Graphics::init(_d3d_device,_d3d_device_ctx);
 	TextureResource::initialise_default();
 
 	// Setup our default overlays
@@ -1455,13 +1455,13 @@ void GameEngine::render_world(ViewParams const& params) {
 		}
 
 		ID3D11SamplerState* samplers[1] = {
-			Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get(),
+			Graphics::get_sampler_state(SamplerState::MinMagMip_Linear).Get(),
 		};
 		_d3d_device_ctx->PSSetSamplers(0, 1, samplers);
 
-		_d3d_device_ctx->OMSetDepthStencilState(Graphics::GetDepthStencilState(depth_stencil_state).Get(), 0);
-		_d3d_device_ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
-		_d3d_device_ctx->OMSetBlendState(Graphics::GetBlendState(BlendState::Default).Get(), NULL, 0xffffffff);
+		_d3d_device_ctx->OMSetDepthStencilState(Graphics::get_depth_stencil_state(depth_stencil_state).Get(), 0);
+		_d3d_device_ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullBack).Get());
+		_d3d_device_ctx->OMSetBlendState(Graphics::get_blend_state(BlendState::Default).Get(), NULL, 0xffffffff);
 		_d3d_device_ctx->RSSetViewports(1, &params.viewport);
 	}
 
@@ -1540,11 +1540,11 @@ void GameEngine::render_world(ViewParams const& params) {
 			Material* material = res->get();
 			if (material->is_double_sided())
 			{
-				ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullNone).Get());
+				ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullNone).Get());
 			} 
 			else 
 			{
-				ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
+				ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullBack).Get());
 			}
 
 			material->apply();
@@ -1800,6 +1800,7 @@ void GameEngine::build_menubar() {
 
 int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<AbstractGame>&& game)
 {
+	GameEngine::create();
 
 #if defined(DEBUG) | defined(_DEBUG)
 	//notify user if heap is corrupt

@@ -38,24 +38,17 @@ struct SamplerState {
 namespace Graphics {
 
 	// Entry point for the graphics. Initializes default D3D11 objects for usage later
-	void init(ComPtr<ID3D11Device> device);
+	void init(ComPtr<ID3D11Device> device, ComPtr<ID3D11DeviceContext> ctx);
 
+	// On shutdown the application should call this to release all handles to the device, context and the common states.
 	void deinit();
 
-
-	ComPtr<ID3D11Device> GetDevice();
-
-	// Returns the requested blend state
-	ComPtr<ID3D11BlendState> GetBlendState(BlendState::Value blendState);
-
-	// Returns the requested rasterizer state
-	ComPtr<ID3D11RasterizerState> GetRasterizerState(RasterizerState::Value rasterizerState);
-
-	// Returns the requested depth stencil state
-	ComPtr<ID3D11DepthStencilState> GetDepthStencilState(DepthStencilState::Value blendState);
-
-	// Returns the requested sampler state 
-	ComPtr<ID3D11SamplerState> GetSamplerState(SamplerState::Value blendState);
+	// Public API to retrieve the currently initialized graphics data and common states
+	ComPtr<ID3D11Device>            get_device();
+	ComPtr<ID3D11BlendState>        get_blend_state(BlendState::Value blendState);
+	ComPtr<ID3D11RasterizerState>   get_rasterizer_state(RasterizerState::Value rasterizerState);
+	ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState::Value blendState);
+	ComPtr<ID3D11SamplerState>      get_sampler_state(SamplerState::Value blendState);
 
 }
 
@@ -83,7 +76,13 @@ public:
 		ctx->Unmap(_buffer.Get(), 0);
 	}
 
-	ConstantBuffer() {}
+	ConstantBuffer()
+			: _buffer()
+			, _size(0)
+			, _cpu_writeable(false) 
+	{
+	}
+
 	~ConstantBuffer(){}
 
 private:
