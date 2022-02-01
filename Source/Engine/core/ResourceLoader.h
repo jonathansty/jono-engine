@@ -36,6 +36,9 @@ public:
 private:
 	std::atomic<bool> _loaded;
 
+	std::mutex _loaded_mutex;
+	std::condition_variable _loaded_cv;
+
 	friend class ResourceLoader;
 };
 
@@ -121,6 +124,7 @@ public:
 
 
 private:
+	std::mutex _cache_lock;
 	ResourceCache _cache;
 
 	std::mutex _tasks_lock;
@@ -145,20 +149,37 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 {
 	LOG_INFO(IO, "Load request {}", params.to_string());
 	std::size_t  h = std::hash<typename T::init_parameters>{}(params);
-	if (auto it = _cache.find(h); it != _cache.end())
+
 	{
-		LOG_INFO(IO, "Returned cached copy for {}", params.to_string());
-		return std::static_pointer_cast<T>(it->second);
+		std::lock_guard lock{ _cache_lock };
+		if (auto it = _cache.find(h); it != _cache.end())
+		{
+			LOG_INFO(IO, "Returned cached copy for {}", params.to_string());
+
+			// This is pretty nasty. When a blocking call to load happens we need to wait for the cached asset to be done loading 
+			// but we also don't want to schedule a new load on the same asset
+			if(blocking) {
+				std::unique_lock<std::mutex> lk{ it->second->_loaded_mutex };
+				it->second->_loaded_cv.wait(lk);
+			}
+
+			return std::static_pointer_cast<T>(it->second);
+		}
 	}
 
 	std::shared_ptr<T> res = std::make_shared<T>(params);
-	_cache[h] = res;
+	{
+		std::lock_guard lock{ _cache_lock };
+		_cache[h] = res;
+	}
+
 
 	res->_loaded = false;
 
 	auto do_load = [res, params]() {
 		res->load();
 		res->_loaded = true;
+		res->_loaded_cv.notify_all();
 		LOG_INFO(IO, "{} finished", params.to_string());
 	};
 

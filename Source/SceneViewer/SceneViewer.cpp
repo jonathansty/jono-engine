@@ -93,6 +93,14 @@ void SceneViewer::start()
 						this->swap_model(file.c_str());
 					}
 				}
+
+				if (ImGui::MenuItem("Rebuild Shaders")) {
+					for (std::shared_ptr<RenderWorldInstance> const& inst : _render_world->get_instances()) {
+						for (auto const& mat : inst->_mesh->_materials) {
+							mat->load();
+						}
+					}
+				}
 				ImGui::EndMenu();
 			}
 		}

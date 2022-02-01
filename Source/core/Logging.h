@@ -62,6 +62,7 @@ inline const char* to_string(LogSeverity severity) {
 			return "Fatal";
 
 	}
+	return "";
 }
 
 }

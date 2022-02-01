@@ -107,6 +107,7 @@ class MaterialResource final : public TCachedResource<Material, MaterialInitPara
 {
 public:
 	MaterialResource(MaterialInitParameters params) : TCachedResource(params) {}
+
 	virtual void load() override;
 };
 

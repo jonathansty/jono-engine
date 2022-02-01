@@ -4,6 +4,8 @@
 #include "GameTest2D.h"
 #include "SceneViewer.h"
 
+#include "Graphics/ShaderCompiler.h"
+
 int main(const int argcs, const char** argvs)
 {
 	// Parses the command line for use with the game engine

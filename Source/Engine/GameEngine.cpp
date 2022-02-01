@@ -21,6 +21,8 @@
 #include "Engine/Core/Material.h"
 #include "Core/Logging.h"
 
+#include "Graphics/ShaderCompiler.h"
+
 
 static constexpr uint32_t max_task_threads = 4;
 
@@ -115,12 +117,26 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_platform_io = IO::create();
 	IO::set(_platform_io);
 
+
+
 	// Create all the singletons needed by the game, the game engine singleton is initialized from run_game
 	Logger::create();
 	ResourceLoader::create();
 
 	// Then we initialize the logger as this might create a log file
 	Logger::instance()->init();
+
+	{
+		std::vector<u8> data;
+		ShaderCompiler::CompileParameters params{};
+		params.defines.push_back({ "USE_PBR", "1" });
+		params.defines.push_back({ "IS_SHADOW_PASS" });
+		params.entry_point = "main";
+		params.stage = ShaderCompiler::ShaderStage::Pixel;
+		params.flags = ShaderCompiler::CompilerFlags::CompileDebug | ShaderCompiler::CompilerFlags::OptimizationLevel0;
+		bool result = ShaderCompiler::compile("Source/Engine/Shaders/debug_px.hlsl", params, data);
+	}
+
 
 	// Now we can start logging information and we mount our resources volume.
 	LOG_INFO(IO, "Mounting resources directory.");
@@ -1801,6 +1817,8 @@ void GameEngine::build_menubar() {
 int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<AbstractGame>&& game)
 {
 	GameEngine::create();
+
+
 
 #if defined(DEBUG) | defined(_DEBUG)
 	//notify user if heap is corrupt

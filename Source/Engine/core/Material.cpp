@@ -28,12 +28,10 @@ Shader::Shader(ShaderType type, const char* byte_code, uint32_t size)
 	D3D11_SHADER_INPUT_BIND_DESC bindDesc;
 	_reflection->GetResourceBindingDescByName("g_Albedo", &bindDesc);
 
-
 }
 
 Shader::~Shader()
 {
-
 }
 
 std::unique_ptr<Shader> Shader::create(ShaderType type, const char* byte_code, uint32_t size)

@@ -13,7 +13,8 @@ enum class Mode {
 
 enum class SeekMode {
 	FromBeginning,
-	FromCurrent
+	FromCurrent,
+	FromEnd,
 };
 
 // IFile
@@ -21,6 +22,8 @@ enum class SeekMode {
 // Interface to define operations that can be executed 
 // on a file. Each platform it's IO implementation will return a pointer to a derived IFile object.
 struct IFile {
+
+	virtual ~IFile(){}
 
 	virtual bool is_binary() const = 0;
 
