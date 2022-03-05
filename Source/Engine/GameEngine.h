@@ -472,6 +472,7 @@ private:
 namespace Perf
 {
 
+// Blog post talking about the inaccuracy of the windows sleep function and how they arrived at this solution
 // https://blat-blatnik.github.io/computerBear/making-accurate-sleep-function/
 inline void precise_sleep(f64 seconds)
 {
@@ -506,5 +507,3 @@ inline void precise_sleep(f64 seconds)
 }
 
 }
-
-// Helper class for scoped gpu debugging
