@@ -26,12 +26,26 @@ void MaterialResource::load()
 		if(!ShaderCompiler::compile("./Source/Engine/Shaders/error_px.hlsl", params, pixel_bytecode)) {
 			LOG_FATAL(Graphics, "Couldn't compile basic error shader!");
 		}
-		
 	}
-	ShaderCompiler::compile("./Source/Engine/Shaders/debug_px.hlsl", params, debug_bytecode);
+
+	if (!ShaderCompiler::compile("./Source/Engine/Shaders/debug_px.hlsl", params, debug_bytecode))
+	{
+		if (!ShaderCompiler::compile("./Source/Engine/Shaders/error_px.hlsl", params, pixel_bytecode))
+		{
+			LOG_FATAL(Graphics, "Couldn't compile basic error shader!");
+		}
+	}
+
 
 	params.stage = ShaderCompiler::ShaderStage::Vertex;
-	ShaderCompiler::compile("./Source/Engine/Shaders/simple_vx.hlsl", params, vertex_bytecode);
+	if (!ShaderCompiler::compile("./Source/Engine/Shaders/simple_vx.hlsl", params, vertex_bytecode))
+	{
+		if (!ShaderCompiler::compile("./Source/Engine/Shaders/error_vx.hlsl", params, pixel_bytecode))
+		{
+			LOG_FATAL(Graphics, "Couldn't compile basic error shader!");
+		}
+	}
+	
 
 	_resource = Material::create((const char*)vertex_bytecode.data(), u32(vertex_bytecode.size()), (const char*)pixel_bytecode.data(), u32(pixel_bytecode.size()));
 	_resource->_debug_pixel_shader = Shader::create(ShaderType::Pixel, (const char*)debug_bytecode.data(), u32(debug_bytecode.size()));

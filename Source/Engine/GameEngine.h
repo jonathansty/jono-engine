@@ -83,6 +83,8 @@ struct EngineSettings {
 	// Allow 3D rendering
 	bool d3d_use = true;
 	MSAAMode d3d_msaa_mode = MSAAMode::Off;
+
+	f64 max_frame_time = 0.0;
 	
 };
 
@@ -284,6 +286,9 @@ private:
 
 	void build_ui();
 
+	void render();
+	void present();
+
 	// Renders the main view
 	void render_view(RenderPass::Value pass);
 
@@ -305,6 +310,25 @@ private:
 	std::function<void(BuildMenuOrder)> _build_menu;
 
 private:
+
+
+	struct GpuTimer
+	{
+		enum Enum
+		{
+			Frame,
+			Count
+		};
+	};
+
+	struct GpuTimingData
+	{
+		ComPtr<ID3D11Query> m_DisjointQuery;
+		ComPtr<ID3D11Query> m_StartQuery;
+		ComPtr<ID3D11Query> m_EndQuery;
+	};
+	std::array<std::array<GpuTimingData,GpuTimer::Count>,2> m_GpuTimings;
+
 	cli::CommandLine _command_line;
 
 	// Member Variables
@@ -444,5 +468,43 @@ private:
 	ImGuiID _viewport_id;
 	friend class SceneViewer;
 };
+
+namespace Perf
+{
+
+// https://blat-blatnik.github.io/computerBear/making-accurate-sleep-function/
+inline void precise_sleep(f64 seconds)
+{
+	using namespace std;
+	using namespace std::chrono;
+
+	static f64  estimate = 5e-3;
+	static f64  mean = 5e-3;
+	static f64  m2 = 0;
+	static int64_t count = 1;
+
+	while (seconds > estimate)
+	{
+		auto start = high_resolution_clock::now();
+		this_thread::sleep_for(milliseconds(1));
+		auto end = high_resolution_clock::now();
+
+		f64 observed = (end - start).count() / 1e9;
+		seconds -= observed;
+
+		++count;
+		double delta = observed - mean;
+		mean += delta / count;
+		m2 += delta * (observed - mean);
+		f64 stddev = sqrt(m2 / (count - 1));
+		estimate = mean + stddev;
+	}
+
+	// spin lock
+	auto start = high_resolution_clock::now();
+	while ((high_resolution_clock::now() - start).count() / 1e9 < seconds);
+}
+
+}
 
 // Helper class for scoped gpu debugging

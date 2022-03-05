@@ -65,9 +65,6 @@ using namespace D2D1;
 #include <math.h>
 
 #include <optional>
-#include "Types.h"
-#include "Asserts.h"
-#include "identifier.h"
 
 
 #include <fmt/core.h>
@@ -103,8 +100,17 @@ using namespace D2D1;
 #endif
 
 
-namespace Tasks {
+#include "Types.h"
+#include "Asserts.h"
+#include "identifier.h"
+#include "Math.h"
+#include <chrono>
+
+namespace Tasks
+{
+
 enki::TaskScheduler* get_scheduler();
+
 
 }
 

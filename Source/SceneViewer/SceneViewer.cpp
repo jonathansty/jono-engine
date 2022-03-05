@@ -48,6 +48,8 @@ void SceneViewer::configure_engine(EngineSettings &engineSettings) {
 
 	engineSettings.d3d_use = true;
 	engineSettings.d3d_msaa_mode = MSAAMode::Off;
+
+	engineSettings.max_frame_time = 1.0 / 72.0;
 }
 
 void SceneViewer::initialize(GameSettings& gameSettings)
@@ -58,7 +60,8 @@ void SceneViewer::initialize(GameSettings& gameSettings)
 }
 
 
-std::string show_file_dialog(HWND owner) {
+std::string show_file_dialog(HWND owner)
+{
 	OPENFILENAMEA ofn;
 	char szFileName[MAX_PATH] = "";
 
@@ -66,18 +69,20 @@ std::string show_file_dialog(HWND owner) {
 
 	ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
 	ofn.hwndOwner = owner;
-	ofn.lpstrFilter = "Model Files (*.glb)\0*.glb\0Model Files (*.gltf)\0*.glb\0All Files (*.*)\0*.*\0\0";
+	ofn.lpstrFilter = "Model Files (*.glb;*.gltf)\0*.glb;*.gltf\0All Files (*.*)\0*.*\0\0";
 	ofn.lpstrFile = szFileName;
 	ofn.nMaxFile = MAX_PATH;
-	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT;
-	ofn.lpstrDefExt = "glb";
+	ofn.Flags = OFN_EXPLORER | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_ALLOWMULTISELECT | OFN_NOCHANGEDIR;
+	ofn.lpstrDefExt = nullptr;
 
-	if (GetOpenFileNameA(&ofn)) {
+	if (GetOpenFileNameA(&ofn))
+	{
 		return ofn.lpstrFile;
 	}
 
 	return {};
 }
+
 void SceneViewer::start()
 {
 	auto ge = GameEngine::instance();
@@ -95,6 +100,8 @@ void SceneViewer::start()
 				}
 
 				if (ImGui::MenuItem("Rebuild Shaders")) {
+					LOG_INFO(Graphics, "Rebuilding all shaders.");
+
 					for (std::shared_ptr<RenderWorldInstance> const& inst : _render_world->get_instances()) {
 						for (auto const& mat : inst->_mesh->_materials) {
 							mat->load();

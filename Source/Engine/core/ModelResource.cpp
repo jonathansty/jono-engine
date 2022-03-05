@@ -1,36 +1,34 @@
-#include "engine.pch.h"
 #include "ModelResource.h"
+#include "engine.pch.h"
 
-#include "TextureResource.h"
 #include "MaterialResource.h"
+#include "TextureResource.h"
 
 #include "GameEngine.h"
 
 #include <assimp/pbrmaterial.h>
 
-
 // Inline shaders
 namespace Shaders
 {
-#include "simple_vx.h"
 #include "simple_px.h"
-}
-
+#include "simple_vx.h"
+} // namespace Shaders
 
 const D3D11_INPUT_ELEMENT_DESC ModelVertex::InputElements[InputElementCount] = {
-	{"SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{"TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{"TANGENT", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT,  D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	{ "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TANGENT", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 };
 void ModelResource::load()
 {
 	std::string const& path = get_init_parameters().path;
 
-	std::string dir_path = path;
-	dir_path = dir_path.substr(0, dir_path.rfind('/') + 1);
+	std::filesystem::path dir_path = std::filesystem::path(path);
+	dir_path = dir_path.parent_path();
 	auto device = GameEngine::instance()->GetD3DDevice();
 	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
 
@@ -51,10 +49,11 @@ void ModelResource::load()
 
 		std::map<int, aiMatrix4x4> transforms;
 
-		struct Flattener {
+		struct Flattener
+		{
 			void operator()(aiMatrix4x4 parent, aiNode* node, std::map<int, aiMatrix4x4>& result)
 			{
-				aiMatrix4x4 t = node->mTransformation* parent;
+				aiMatrix4x4 t = node->mTransformation * parent;
 				for (unsigned int i = 0; i < node->mNumMeshes; ++i)
 				{
 					result[node->mMeshes[i]] = t;
@@ -64,7 +63,6 @@ void ModelResource::load()
 				{
 					operator()(t, node->mChildren[i], result);
 				}
-
 			}
 		};
 		aiNode* root = scene->mRootNode;
@@ -77,13 +75,11 @@ void ModelResource::load()
 			aiMesh const* mesh = scene->mMeshes[i];
 			aiMatrix4x4 const& transform = transforms[i];
 
-
 			aiMatrix3x3 normalTransform = aiMatrix3x3{
-				transform.a1, transform.a2,transform.a3,
-				transform.b1, transform.b2,transform.b3,
-				transform.c1, transform.c2,transform.c3
+				transform.a1, transform.a2, transform.a3,
+				transform.b1, transform.b2, transform.b3,
+				transform.c1, transform.c2, transform.c3
 			};
-
 
 			Mesh meshlet{};
 			meshlet.firstIndex = indices.size();
@@ -109,7 +105,6 @@ void ModelResource::load()
 				v.position.x = pos.x;
 				v.position.y = pos.y;
 				v.position.z = pos.z;
-
 
 				if (mesh->HasVertexColors(0))
 				{
@@ -156,7 +151,6 @@ void ModelResource::load()
 				}
 
 				vertices.push_back(v);
-
 			}
 
 			for (unsigned int k = 0; k < mesh->mNumFaces; ++k)
@@ -183,16 +177,13 @@ void ModelResource::load()
 
 		SUCCEEDED(device->CreateBuffer(&bufferDesc, &data, _vert_buffer.GetAddressOf()));
 
-
 		bufferDesc.ByteWidth = UINT(indices.size() * sizeof(indices[0]));
 		bufferDesc.StructureByteStride = sizeof(indices[0]);
 		bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 		data.pSysMem = indices.data();
 		SUCCEEDED(device->CreateBuffer(&bufferDesc, &data, _index_buffer.GetAddressOf()));
 		_index_count = indices.size();
-
 	}
-
 
 	if (scene->HasMaterials())
 	{
@@ -205,7 +196,7 @@ void ModelResource::load()
 			parameters.load_type = MaterialInitParameters::LoadType_FromMemory;
 			parameters.name = "[Built-in] Material";
 
-			// Get the name of the material 
+			// Get the name of the material
 			aiString materialName;
 			material->Get(AI_MATKEY_NAME, materialName);
 			parameters.name = name.C_Str();
@@ -223,28 +214,27 @@ void ModelResource::load()
 			aiString texturePath;
 			if (material->GetTexture(aiTextureType_BASE_COLOR, 0, &texturePath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path + std::string(texturePath.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path.string() + "\\" + std::string(texturePath.C_Str());
 			}
-			if (material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS,0, &texturePath) == aiReturn_SUCCESS)
+			if (material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &texturePath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path + std::string(texturePath.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path.string() + "\\" + std::string(texturePath.C_Str());
 			}
 			if (material->GetTexture(aiTextureType_NORMAL_CAMERA, 0, &texturePath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path + std::string(texturePath.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path.string() + "\\" + std::string(texturePath.C_Str());
 			}
 
 			bool double_sided;
-			if (material->Get(AI_MATKEY_TWOSIDED, double_sided) == aiReturn_SUCCESS) {
+			if (material->Get(AI_MATKEY_TWOSIDED, double_sided) == aiReturn_SUCCESS)
+			{
 				parameters.double_sided = double_sided;
 			}
-
 
 			auto handle = ResourceLoader::instance()->load<MaterialResource>(parameters, true);
 			_materials.push_back(handle);
 		}
 	}
-
 
 #ifdef _DEBUG
 	char name[512];
@@ -254,14 +244,10 @@ void ModelResource::load()
 	sprintf_s(name, "%s - Vertex Buffer", path.c_str());
 	helpers::SetDebugObjectName(_vert_buffer.Get(), name);
 #endif
-
 }
 
-
-
-ModelResource::ModelResource(FromFileResourceParameters params) : TCachedResource(params)
-, _index_count(0)
+ModelResource::ModelResource(FromFileResourceParameters params)
+		: TCachedResource(params)
+		, _index_count(0)
 {
-
 }
-

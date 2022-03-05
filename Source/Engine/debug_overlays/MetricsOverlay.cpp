@@ -25,21 +25,21 @@ void MetricsOverlay::render_overlay()
 		{
 			GameEngine::instance()->set_vsync(s_EnableVsync);
 		}
-		double fps = 1.0 / (m_Times[Timer::FrameTime] * 0.001);
+		f64 fps = 1.0 / (m_Times[Timer::FrameTime] * 0.001);
 		ImGui::Text("FPS: %d", int(fps));
-		ImGui::Text("FrameTime: %.2f", m_Times[Timer::FrameTime]);
-		ImGui::Text("GameUpdate: %.2f", m_Times[Timer::GameUpdateCPU]);
-		ImGui::Text("RenderCPU: %.2f", m_Times[Timer::RenderCPU]);
-		ImGui::Text("RenderGPU: %.2f", m_Times[Timer::RenderGPU]);
+		ImGui::Text("FrameTime: %.2f", m_Times[Timer::FrameTime].average());
+		ImGui::Text("GameUpdate: %.2f", m_Times[Timer::GameUpdateCPU].average());
+		ImGui::Text("RenderCPU: %.2f", m_Times[Timer::RenderCPU].average());
+		ImGui::Text("RenderGPU: %.2f", m_Times[Timer::RenderGPU].average());
 
 		ImGui::End();
 	}
 }
 
-void MetricsOverlay::UpdateTimer(Timer timer, float time)
+void MetricsOverlay::UpdateTimer(Timer timer, f64 time)
 {
 	assert(timer >= 0 && timer < Timer::Num);
-	m_Times[timer] = time;
+	m_Times[timer].add_sample(time);
 }
 
 const std::string MetricsOverlay::m_Name = "Metrics";

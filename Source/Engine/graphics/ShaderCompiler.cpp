@@ -8,6 +8,8 @@ namespace ShaderCompiler {
 
 bool compile(const char* shader, CompileParameters const& parameters, std::vector<u8>& bytecode) {
 
+	LOG_VERBOSE(Graphics, "[SHDRCMP] {}", shader);
+
 	auto io = IO::get();
 	if(IO::IFileRef file = io->open(shader, IO::Mode::Read); file) {
 
