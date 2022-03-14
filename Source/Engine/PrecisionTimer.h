@@ -7,15 +7,11 @@
 
 #pragma once
 
-class PrecisionTimer
+class PrecisionTimer final
 {
 public:
 	PrecisionTimer();
-	virtual ~PrecisionTimer();
-
-	PrecisionTimer(const PrecisionTimer& sRef) = delete;
-	PrecisionTimer& operator=(const PrecisionTimer& sRef) = delete;
-
+	~PrecisionTimer();
 
 	// Returns the elapsed time since Tick was called
 	double get_delta_time(); // in seconds
@@ -38,7 +34,7 @@ private:
 
 };
 
-class Timer
+class Timer final
 {
 public:
 	// -------------------------

@@ -12,6 +12,7 @@ enki::TaskScheduler* get_scheduler()
 		g_Scheduler = std::make_unique<enki::TaskScheduler>();
 	}
 	return g_Scheduler.get();
+
 }
 
 } // namespace Tasks

@@ -20,6 +20,7 @@ template <class T> void SafeRelease(T **ppT)
 AudioDecoder::AudioDecoder(const std::wstring& filenameRef, XAUDIO2_BUFFER& bufferRef, WAVEFORMATEXTENSIBLE* pWfx)
 {
 
+
 	HRESULT hr = Open(filenameRef, bufferRef, pWfx);
 	if (FAILED(hr))
 	{

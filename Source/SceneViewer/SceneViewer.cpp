@@ -18,12 +18,6 @@
 using framework::Entity;
 using framework::Component;
 
-namespace Shaders {
-#include "simple_px.h"
-#include "simple_vx.h"
-#include "debug_px.h"
-}
-
 using hlslpp::float4x4;
 using hlslpp::float4;
 
@@ -49,7 +43,7 @@ void SceneViewer::configure_engine(EngineSettings &engineSettings) {
 	engineSettings.d3d_use = true;
 	engineSettings.d3d_msaa_mode = MSAAMode::Off;
 
-	engineSettings.max_frame_time = 1.0 / 72.0;
+	//engineSettings.max_frame_time = 1.0 / 72.0;
 }
 
 void SceneViewer::initialize(GameSettings& gameSettings)
@@ -318,12 +312,6 @@ void SceneViewer::tick(double deltaTime)
 
 void SceneViewer::debug_ui()
 {
-	if(GameEngine::instance()->_shadow_map_srv) {
-		ImGui::Begin("Shadow Map");
-		ImGui::Image(GameEngine::instance()->_shadow_map_srv.Get(), { 400, 400 });
-		ImGui::End();
-	}
-
 	static bool s_open = true;
 	ImGui::Begin("Game", &s_open);
 

@@ -54,6 +54,7 @@ public:
 	{
 		FrameTime,
 		GameUpdateCPU,
+		PresentCPU,
 		RenderCPU,
 		RenderGPU,
 		Num
@@ -64,6 +65,6 @@ public:
 private:
 	static const std::string m_Name;
 
-	std::array<RunningAverage<144>, Timer::Num> m_Times;
+	std::array<RunningAverage<30>, Timer::Num> m_Times;
 
 };

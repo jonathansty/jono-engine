@@ -152,7 +152,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 	// Setup our default overlays
 	_overlay_manager = std::make_shared<OverlayManager>();
-	_metrics_overlay = new MetricsOverlay();
+	_metrics_overlay = new MetricsOverlay(true);
 
 	_overlay_manager->register_overlay(_metrics_overlay);
 	_overlay_manager->register_overlay(new RTTIDebugOverlay());
@@ -220,6 +220,13 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	}
 	LOG_INFO(System, "Finished initialising worlds.");
 
+
+	_render_thread = std::make_unique<RenderThread>();
+	_render_thread->wait_for_stage(RenderThread::Stage::Running);
+	_render_thread->terminate();
+	_render_thread->wait_for_stage(RenderThread::Stage::Terminated);
+	_render_thread->join();
+
 	// Game Initialization
 	_game->initialize(_game_settings);
 	apply_settings(_game_settings);
@@ -272,19 +279,15 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_game->start();
 
 
+	// Initialize our performance tracking
+	Perf::initialize(_d3d_device);
+
 	// Initialize our GPU timers
 	for(u32 i = 0; i < GpuTimer::Count; ++i)
 	{
 		for (u32 j = 0; j < 2; ++j)
 		{
-			D3D11_QUERY_DESC desc{};
-			desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
-			GpuTimingData data{};
-			GetD3DDevice()->CreateQuery(&desc, data.m_DisjointQuery.GetAddressOf());
-			desc.Query = D3D11_QUERY_TIMESTAMP;
-			GetD3DDevice()->CreateQuery(&desc, data.m_StartQuery.GetAddressOf());
-			GetD3DDevice()->CreateQuery(&desc, data.m_EndQuery.GetAddressOf());
-			m_GpuTimings[j][i] = data;
+			m_GpuTimings[j][i] = Perf::Timer(_d3d_device);
 		}
 	}
 
@@ -317,14 +320,13 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			++_frame_cnt;
 
 
+			// Execute the game simulation loop
 			{
 				f64 current = time_elapsed;
 				f64 elapsed = current - time_previous; 
 				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::FrameTime, (float)(elapsed * 1000.0f));
-				if (elapsed > 0.25)
-					elapsed = 0.25; //prevent jumps in time when break point or sleeping
 
-				time_previous = current; // reset
+				time_previous = current; 
 				time_lag += elapsed;
 
 				Timer t{};
@@ -352,10 +354,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
 			}
 
+			Perf::begin_frame(_d3d_device_ctx);
+
 			if (_recreate_swapchain)
 			{
-				LOG_VERBOSE(Graphics, "Recreating swapchain. New size: %dx%d\n", (uint32_t)_window_width, (uint32_t)_window_height);
-
 				this->resize_swapchain(_window_width, _window_height);
 				_recreate_swapchain = false;
 			}
@@ -379,35 +381,38 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			ImGui::UpdatePlatformWindows();
 			ImGui::Render();
 
-			// Get gpu data
-			size_t idx = _frame_cnt % 2;
-			if (_frame_cnt > 2)
-			{
-				D3D11_QUERY_DATA_TIMESTAMP_DISJOINT timestampDisjoint;
-				UINT64 start;
-				UINT64 end;
-
-				auto const& timing_data = m_GpuTimings[idx][GpuTimer::Frame];
-				while (S_OK != _d3d_device_ctx->GetData(timing_data.m_DisjointQuery.Get(), &timestampDisjoint, sizeof(timestampDisjoint), 0))
-				{
-				}
-				while (S_OK != _d3d_device_ctx->GetData(timing_data.m_StartQuery.Get(), &start, sizeof(UINT64), 0))
-				{
-				}
-				while (S_OK != _d3d_device_ctx->GetData(timing_data.m_EndQuery.Get(), &end, sizeof(UINT64), 0))
-				{
-				}
-
-				double diff = (double)(end - start) / (double)timestampDisjoint.Frequency;
-				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::RenderGPU, (float)(diff * 1000.0));
-			}
 		}
 
 		ResourceLoader::instance()->update();
 
 		render();
-		present();
 
+		PrecisionTimer present_timer{};
+		present_timer.reset();
+		present_timer.start();
+		present();
+		present_timer.stop();
+
+		size_t idx = _frame_cnt % 2;
+		{
+			D3D11_QUERY_DATA_TIMESTAMP_DISJOINT timestampDisjoint;
+			UINT64 start;
+			UINT64 end;
+
+			if (Perf::get_disjoint(_d3d_device_ctx, timestampDisjoint))
+			{
+				auto& timing_data = m_GpuTimings[idx][GpuTimer::Frame];
+				f64 cpuTime;
+				timing_data.flush(_d3d_device_ctx, start, end, cpuTime);
+
+				double diff = (double)(end - start) / (double)timestampDisjoint.Frequency;
+				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::RenderGPU, (float)(diff * 1000.0));
+				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::RenderCPU, (float)(cpuTime * 1000.0));
+			}
+		}
+
+		// Update CPU only timings
+		_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::PresentCPU, present_timer.get_delta_time() * 1000.0);
 		if (_engine_settings.max_frame_time > 0.0)
 		{
 			f64 targetTimeMs = _engine_settings.max_frame_time;
@@ -419,19 +424,20 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			Perf::precise_sleep(time_to_sleep);
 		}
 
-		f64 framet = full_frame_timer.get_delta_time();
-		LOG_VERBOSE(Unknown, "FPS : {:.2f}", 1.0 / framet);
-
 		full_frame_timer.stop();
+		f64 framet = full_frame_timer.get_delta_time();
 		time_elapsed += framet;
 	}
 
-	// Make sure all tasks have finished before shutting down
-	Tasks::get_scheduler()->WaitforAllAndShutdown();
 
 	// User defined code for exiting the game
 	_game->end();
 	_game.reset();
+
+	// Make sure all tasks have finished before shutting down
+	Tasks::get_scheduler()->WaitforAllAndShutdown();
+
+	Perf::shutdown();
 
 	ResourceLoader::instance()->unload_all();
 	ResourceLoader::Shutdown();
@@ -1555,9 +1561,8 @@ void GameEngine::render()
 	size_t idx = _frame_cnt % 2;
 
 	// Begin frame gpu timer
-	auto const& timer = m_GpuTimings[idx][GpuTimer::Frame];
-	_d3d_device_ctx->Begin(timer.m_DisjointQuery.Get());
-	_d3d_device_ctx->End(timer.m_StartQuery.Get());
+	auto& timer = m_GpuTimings[idx][GpuTimer::Frame];
+	timer.begin(_d3d_device_ctx);
 
 	D3D11_VIEWPORT vp{};
 	vp.Width = static_cast<float>(this->get_viewport_size().x);
@@ -1669,9 +1674,9 @@ void GameEngine::render()
 void GameEngine::present()
 {
 	size_t idx = _frame_cnt % 2;
-	auto const& timer = m_GpuTimings[idx][GpuTimer::Frame];
-	_d3d_device_ctx->End(timer.m_EndQuery.Get());
-	_d3d_device_ctx->End(timer.m_DisjointQuery.Get());
+	auto& timer = m_GpuTimings[idx][GpuTimer::Frame];
+	timer.end(_d3d_device_ctx);
+	Perf::end_frame(_d3d_device_ctx);
 
 
 	// Present, 
@@ -1944,4 +1949,93 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 #endif
 
 	return result;
+}
+
+void RenderThread::run()
+{
+	_stage = Stage::Initialization;
+	LOG_INFO(Graphics, "Launching render thread...");
+	Perf::precise_sleep(2.0f);
+
+
+	_stage = Stage::Running;
+
+	u64 _frame = 0;
+	while(is_running())
+	{
+		LOG_INFO(Graphics, "Frame  {}", _frame);
+
+		Perf::precise_sleep(0.25f);
+	
+		++_frame;
+	}
+	_stage = Stage::Cleanup;
+	LOG_INFO(Graphics, "Shutting down render thread...");
+	Perf::precise_sleep(2.0f);
+
+	_stage = Stage::Terminated;
+}
+
+namespace Perf
+{
+	ComPtr<ID3D11Query> s_disjoint_query;
+
+void Timer::begin(ComPtr<ID3D11DeviceContext> const& ctx)
+{
+	_timer.reset();
+	_timer.start();
+
+	ctx->End(_begin.Get());
+}
+
+void Timer::end(ComPtr<ID3D11DeviceContext> const& ctx)
+{
+	_timer.stop();
+
+	ctx->End(_end.Get());
+}
+
+void Timer::flush(ComPtr<ID3D11DeviceContext> const& ctx, UINT64& start, UINT64& end, f64& cpuTime)
+{
+	while (S_OK != ctx->GetData(_begin.Get(), &start, sizeof(UINT64), 0))
+	{
+	}
+	while (S_OK != ctx->GetData(_end.Get(), &end, sizeof(UINT64), 0))
+	{
+	}
+
+	cpuTime = _timer.get_delta_time();
+}
+
+}
+
+void Perf::initialize(ComPtr<ID3D11Device> const& device)
+{
+	D3D11_QUERY_DESC desc{};
+	desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
+	desc.MiscFlags = 0;
+	device->CreateQuery(&desc, s_disjoint_query.ReleaseAndGetAddressOf());
+}
+
+void Perf::shutdown()
+{
+	s_disjoint_query.Reset();
+}
+
+void Perf::begin_frame(ComPtr<ID3D11DeviceContext> const& ctx)
+{
+	ctx->Begin(s_disjoint_query.Get());
+}
+
+void Perf::end_frame(ComPtr<ID3D11DeviceContext> const& ctx)
+{
+	ctx->End(s_disjoint_query.Get());
+}
+
+bool Perf::get_disjoint(ComPtr<ID3D11DeviceContext> const& ctx, D3D11_QUERY_DATA_TIMESTAMP_DISJOINT& disjoint)
+{
+	while (S_OK != ctx->GetData(s_disjoint_query.Get(), &disjoint, sizeof(D3D11_QUERY_DATA_TIMESTAMP_DISJOINT), 0))
+	{
+	}
+	return true;
 }

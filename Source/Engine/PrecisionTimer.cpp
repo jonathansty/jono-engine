@@ -1,10 +1,6 @@
 #include "engine.pch.h"
 #include "PrecisionTimer.h"
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include "windows.h"
-
 //=======================================================================================
 // PrecisionTimer.cpp by Frank Luna (C) 2008 All Rights Reserved.
 // Adapted for DAE GP1 by Bart Uyttenhove
@@ -14,6 +10,7 @@ PrecisionTimer::PrecisionTimer() : _seconds_per_tick(0.0), _start_time(0), _stop
 	__int64 countsPerSec;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSec);
 	_seconds_per_tick = 1.0 / (f64)countsPerSec;
+
 
 	reset();
 }

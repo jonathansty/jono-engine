@@ -150,7 +150,6 @@ public class SceneViewerProject : JonaBaseProject
 
         conf.AddPrivateDependency<EngineProject>(target);
 
-
         conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
         conf.Output = Configuration.OutputType.Exe;
 

@@ -79,6 +79,7 @@ struct LogEntry
 	LogSeverity _severity;
 	LogCategory _category;
 	std::string _message;
+	std::thread::id _thread_id;
 	const char* _file;
 	int _line;
 
@@ -107,7 +108,7 @@ public:
 	Logger();
 	~Logger();
 
-	static constexpr int c_buffer_size = 2048;
+	static constexpr int c_buffer_size = 512;
 
 	using Severity = LogSeverity;
 
@@ -121,13 +122,20 @@ public:
 	bool _hasNewMessages = false;
 
 private:
+	void thread_flush();
+
+	std::atomic<bool> _running;
 	bool _initialized;
 
 	// Time we started the game and logging data
 	SYSTEMTIME _time;
 
 	std::mutex _lock;
+	std::condition_variable _cv;
 	RingBuffer<LogEntry, c_buffer_size> _buffer;
+
+	std::vector<std::string> _to_flush;
+	std::thread _worker;
 
 	IO::IFileRef _file;
 };
@@ -138,9 +146,12 @@ namespace Logging
 template <typename S, typename... Args>
 void log(const char* file, int line, LogCategory category, LogSeverity severity, const S& format, Args&&... args)
 {
+	std::thread::id current_id = std::this_thread::get_id();
+
 	std::string msg = fmt::vformat(format, fmt::make_args_checked<Args...>(format, args...));
 	LogEntry entry = LogEntry();
 	entry._severity = severity;
+	entry._thread_id = current_id;
 	entry._message = msg;
 	entry._file = file;
 	entry._line = line;

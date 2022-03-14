@@ -158,9 +158,13 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 
 			// This is pretty nasty. When a blocking call to load happens we need to wait for the cached asset to be done loading 
 			// but we also don't want to schedule a new load on the same asset
-			if(blocking) {
-				std::unique_lock<std::mutex> lk{ it->second->_loaded_mutex };
-				it->second->_loaded_cv.wait(lk);
+			if (blocking)
+			{
+				if (!it->second->_loaded)
+				{
+					std::unique_lock<std::mutex> lk{ it->second->_loaded_mutex };
+					it->second->_loaded_cv.wait(lk);
+				}
 			}
 
 			return std::static_pointer_cast<T>(it->second);

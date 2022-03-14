@@ -1,7 +1,8 @@
 #pragma once
 
 // The values of keycode match up with the codes coming in from the Win32 event api
-enum class KeyCode : u32 {
+enum class KeyCode : u32
+{
 	Back = 0x08,
 	Tab = 0x09,
 	Clear = 0x0C,
@@ -68,19 +69,19 @@ enum class KeyCode : u32 {
 	Z = 0x5A,
 };
 
-inline u32 get_raw(KeyCode code) {
+inline u32 get_raw(KeyCode code)
+{
 	return static_cast<u32>(code);
 }
 
-
-enum class MouseKeyCode {
+enum class MouseKeyCode
+{
 	Left = 0x1,
 	Right = 0x2,
 	Middle = 0x4,
 	Mouse4 = 0x5,
 	Mouse5 = 0x6
 };
-
 
 class InputManager
 {
@@ -96,7 +97,7 @@ public:
 
 	int2 get_mouse_position(bool previousFrame = false) const;
 	int2 get_mouse_delta() const { return _mouse_delta; }
-	f32  get_scroll_delta() const { return _mouse_wheel; }
+	f32 get_scroll_delta() const { return _mouse_wheel; }
 
 	bool is_key_down(KeyCode key) const;
 	bool is_key_pressed(KeyCode key) const;
@@ -114,7 +115,7 @@ private:
 	using KeyHandler = std::function<void(WPARAM, LPARAM)>;
 	using MouseHandler = std::function<void(WPARAM, LPARAM)>;
 
-	// Input handling is done by registering a bunch of handlers into fixed size arrays 
+	// Input handling is done by registering a bunch of handlers into fixed size arrays
 	void register_key_handler(UINT msg, KeyHandler handler);
 	void register_key_handler(std::vector<UINT> msgs, KeyHandler handler);
 
@@ -129,7 +130,7 @@ private:
 	static constexpr u32 s_prev_frame = 1;
 	static constexpr u32 s_frame_count = 2;
 
-	std::array<int2,2> _mouse_pos;
+	std::array<int2, 2> _mouse_pos;
 	f32 _mouse_wheel;
 
 	std::array<KeyState, 5> _mouse_buttons;
