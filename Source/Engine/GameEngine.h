@@ -152,6 +152,11 @@ private:
 namespace Perf
 {
 
+inline void sleep(u32 ms)
+{
+	Sleep(ms);
+}
+
 // Blog post talking about the inaccuracy of the windows sleep function and how they arrived at this solution
 // https://blat-blatnik.github.io/computerBear/making-accurate-sleep-function/
 inline void precise_sleep(f64 seconds)
@@ -195,7 +200,16 @@ void begin_frame(ComPtr<ID3D11DeviceContext> const& ctx);
 
 void end_frame(ComPtr<ID3D11DeviceContext> const& ctx);
 
+void new_frame(u32 idx);
+
 bool get_disjoint(ComPtr<ID3D11DeviceContext> const& ctx, D3D11_QUERY_DATA_TIMESTAMP_DISJOINT& disjoint);
+
+s64 get_frame_count();
+
+s64 get_current_frame_resource_index();
+s64 get_previous_frame_resource_index();
+
+constexpr u32 s_frames = 2; 
 
 class Timer
 {
@@ -223,6 +237,7 @@ public:
 private:
 	ComPtr<ID3D11Query> _begin;
 	ComPtr<ID3D11Query> _end;
+	bool _flushed = true;
 
 	PrecisionTimer _timer;
 };
@@ -453,7 +468,7 @@ private:
 		};
 	};
 
-	std::array<std::array<Perf::Timer, GpuTimer::Count>, 2> m_GpuTimings;
+	std::array<Perf::Timer, 50> m_GpuTimings;
 
 	cli::CommandLine _command_line;
 
@@ -470,10 +485,10 @@ private:
 	// DirectX resources
 	bool _initialized;
 	DXGI_FORMAT _swapchain_format;
-	IDXGIFactory* _dxgi_factory;
+	IDXGIFactory3* _dxgi_factory;
 	ID3D11Device* _d3d_device;
 	ID3D11DeviceContext* _d3d_device_ctx;
-	IDXGISwapChain* _dxgi_swapchain;
+	IDXGISwapChain3* _dxgi_swapchain;
 	ID3D11RenderTargetView* _d3d_backbuffer_view;
 	ID3D11ShaderResourceView* _d3d_backbuffer_srv;
 	ID3DUserDefinedAnnotation* _d3d_user_defined_annotation;
@@ -521,7 +536,6 @@ private:
 	std::vector<ImpulseData> _b2d_impulse_data;
 	double _physics_timestep = 1 / 60.0f;
 	float2 _gravity;
-	unsigned long _frame_cnt = 0;
 
 	// Systems
 	unique_ptr<PrecisionTimer> _game_timer;

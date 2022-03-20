@@ -16,6 +16,7 @@
 #include <d3dcompiler.h>
 #include <dwrite.h> // Draw Text
 #include <dxgi.h>
+#include <dxgi1_4.h>
 #include <dxgidebug.h>
 #include <wincodec.h> // WIC: image loading
 using namespace DirectX;

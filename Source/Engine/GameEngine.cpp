@@ -221,11 +221,11 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	LOG_INFO(System, "Finished initialising worlds.");
 
 
-	_render_thread = std::make_unique<RenderThread>();
-	_render_thread->wait_for_stage(RenderThread::Stage::Running);
-	_render_thread->terminate();
-	_render_thread->wait_for_stage(RenderThread::Stage::Terminated);
-	_render_thread->join();
+	//_render_thread = std::make_unique<RenderThread>();
+	//_render_thread->wait_for_stage(RenderThread::Stage::Running);
+	//_render_thread->terminate();
+	//_render_thread->wait_for_stage(RenderThread::Stage::Terminated);
+	//_render_thread->join();
 
 	// Game Initialization
 	_game->initialize(_game_settings);
@@ -283,12 +283,9 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	Perf::initialize(_d3d_device);
 
 	// Initialize our GPU timers
-	for(u32 i = 0; i < GpuTimer::Count; ++i)
+	for (u32 j = 0; j < std::size(m_GpuTimings); ++j)
 	{
-		for (u32 j = 0; j < 2; ++j)
-		{
-			m_GpuTimings[j][i] = Perf::Timer(_d3d_device);
-		}
+		m_GpuTimings[j] = Perf::Timer(_d3d_device);
 	}
 
 	// Timer to track the elapsed time in the game
@@ -300,14 +297,22 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_running = true;
 	while (_running)
 	{
+
 		full_frame_timer.start();
 
-		// Process all window messages
-		MSG msg{};
-		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			Timer t{};
+			t.Start();
+			// Process all window messages
+			MSG msg{};
+			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
+
+			t.Stop();
+			_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::EventHandlingCPU, t.GetTimeInMS());
 		}
 
 		// Running might have been updated by the windows message loop. Handle this here.
@@ -316,8 +321,9 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			break;
 		}
 
+
+
 		{
-			++_frame_cnt;
 
 
 			// Execute the game simulation loop
@@ -385,23 +391,19 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 		ResourceLoader::instance()->update();
 
-		render();
-
-		PrecisionTimer present_timer{};
-		present_timer.reset();
-		present_timer.start();
-		present();
-		present_timer.stop();
-
-		size_t idx = _frame_cnt % 2;
+		// Process the previous frame gpu timers here to allow our update thread to run first
+		if (Perf::get_frame_count() > (Perf::s_frames - 2))
 		{
+			size_t current = Perf::get_previous_frame_resource_index();
+
 			D3D11_QUERY_DATA_TIMESTAMP_DISJOINT timestampDisjoint;
 			UINT64 start;
 			UINT64 end;
 
+
 			if (Perf::get_disjoint(_d3d_device_ctx, timestampDisjoint))
 			{
-				auto& timing_data = m_GpuTimings[idx][GpuTimer::Frame];
+				auto& timing_data = m_GpuTimings[current];
 				f64 cpuTime;
 				timing_data.flush(_d3d_device_ctx, start, end, cpuTime);
 
@@ -410,6 +412,16 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::RenderCPU, (float)(cpuTime * 1000.0));
 			}
 		}
+
+
+		render();
+
+		PrecisionTimer present_timer{};
+		present_timer.reset();
+		present_timer.start();
+		present();
+		present_timer.stop();
+
 
 		// Update CPU only timings
 		_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::PresentCPU, present_timer.get_delta_time() * 1000.0);
@@ -427,6 +439,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		full_frame_timer.stop();
 		f64 framet = full_frame_timer.get_delta_time();
 		time_elapsed += framet;
+
 	}
 
 
@@ -667,9 +680,11 @@ void GameEngine::resize_swapchain(uint32_t width, uint32_t height)
 			desc.Windowed = false;
 		}
 		desc.BufferCount = 2;
-		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
 		desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-		SUCCEEDED(_dxgi_factory->CreateSwapChain(_d3d_device, &desc, &_dxgi_swapchain));
+		ComPtr<IDXGISwapChain> swapchain;
+		SUCCEEDED(_dxgi_factory->CreateSwapChain(_d3d_device, &desc, &swapchain));
+		swapchain->QueryInterface(IID_PPV_ARGS(&_dxgi_swapchain));
 
 		set_debug_name(_dxgi_swapchain, "DXGISwapchain");
 		set_debug_name(_dxgi_factory, "DXGIFactory");
@@ -1033,13 +1048,13 @@ void GameEngine::create_factories()
 					info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
 				}
 
-				D3D11_INFO_QUEUE_FILTER f{};
-				f.DenyList.NumSeverities = 1;
-				D3D11_MESSAGE_SEVERITY severities[1] = {
-					//D3D11_MESSAGE_SEVERITY_WARNING
-				};
-				f.DenyList.pSeverityList = severities;
-				info_queue->AddStorageFilterEntries(&f);
+				//D3D11_INFO_QUEUE_FILTER f{};
+				//f.DenyList.NumSeverities = 1;
+				//D3D11_MESSAGE_SEVERITY severities[1] = {
+				//	D3D11_MESSAGE_SEVERITY_WARNING
+				//};
+				//f.DenyList.pSeverityList = severities;
+				//info_queue->AddStorageFilterEntries(&f);
 			}
 		}
 	}
@@ -1558,10 +1573,10 @@ void GameEngine::build_ui()
 void GameEngine::render()
 {
 	GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Frame");
-	size_t idx = _frame_cnt % 2;
+	size_t idx = Perf::get_current_frame_resource_index();
 
 	// Begin frame gpu timer
-	auto& timer = m_GpuTimings[idx][GpuTimer::Frame];
+	auto& timer = m_GpuTimings[idx];
 	timer.begin(_d3d_device_ctx);
 
 	D3D11_VIEWPORT vp{};
@@ -1572,12 +1587,6 @@ void GameEngine::render()
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	_d3d_device_ctx->RSSetViewports(1, &vp);
-
-	if (_render_world->get_view_camera())
-	{
-		//_render_world->get_view_camera()->set_aspect((f32)vp.Width / (f32)vp.Height);
-		//_render_world->get_view_camera()->update();
-	}
 
 	// Render 3D before 2D
 	if (_engine_settings.d3d_use)
@@ -1673,10 +1682,7 @@ void GameEngine::render()
 
 void GameEngine::present()
 {
-	size_t idx = _frame_cnt % 2;
-	auto& timer = m_GpuTimings[idx][GpuTimer::Frame];
-	timer.end(_d3d_device_ctx);
-	Perf::end_frame(_d3d_device_ctx);
+	size_t idx = Perf::get_current_frame_resource_index();
 
 
 	// Present, 
@@ -1688,6 +1694,11 @@ void GameEngine::present()
 	}
 	_dxgi_swapchain->Present(_vsync_enabled ? 1 : 0, flags);
 
+	auto& timer = m_GpuTimings[idx];
+	timer.end(_d3d_device_ctx);
+	Perf::end_frame(_d3d_device_ctx);
+
+	Perf::new_frame(0);
 
 	// Render all other imgui windows
 	ImGui::RenderPlatformWindowsDefault();
@@ -1978,14 +1989,21 @@ void RenderThread::run()
 
 namespace Perf
 {
-	ComPtr<ID3D11Query> s_disjoint_query;
+ComPtr<ID3D11Query> s_disjoint_query[s_frames];
+ComPtr<ID3D11Query> s_end_frame[s_frames];
+
+s64 s_frame = 0;
+s64 s_previous[s_frames] = {};
 
 void Timer::begin(ComPtr<ID3D11DeviceContext> const& ctx)
 {
+	assert(_flushed);
 	_timer.reset();
 	_timer.start();
 
 	ctx->End(_begin.Get());
+
+	_flushed = false;
 }
 
 void Timer::end(ComPtr<ID3D11DeviceContext> const& ctx)
@@ -1993,16 +2011,14 @@ void Timer::end(ComPtr<ID3D11DeviceContext> const& ctx)
 	_timer.stop();
 
 	ctx->End(_end.Get());
+	_flushed = false;
 }
 
 void Timer::flush(ComPtr<ID3D11DeviceContext> const& ctx, UINT64& start, UINT64& end, f64& cpuTime)
 {
-	while (S_OK != ctx->GetData(_begin.Get(), &start, sizeof(UINT64), 0))
-	{
-	}
-	while (S_OK != ctx->GetData(_end.Get(), &end, sizeof(UINT64), 0))
-	{
-	}
+	_flushed = true;
+	ENSURE_HR(ctx->GetData(_begin.Get(), &start, sizeof(UINT64), 0));
+	ENSURE_HR(ctx->GetData(_end.Get(), &end, sizeof(UINT64), 0));
 
 	cpuTime = _timer.get_delta_time();
 }
@@ -2014,28 +2030,69 @@ void Perf::initialize(ComPtr<ID3D11Device> const& device)
 	D3D11_QUERY_DESC desc{};
 	desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
 	desc.MiscFlags = 0;
-	device->CreateQuery(&desc, s_disjoint_query.ReleaseAndGetAddressOf());
+	for(u32 i = 0 ; i < s_frames; ++i)
+	{
+		device->CreateQuery(&desc, s_disjoint_query[i].ReleaseAndGetAddressOf());
+	}
+
 }
 
 void Perf::shutdown()
 {
-	s_disjoint_query.Reset();
+	for (u32 i = 0; i < s_frames; ++i)
+	{
+		s_disjoint_query[i].Reset();
+	}
 }
 
 void Perf::begin_frame(ComPtr<ID3D11DeviceContext> const& ctx)
 {
-	ctx->Begin(s_disjoint_query.Get());
+	ctx->Begin(s_disjoint_query[get_current_frame_resource_index()].Get());
 }
 
 void Perf::end_frame(ComPtr<ID3D11DeviceContext> const& ctx)
 {
-	ctx->End(s_disjoint_query.Get());
+	ctx->End(s_disjoint_query[get_current_frame_resource_index()].Get());
+}
+
+void Perf::new_frame(u32 idx)
+{
+
+	for (int i = 0; i < s_frames - 1; ++i)
+	{
+		int curr = s_frames - 1 - i;
+		int prev = s_frames - 2 - i;
+		s_previous[curr] = s_previous[prev];
+	}
+	s_previous[0] = (s_previous[0] + 1) % s_frames;
+
+	++s_frame;
 }
 
 bool Perf::get_disjoint(ComPtr<ID3D11DeviceContext> const& ctx, D3D11_QUERY_DATA_TIMESTAMP_DISJOINT& disjoint)
 {
-	while (S_OK != ctx->GetData(s_disjoint_query.Get(), &disjoint, sizeof(D3D11_QUERY_DATA_TIMESTAMP_DISJOINT), 0))
+	// TODO: Figure out how to really make this double buffered. In D3D11 our previous frame timers aren't even really done after executing 1 frame
+	s64 previous = get_previous_frame_resource_index();
+	while (S_OK != ctx->GetData(s_disjoint_query[previous].Get(), &disjoint, sizeof(D3D11_QUERY_DATA_TIMESTAMP_DISJOINT), 0))
 	{
+		Perf::precise_sleep(0.001);
 	}
-	return true;
+	return !disjoint.Disjoint;
 }
+
+
+s64 Perf::get_frame_count()
+{
+	return s_frame;
+}
+
+s64 Perf::get_current_frame_resource_index()
+{
+	return s_previous[0];
+}
+
+s64 Perf::get_previous_frame_resource_index()
+{
+	return s_previous[s_frames - 1];
+}
+

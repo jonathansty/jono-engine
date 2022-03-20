@@ -11,13 +11,15 @@ public:
 	{
 		_values[_idx] = value;
 		_idx = ++_idx % ValueCount;
+
+		_last = value;
 	}
 
 	operator f64() {
 		return average();
 	}
 
-	f64 average()
+	f64 average() const
 	{
 		f64 result = 0.0;
 		for(auto i : _values)
@@ -29,8 +31,14 @@ public:
 		return result;
 	}
 
+	f64 last() const
+	{
+		return _last;
+	}
+
 private:
 	u32 _idx = 0;
+	f64 _last;
 	std::array<f64, ValueCount> _values;
 
 };
@@ -53,6 +61,7 @@ public:
 	enum Timer
 	{
 		FrameTime,
+		EventHandlingCPU,
 		GameUpdateCPU,
 		PresentCPU,
 		RenderCPU,

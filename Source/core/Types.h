@@ -178,7 +178,7 @@ void SafeRelease(T*& obj) {
 #define ENSURE_HR(result)     \
 	{                         \
 		HRESULT __COUNTER__##_result = result;  \
-		assert(SUCCEEDED(__COUNTER__##_result)); \
+		assert(S_OK == (__COUNTER__##_result)); \
 	}
 
 

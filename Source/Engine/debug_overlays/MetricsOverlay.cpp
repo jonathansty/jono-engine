@@ -50,11 +50,12 @@ void MetricsOverlay::render_overlay()
 		ImGui::Text("FPS: %d", int(fps));
 
 
-		ImGui::Text("FrameTime:  %.4f ms", m_Times[Timer::FrameTime].average());
-		ImGui::Text("GameUpdate: %.4f ms", m_Times[Timer::GameUpdateCPU].average());
-		ImGui::Text("RenderCPU:  %.4f ms", m_Times[Timer::RenderCPU].average());
-		ImGui::Text("RenderGPU:  %.4f ms", m_Times[Timer::RenderGPU].average());
-		ImGui::Text("PresentCPU:  %.4f ms", m_Times[Timer::PresentCPU].average());
+		ImGui::Text("FrameTime:  %.4f ms", m_Times[Timer::FrameTime].last());
+		ImGui::Text("GameUpdate: %.4f ms", m_Times[Timer::GameUpdateCPU].last());
+		ImGui::Text("EventProcessing:  %.4f ms", m_Times[Timer::EventHandlingCPU].last());
+		ImGui::Text("RenderCPU:  %.4f ms", m_Times[Timer::RenderCPU].last());
+		ImGui::Text("RenderGPU:  %.4f ms", m_Times[Timer::RenderGPU].last());
+		ImGui::Text("PresentCPU:  %.4f ms", m_Times[Timer::PresentCPU].last());
 
 		ImGui::End();
 	}
