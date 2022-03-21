@@ -392,7 +392,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		ResourceLoader::instance()->update();
 
 		// Process the previous frame gpu timers here to allow our update thread to run first
-		if (Perf::get_frame_count() > (Perf::s_frames - 2))
+		if (Perf::can_collect())
 		{
 			size_t current = Perf::get_previous_frame_resource_index();
 
@@ -400,8 +400,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			UINT64 start;
 			UINT64 end;
 
-
-			if (Perf::get_disjoint(_d3d_device_ctx, timestampDisjoint))
+			if (Perf::collect_disjoint(_d3d_device_ctx, timestampDisjoint))
 			{
 				auto& timing_data = m_GpuTimings[current];
 				f64 cpuTime;
@@ -1698,8 +1697,6 @@ void GameEngine::present()
 	timer.end(_d3d_device_ctx);
 	Perf::end_frame(_d3d_device_ctx);
 
-	Perf::new_frame(0);
-
 	// Render all other imgui windows
 	ImGui::RenderPlatformWindowsDefault();
 }
@@ -1985,114 +1982,5 @@ void RenderThread::run()
 	Perf::precise_sleep(2.0f);
 
 	_stage = Stage::Terminated;
-}
-
-namespace Perf
-{
-ComPtr<ID3D11Query> s_disjoint_query[s_frames];
-ComPtr<ID3D11Query> s_end_frame[s_frames];
-
-s64 s_frame = 0;
-s64 s_previous[s_frames] = {};
-
-void Timer::begin(ComPtr<ID3D11DeviceContext> const& ctx)
-{
-	assert(_flushed);
-	_timer.reset();
-	_timer.start();
-
-	ctx->End(_begin.Get());
-
-	_flushed = false;
-}
-
-void Timer::end(ComPtr<ID3D11DeviceContext> const& ctx)
-{
-	_timer.stop();
-
-	ctx->End(_end.Get());
-	_flushed = false;
-}
-
-void Timer::flush(ComPtr<ID3D11DeviceContext> const& ctx, UINT64& start, UINT64& end, f64& cpuTime)
-{
-	_flushed = true;
-	ENSURE_HR(ctx->GetData(_begin.Get(), &start, sizeof(UINT64), 0));
-	ENSURE_HR(ctx->GetData(_end.Get(), &end, sizeof(UINT64), 0));
-
-	cpuTime = _timer.get_delta_time();
-}
-
-}
-
-void Perf::initialize(ComPtr<ID3D11Device> const& device)
-{
-	D3D11_QUERY_DESC desc{};
-	desc.Query = D3D11_QUERY_TIMESTAMP_DISJOINT;
-	desc.MiscFlags = 0;
-	for(u32 i = 0 ; i < s_frames; ++i)
-	{
-		device->CreateQuery(&desc, s_disjoint_query[i].ReleaseAndGetAddressOf());
-	}
-
-}
-
-void Perf::shutdown()
-{
-	for (u32 i = 0; i < s_frames; ++i)
-	{
-		s_disjoint_query[i].Reset();
-	}
-}
-
-void Perf::begin_frame(ComPtr<ID3D11DeviceContext> const& ctx)
-{
-	ctx->Begin(s_disjoint_query[get_current_frame_resource_index()].Get());
-}
-
-void Perf::end_frame(ComPtr<ID3D11DeviceContext> const& ctx)
-{
-	ctx->End(s_disjoint_query[get_current_frame_resource_index()].Get());
-}
-
-void Perf::new_frame(u32 idx)
-{
-
-	for (int i = 0; i < s_frames - 1; ++i)
-	{
-		int curr = s_frames - 1 - i;
-		int prev = s_frames - 2 - i;
-		s_previous[curr] = s_previous[prev];
-	}
-	s_previous[0] = (s_previous[0] + 1) % s_frames;
-
-	++s_frame;
-}
-
-bool Perf::get_disjoint(ComPtr<ID3D11DeviceContext> const& ctx, D3D11_QUERY_DATA_TIMESTAMP_DISJOINT& disjoint)
-{
-	// TODO: Figure out how to really make this double buffered. In D3D11 our previous frame timers aren't even really done after executing 1 frame
-	s64 previous = get_previous_frame_resource_index();
-	while (S_OK != ctx->GetData(s_disjoint_query[previous].Get(), &disjoint, sizeof(D3D11_QUERY_DATA_TIMESTAMP_DISJOINT), 0))
-	{
-		Perf::precise_sleep(0.001);
-	}
-	return !disjoint.Disjoint;
-}
-
-
-s64 Perf::get_frame_count()
-{
-	return s_frame;
-}
-
-s64 Perf::get_current_frame_resource_index()
-{
-	return s_previous[0];
-}
-
-s64 Perf::get_previous_frame_resource_index()
-{
-	return s_previous[s_frames - 1];
 }
 

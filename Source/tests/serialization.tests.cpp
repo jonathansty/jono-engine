@@ -1,51 +1,58 @@
 #include "tests.pch.h"
 
-struct TypeWithVector {
+struct TypeWithVector
+{
 	std::vector<int> vector_data;
 	std::unordered_map<std::string, int> map_data;
 };
 
-struct MockA {
+struct MockA
+{
 	MockA() = default;
 	MockA(MockA const& rhs)
-			: a(rhs.a), d(rhs.d) 
-	{}
+			: a(rhs.a), d(rhs.d)
+	{
+	}
 
 	int a;
 	float d;
 };
 
-struct MockB {
+struct MockB
+{
 	MockB() = default;
-	MockB(MockB const& rhs) : value(rhs.value), data(data) {
-
+	MockB(MockB const& rhs)
+			: value(rhs.value), data(data)
+	{
 	}
 
 	MockA value;
 	std::string data;
 };
-RTTR_REGISTRATION{
+RTTR_REGISTRATION
+{
 	using namespace rttr;
 
 	registration::class_<MockA>("MockA")
-		.constructor<>()()
-		.property("a", &MockA::a)
-		.property("d", &MockA::d);
-	
+			.constructor<>()()
+			.property("a", &MockA::a)
+			.property("d", &MockA::d);
+
 	registration::class_<MockB>("MockB")
-		.constructor<>()()
-		.property("value", &MockB::value)
-		.property("data", &MockB::data);
+			.constructor<>()()
+			.property("value", &MockB::value)
+			.property("data", &MockB::data);
 
 	registration::class_<TypeWithVector>("TypeWithVector")
-		.property("map_data", &TypeWithVector::map_data)
-		.property("vector_data", &TypeWithVector::vector_data);
-
-
+			.property("map_data", &TypeWithVector::map_data)
+			.property("vector_data", &TypeWithVector::vector_data);
 }
-namespace serialization {
-TEST_CLASS(SerializationBinaryTests) {
-	TEST_METHOD(serialize_simple) {
+namespace serialization
+{
+	TEST_CLASS(SerializationBinaryTests)
+	{
+		TEST_METHOD(serialize_simple)
+		{
 
 			MockB data{};
 			data.value.a = 100;
@@ -57,18 +64,18 @@ TEST_CLASS(SerializationBinaryTests) {
 
 			auto io = IO::create();
 			io->mount("./");
-			if (auto file = io->open("tests.bin", IO::Mode::Write, true); file) {
+			if (auto file = io->open("tests.bin", IO::Mode::Write, true); file)
+			{
 				serialization::serialize_instance<IO::Mode::Write>(file, data);
 			}
 
-			if (auto file = io->open("tests.bin", IO::Mode::Read, true); file) {
-
+			if (auto file = io->open("tests.bin", IO::Mode::Read, true); file)
+			{
 				u64 hash = serialization::read<u64>(file);
 				file->seek(0, IO::SeekMode::FromBeginning);
 
 				rttr::type in_type = helpers::get_type_by_id(hash);
 				rttr::variant obj = in_type.create();
-
 
 				bool result = serialization::serialize_instance<IO::Mode::Read>(file, obj);
 
@@ -76,36 +83,31 @@ TEST_CLASS(SerializationBinaryTests) {
 				Assert::AreEqual(data.value.a, read_data->value.a);
 				Assert::AreEqual(data.value.d, read_data->value.d);
 				Assert::AreEqual(data.data, read_data->data);
-			
 			}
-	}
+		}
 
+		TEST_METHOD(serialize_containers)
+		{
+			auto io = IO::create();
+			io->mount("./");
+			auto file = io->open("tests.bin", IO::Mode::Write, true);
+			Assert::IsNotNull(file.get());
 
+			TypeWithVector v = TypeWithVector{
+				std::vector<int>{ 1, 2, 3, 9, -1, -5 }
+			};
+			rttr::variant obj = v;
 
-	TEST_METHOD(serialize_containers) {
-		auto io = IO::create();
-		io->mount("./");
-		auto file = io->open("tests.bin", IO::Mode::Write, true);
-		Assert::IsNotNull(file.get());
+			Assert::IsTrue(serialization::serialize_instance<IO::Mode::Write>(file, obj));
 
-		TypeWithVector v = TypeWithVector{
-			std::vector<int>{ 1, 2, 3, 9, -1, -5 }
-		};
-		rttr::variant obj = v;
+			file.reset();
 
-		Assert::IsTrue(serialization::serialize_instance<IO::Mode::Write>(file, obj));
+			file = io->open("tests.bin", IO::Mode::Read, true);
+			Assert::IsNotNull(file.get());
 
-		file.reset();
+			Assert::IsTrue(serialization::serialize_instance<IO::Mode::Read>(file, obj));
 
-		file = io->open("tests.bin", IO::Mode::Read, true);
-		Assert::IsNotNull(file.get());
-
-		Assert::IsTrue(serialization::serialize_instance<IO::Mode::Read>(file, obj));
-
-		rttr::variant var = obj.convert<TypeWithVector>();
-
-	}
-};
-
-
+			rttr::variant var = obj.convert<TypeWithVector>();
+		}
+	};
 }
