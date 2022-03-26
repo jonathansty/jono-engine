@@ -29,8 +29,8 @@ void ModelResource::load()
 
 	std::filesystem::path dir_path = std::filesystem::path(path);
 	dir_path = dir_path.parent_path();
-	auto device = GameEngine::instance()->GetD3DDevice();
-	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
+	auto device = Graphics::get_device();
+	auto ctx = Graphics::get_ctx();
 
 	using namespace Assimp;
 	Importer importer{};

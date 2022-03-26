@@ -104,7 +104,9 @@ void SimpleMeshComponent::on_detach(Entity* ent)
 
 void SimpleMeshComponent::render()
 {
-	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
+	auto device = Graphics::get_device();
+	auto ctx = Graphics::get_ctx();
+
 
 	// Draw mesh
 	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);

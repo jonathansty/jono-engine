@@ -11,7 +11,7 @@
 
 void MaterialResource::load()
 {
-	auto device = GameEngine::instance()->GetD3DDevice();
+	auto device = Graphics::get_device();
 
 	ShaderCompiler::CompileParameters params{};
 	params.entry_point = "main";

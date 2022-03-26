@@ -39,20 +39,29 @@ struct SamplerState {
 
 namespace Graphics {
 
+	struct DeviceContext;
+
 	// Entry point for the graphics. Initializes default D3D11 objects for usage later
-	void init(ComPtr<ID3D11Device> device, ComPtr<ID3D11DeviceContext> ctx);
+	void init(DeviceContext const& ctx);
 
 	// On shutdown the application should call this to release all handles to the device, context and the common states.
 	void deinit();
 
 	// Public API to retrieve the currently initialized graphics data and common states
 	ComPtr<ID3D11Device>            get_device();
+	ComPtr<ID3D11DeviceContext>     get_ctx();
 	ComPtr<ID3D11BlendState>        get_blend_state(BlendState::Value blendState);
 	ComPtr<ID3D11RasterizerState>   get_rasterizer_state(RasterizerState::Value rasterizerState);
 	ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState::Value blendState);
 	ComPtr<ID3D11SamplerState>      get_sampler_state(SamplerState::Value blendState);
 
-}
+	template <typename T>
+	HRESULT set_debug_name(T* obj, std::string const& n)
+	{
+		return obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(n.size()), n.data());
+	}
+
+	}
 
 class ConstantBuffer {
 

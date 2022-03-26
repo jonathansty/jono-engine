@@ -1,23 +1,24 @@
 #include "engine.pch.h"
 
 #include "Graphics.h"
+#include "Renderer.h"
 
-namespace Graphics {
+namespace Graphics
+{
 
-ComPtr<ID3D11Device> s_device;
-ComPtr<ID3D11DeviceContext> s_ctx;
+DeviceContext s_ctx;
 
 std::array<ComPtr<ID3D11DepthStencilState>, DepthStencilState::Num> s_depth_stencil_states;
 std::array<ComPtr<ID3D11BlendState>, BlendState::Num> s_blend_states;
 std::array<ComPtr<ID3D11RasterizerState>, RasterizerState::Num> s_raster_states;
 std::array<ComPtr<ID3D11SamplerState>, SamplerState::Num> s_sampler_states;
 
-void init(ComPtr<ID3D11Device> device, ComPtr<ID3D11DeviceContext> ctx) {
-
-	assert(!s_device);
-
-	s_device = device;
+void init(DeviceContext const& ctx)
+{
+	assert(ctx._device.Get() && ctx._ctx.Get());
 	s_ctx = ctx;
+
+	auto device = s_ctx._device;
 
 	// Depth Stencil
 	{
@@ -33,7 +34,6 @@ void init(ComPtr<ID3D11Device> device, ComPtr<ID3D11DeviceContext> ctx) {
 		ds_desc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
 		SUCCEEDED(device->CreateDepthStencilState(&ds_desc, s_depth_stencil_states[DepthStencilState::LessEqual].GetAddressOf()));
 		helpers::SetDebugObjectName(s_depth_stencil_states[DepthStencilState::LessEqual].Get(), "LessEqual");
-
 	}
 
 	// Blend states
@@ -67,41 +67,54 @@ void init(ComPtr<ID3D11Device> device, ComPtr<ID3D11DeviceContext> ctx) {
 	}
 }
 
-void deinit() {
-	auto clear_fn = []<typename T>(T& ptr) {
+void deinit()
+{
+	auto clear_fn = []<typename T>(T& ptr)
+	{
 		ptr.Reset();
 	};
 	std::for_each(s_depth_stencil_states.begin(), s_depth_stencil_states.end(), clear_fn);
 	std::for_each(s_blend_states.begin(), s_blend_states.end(), clear_fn);
 	std::for_each(s_raster_states.begin(), s_raster_states.end(), clear_fn);
 	std::for_each(s_sampler_states.begin(), s_sampler_states.end(), clear_fn);
-	s_device.Reset();
 
+	s_ctx = {};
 }
 
-ComPtr<ID3D11Device> get_device() {
-	return s_device;
+ComPtr<ID3D11Device> get_device()
+{
+	return s_ctx._device;
 }
 
-ComPtr<ID3D11BlendState> get_blend_state(BlendState::Value blendState) {
+ComPtr<ID3D11DeviceContext> get_ctx()
+{
+	return s_ctx._ctx;
+}
+
+ComPtr<ID3D11BlendState> get_blend_state(BlendState::Value blendState)
+{
 	return s_blend_states[blendState];
 }
 
-ComPtr<ID3D11RasterizerState> get_rasterizer_state(RasterizerState::Value rasterizerState) {
+ComPtr<ID3D11RasterizerState> get_rasterizer_state(RasterizerState::Value rasterizerState)
+{
 	return s_raster_states[rasterizerState];
 }
 
-ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState::Value depthStencilState) {
+ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState::Value depthStencilState)
+{
 	return s_depth_stencil_states[depthStencilState];
 }
 
-ComPtr<ID3D11SamplerState> get_sampler_state(SamplerState::Value samplerState) {
+ComPtr<ID3D11SamplerState> get_sampler_state(SamplerState::Value samplerState)
+{
 	return s_sampler_states[samplerState];
 }
 
 } // namespace Graphics
 
-std::shared_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32 size, bool cpu_write /*= false*/, BufferUsage usage /*= BufferUsage::Default*/, void* initialData /*= nullptr*/) {
+std::shared_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32 size, bool cpu_write /*= false*/, BufferUsage usage /*= BufferUsage::Default*/, void* initialData /*= nullptr*/)
+{
 	std::shared_ptr<ConstantBuffer> result = std::make_shared<ConstantBuffer>();
 
 	D3D11_BUFFER_DESC buff{};
@@ -112,7 +125,8 @@ std::shared_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 		buff.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
 
 	buff.Usage = D3D11_USAGE_DEFAULT;
-	switch (usage) {
+	switch (usage)
+	{
 		case BufferUsage::Dynamic:
 			buff.Usage = D3D11_USAGE_DYNAMIC;
 			break;
@@ -130,7 +144,7 @@ std::shared_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 	data.pSysMem = initialData;
 
 	ComPtr<ID3D11Buffer> b;
-	if(initialData)
+	if (initialData)
 		SUCCEEDED(device->CreateBuffer(&buff, &data, &b));
 	else
 		SUCCEEDED(device->CreateBuffer(&buff, nullptr, &b));
@@ -148,7 +162,7 @@ namespace Perf
 constexpr u32 s_frames = 2;
 static_assert(s_frames >= 2, "Number of buffered frames need to be atleast 2 to implement a double buffering strategy.");
 
-// Query stack to keep track of our disjoint queries 
+// Query stack to keep track of our disjoint queries
 ComPtr<ID3D11Query> s_disjoint_query[s_frames];
 
 // Global state to track performance related states
@@ -182,7 +196,6 @@ void Timer::flush(ComPtr<ID3D11DeviceContext> const& ctx, UINT64& start, UINT64&
 
 	cpuTime = _timer.get_delta_time();
 }
-
 
 void initialize(ComPtr<ID3D11Device> const& device)
 {

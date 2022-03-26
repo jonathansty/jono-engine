@@ -1,15 +1,9 @@
 #pragma once
 
-class GameSettings
+struct GameSettings final
 {
-public:
-	GameSettings(void);
-	virtual ~GameSettings(void);
-
-	// C++11 make the class non-copyable
-	GameSettings(const GameSettings&) = delete;
-	GameSettings& operator=(const GameSettings&) = delete;
-
+	GameSettings();
+	~GameSettings();
 	enum class FullScreenMode
 	{
 		Windowed,

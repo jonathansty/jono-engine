@@ -61,8 +61,9 @@ std::shared_ptr<TextureResource> TextureResource::default_roughness() {
 void TextureResource::load()
 {
 	std::string const& path = get_init_parameters().path;
-	auto device = GameEngine::instance()->GetD3DDevice();
-	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
+	auto device = Graphics::get_device();
+	auto ctx = Graphics::get_ctx();
+
 
 	int x, y, comp;
 	stbi_uc* data = stbi_load(path.c_str(), &x, &y, &comp, 4); 
@@ -75,8 +76,8 @@ void TextureResource::load()
 
 void TextureResource::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data) {
 
-	auto device = GameEngine::instance()->GetD3DDevice();
-	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
+	auto device = Graphics::get_device();
+	auto ctx = Graphics::get_ctx();
 
 
 	auto desc = CD3D11_TEXTURE2D_DESC(format, width, height);

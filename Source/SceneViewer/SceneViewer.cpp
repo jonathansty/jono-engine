@@ -108,8 +108,8 @@ void SceneViewer::start()
 
 	});
 
-	auto device = GameEngine::instance()->GetD3DDevice();
-	auto ctx = GameEngine::instance()->GetD3DDeviceContext();
+	auto device = Graphics::get_device();
+	auto ctx = Graphics::get_ctx();
 
 	// Capture the mouse in the window
 	::SetCapture(GameEngine::instance()->get_window());

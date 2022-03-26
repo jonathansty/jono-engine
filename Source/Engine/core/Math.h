@@ -25,4 +25,17 @@ inline float3 compute_normal(float3 p0, float3 p1, float3 p2)
 	return hlslpp::normalize(normal);
 }
 
+// Inverse transpose is used to transform normal vectors properly when shearing and using non uniform matrices
+inline float4x4 compute_inverse_transpose(float4x4 matrix)
+{
+	float4x4 result = matrix;
+	result.f32_128_3[0] = 0.0f;
+	result.f32_128_3[1] = 0.0f;
+	result.f32_128_3[2] = 0.0f;
+	result.f32_128_3[3] = 1.0f;
+
+	return transpose(inverse(result));
+
+}
+
 }
