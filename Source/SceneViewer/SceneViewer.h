@@ -41,7 +41,6 @@ private:
 	// World to store our scene data in
 	std::shared_ptr<framework::World> _world;
 	shared_ptr<RenderWorld> _render_world;
-	shared_ptr<RenderWorldCamera> _camera;
 	shared_ptr<RenderWorldLight> _light;
 	shared_ptr<RenderWorldInstance> _model;
 

@@ -120,53 +120,46 @@ void SceneViewer::start()
 	
 	auto render_world = GameEngine::instance()->get_render_world();
 	_render_world = render_world;
-	render_world->create_instance(float4x4::identity(), "Resources/Models/plane.glb");
-_model = render_world->create_instance(float4x4::identity(), "Resources/Models/cube.glb");
+	render_world->create_instance(float4x4::identity(), "Resources/Models/plane_big.glb");
+	_model = render_world->create_instance(float4x4::translation({0.0,1.0,0.0}), "Resources/Models/cube.glb");
 
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
 	const float aspect = (float)size.x / (float)size.y;
-	const float near_plane = 0.01f;
+	const float near_plane = 5.0f;
 	const float far_plane = 1000.0f;
 
+	// Create Cam 1
 	auto rw_cam = render_world->create_camera();
-	_camera = rw_cam;
 	RenderWorldCamera::CameraSettings settings{};
 	settings.aspect = aspect;
 	settings.far_clip = far_plane;
 	settings.near_clip = near_plane;
-	settings.fov = 33.0f;
-	settings.reverse_z = true;
+	settings.fov = hlslpp::radians(float1(60.0f));
 	settings.projection_type = RenderWorldCamera::Projection::Perspective;
 	rw_cam->set_settings(settings);
-	rw_cam->set_position({ 0.0f, 50.0f, -100.0f });
-	rw_cam->look_at({ 0.0f, 0.0f, 0.0f });
+	rw_cam->set_position({ 0.0f, 1.5f, -25.0 });
+
+	// Create Cam 2 
+	auto cam2 = render_world->create_camera();
+	settings.near_clip = 0.5f;
+	settings.far_clip = 2000.0f;
+	cam2->set_settings(settings);
 
 	auto l = render_world->create_light(RenderWorldLight::LightType::Directional);
 	settings.aspect = 1.0f;
-	settings.fov = 3.0f;
+	settings.near_clip = 0.0f;
+	settings.far_clip = 25.0f;
+	settings.width = 10.0f;
+	settings.height = 20.0f;
 	settings.projection_type = RenderWorldCamera::Projection::Ortographic;
-	settings.reverse_z = true;
 	l->set_settings(settings);
 	l->set_colour({ 1.0f, 1.0f, 1.0f });
 	l->set_casts_shadow(true);
-	l->set_position(rw_cam->get_position());
-	l->look_at(float3{ 0.0f, 0.0f, 0.0f });
+	l->set_position({ 10.0, 10.0f, 0.0f });
+	l->look_at(float3{0.0f, 0.0f, 0.0f });
 	_light = l;
-
-	//_timer += 1.5f;
-	//_light_tick += M_PI_2;
-
-	float4 f = float4{ 1.0f, 5.0f, 100.0f, 1.0f };
-
-	float4 projected_cam = hlslpp::mul(rw_cam->get_vp(), f);
-	projected_cam.xyz = projected_cam.xyz / projected_cam.w;
-	float4 projected_light = hlslpp::mul(l->get_vp(), f);
-	projected_light.xyz = projected_light.xyz / projected_light.w;
-
-
-
-	framework::EntityDebugOverlay* overlay = new framework::EntityDebugOverlay(_world.get());
-	GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
+	//framework::EntityDebugOverlay* overlay = new framework::EntityDebugOverlay(_world.get());
+	//GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
 	// Create the world camera
 	#if 0 
@@ -255,6 +248,7 @@ void SceneViewer::tick(double deltaTime)
 
 	auto imgui = ImGui::GetIO();
 
+	auto camera = _render_world->get_view_camera();
 	bool has_viewport_focus = GameEngine::instance()->is_viewport_focused();
 	if (has_viewport_focus) {
 		f32 scroll_delta = input_manager->get_scroll_delta();
@@ -277,11 +271,11 @@ void SceneViewer::tick(double deltaTime)
 		}
 
 		// pan
-		float3 pos = _camera->get_position();
+		float3 pos = camera->get_position();
 
 		float3 localPan = float3(0.0f, 0.0f, 0.0f);
 		if (input_manager->is_mouse_button_down(1)) {
-			float4x4 view = _camera->get_view();
+			float4x4 view = camera->get_view();
 
 			float4 right = hlslpp::mul(view, float4(1.0, 0.0, 0.0, 0.0)) * -(f32)mouse_delta.x * deltaTime;
 			float4 up = hlslpp::mul(view, float4(0.0, 1.0, 0.0, 0.0)) * (f32)mouse_delta.y * deltaTime;
@@ -298,12 +292,13 @@ void SceneViewer::tick(double deltaTime)
 		}
 	}
 
-	float radius = 50.0f;
-	float3 newUnitPos = float3{ cos(_timer) * sin(_up_timer), cos(_up_timer), sin(_timer) * sin(_up_timer) };
-	_camera->set_position(_center + _zoom*newUnitPos);
-	_camera->look_at(_center);
 
-	_light->set_position(float3{ radius * sin(_light_tick), 20.0f, radius * cos(_light_tick) });
+	float radius = 10.0f;
+	float3 newUnitPos = float3{ cos(_timer) * sin(_up_timer), cos(_up_timer), sin(_timer) * sin(_up_timer) };
+	camera->set_position(_center + _zoom*newUnitPos);
+	camera->look_at(_center);
+
+	_light->set_position(float3{ radius * sin(_light_tick), 5.0f, radius * cos(_light_tick) });
 	_light->look_at(float3{ 0.0f, 0.0f, 0.0f });
 
 	_world->update((float)deltaTime);

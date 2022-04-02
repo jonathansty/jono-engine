@@ -19,7 +19,6 @@
 #include <dxgi1_4.h>
 #include <dxgidebug.h>
 #include <wincodec.h> // WIC: image loading
-using namespace DirectX;
 
 #include <wrl.h>
 using Microsoft::WRL::ComPtr;
@@ -46,7 +45,7 @@ using namespace D2D1;
 #define FEATURE_D2D    true    // Flag to control if D2D can be used or not
 #define FEATURE_XAUDIO true    // Flag to control if XAudio can be used or not
 
-#define NOMINMAX
+
 #define HLSLPP_FEATURE_TRANSFORM
 #include <hlsl++.h>
 

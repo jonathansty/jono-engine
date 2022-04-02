@@ -50,8 +50,8 @@ public:
 		float3 up{ 0.0f, 1.0f, 0.0f };
 
 		quaternion rot = ent->get_rotation();
-		quaternion added = hlslpp::axisangle(up, hlslpp::radians(hlslpp::float1(dt * _speed)));
-		rot *= added;
+		quaternion added = quaternion::rotation_axis(up, hlslpp::radians(hlslpp::float1(dt * _speed)));
+		rot = hlslpp::mul(rot, added);
 		ent->set_rotation(rot);
 		//ent->set_local_position(_offset.x + cos(_elapsed) * 100.0, _offset.y + sin(_elapsed) * 100.0);
 	}

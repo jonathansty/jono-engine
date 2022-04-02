@@ -89,6 +89,7 @@ public abstract class JonaBaseProject : Project
     virtual public void ConfigureDebug(Configuration config, Target target)
     {
         config.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDebugDLL);
+        config.Options.Add(Options.Vc.Compiler.Inline.Disable);
     }
 
     [Configure(Optimization.Release), ConfigurePriority(3)]

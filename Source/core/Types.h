@@ -25,6 +25,14 @@ using s64 = int64_t;
 using f32 = float;
 using f64 = double;
 
+using DirectX::XMFLOAT2;
+using DirectX::XMFLOAT3;
+using DirectX::XMFLOAT4;
+using DirectX::XMFLOAT4X4;
+using DirectX::XMFLOAT3X3;
+using DirectX::XMMATRIX;
+using DirectX::XMVECTOR;
+
 using hlslpp::double2;
 using hlslpp::float1;
 using hlslpp::float2;
@@ -183,3 +191,20 @@ void SafeRelease(T*& obj) {
 
 
 
+// Enum related implementation macros
+
+// Implements basic enum bitflag operators and the underlying operator* overload
+#define ENUM_BITFLAGS(enum_type)                                           \
+	inline enum_type operator&(enum_type const& lhs, enum_type const& rhs) \
+	{                                                                      \
+		return static_cast<enum_type>((u32)lhs & (u32)rhs);                \
+	}                                                                      \
+	inline enum_type operator|(enum_type const& lhs, enum_type const& rhs) \
+	{                                                                      \
+		return static_cast<enum_type>((u32)lhs | (u32)rhs);                \
+	}                                                                      \
+	ENUM_UNDERLYING_TYPE(enum_type)	
+
+// Implement operator* to convert the enum to it's underlying type
+#define ENUM_UNDERLYING_TYPE(enum_type) \
+	constexpr auto operator*(enum_type e) noexcept { return static_cast<std::underlying_type<enum_type>::type>(e); }

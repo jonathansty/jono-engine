@@ -97,7 +97,7 @@ void EntityDebugOverlay::render_object(rttr::instance& obj)
 				hlslpp::float3 euler = hlslpp::degrees(euler_angles);
 				if (ImGui::InputScalarN(name.c_str(), ImGuiDataType_Float, (float*)&euler, 3))
 				{
-					p.set_value(obj, WrapperQuat{ hlslpp::euler(hlslpp::radians(euler)) });
+					p.set_value(obj, WrapperQuat{ quaternion::rotation_euler_zxy(hlslpp::radians(euler)) });
 				}
 			}
 			else if (t == rttr::type::get<float>())

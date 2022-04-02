@@ -1,5 +1,5 @@
-#include "Math.h"
 #include "engine.pch.h"
+#include "Math.h"
 
 namespace hlslpp_helpers
 {

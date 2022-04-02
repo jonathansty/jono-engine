@@ -61,12 +61,13 @@ void Entity::set_rotation(hlslpp::quaternion quat) {
 	_rot = quat;
 }
 
-void Entity::set_rotation(float angle) {
-	set_rotation(hlslpp::euler({ 0.0, 0.0, angle }));
-}
-
 using hlslpp::float3;
 using hlslpp::float4x4;
+
+void Entity::set_rotation(float angle) {
+	set_rotation(quaternion::rotation_euler_zxy({ 0.0, 0.0, angle }));
+}
+
 float4x4 Entity::get_world_transform() const {
 	float4x4 curr = get_local_transform();
 	if (_parent) {

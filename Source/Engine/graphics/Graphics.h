@@ -2,71 +2,47 @@
 
 #include "PrecisionTimer.h"
 
-struct DepthStencilState {
-	enum Value {
-		Default,
-		GreaterEqual = Default,
-		Equal,
-		LessEqual,
-		Num
-	};
+enum class DepthStencilState : u32
+{
+	Default,
+	GreaterEqual = Default,
+	Equal,
+	LessEqual,
+	Num
 };
+ENUM_UNDERLYING_TYPE(DepthStencilState);
 
-struct BlendState {
-	enum Value {
-		Default,
-		Num
-	};
+enum class BlendState : u32
+{
+	Default,
+	Num
 };
+ENUM_UNDERLYING_TYPE(BlendState);
 
-struct RasterizerState {
-	enum Value {
-		Default,
-		CullNone = Default,
-		CullFront,
-		CullBack,
-		Num
-	};
+
+enum class RasterizerState : u32
+{
+	Default,
+	CullNone = Default,
+	CullFront,
+	CullBack,
+	Num
 };
+ENUM_UNDERLYING_TYPE(RasterizerState);
 
-struct SamplerState {
-	enum Value {
-		MinMagMip_Linear,
-		Num
-	};
 
+enum class SamplerState : u32
+{
+	MinMagMip_Linear,
+	Num
 };
+ENUM_UNDERLYING_TYPE(SamplerState);
 
-namespace Graphics {
-
-	struct DeviceContext;
-
-	// Entry point for the graphics. Initializes default D3D11 objects for usage later
-	void init(DeviceContext const& ctx);
-
-	// On shutdown the application should call this to release all handles to the device, context and the common states.
-	void deinit();
-
-	// Public API to retrieve the currently initialized graphics data and common states
-	ComPtr<ID3D11Device>            get_device();
-	ComPtr<ID3D11DeviceContext>     get_ctx();
-	ComPtr<ID3D11BlendState>        get_blend_state(BlendState::Value blendState);
-	ComPtr<ID3D11RasterizerState>   get_rasterizer_state(RasterizerState::Value rasterizerState);
-	ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState::Value blendState);
-	ComPtr<ID3D11SamplerState>      get_sampler_state(SamplerState::Value blendState);
-
-	template <typename T>
-	HRESULT set_debug_name(T* obj, std::string const& n)
-	{
-		return obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(n.size()), n.data());
-	}
-
-	}
-
-class ConstantBuffer {
-
+class ConstantBuffer
+{
 public:
-	enum class BufferUsage {
+	enum class BufferUsage
+	{
 		Default,
 		Dynamic,
 		Staging,
@@ -77,27 +53,27 @@ public:
 
 	ID3D11Buffer* Get() const { return _buffer.Get(); }
 
-	void* map(ID3D11DeviceContext* ctx) {
+	void* map(ID3D11DeviceContext* ctx)
+	{
 		D3D11_MAPPED_SUBRESOURCE resource{};
 		ctx->Map(_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
 		return resource.pData;
-
 	}
-	void unmap(ID3D11DeviceContext* ctx) {
+	void unmap(ID3D11DeviceContext* ctx)
+	{
 		ctx->Unmap(_buffer.Get(), 0);
 	}
 
 	ConstantBuffer()
 			: _buffer()
 			, _size(0)
-			, _cpu_writeable(false) 
+			, _cpu_writeable(false)
 	{
 	}
 
-	~ConstantBuffer(){}
+	~ConstantBuffer() {}
 
 private:
-
 	ComPtr<ID3D11Buffer> _buffer;
 	u32 _size;
 	bool _cpu_writeable;
@@ -105,22 +81,27 @@ private:
 };
 using ConstantBufferRef = shared_ptr<ConstantBuffer>;
 
-// --------------------------------------------------------------------------------- 
-// Debug 
-// --------------------------------------------------------------------------------- 
+// ---------------------------------------------------------------------------------
+// Debug
+// ---------------------------------------------------------------------------------
 
 #ifdef _DEBUG
-class scoped_gpu_event final {
+class scoped_gpu_event final
+{
 public:
 	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::wstring name)
-			: _name(name), _annotation(annotation) {
+			: _name(name), _annotation(annotation)
+	{
 		annotation->BeginEvent(name.c_str());
 	}
 	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::string name)
-			: _annotation(annotation) {
+			: _annotation(annotation)
+	{
 		_name = std::wstring(name.begin(), name.end());
+		annotation->BeginEvent(_name.c_str());
 	}
-	~scoped_gpu_event() {
+	~scoped_gpu_event()
+	{
 		_annotation->EndEvent();
 	}
 
@@ -137,6 +118,36 @@ private:
 #define GPU_SCOPED_EVENT(ctx, name)
 #define GPU_MARKER(ctx, name)
 #endif
+
+namespace Graphics {
+
+	struct DeviceContext;
+
+	// Entry point for the graphics. Initializes default D3D11 objects for usage later
+	void init(DeviceContext const& ctx);
+
+	// On shutdown the application should call this to release all handles to the device, context and the common states.
+	void deinit();
+
+	// Public API to retrieve the currently initialized graphics data and common states
+	ComPtr<ID3D11Device>            get_device();
+	ComPtr<ID3D11DeviceContext>     get_ctx();
+	ComPtr<ID3D11BlendState>        get_blend_state(BlendState blendState);
+	ComPtr<ID3D11RasterizerState>   get_rasterizer_state(RasterizerState rasterizerState);
+	ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState blendState);
+	ComPtr<ID3D11SamplerState>      get_sampler_state(SamplerState blendState);
+
+	template <typename T>
+	HRESULT set_debug_name(T* obj, std::string const& n)
+	{
+		return obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(n.size()), n.data());
+	}
+
+
+
+
+
+} // Graphics
 
 namespace Perf
 {

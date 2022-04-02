@@ -32,15 +32,6 @@ inline const char* get_target(ShaderStage stage)
 	return nullptr;
 }
 
-#define ENUM_BITFLAGS(enum_type)                                           \
-	inline enum_type operator&(enum_type const& lhs, enum_type const& rhs) \
-	{                                                                      \
-		return static_cast<enum_type>((u32)lhs & (u32)rhs);                \
-	}                                                                      \
-	inline enum_type operator|(enum_type const& lhs, enum_type const& rhs) \
-	{                                                                      \
-		return static_cast<enum_type>((u32)lhs | (u32)rhs);                \
-	}
 
 enum class CompilerFlags : u32
 {

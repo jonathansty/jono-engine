@@ -178,4 +178,53 @@ public class Rttr : ExternalProject
 }
 
 
+[Export]
+public class Hlslpp : ExternalProject
+{
+    public Hlslpp() : base()
+    {
+        Name = "hlslpp";
+        SourceRootPath = Path.Combine(ExternalDir, "hlslpp/include/");
+    }
+    override public void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        conf.Output = Configuration.OutputType.None;
+        conf.IncludeSystemPaths.Add(Path.Combine(ExternalDir, "hlslpp/include/"));
+        conf.IncludePaths.Add(Path.Combine(ExternalDir, "hlslpp/include/"));
+    }
+}
+
+[Generate]
+public class DirectXTK : ExternalProject
+{
+    public DirectXTK() : base()
+    {
+        Name = "DirectXTK";
+        SourceRootPath = @"[project.ExternalDir]/DirectXTK/";
+
+        SourceFilesExtensions.Add("inc");
+        SourceFilesExcludeRegex.Add(".*(XBOX|Model(.h|.cpp)).*");
+        SourceFilesFiltersRegex.Add(".*(Src)|(Inc).*");
+    }
+    override public void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+        //conf.ProjectReferencesByPath.Add(@"[project.SharpmakeCsPath]/external/DirectXTK/DirectXTK_Desktop_2022_Win10.vcxproj");
+        conf.PrecompHeader = "pch.h";
+        conf.PrecompSource = "[project.ExternalDir]/DirectXTK/Src/pch.cpp";
+
+        conf.Output = Configuration.OutputType.Lib;
+        conf.IncludePaths.Add(@"[project.SourceRootPath]/Inc");
+        conf.IncludePaths.Add(@"[project.SourceRootPath]/Src");
+        conf.IncludePaths.Add(@"[project.SourceRootPath]/Src/Shaders/Compiled/");
+
+        conf.IncludeSystemPaths.Add(Path.Combine(ExternalDir, "DirectXTK/Inc/"));
+    }
+}
+
+
+
+
 

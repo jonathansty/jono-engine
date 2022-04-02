@@ -42,6 +42,8 @@ public:
 	{
 		f32 aspect;
 		f32 fov;
+		f32 width;
+		f32 height;
 		f32 near_clip;
 		f32 far_clip;
 		Projection projection_type;
@@ -119,6 +121,17 @@ public:
 
 	void update() const;
 
+	f32 get_near() const { return _settings.near_clip; }
+	f32 get_far() const { return _settings.far_clip; }
+	f32 get_aspect() const { return _settings.aspect; }
+	f32 get_fov() const { return _settings.fov; }
+	f32 get_vertical_fov() const {
+
+		f32 aspect = 1.0f / _settings.aspect;
+		f32 fov = float1(_settings.fov);
+		return float1(2.0f * atan(tan(fov / 2.0f) * aspect));
+	}
+
 protected:
 	mutable bool _dirty;
 	float3 _position;
@@ -136,6 +149,13 @@ protected:
 	mutable float4x4 _world;
 
 	friend class RenderWorld;
+};
+
+struct CascadeInfo 
+{
+	float4x4 view;
+	float4x4 proj;
+	float4x4 vp;
 };
 
 class RenderWorldLight : public RenderWorldCamera
@@ -161,6 +181,20 @@ public:
 	void set_colour(float3 colour) { _colour = colour; }
 	void set_casts_shadow(bool cast) { _shadow_settings.casts_shadow = true; }
 
+	CascadeInfo const& get_cascade(u32 idx) const
+	{
+		return _cascade[idx];
+	}
+
+	void update_cascades(std::vector<CascadeInfo> vps)
+	{
+		_cascade.clear();
+		for(u32 i = 0 ; i < vps.size(); ++i)
+		{
+			_cascade.emplace_back(vps[i]);
+		}
+	}
+
 private:
 	struct ShadowSettings
 	{
@@ -175,6 +209,7 @@ private:
 	LightType _type;
 
 	float3 _colour;
+	std::vector<CascadeInfo> _cascade;
 };
 
 class RenderWorld final
@@ -205,9 +240,13 @@ public:
 
 	void remove_instance(std::shared_ptr<RenderWorldInstance> const& instance);
 
-	std::shared_ptr<RenderWorldCamera> get_view_camera() const { return _cameras[0]; }
+	std::shared_ptr<RenderWorldCamera> get_view_camera() const { return _cameras[_active_camera]; }
+
+	void set_active_camera(u32 idx) { _active_camera = idx; }
 
 private:
+	u32 _active_camera = 0;
+
 	std::mutex _instance_cs;
 	InstanceCollection _instances;
 

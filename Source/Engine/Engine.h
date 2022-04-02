@@ -2,6 +2,12 @@
 
 #include "Core/Core.h"
 
+// XTK helpers
+#include <Effects.h>
+#include <Model.h>
+#include <PrimitiveBatch.h>
+#include <VertexTypes.h>
+
 //#pragma GCC diagnostic ignored "-Wpragma-pack"
 #include <assimp/pbrmaterial.h>
 #include <assimp/postprocess.h>

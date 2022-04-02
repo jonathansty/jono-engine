@@ -10,6 +10,8 @@ struct IOverlay
 
 	// Render function called when rendering the ImGui viewport
 	virtual void render_viewport() {}
+
+	virtual void render_3d(ID3D11DeviceContext* ctx) {}
 };
 
 class DebugOverlay : public IOverlay
@@ -46,7 +48,10 @@ public:
 
 
 	void render_overlay() override;
+
 	void render_viewport() override;
+
+	void render_3d(ID3D11DeviceContext* ctx) override;
 
 	void register_overlay(DebugOverlay* overlay);
 	void unregister_overlay(DebugOverlay* overlay);

@@ -4,7 +4,12 @@
 #include "EngineSettings.h"
 #include "GameSettings.h"
 
+#include "debug_overlays/OverlayManager.h"
+#include <DirectXColors.h>
+#include <DirectXCollision.h>
+
 class RenderWorld;
+class RenderWorldCamera;
 
 namespace cli
 {
@@ -13,6 +18,8 @@ using CommandLine = std::vector<std::string>;
 
 namespace Graphics
 {
+
+using FrustumCorners = std::array<float4, 8>;
 
 struct RenderPass
 {
@@ -58,6 +65,7 @@ struct ViewParams
 
 // The max amount of lights available in the shaders
 static constexpr u32 MAX_LIGHTS = 4;
+static constexpr u32 MAX_CASCADES = 4;
 
 __declspec(align(16)) 
 struct LightInfo
@@ -65,6 +73,12 @@ struct LightInfo
 	float4 colour;
 	float4 direction;
 	float4x4 light_space;
+
+	u32 num_cascades;
+	f32 padding0[3];
+
+	float4x4 cascades[MAX_CASCADES];
+	float4 cascade_distances[MAX_CASCADES];
 };
 
 __declspec(align(16)) 
@@ -84,8 +98,12 @@ struct GlobalCB
 
 	AmbientInfo ambient;
 
+
 	LightInfo lights[MAX_LIGHTS];
+
 	u32 num_lights;
+	f32 padding[3];
+
 };
 
 __declspec(align(16)) 
@@ -143,8 +161,7 @@ public:
 	// Respond to external swapchain change requests
 	void resize_swapchain(u32 w, u32 h);
 
-	void pre_render();
-	void render(shared_ptr<RenderWorld> const& world);
+	void pre_render(shared_ptr<RenderWorld> const& world);
 
 	// Rendering passes and commands
 	void render_view(shared_ptr<RenderWorld> const& world, RenderPass::Value pass);
@@ -162,9 +179,14 @@ private:
 	void create_wic_factory();
 	void create_write_factory();
 
+	FrustumCorners get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const;
+
+	FrustumCorners get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const;
 
 
 private:
+	// 0: Game camera | 1: Debug camera
+	u32 _active_cam = 0;
 	EngineSettings _engine_settings;
 	GameSettings _game_settings;
 
@@ -203,19 +225,38 @@ private:
 	D2D1_ANTIALIAS_MODE _d2d_aa_mode;
 
 	ComPtr<ID3D11Texture2D> _shadow_map;
-	ComPtr<ID3D11DepthStencilView> _shadow_map_dsv;
+	ComPtr<ID3D11DepthStencilView> _shadow_map_dsv[MAX_CASCADES];
 	ComPtr<ID3D11ShaderResourceView> _shadow_map_srv;
+	ComPtr<ID3D11ShaderResourceView> _debug_shadow_map_srv[MAX_CASCADES];
 
 	ConstantBufferRef _cb_global;
 	ConstantBufferRef _cb_debug;
 
+	std::unique_ptr<class RendererDebugTool> _debug_tool;
+	friend class RendererDebugTool;	
 
 	// Rendering parameters
 	u32 _viewport_width;
 	u32 _viewport_height;
 	float2 _viewport_pos;
 
-
+	
 };
+
+class RendererDebugTool : public DebugOverlay
+{
+public:
+	RendererDebugTool(Renderer* owner);
+
+	void render_overlay() override;
+
+	 void render_3d(ID3D11DeviceContext* ctx) override;
+
+private:
+	Renderer* _renderer;
+	std::shared_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>> _batch;
+};
+
+
 
 }

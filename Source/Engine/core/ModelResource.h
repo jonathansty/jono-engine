@@ -1,6 +1,7 @@
 #pragma once
 #include "ResourceLoader.h"
 
+
 using MaterialRef = std::shared_ptr<class MaterialResource>;
 
 struct ModelVertex

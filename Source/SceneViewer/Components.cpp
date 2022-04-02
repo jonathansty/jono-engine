@@ -73,8 +73,9 @@ void SimpleMovement2D::update(float dt)
 	float3 up { 0.0f,0.0f,1.0f };
 
 	quaternion rot = ent->get_rotation();
-	quaternion added = hlslpp::axisangle(up, hlslpp::radians(hlslpp::float1(dt * _speed)));
-	rot *= added;
+	quaternion added = quaternion::rotation_axis(up, hlslpp::radians(hlslpp::float1(dt * _speed)));
+	//rot = hlslpp::mul(rot, added);
+	rot = hlslpp::mul(rot, added);
 	ent->set_rotation(rot);
 	//ent->set_local_position(_offset.x + cos(_elapsed) * 100.0, _offset.y + sin(_elapsed) * 100.0);
 }
@@ -174,7 +175,7 @@ void CameraComponent::look_at(float3 eye, float3 target, float3 up /*= { 0.0,0.0
 
 	this->get_entity()->set_local_position(eye);
 
-	quaternion quat = hlslpp::euler(float3{ 0.0f, 0.0f, 0.0f});
+	quaternion quat = quaternion::rotation_euler_zxy(float3{ 0.0f, 0.0f, 0.0f});
 	this->get_entity()->set_rotation(quat);
 	//XMVECTOR quat = XMQuaternionRotationMatrix(XMLoadFloat4x4(&matrix));
 	//this->get_entity()->set_rotation(quat);
@@ -259,12 +260,12 @@ void CameraComponent::update(float dt)
 		float x_angle = hlslpp::radians(hlslpp::float1(4.9f)) * dt * _x_angle;
 		float y_angle = hlslpp::radians(hlslpp::float1(4.9f)) * dt * _y_angle;
 
-		quaternion x_quat = hlslpp::axisangle(up.xyz, x_angle);
+		quaternion x_quat = quaternion::rotation_axis(up.xyz, x_angle);
 
 		// recalculate our right vector for the new position
 		right = float4(hlslpp::mul(x_quat, right.xyz), 0.0);
-		quaternion y_quat = hlslpp::axisangle(right.xyz, y_angle);
-		quaternion transform_result = y_quat * x_quat;
+		quaternion y_quat = quaternion::rotation_axis(right.xyz, y_angle);
+		quaternion transform_result = hlslpp::mul(y_quat, x_quat);
 		ent->set_rotation(transform_result);
 	}
 

@@ -23,6 +23,9 @@
 
 #include "Graphics/ShaderCompiler.h"
 
+#include "CommonStates.h"
+#include "Effects.h"
+
 static constexpr uint32_t max_task_threads = 4;
 
 // Static task scheduler used for loading assets and executing multi threaded work loads
@@ -454,6 +457,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 		// Deinit our global graphics API before killing the game engine API
 		Graphics::deinit();
+		_renderer->deinit();
+		_renderer = nullptr;
 
 		// deinit the engine graphics layer
 		d3d_deinit();
@@ -567,6 +572,7 @@ bool GameEngine::open_window(int iCmdShow)
 	::GetClientRect(_hwindow, &r);
 	_window_width = r.right - r.left;
 	_window_height = r.bottom - r.top;
+	assert(_window_width > 0 && _window_height > 0);
 
 	return true;
 }
@@ -677,11 +683,13 @@ void GameEngine::set_small_icon(WORD wSmallIcon)
 void GameEngine::set_width(int iWidth)
 {
 	_window_width = iWidth;
+	assert(_window_width > 0);
 }
 
 void GameEngine::set_height(int iHeight)
 {
 	_window_height = iHeight;
+	assert(_window_height > 0);
 }
 
 void GameEngine::set_physics_step(bool bEnabled)
@@ -1151,7 +1159,7 @@ void GameEngine::render()
 	// Render 3D before 2D
 	if (_engine_settings.d3d_use)
 	{
-		_renderer->pre_render();
+		_renderer->pre_render(_render_world);
 
 		GPU_SCOPED_EVENT(d3d_annotation, L"Render");
 		// Render the shadows
@@ -1159,17 +1167,14 @@ void GameEngine::render()
 			_renderer->render_shadow_pass(_render_world);
 		}
 
-		// Update our view camera to properly match the viewport aspect
-		_render_world->get_view_camera()->set_aspect((f32)_viewport_width / (f32)_viewport_height);
-		_render_world->get_view_camera()->update();
 
 		// Clear the output targets
 		FLOAT color[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
 		d3d_ctx->ClearRenderTargetView(d3d_output_rtv, color);
-		d3d_ctx->ClearDepthStencilView(d3d_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 0.0f, 0);
+		d3d_ctx->ClearDepthStencilView(d3d_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 		d3d_ctx->OMSetRenderTargets(0, NULL, d3d_output_dsv);
-		//render_view(RenderPass::ZPrePass);
+		render_view(Graphics::RenderPass::ZPrePass);
 
 		d3d_ctx->OMSetRenderTargets(1, &d3d_output_rtv, d3d_output_dsv);
 		render_view(Graphics::RenderPass::Opaque);
@@ -1188,6 +1193,37 @@ void GameEngine::render()
 
 	// Resolve msaa to non msaa for imgui render
 	d3d_ctx->ResolveSubresource(d3d_output_non_msaa_tex, 0, d3d_output_tex, 0, _renderer->get_swapchain_format());
+
+	static std::unique_ptr<DirectX::CommonStates> s_states = nullptr;
+	static std::unique_ptr<DirectX::BasicEffect> s_effect = nullptr;
+	static ComPtr<ID3D11InputLayout> s_layout = nullptr;
+	if (!s_states)
+	{
+		s_states = std::make_unique<DirectX::CommonStates>(d3d_device);
+		s_effect = std::make_unique<DirectX::BasicEffect>(d3d_device);
+		s_effect->SetVertexColorEnabled(true);
+
+		void const* shader_byte_code;
+		size_t byte_code_length;
+		s_effect->GetVertexShaderBytecode(&shader_byte_code, &byte_code_length);
+		ENSURE_HR(d3d_device->CreateInputLayout(DirectX::VertexPositionColor::InputElements, DirectX::VertexPositionColor::InputElementCount, shader_byte_code, byte_code_length, s_layout.ReleaseAndGetAddressOf()));
+	}
+	d3d_ctx->OMSetBlendState(s_states->Opaque(), nullptr, 0xFFFFFFFF);
+	d3d_ctx->OMSetDepthStencilState(s_states->DepthDefault(), 0);
+	d3d_ctx->RSSetState(s_states->CullNone());
+
+	d3d_ctx->IASetInputLayout(s_layout.Get());
+
+	auto view = _render_world->get_view_camera()->get_view();
+	auto proj = _render_world->get_view_camera()->get_proj();
+	XMMATRIX xm_view = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&view);
+	XMMATRIX xm_proj = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&proj);
+	s_effect->SetView(xm_view);
+	s_effect->SetProjection(xm_proj);
+
+	s_effect->Apply(d3d_ctx);
+
+	_overlay_manager->render_3d(_renderer->get_raw_device_context());
 
 	// Render main viewport ImGui
 	{

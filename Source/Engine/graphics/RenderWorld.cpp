@@ -88,16 +88,17 @@ void RenderWorldCamera::update() const
 		}
 
 		bool reverse_z = _settings.reverse_z;
-		f32 near_clip = reverse_z ? _settings.far_clip : _settings.near_clip;
-		f32 far_clip = reverse_z ? _settings.near_clip : _settings.far_clip;
+		f32 near_clip = _settings.near_clip;
+		f32 far_clip = _settings.far_clip;
 
-		hlslpp::projection proj(hlslpp::frustum::field_of_view_x(hlslpp::radians(float1(_settings.fov)), _settings.aspect, near_clip, far_clip), hlslpp::zclip::zero);
 		if (_settings.projection_type == Projection::Perspective)
 		{
+			hlslpp::projection proj(hlslpp::frustum::field_of_view_x(_settings.fov, _settings.aspect, near_clip, far_clip), reverse_z ? hlslpp::zclip::minus_one : hlslpp::zclip::zero);
 			_proj = float4x4::perspective(proj);
 		}
 		else if (_settings.projection_type == Projection::Ortographic)
 		{
+			hlslpp::projection proj(hlslpp::frustum(_settings.width, _settings.height, near_clip, far_clip),reverse_z ? hlslpp::zclip::minus_one : hlslpp::zclip::zero);
 			_proj = float4x4::orthographic(proj);
 		}
 
