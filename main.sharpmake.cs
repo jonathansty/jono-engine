@@ -37,7 +37,9 @@ public class CoreProject : JonaBaseProject
         conf.SolutionFolder = "engine";
         conf.Output = Configuration.OutputType.Lib;
 
+
         conf.AddPublicDependency<Rttr>(target);
+        conf.AddPublicDependency<Hlslpp>(target);
     }
 }
 
@@ -70,6 +72,8 @@ public class EngineProject : JonaBaseProject
         // Own public libraries
         conf.AddPublicDependency<CliProject>(target);
         conf.AddPublicDependency<CoreProject>(target);
+        conf.AddPublicDependency<DirectXTK>(target);
+
 
         conf.Output = Configuration.OutputType.Lib;
         conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
@@ -93,6 +97,7 @@ public class EngineProject : JonaBaseProject
             "dxguid", 
             "Winmm" }
         );
+
 
         //conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
         //conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
@@ -150,7 +155,6 @@ public class SceneViewerProject : JonaBaseProject
 
         conf.AddPrivateDependency<EngineProject>(target);
 
-
         conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
         conf.Output = Configuration.OutputType.Exe;
 
@@ -202,9 +206,13 @@ public class EngineSolution : Solution
         // Puts the generated solution in the /generated folder too.
         conf.SolutionPath = @"[solution.SharpmakeCsPath]/build";
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
+
+
         conf.AddProject<EngineProject>(target);
         conf.AddProject<SceneViewerProject>(target);
         conf.AddProject<EngineTestProject>(target);
+
+
 
     }
 }

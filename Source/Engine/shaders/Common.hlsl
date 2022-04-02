@@ -2,6 +2,9 @@
 #define _COMMON_H_
 
 // DirectX::VertexPositionNormalColorTexture
+
+#define MAX_LIGHTS 4
+#define MAX_CASCADES 4 
 struct VS_IN
 {
 	float3 position : SV_Position;
@@ -36,9 +39,12 @@ struct LightInfo {
 	float4 colour;
 	float4 direction;
 	float4x4 light_space;
+
+	int num_cascades;
+	float4x4 cascade[MAX_CASCADES];
+	float4 cascade_distance[MAX_CASCADES];
 };
 
-#define MAX_LIGHTS 4
 
 cbuffer WorldConstants : register(b0) {
 	float4x4 View;
@@ -50,6 +56,7 @@ cbuffer WorldConstants : register(b0) {
 
 	LightInfo g_Lights[MAX_LIGHTS];
 	unsigned int num_lights;
+
 };
 
 cbuffer ModelConstants : register(b1) {
@@ -57,6 +64,11 @@ cbuffer ModelConstants : register(b1) {
 	float4x4 WorldView;
 	float4x4 WorldViewProjection;
 };
+
+cbuffer DebugCB : register(b2) {
+	int g_VisualizeMode;
+};
+
 
 
 

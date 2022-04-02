@@ -8,22 +8,24 @@ Texture2D<float4> g_albedo    : register(t0);
 Texture2D<float4> g_data      : register(t1); // .x: metalness, .y : roughness 
 Texture2D<float4> g_normal    : register(t2);
 
-Texture2D<float> g_shadow_map : register(t3);
+Texture2DArray<float> g_shadow_map : register(t3);
 
 // Default Samplers
 SamplerState g_all_linear_sampler : register(s0);
 
-float4 calculate_shadow(float4 pos, float3 light, float3 normal) {
+float4 calculate_shadow(float4 pos, float3 light, float3 normal, int cascade) {
+
+
 	// taken from https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping
 	float3 proj_coords = pos.xyz / pos.w;
 	proj_coords.x = ((proj_coords.x)*0.5) + 0.5;
 	proj_coords.y = ((proj_coords.y)*-0.5) + 0.5;
-	float closest_depth = g_shadow_map.Sample(g_all_linear_sampler, proj_coords.xy).r;
+	float closest_depth = g_shadow_map.Sample(g_all_linear_sampler, float3(proj_coords.xy, cascade)).r;
 	float current_depth = proj_coords.z;
 
 	float bias = 0.00001;
 	bias = max(bias * (1.0 - dot(normal, light)), bias);
-	float shadow = ( (current_depth + bias) < closest_depth ? 1.0 : 0.0);
+	float shadow = ( (current_depth - bias) > closest_depth ? 1.0 : 0.0);
 
 	return shadow;
 }
@@ -55,16 +57,38 @@ float4 main(VS_OUT vout) : SV_Target {
 	float3 view = normalize(g_ViewDirection.xyz);
 	float3 final_colour = float3(0.0,0.0,0.0);
 
+	float3 colors[4] = {
+		float3(1.0f,0.0f,0.0f),
+		float3(0.0f,1.0f,0.0f),
+		float3(0.0f,0.0f,1.0f),
+		float3(1.0f,0.0f,1.0f),
+	};
 	[loop]
-	for (unsigned int i = 0; i < num_lights; ++i) 
+	for (unsigned int i = 0; i < 1; ++i) 
 	{
+		
+		// Calculate the layer based on the view position depth
+		float depth = abs(vout.viewPosition.z);
+
+		LightInfo info = g_Lights[i];
+		int layer = info.num_cascades.x;
+		for(int j = 0; j < info.num_cascades.x; ++j)
+		{
+			if(depth < info.cascade_distance[j].x)
+			{
+				layer = j;
+				break;
+			}
+		}
+
 		float3 light = normalize(g_Lights[i].direction);
 		float3 light_colour = g_Lights[i].colour;
 
 		// pixels position in the light space (view,projection)
 		// we need to use this to sample the shadow map
-		float4 light_space_pos = mul(g_Lights[i].light_space, vout.worldPosition);
-		float4 shadow = calculate_shadow(light_space_pos, light, final_normal);
+		
+		float4 light_space_pos = mul(info.cascade[layer], vout.worldPosition);
+		float4 shadow = calculate_shadow(light_space_pos, light, final_normal, layer);
 
 		// Need to invert the light vector here because we pass in the direction.
 		final_colour += ((1.0 - shadow) * SimpleBlinnPhong(view, -light, final_normal,  material) * light_colour);

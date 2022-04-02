@@ -18,8 +18,9 @@ public:
 
 	virtual ~Win64File() {
 		// When a file goes out of scope force a close
-		if (!_stream) {
+		if (_stream) {
 			fclose(_stream);
+			_stream = nullptr;
 		}
 	}
 
@@ -32,13 +33,16 @@ public:
 	}
 
 	virtual u32 read(void* dst, u32 size) {
-		return static_cast<uint32_t>(fread(dst, size, 1, _stream));
+		return static_cast<u32>(fread(dst, size, 1, _stream));
 	}
 
 	virtual void seek(s64 offset, SeekMode mode) {
 		int m = SEEK_CUR;
 		if (mode == SeekMode::FromBeginning) {
 			m = SEEK_SET;
+		}
+		if(mode == SeekMode::FromEnd) {
+			m = SEEK_END;
 		}
 		fseek(_stream, long(offset), m);
 	}
@@ -55,7 +59,6 @@ class Win64IO final : public IPlatformIO {
 public:
 	Win64IO()
 			: _root(".") {
-
 	}
 
 	virtual bool create_directory(const char* path) override {
@@ -82,9 +85,12 @@ public:
 		}
 
 		// Relative paths need to be resolved to the root
-		char tmp[512];
-		sprintf_s(tmp, "%s/%s", _root.c_str(), path.c_str());
-		return tmp;
+		if (!path.starts_with("..") && !path.starts_with('.')) {
+			char tmp[512];
+			sprintf_s(tmp, "%s/%s", _root.c_str(), path.c_str());
+			return tmp;
+		}
+		return path;
 	}
 
 	virtual std::shared_ptr<IFile> open(const char* path, Mode mode, bool binary) override {

@@ -61,7 +61,6 @@ public abstract class JonaBaseProject : Project
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP20);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
 
-        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
         conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
             "4100", // Unused method variables
             "4189"  // Unused local variables
@@ -90,6 +89,7 @@ public abstract class JonaBaseProject : Project
     virtual public void ConfigureDebug(Configuration config, Target target)
     {
         config.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDebugDLL);
+        config.Options.Add(Options.Vc.Compiler.Inline.Disable);
     }
 
     [Configure(Optimization.Release), ConfigurePriority(3)]

@@ -18,6 +18,7 @@
 #include <rttr/registration>
 #include <rttr/registration_friend>
 
+#define HLSLPP_FEATURE_TRANSFORM
 #include <hlsl++.h>
 using hlslpp::float4;
 using hlslpp::float3;

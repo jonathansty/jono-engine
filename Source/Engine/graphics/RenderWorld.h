@@ -3,19 +3,23 @@
 #include "Graphics.h"
 #include "core/ModelResource.h"
 
-class RenderWorldInstance {
+class RenderWorldInstance
+{
 public:
-	RenderWorldInstance(float4x4 const& transform) : _transform(transform) {}
+	RenderWorldInstance(float4x4 const& transform)
+			: _transform(transform) {}
 	~RenderWorldInstance() {}
 
-	bool is_ready() const {
+	bool is_ready() const
+	{
 		return _mesh->is_loaded();
 	}
 
 	float4x4 _transform;
 	std::shared_ptr<ModelResource> _mesh;
 
-	struct ConstantBufferData {
+	struct ConstantBufferData
+	{
 		float4x4 world;
 		float4x4 wv;
 		float4x4 wvp;
@@ -23,19 +27,23 @@ public:
 	ConstantBufferRef _model_cb;
 
 	friend class RenderWorld;
-
 };
 
-class RenderWorldCamera {
+class RenderWorldCamera
+{
 public:
-	enum class Projection {
+	enum class Projection
+	{
 		Ortographic,
 		Perspective
 	};
 
-	struct CameraSettings {
+	struct CameraSettings
+	{
 		f32 aspect;
 		f32 fov;
+		f32 width;
+		f32 height;
 		f32 near_clip;
 		f32 far_clip;
 		Projection projection_type;
@@ -45,68 +53,86 @@ public:
 	RenderWorldCamera();
 	~RenderWorldCamera();
 
-	// Retrieve the projection 
-	float4x4 const& get_proj() const {
+	// Retrieve the projection
+	float4x4 const& get_proj() const
+	{
 		update();
 		return _proj;
 	}
 
-
-	// Retrieve the view 
-	float4x4 const& get_view() const { 
+	// Retrieve the view
+	float4x4 const& get_view() const
+	{
 		update();
-		return _view; 
+		return _view;
 	}
 
-	float4x4 const& get_world() const {
+	float4x4 const& get_world() const
+	{
 		update();
 		return _world;
 	}
 
-	float4x4 const& get_vp() const {
+	float4x4 const& get_vp() const
+	{
 		update();
 		return _vp;
 	}
 
-	float4 get_view_direction() const {
+	float4 get_view_direction() const
+	{
 		float4 world_fwd{ 0.0f, 0.0f, 1.0f, 0.0f };
 		return mul(get_view(), world_fwd);
 	}
 
-	float3 get_position() const {
+	float3 get_position() const
+	{
 		return _position;
 	}
 
-
-	void set_settings(CameraSettings const& settings) {
+	void set_settings(CameraSettings const& settings)
+	{
 		_settings = settings;
 		_dirty = true;
 	}
 	void set_aspect(f32 aspect);
 
-
-	void set_position(float3 pos) {
+	void set_position(float3 pos)
+	{
 		_position = pos;
 		_dirty = true;
 	}
 
 	// Conditionally sets up a target for look at.
 	// This overrides any rotation the camera specifies
-	void look_at(float3 target) {
+	void look_at(float3 target)
+	{
 		_target = target;
 		_use_target = true;
 		_dirty = true;
 	}
 
 	// Clears the lookat and falls back on the _rotation value set
-	void clear_lookat() {
+	void clear_lookat()
+	{
 		_use_target = false;
 		_dirty = true;
 	}
 
 	void update() const;
-protected:
 
+	f32 get_near() const { return _settings.near_clip; }
+	f32 get_far() const { return _settings.far_clip; }
+	f32 get_aspect() const { return _settings.aspect; }
+	f32 get_fov() const { return _settings.fov; }
+	f32 get_vertical_fov() const {
+
+		f32 aspect = 1.0f / _settings.aspect;
+		f32 fov = float1(_settings.fov);
+		return float1(2.0f * atan(tan(fov / 2.0f) * aspect));
+	}
+
+protected:
 	mutable bool _dirty;
 	float3 _position;
 
@@ -125,13 +151,22 @@ protected:
 	friend class RenderWorld;
 };
 
-class RenderWorldLight : public RenderWorldCamera {
+struct CascadeInfo 
+{
+	float4x4 view;
+	float4x4 proj;
+	float4x4 vp;
+};
+
+class RenderWorldLight : public RenderWorldCamera
+{
 public:
-	enum class LightType {
+	enum class LightType
+	{
 		Directional,
 		Spot,
 		// #TODO
-		//Point
+		// Point
 	};
 
 	RenderWorldLight(LightType type);
@@ -146,9 +181,25 @@ public:
 	void set_colour(float3 colour) { _colour = colour; }
 	void set_casts_shadow(bool cast) { _shadow_settings.casts_shadow = true; }
 
+	CascadeInfo const& get_cascade(u32 idx) const
+	{
+		return _cascade[idx];
+	}
+
+	void update_cascades(std::vector<CascadeInfo> vps)
+	{
+		_cascade.clear();
+		for(u32 i = 0 ; i < vps.size(); ++i)
+		{
+			_cascade.emplace_back(vps[i]);
+		}
+	}
+
 private:
-	struct ShadowSettings {
-		ShadowSettings() : casts_shadow(false) {}
+	struct ShadowSettings
+	{
+		ShadowSettings()
+				: casts_shadow(false) {}
 		~ShadowSettings() {}
 
 		bool casts_shadow;
@@ -158,47 +209,50 @@ private:
 	LightType _type;
 
 	float3 _colour;
+	std::vector<CascadeInfo> _cascade;
 };
 
-class RenderWorld final {
+class RenderWorld final
+{
+public:
+	using InstanceCollection = std::vector<std::shared_ptr<RenderWorldInstance>>;
+	using CameraCollection = std::vector<std::shared_ptr<RenderWorldCamera>>;
+	using LightCollection = std::vector<std::shared_ptr<RenderWorldLight>>;
 
-	public:
-		using InstanceCollection = std::vector<std::shared_ptr<RenderWorldInstance>>;
-		using CameraCollection = std::vector<std::shared_ptr<RenderWorldCamera>>;
-		using LightCollection = std::vector<std::shared_ptr<RenderWorldLight>>;
+	RenderWorld() = default;
+	~RenderWorld() = default;
 
-		RenderWorld() = default;
-		~RenderWorld() = default;
+	void init();
 
-		void init();
+	// Getters to retrieve all collections
+	InstanceCollection const& get_instances() const { return _instances; }
+	LightCollection const& get_lights() const { return _lights; }
+	CameraCollection const& get_cameras() const { return _cameras; }
 
-		// Getters to retrieve all collections
-		InstanceCollection const& get_instances() const { return _instances; }
-		LightCollection const& get_lights() const { return _lights; }
-		CameraCollection const& get_cameras() const { return _cameras; }
+	// Retrieve individual objects for access
+	std::shared_ptr<RenderWorldCamera> const& get_camera(u32 idx) const { return _cameras[0]; }
+	std::shared_ptr<RenderWorldLight> const& get_light(u32 idx) const { return _lights[0]; }
 
-		// Retrieve individual objects for access
-		std::shared_ptr<RenderWorldCamera> const& get_camera(u32 idx) const { return _cameras[0]; }
-		std::shared_ptr<RenderWorldLight> const& get_light(u32 idx) const { return _lights[0]; }
+	// Create render world objects
+	std::shared_ptr<RenderWorldInstance> create_instance(float4x4 transform, std::string const& mesh);
+	std::shared_ptr<RenderWorldCamera> create_camera();
+	std::shared_ptr<RenderWorldLight> create_light(RenderWorldLight::LightType type);
 
-		// Create render world objects
-		std::shared_ptr<RenderWorldInstance> create_instance(float4x4 transform, std::string const& mesh);
-		std::shared_ptr<RenderWorldCamera> create_camera();
-		std::shared_ptr<RenderWorldLight> create_light(RenderWorldLight::LightType type);
+	void remove_instance(std::shared_ptr<RenderWorldInstance> const& instance);
 
-		void remove_instance(std::shared_ptr<RenderWorldInstance> const& instance);
+	std::shared_ptr<RenderWorldCamera> get_view_camera() const { return _cameras[_active_camera]; }
 
-		std::shared_ptr<RenderWorldCamera> get_view_camera() const { return _cameras[0]; }
+	void set_active_camera(u32 idx) { _active_camera = idx; }
 
-	private:
-		std::mutex _instance_cs;
-		InstanceCollection  _instances;
+private:
+	u32 _active_camera = 0;
 
-		std::mutex _camera_cs;
-		CameraCollection _cameras;
+	std::mutex _instance_cs;
+	InstanceCollection _instances;
 
-		std::mutex _lights_cs;
-		LightCollection _lights;
+	std::mutex _camera_cs;
+	CameraCollection _cameras;
 
-
+	std::mutex _lights_cs;
+	LightCollection _lights;
 };

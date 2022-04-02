@@ -26,6 +26,7 @@ public:
 	}
 	ComPtr<ID3D11Resource> get_shader() const { return _shader; }
 	ComPtr<ID3D11InputLayout> get_input_layout() const { assert(_type == ShaderType::Vertex); return _input_layout; }
+
 private:
 	ShaderType _type;
 

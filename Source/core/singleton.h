@@ -24,11 +24,11 @@ public:
 	}
 
 	static T* instance();
-	static void Shutdown();
 
+	static void create();
+	static void Shutdown();
 private:
 
-	static void CreateIfNull();
 	static T* _obj;
 };
 
@@ -46,13 +46,12 @@ void TSingleton<T>::Shutdown()
 template<typename T>
 T* TSingleton<T>::instance()
 {
-	CreateIfNull();
-
+	ASSERT(_obj);
 	return _obj;
 }
 
 template<typename T>
-void TSingleton<T>::CreateIfNull()
+void TSingleton<T>::create()
 {
 	if (!_obj)
 	{

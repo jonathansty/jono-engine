@@ -1,10 +1,11 @@
 #include "engine.pch.h"
 #include "Math.h"
 
-namespace hlslpp_helpers {
+namespace hlslpp_helpers
+{
 
-	// #TODO: Use HLSLPP once it drops
-float3 to_euler(hlslpp::quaternion q) {
+float3 to_euler(hlslpp::quaternion q)
+{
 	// https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
 	float3 angles;
 
@@ -28,4 +29,4 @@ float3 to_euler(hlslpp::quaternion q) {
 	return angles;
 }
 
-}
+} // namespace hlslpp_helpers

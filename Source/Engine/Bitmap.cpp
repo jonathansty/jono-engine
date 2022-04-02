@@ -19,6 +19,7 @@ Bitmap::~Bitmap()
 unique_ptr<Bitmap> Bitmap::load(string const& filename) {
 	auto bmp = make_unique<Bitmap>();
 
+	#if 0
 	string path = GameEngine::instance()->get_io()->resolve_path(filename);
 	bmp->m_FileName = path;
 	//IWICFormatConverter *convertorPtr=nullptr;
@@ -36,6 +37,9 @@ unique_ptr<Bitmap> Bitmap::load(string const& filename) {
 	}
 
 	return bmp;
+	#else
+	return nullptr;
+	#endif
 }
 
 HRESULT Bitmap::LoadBitmapFromFile(ID2D1RenderTarget *renderTargetPtr, IWICImagingFactory *wICFactoryPtr, const string& uriRef, UINT destinationWidth, UINT destinationHeight, IWICFormatConverter **FormatConverterPtr)
@@ -132,6 +136,7 @@ void Bitmap::SetOpacity(double opacity)
 
 void Bitmap::SetTransparencyColor(u32 transparentColor)
 {
+	#if 0 
 	u32 r = COLOR_R(transparentColor);
 	u32 g = COLOR_G(transparentColor);
 	u32 b = COLOR_B(transparentColor);
@@ -166,6 +171,9 @@ void Bitmap::SetTransparencyColor(u32 transparentColor)
 		renderTargetPtr->CreateBitmapFromWicBitmap(iWICBitmapPtr, &m_BitmapPtr);
 		iWICBitmapPtr->Release();
 	}
+	#else 
+	ASSERTMSG(false, "Not implemented.");
+	#endif
 }
 string Bitmap::GetFileName()
 {

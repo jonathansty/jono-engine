@@ -4,8 +4,6 @@
 
 #include "graphics/2DRenderContext.h"
 
-
-
 class ModelResource;
 
 using hlslpp::float3;
@@ -34,10 +32,10 @@ public:
 	float4 _offset;
 	float _elapsed = 0.0;
 	float _speed;
-
 };
 
-class SimpleMovement3D final : public framework::Component {
+class SimpleMovement3D final : public framework::Component
+{
 	RTTR_ENABLE(framework::Component);
 
 public:
@@ -45,14 +43,15 @@ public:
 
 	~SimpleMovement3D() = default;
 
-	void update(float dt) {
+	void update(float dt)
+	{
 		_elapsed += dt * _speed;
 		framework::Entity* ent = get_entity();
 		float3 up{ 0.0f, 1.0f, 0.0f };
 
 		quaternion rot = ent->get_rotation();
-		quaternion added = hlslpp::axisangle(up, hlslpp::radians(hlslpp::float1(dt * _speed)));
-		rot *= added;
+		quaternion added = quaternion::rotation_axis(up, hlslpp::radians(hlslpp::float1(dt * _speed)));
+		rot = hlslpp::mul(rot, added);
 		ent->set_rotation(rot);
 		//ent->set_local_position(_offset.x + cos(_elapsed) * 100.0, _offset.y + sin(_elapsed) * 100.0);
 	}
@@ -63,19 +62,19 @@ public:
 	float _speed = 0.0f;
 };
 
-
 #if FEATURE_D2D
 class BitmapComponent final : public framework::Component
 {
 	RTTR_ENABLE(framework::Component);
-public:
-	BitmapComponent() : Component()
-	{
 
+public:
+	BitmapComponent()
+			: Component()
+	{
 	}
 
 	BitmapComponent(std::string const& path)
-		: framework::Component()
+			: framework::Component()
 	{
 		_bmp = Bitmap::load(path);
 	}
@@ -85,12 +84,10 @@ public:
 
 	void render()
 	{
-		GameEngine::instance()->_d2d_ctx->draw_bitmap(_bmp.get(), (int)(-_bmp->get_width()/2.0), (int)(-_bmp->get_height() / 2.0));
+		GameEngine::instance()->_d2d_ctx->draw_bitmap(_bmp.get(), (int)(-_bmp->get_width() / 2.0), (int)(-_bmp->get_height() / 2.0));
 	}
 
-
 	unique_ptr<Bitmap> _bmp;
-
 };
 #endif
 
@@ -118,7 +115,6 @@ public:
 
 private:
 	std::shared_ptr<ModelResource> _resource;
-
 };
 
 class LightComponent final : public framework::Component
@@ -132,7 +128,8 @@ public:
 	LightComponent()
 			: _color({ float3(0.0, 0.0, 0.0) })
 			, _intensity(0.0)
-	{}
+	{
+	}
 
 	virtual ~LightComponent() {}
 
@@ -141,7 +138,6 @@ public:
 private:
 	helpers::WrapperFloat3 _color;
 	float _intensity;
-
 };
 
 class CameraComponent final : public framework::Component
@@ -159,29 +155,34 @@ public:
 
 	void update(float dt) override;
 
-	void look_at(float3 eye, float3 target, float3 up = { 0.0,0.0f,1.0f });
+	void look_at(float3 eye, float3 target, float3 up = { 0.0, 0.0f, 1.0f });
 
 	float get_fov() const { return _fov; }
 	float get_near_plane() const { return _near_plane; }
 	float get_far_plane() const { return _far_plane; }
 
-	float set_fov(float fov) { assert(fov > 0.01f && fov < 180.0f); _fov = fov; }
-	float set_planes(float n, float f) { _near_plane = n; _far_plane = f; }
+	float set_fov(float fov)
+	{
+		assert(fov > 0.01f && fov < 180.0f);
+		_fov = fov;
+	}
+
+	float set_planes(float n, float f)
+	{
+		_near_plane = n;
+		_far_plane = f;
+	}
 
 	static const float DEFAULT_FOV;
-private:
 
+private:
 	float _fly_speed;
 	float _fov;
 	float _near_plane;
 	float _far_plane;
 
-
 	float _x_angle;
 	float _y_angle;
-	
+
 	hlslpp::float2 _prev_position;
-
 };
-
-

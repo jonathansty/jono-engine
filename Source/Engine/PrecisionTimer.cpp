@@ -1,141 +1,63 @@
 #include "engine.pch.h"
 #include "PrecisionTimer.h"
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include "windows.h"
-
 //=======================================================================================
 // PrecisionTimer.cpp by Frank Luna (C) 2008 All Rights Reserved.
 // Adapted for DAE GP1 by Bart Uyttenhove
 //=======================================================================================
-PrecisionTimer::PrecisionTimer() : m_SecondsPerCount(0.0), m_DeltaTime(-1.0), m_BaseTime(0), m_PausedTime(0), m_PrevTime(0), m_CurrTime(0), m_bStopped(false)
+PrecisionTimer::PrecisionTimer() : _seconds_per_tick(0.0), _start_time(0), _stop_time(0), _stopped(false)
 {
 	__int64 countsPerSec;
 	QueryPerformanceFrequency((LARGE_INTEGER*)&countsPerSec);
-	m_SecondsPerCount = 1.0 / (double)countsPerSec;
+	_seconds_per_tick = 1.0 / (f64)countsPerSec;
+
+
+	reset();
 }
 
 PrecisionTimer::~PrecisionTimer()
 {}
 
-// Returns the total time elapsed since reset() was called, NOT counting any
-// time when the clock is stopped.
-double PrecisionTimer::GetGameTime() const
+double PrecisionTimer::get_delta_time() 
 {
-
-
-	// If we are stopped, do not count the time that has passed since we stopped.
-	//
-	// ----*---------------*------------------------------*------> time
-	//  mBaseTime       mStopTime                      mCurrTime
-
-	if (m_bStopped)
+	if(!_stopped)
 	{
-		return (double)(((m_StopTime - m_PausedTime) - m_BaseTime) * m_SecondsPerCount);
-	}
+		QueryPerformanceCounter((LARGE_INTEGER*)&_stop_time);
+		_delta_time = _stop_time - _start_time;
 
-	// The distance mCurrTime - mBaseTime includes paused time,
-	// which we do not want to count.  To correct this, we can subtract 
-	// the paused time from mCurrTime:  
-	//
-	//  (mCurrTime - mPausedTime) - mBaseTime 
-	//
-	//                     |<-------d------->|
-	// ----*---------------*-----------------*------------*------> time
-	//  mBaseTime       mStopTime        startTime     mCurrTime
-
-	else
-	{
-		//Bart: Get current time
-		QueryPerformanceCounter((LARGE_INTEGER*)&m_CurrTime);
-		return (double)(((m_CurrTime - m_PausedTime) - m_BaseTime) * m_SecondsPerCount);
 	}
+	return (f64)_delta_time * _seconds_per_tick;
 }
 
-double PrecisionTimer::GetDeltaTime() const
+void PrecisionTimer::reset()
 {
-	return (double)m_DeltaTime;
-}
-
-void PrecisionTimer::Reset()
-{
-	__int64 currTime;
+	u64 currTime;
 	QueryPerformanceCounter((LARGE_INTEGER*)&currTime);
 
-	m_BaseTime = currTime;
-	m_PrevTime = currTime;
-	m_StopTime = 0;
-	m_PausedTime = 0;
-	m_bStopped = false;
+	_stop_time = currTime;
+	_start_time = currTime;
+	_stopped = false;
 }
 
-void PrecisionTimer::Start()
+void PrecisionTimer::start()
 {
-	__int64 startTime;
-	QueryPerformanceCounter((LARGE_INTEGER*)&startTime);
-
-
-	// Accumulate the time elapsed between stop and start pairs.
-	//
-	//                     |<-------d------->|
-	// ----*---------------*-----------------*------------> time
-	//  mBaseTime       mStopTime        startTime     
-
-	if (m_bStopped)
-	{
-		m_PausedTime += (startTime - m_StopTime);
-		m_StopTime = 0;
-		m_bStopped = false;
-	}
+	QueryPerformanceCounter((LARGE_INTEGER*)&_start_time);
+	_stop_time = _start_time;
+	_stopped = false;
 }
 
-void PrecisionTimer::Stop()
+void PrecisionTimer::stop()
 {
-	if (!m_bStopped)
-	{
-		__int64 currTime;
-		QueryPerformanceCounter((LARGE_INTEGER*)&currTime);
+	QueryPerformanceCounter((LARGE_INTEGER*)&_stop_time);
 
-		m_StopTime = currTime;
+	_delta_time = _stop_time - _start_time;
 
-		m_DeltaTime = (m_CurrTime - m_PrevTime - m_PausedTime) * m_SecondsPerCount;
-		m_bStopped = true;
-	}
+	_stopped = true;
 }
 
-void PrecisionTimer::Tick()
+bool PrecisionTimer::is_stopped() const
 {
-	if (m_bStopped)
-	{
-		m_DeltaTime = 0.0;
-		return;
-	}
-
-	__int64 currTime;
-	QueryPerformanceCounter((LARGE_INTEGER*)&currTime);
-	m_CurrTime = currTime;
-
-	// Time difference between this frame and the previous.
-	m_DeltaTime = (m_CurrTime - m_PrevTime - m_PausedTime) * m_SecondsPerCount;
-
-	// Force nonnegative.  The DXSDK's CDXUTTimer mentions that if the 
-	// processor goes into a power save mode or we get shuffled to another
-	// processor, then mDeltaTime can be negative.
-	if (m_DeltaTime < 0.0)
-	{
-		m_DeltaTime = 0.0;
-	}
-
-	// Prepare for next frame.
-	m_PrevTime = m_CurrTime;
-	m_PausedTime = 0;
-
-}
-
-bool PrecisionTimer::IsStopped() const
-{
-	return m_bStopped;
+	return _stopped;
 }
 
 void Timer::Start()

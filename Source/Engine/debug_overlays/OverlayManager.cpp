@@ -67,6 +67,18 @@ void OverlayManager::render_viewport() {
 	}
 }
 
+void OverlayManager::render_3d(ID3D11DeviceContext* ctx)
+{
+	for (auto& overlay : _overlays)
+	{
+		if (overlay.second->_isOpen)
+		{
+			overlay.second->render_3d(ctx);
+		}
+	
+	}
+}
+
 void DebugOverlay::set_visible(bool visible) {
 	if (!_isOpen) {
 		ImGui::SetWindowFocus("Overlays");

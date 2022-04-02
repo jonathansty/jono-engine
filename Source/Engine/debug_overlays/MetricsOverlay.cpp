@@ -16,30 +16,55 @@ MetricsOverlay::~MetricsOverlay()
 
 void MetricsOverlay::render_overlay()
 {
+	auto engine = GameEngine::instance();
 	if (_isOpen)
 	{
+
 		ImGui::Begin(_name.c_str(), &_isOpen);
 
 		static bool s_EnableVsync = GameEngine::instance()->get_vsync();
 		if (ImGui::Checkbox("Enable VSync", &s_EnableVsync))
 		{
-			GameEngine::instance()->set_vsync(s_EnableVsync);
+			engine->set_vsync(s_EnableVsync);
 		}
-		double fps = 1.0 / (m_Times[Timer::FrameTime] * 0.001);
+
+		bool enable_limiter = (GameEngine::instance()->_engine_settings.max_frame_time > 0.0f);
+		s32 s_target = enable_limiter ? s32(1.0 / engine->_engine_settings.max_frame_time) : 0;
+		if (ImGui::Checkbox("Enable Frame Limiter", &enable_limiter))
+		{
+			engine->_engine_settings.max_frame_time = m_Times[Timer::FrameTime] * 0.001;
+			if(!enable_limiter)
+			{
+				engine->_engine_settings.max_frame_time = 0.0f;
+			}
+		}
+
+		ImGui::SameLine();
+		if(ImGui::InputInt("Target FPS", &s_target, 1, 5, ImGuiInputTextFlags_EnterReturnsTrue) && enable_limiter)
+		{
+			s_target = std::max(30, s_target);
+			engine->_engine_settings.max_frame_time = 1.0 / (f64)s_target;
+		}
+
+		f64 fps = 1.0 / (m_Times[Timer::FrameTime] * 0.001);
 		ImGui::Text("FPS: %d", int(fps));
-		ImGui::Text("FrameTime: %.2f", m_Times[Timer::FrameTime]);
-		ImGui::Text("GameUpdate: %.2f", m_Times[Timer::GameUpdateCPU]);
-		ImGui::Text("RenderCPU: %.2f", m_Times[Timer::RenderCPU]);
-		ImGui::Text("RenderGPU: %.2f", m_Times[Timer::RenderGPU]);
+
+
+		ImGui::Text("FrameTime:  %.4f ms", m_Times[Timer::FrameTime].last());
+		ImGui::Text("GameUpdate: %.4f ms", m_Times[Timer::GameUpdateCPU].last());
+		ImGui::Text("EventProcessing:  %.4f ms", m_Times[Timer::EventHandlingCPU].last());
+		ImGui::Text("RenderCPU:  %.4f ms", m_Times[Timer::RenderCPU].last());
+		ImGui::Text("RenderGPU:  %.4f ms", m_Times[Timer::RenderGPU].last());
+		ImGui::Text("PresentCPU:  %.4f ms", m_Times[Timer::PresentCPU].last());
 
 		ImGui::End();
 	}
 }
 
-void MetricsOverlay::UpdateTimer(Timer timer, float time)
+void MetricsOverlay::UpdateTimer(Timer timer, f64 time)
 {
 	assert(timer >= 0 && timer < Timer::Num);
-	m_Times[timer] = time;
+	m_Times[timer].add_sample(time);
 }
 
 const std::string MetricsOverlay::m_Name = "Metrics";

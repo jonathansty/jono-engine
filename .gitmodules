@@ -13,3 +13,9 @@
 [submodule "external/rttr"]
 	path = external/rttr
 	url = https://github.com/rttrorg/rttr.git
+[submodule "External/hlslpp"]
+	path = External/hlslpp
+	url = https://github.com/redorav/hlslpp.git/
+[submodule "External/DirectXTK"]
+	path = External/DirectXTK
+	url = https://github.com/microsoft/DirectXTK.git

@@ -11,6 +11,9 @@ public:
 			: _scene_path(path)
 			, _timer(0.0f)
 			, _light_tick(0.0f)
+			, _zoom(50.0f)
+		, _up_timer(0.0f)
+		,_center()
 	{}
 	virtual ~SceneViewer() {}
 
@@ -38,13 +41,15 @@ private:
 	// World to store our scene data in
 	std::shared_ptr<framework::World> _world;
 	shared_ptr<RenderWorld> _render_world;
-	shared_ptr<RenderWorldCamera> _camera;
 	shared_ptr<RenderWorldLight> _light;
 	shared_ptr<RenderWorldInstance> _model;
 
 	framework::EntityDebugOverlay* _overlay;
 
+	float3 _center;
+	float _zoom;
 	float _timer;
+	float _up_timer;
 	float _light_tick;
 };
 

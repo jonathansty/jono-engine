@@ -7,69 +7,34 @@
 
 #pragma once
 
-//=======================================================================================
-// PrecisionTimer.h by Frank Luna (C) 2008 All Rights Reserved.
-// Adapted for DAE by Bart Uyttenhove
-//=======================================================================================
-class PrecisionTimer
+class PrecisionTimer final
 {
 public:
-	// -------------------------
-	// Constructors & Destructor
-	// -------------------------
 	PrecisionTimer();
-	virtual ~PrecisionTimer();
-
-	// -------------------------
-	// General Methods
-	// -------------------------
-
-	// Returns the total time elapsed since reset() was called, NOT counting any
-	// time when the clock is stopped.	
-	double GetGameTime() const;  // in seconds
+	~PrecisionTimer();
 
 	// Returns the elapsed time since Tick was called
-	double GetDeltaTime() const; // in seconds
+	double get_delta_time(); // in seconds
 
-	// Resets all 
-	void Reset(); // Call before message loop.
-	// Stores the start time
-	void Start(); // Call when unpaused.
-	// Stores the current time
-	void Stop();  // Call when paused.
-	// Calculates the time difference between this frame and the previous.
-	// Use GetDeltaTime to retrieve that time
-	void Tick();  // Call every frame.
+	void reset(); 
+	void start(); 
+	void stop(); 
+
 	// Returns the state
-	bool IsStopped() const;
+	bool is_stopped() const;
 
 private:
-	//---------------------------
-	// Private methods
-	//---------------------------
-	double m_SecondsPerCount;
-	double m_DeltaTime;
+	f64 _seconds_per_tick;
 
-	//---------------------------
-	// Datamembers
-	//---------------------------
-	__int64 m_BaseTime;
-	__int64 m_PausedTime;
-	__int64 m_StopTime;
-	__int64 m_PrevTime;
-	__int64 m_CurrTime;
+	u64 _start_time;
+	u64 _stop_time;
+	u64 _delta_time;
 
-	bool m_bStopped;
+	bool _stopped;
 
-	// -------------------------
-	// Disabling default copy constructor and default assignment operator.
-	// If you get a linker error from one of these functions, your class is internally trying to use them. This is
-	// an error in your class, these declarations are deliberately made without implementation because they should never be used.
-	PrecisionTimer(const PrecisionTimer& sRef);
-	PrecisionTimer& operator=(const PrecisionTimer& sRef);
 };
 
-class Timer
+class Timer final
 {
 public:
 	// -------------------------

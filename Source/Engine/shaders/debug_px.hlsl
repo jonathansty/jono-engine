@@ -1,10 +1,6 @@
 #include "Common.hlsl"
 #include "Lighting.hlsl"
 
-cbuffer DebugCB : register(b1)
-{
-	int g_VisualizeMode;
-};
 
 #define VisualizeMode_Default 0
 #define VisualizeMode_Albedo 1 

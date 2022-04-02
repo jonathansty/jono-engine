@@ -113,7 +113,7 @@ bool serialize_instance(IO::IFileRef const& file, rttr::instance instance) {
 	u64 type_hash = Identifier64(t.get_name().begin()).get_hash();
 	serialize<u64, Mode>(file, type_hash);
 
-	u32 n_properties = t.get_properties().size();
+	u32 n_properties = static_cast<u32>(t.get_properties().size());
 	serialize<u32, Mode>(file, n_properties);
 
 	// Make sure that the ID matches

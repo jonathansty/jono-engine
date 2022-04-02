@@ -1,9 +1,8 @@
 #pragma once
 
 class PhysicsActor;
-class GameSettings;
 
-class GameSettings;
+struct GameSettings;
 struct EngineSettings;
 
 #include "graphics/2DRenderContext.h"
