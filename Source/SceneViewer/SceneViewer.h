@@ -30,6 +30,8 @@ public:
 
 private:
 
+	void rebuild_shaders();
+
 	bool load_world(const char* path);
 	void save_world(const char* path);
 

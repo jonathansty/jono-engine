@@ -1,37 +1,11 @@
 #pragma once
+
+#include "ShaderType.h"
+
 namespace ShaderCompiler
 {
 
-enum class ShaderStage
-{
-	Vertex,
-	Pixel,
-	Compute,
-	Domain,
-	Geometry,
-	Hull,
-};
-
-inline const char* get_target(ShaderStage stage)
-{
-	switch (stage)
-	{
-		case ShaderStage::Vertex:
-			return "vs_5_0";
-		case ShaderStage::Pixel:
-			return "ps_5_0";
-		case ShaderStage::Compute:
-			return "cs_5_0";
-		case ShaderStage::Domain:
-			return "ds_5_0";
-		case ShaderStage::Geometry:
-			return "gs_5_0";
-		case ShaderStage::Hull:
-			return "hs_5_0";
-	}
-	return nullptr;
-}
-
+using Graphics::ShaderType;
 
 enum class CompilerFlags : u32
 {
@@ -59,9 +33,10 @@ struct CompileParameters
 	{
 		std::string name;
 		std::optional<std::string> value;
-	};
-	ShaderStage stage;
 
+	};
+
+	ShaderType stage;
 	CompilerFlags flags;
 	CompilerEffectFlags effect_flags;
 
@@ -69,6 +44,37 @@ struct CompileParameters
 	std::vector<Define> defines;
 };
 
+inline bool operator==(CompileParameters::Define const& lhs, CompileParameters::Define const& rhs)
+{
+	return lhs.name == rhs.name && lhs.value == rhs.value;
+}
+
+inline bool operator==(CompileParameters const& lhs, CompileParameters const& rhs)
+{
+	return lhs.entry_point == rhs.entry_point 
+		&& lhs.defines == rhs.defines 
+		&& lhs.flags == rhs.flags 
+		&& lhs.stage == rhs.stage 
+		&& lhs.effect_flags == rhs.effect_flags;
+}
+
+
+
 bool compile(const char* shader, CompileParameters const& parameters, std::vector<u8>& out_bytecode);
 
 } // namespace ShaderCompiler
+
+template <>
+struct std::hash<ShaderCompiler::CompileParameters>
+{
+	std::size_t operator()(ShaderCompiler::CompileParameters const& params) const noexcept
+	{
+		size_t h = 0;
+		Hash::combine(h, Hash::fnv1a(params.effect_flags));
+		Hash::combine(h, Hash::fnv1a(params.flags));
+		Hash::combine(h, Hash::fnv1a(params.stage));
+		Hash::combine(h, Hash::fnv1a(params.defines));
+		Hash::combine(h, Hash::fnv1a(params.entry_point));
+		return h;
+	}
+};

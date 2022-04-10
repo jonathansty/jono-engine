@@ -46,16 +46,29 @@ struct LightInfo {
 };
 
 
+struct Viewport_t
+{
+	float HalfWidth;
+	float HalfHeight;
+	float TopLeftX;
+	float TopLeftY;
+	float MinDepth;
+	float MaxDepth;
+};
+
 cbuffer WorldConstants : register(b0) {
 	float4x4 View;
 	float4x4 InvView;
 	float4x4 Projection;
+	float4x4 InvProjection;
+	float4x4 InvViewProjection;
 	float4 g_ViewDirection;
 
+	Viewport_t Viewport;
 	AmbientInfo g_Ambient;
-
 	LightInfo g_Lights[MAX_LIGHTS];
 	unsigned int num_lights;
+
 
 };
 

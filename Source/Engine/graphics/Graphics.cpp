@@ -3,6 +3,8 @@
 #include "Graphics.h"
 #include "Renderer.h"
 
+#include "Core/ModelResource.h"
+
 namespace Graphics
 {
 
@@ -13,12 +15,33 @@ std::array<ComPtr<ID3D11BlendState>, static_cast<u32>(BlendState::Num)> s_blend_
 std::array<ComPtr<ID3D11RasterizerState>, static_cast<u32>(RasterizerState::Num)> s_raster_states;
 std::array<ComPtr<ID3D11SamplerState>, static_cast<u32>(SamplerState::Num)> s_sampler_states;
 
+std::shared_ptr<Shader> s_error_pixel_shader = nullptr;
+std::shared_ptr<Shader> s_error_vertex_shader = nullptr;
+
 void init(DeviceContext const& ctx)
 {
 	assert(ctx._device.Get() && ctx._ctx.Get());
 	s_ctx = ctx;
 
 	auto device = s_ctx._device;
+
+	ShaderCache::create();
+
+	// Create error shaders
+	{
+		ShaderCreateParams parameters{};
+		parameters.path = "Source/Engine/Shaders/error_px.hlsl";
+		parameters.params.entry_point = "main";
+		parameters.params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
+		parameters.params.stage = ShaderType::Pixel;
+		s_error_pixel_shader = ShaderCache::instance()->find_or_create(parameters);
+		ASSERTMSG(s_error_pixel_shader, "Failed to create error shader (\"{}\")", parameters.path.c_str());
+
+		parameters.path = "Source/Engine/Shaders/error_vx.hlsl";
+		parameters.params.stage = ShaderType::Vertex;
+		s_error_vertex_shader = ShaderCache::instance()->find_or_create(parameters);
+		ASSERTMSG(s_error_vertex_shader, "Failed to create error shader (\"{}\")", parameters.path.c_str());
+	}
 
 	// Depth Stencil
 	{
@@ -64,11 +87,16 @@ void init(DeviceContext const& ctx)
 		CD3D11_SAMPLER_DESC sampler{ CD3D11_DEFAULT() };
 		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 		SUCCEEDED(device->CreateSamplerState(&sampler, s_sampler_states[*SamplerState::MinMagMip_Linear].GetAddressOf()));
+
+		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		SUCCEEDED(device->CreateSamplerState(&sampler, s_sampler_states[*SamplerState::MinMagMip_Point].GetAddressOf()));
 	}
 }
 
 void deinit()
 {
+	ShaderCache::shutdown();
+
 	auto clear_fn = []<typename T>(T& ptr)
 	{
 		ptr.Reset();
@@ -110,6 +138,103 @@ ComPtr<ID3D11SamplerState> get_sampler_state(SamplerState samplerState)
 {
 	return s_sampler_states[*samplerState];
 }
+
+std::shared_ptr<Graphics::Shader> get_error_shader_px()
+{
+	return s_error_pixel_shader;
+}
+
+std::shared_ptr<Graphics::Shader> get_error_shader_vx()
+{
+	return s_error_vertex_shader;
+}
+
+std::shared_ptr<Shader> ShaderCache::find_or_create(ShaderCreateParams const& creation_params)
+{
+	if (auto it = _shaders.find(creation_params); it != _shaders.end())
+	{
+		return it->second;
+	}
+
+	// Shader doesn't exist? Then compile it.
+
+	std::vector<u8> bytecode;
+	if (!ShaderCompiler::compile(creation_params.path.c_str(), creation_params.params, bytecode))
+	{
+		// TODO: Error
+		return nullptr;
+	}
+
+	_shaders[creation_params] = Shader::create(creation_params.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
+	return _shaders[creation_params];
+}
+
+bool ShaderCache::reload_all()
+{
+	bool success = true;
+	for(auto it : _shaders)
+	{
+		std::vector<u8> bytecode;
+		if (!ShaderCompiler::compile(it.first.path.c_str(), it.first.params, bytecode))
+		{
+			success = false;
+		}
+
+		auto tmp = Shader::create(it.first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
+		*it.second = *tmp;
+	}
+	return success;
+}
+
+bool ShaderCache::reload(ShaderCreateParams const& params)
+{
+	auto it = _shaders.find(params);
+	std::vector<u8> bytecode;
+	if (!ShaderCompiler::compile(it->first.path.c_str(), it->first.params, bytecode))
+	{
+		return false;
+	}
+
+	auto tmp = Shader::create(it->first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
+	*it->second = *tmp;
+	return true;
+
+}
+
+Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size)
+		: _type(type)
+{
+	ComPtr<ID3D11Device> device = Graphics::get_device();
+	switch (type)
+	{
+		case ShaderType::Vertex:
+		{
+			SUCCEEDED(device->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)_shader.GetAddressOf()));
+			using VertexType = ModelVertex;
+			SUCCEEDED(device->CreateInputLayout(VertexType::InputElements, VertexType::InputElementCount, byte_code, size, _input_layout.GetAddressOf()));
+		}
+		break;
+		case ShaderType::Pixel:
+			SUCCEEDED(device->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)_shader.GetAddressOf()));
+			break;
+		default:
+			throw new std::exception("ShaderType not supported!");
+	}
+
+	D3DReflect(byte_code, size, IID_ID3D11ShaderReflection, &_reflection);
+	D3D11_SHADER_INPUT_BIND_DESC bindDesc;
+	_reflection->GetResourceBindingDescByName("g_Albedo", &bindDesc);
+}
+
+Shader::~Shader()
+{
+}
+
+std::unique_ptr<Shader> Shader::create(ShaderType type, const u8* byte_code, uint32_t size)
+{
+	return std::make_unique<Shader>(type, byte_code, size);
+}
+
 
 } // namespace Graphics
 

@@ -87,23 +87,34 @@ struct AmbientInfo
 	float4 ambient;
 };
 
+__declspec(align(16))
+struct Viewport
+{
+	float vp_half_width;
+	float vp_half_height;
+	float vp_top_x;
+	float vp_top_y;
+	float vp_min_depth;
+	float vp_max_depth;
+	float pad[2];
+};
+
 __declspec(align(16)) 
 struct GlobalCB
 {
 	float4x4 view;
 	float4x4 inv_view;
 	float4x4 proj;
-
+	float4x4 inv_proj;
+	float4x4 inv_view_projection;
 	float4 view_direction;
 
+	Viewport vp;
 	AmbientInfo ambient;
-
-
 	LightInfo lights[MAX_LIGHTS];
 
 	u32 num_lights;
-	f32 padding[3];
-
+	float padding[3];
 };
 
 __declspec(align(16)) 
@@ -153,8 +164,10 @@ public:
 	DXGI_FORMAT get_swapchain_format() const { return _swapchain_format; }
 
 
-	void update_viewport(u32 w, u32 h)
+	void update_viewport(u32 x, u32 y, u32 w, u32 h)
 	{
+		_viewport_pos.x = float(x);
+		_viewport_pos.y = float(y);
 		_viewport_width = w;
 		_viewport_height = h;
 	}
@@ -172,6 +185,8 @@ public:
 	void prepare_shadow_pass();
 
 	void render_shadow_pass(shared_ptr<RenderWorld> const& world);
+
+	void copy_depth();
 
 private:
 	void create_factories(EngineSettings const& settings, cli::CommandLine const& cmdline);
@@ -213,6 +228,9 @@ private:
 	ID3D11ShaderResourceView* _non_msaa_output_srv;
 	ID3D11RenderTargetView*   _output_rtv;
 	ID3D11Texture2D*          _output_depth;
+	ID3D11Texture2D*          _output_depth_copy;
+	ID3D11ShaderResourceView* _output_depth_srv;
+	ID3D11ShaderResourceView* _output_depth_srv_copy;
 	ID3D11DepthStencilView*   _output_dsv;
 
 	// D2D resources to support D2D1 on D3D11
@@ -250,10 +268,15 @@ public:
 
 	void render_overlay() override;
 
-	 void render_3d(ID3D11DeviceContext* ctx) override;
+	void render_3d(ID3D11DeviceContext* ctx) override;
 
 private:
+	void render_shader_tool();
+	void render_debug_tool();
 	Renderer* _renderer;
+
+	bool _show_shadow_debug;
+
 	std::shared_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>> _batch;
 };
 

@@ -76,6 +76,9 @@ void Renderer::deinit()
 	SafeRelease(_output_rtv);
 	SafeRelease(_output_srv);
 	SafeRelease(_output_depth);
+	SafeRelease(_output_depth_srv);
+	SafeRelease(_output_depth_srv_copy);
+	SafeRelease(_output_depth_copy);
 	SafeRelease(_output_dsv);
 	SafeRelease(_user_defined_annotation);
 
@@ -265,21 +268,27 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 				1,
 				D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
 				D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
-		SUCCEEDED(_device->CreateTexture2D(&output_desc, nullptr, &_output_tex));
-		SUCCEEDED(_device->CreateRenderTargetView(_output_tex, nullptr, &_output_rtv));
-		SUCCEEDED(_device->CreateShaderResourceView(_output_tex, nullptr, &_output_srv));
+		ENSURE_HR(_device->CreateTexture2D(&output_desc, nullptr, &_output_tex));
+		ENSURE_HR(_device->CreateRenderTargetView(_output_tex, nullptr, &_output_rtv));
+		ENSURE_HR(_device->CreateShaderResourceView(_output_tex, nullptr, &_output_srv));
 
 		// This texture is used to output to a image in imgui
 		output_desc.SampleDesc.Count = 1;
 		output_desc.SampleDesc.Quality = 0;
-		SUCCEEDED(_device->CreateTexture2D(&output_desc, nullptr, &_non_msaa_output_tex));
-		SUCCEEDED(_device->CreateShaderResourceView(_non_msaa_output_tex, nullptr, &_non_msaa_output_srv));
+		ENSURE_HR(_device->CreateTexture2D(&output_desc, nullptr, &_non_msaa_output_tex));
+		ENSURE_HR(_device->CreateShaderResourceView(_non_msaa_output_tex, nullptr, &_non_msaa_output_srv));
 	}
 
 	// Create the 3D depth target
-	auto dsv_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_D24_UNORM_S8_UINT, w, h, 1, 1, D3D11_BIND_DEPTH_STENCIL, D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
-	SUCCEEDED(_device->CreateTexture2D(&dsv_desc, nullptr, &_output_depth));
-	SUCCEEDED(_device->CreateDepthStencilView(_output_depth, NULL, &_output_dsv));
+	auto depth_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R16_TYPELESS, w, h, 1, 1, D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
+	ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth));
+	ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth_copy));
+
+	auto dsv_desc = CD3D11_DEPTH_STENCIL_VIEW_DESC(_output_depth, D3D11_DSV_DIMENSION_TEXTURE2D, DXGI_FORMAT_D16_UNORM);
+	ENSURE_HR(_device->CreateDepthStencilView(_output_depth, &dsv_desc, &_output_dsv));
+	auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(_output_depth, D3D11_SRV_DIMENSION_TEXTURE2D, DXGI_FORMAT_R16_UNORM);
+	ENSURE_HR(_device->CreateShaderResourceView(_output_depth, &srv_desc, &_output_depth_srv));
+	ENSURE_HR(_device->CreateShaderResourceView(_output_depth_copy, &srv_desc, &_output_depth_srv_copy));
 
 	set_debug_name(_output_tex, "Color Output");
 	set_debug_name(_output_depth, "Depth Output");
@@ -378,6 +387,10 @@ void Renderer::render_view(shared_ptr<RenderWorld> const& world, RenderPass::Val
 
 	// Viewport depends on the actual imgui window
 	params.viewport = CD3D11_VIEWPORT(_output_tex, _output_rtv);
+
+	// For the world we always render from the top left corner
+	params.viewport.TopLeftX = 0.0;
+	params.viewport.TopLeftY = 0.0;
 	params.viewport.Width = (f32)_viewport_width;
 	params.viewport.Height = (f32)_viewport_height;
 
@@ -400,10 +413,11 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 			depth_stencil_state = DepthStencilState::LessEqual;
 		}
 
-		ID3D11SamplerState* samplers[1] = {
+		ID3D11SamplerState* samplers[2] = {
 			Graphics::get_sampler_state(SamplerState::MinMagMip_Linear).Get(),
+			Graphics::get_sampler_state(SamplerState::MinMagMip_Point).Get()
 		};
-		_device_ctx->PSSetSamplers(0, 1, samplers);
+		_device_ctx->PSSetSamplers(0, UINT(std::size(samplers)), samplers);
 
 		_device_ctx->OMSetDepthStencilState(Graphics::get_depth_stencil_state(depth_stencil_state).Get(), 0);
 		_device_ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullBack).Get());
@@ -417,7 +431,13 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	global->proj = params.proj;
 	global->view = params.view;
 	global->inv_view = hlslpp::inverse(params.view);
+	global->inv_proj = hlslpp::inverse(params.proj);
+	global->inv_view_projection = hlslpp::inverse(hlslpp::mul(params.view, params.proj));
 	global->view_direction = float4(params.view_direction.xyz, 0.0f);
+	global->vp.vp_top_x = params.viewport.TopLeftX;
+	global->vp.vp_top_y = params.viewport.TopLeftY;
+	global->vp.vp_half_width = params.viewport.Width / 2.0f;
+	global->vp.vp_half_height = params.viewport.Height / 2.0f;
 
 
 	RenderWorld::LightCollection const& lights = world->get_lights();
@@ -519,11 +539,22 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 
 			if (params.pass == RenderPass::Opaque)
 			{
-				ID3D11ShaderResourceView* views[] = { _shadow_map_srv.Get() };
-				_device_ctx->PSSetShaderResources(3, 1, views);
+				ID3D11ShaderResourceView* views[] = { 
+					_shadow_map_srv.Get(),
+					_output_depth_srv_copy
+				};
+				_device_ctx->PSSetShaderResources(3, UINT(std::size(views)), views);
 			}
 
 			ctx->DrawIndexed((UINT)m.indexCount, (UINT)m.firstIndex, (INT)m.firstVertex);
+
+			ID3D11ShaderResourceView* views[] = {
+				nullptr,
+				nullptr
+			};
+
+			_device_ctx->PSSetShaderResources(3, UINT(std::size(views)), views);
+
 		}
 
 		if (params.pass == RenderPass::Opaque)
@@ -561,7 +592,7 @@ void Renderer::prepare_shadow_pass()
 				ASSERTMSG(false, "Failed to create the shadowmap DSV");
 			}
 
-			auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(_shadow_map.Get(), D3D11_SRV_DIMENSION_TEXTURE2DARRAY, DXGI_FORMAT_R32_FLOAT,0,-1,i);
+			auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(_shadow_map.Get(), D3D11_SRV_DIMENSION_TEXTURE2DARRAY, DXGI_FORMAT_R32_FLOAT, 0, UINT(-1), i, 1);
 			if (FAILED(_device->CreateShaderResourceView(_shadow_map.Get(), &srv_desc, _debug_shadow_map_srv[i].ReleaseAndGetAddressOf())))
 			{
 				ASSERTMSG(false, "Failed to create the shadowmap SRV");
@@ -756,9 +787,15 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 
 
 
- RendererDebugTool::RendererDebugTool(Renderer* owner)
+void Renderer::copy_depth()
+{
+	_device_ctx->CopyResource(_output_depth_copy, _output_depth);
+}
+
+RendererDebugTool::RendererDebugTool(Renderer* owner)
 		: DebugOverlay(true, "RendererDebug")
 	    , _renderer(owner)
+		, _show_shadow_debug(false)
 {
 
 }
@@ -766,11 +803,135 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 
 void RendererDebugTool::render_overlay()
 {
+	render_debug_tool();
+	render_shader_tool();
+}
+
+void RendererDebugTool::render_3d(ID3D11DeviceContext* ctx)
+{
+
+	if(!_batch)
+	{
+		_batch = std::make_shared<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>(ctx);
+	}
+
+	_batch->Begin();
+
+	Debug::DrawGrid(_batch.get(), float4(100.0, 0.0, 0.0, 0.0), float4(0.0, 0.0, 100.0, 0.0), float4(0.0, 0.0, 0.0, 0.0), 10, 10, float4(1.0f,1.0f,1.0f,0.5f));
+
+	if(_show_shadow_debug)
+	{
+		float4 frustum_color = float4(0.7f, 0.0f, 0.0f, 1.0f);
+		auto world = GameEngine::instance()->get_render_world();
+		if (world->get_camera(0) != world->get_view_camera())
+		{
+			std::vector<float4> colors = {
+				float4(1.0f, 0.0f, 0.0f, 1.0f),
+				float4(0.0f, 1.0f, 0.0f, 1.0f),
+				float4(0.0f, 0.0f, 1.0f, 1.0f),
+				float4(1.0f, 0.0f, 1.0f, 1.0f),
+				float4(1.0f, 1.0f, 0.0f, 1.0f),
+				float4(0.0f, 1.0f, 1.0f, 1.0f)
+			};
+			u32 num_cascades = MAX_CASCADES;
+			for (u32 i = 0; i < num_cascades; ++i)
+			{
+				FrustumCorners frustum = _renderer->get_cascade_frustum(world->get_camera(0), i, num_cascades);
+				Debug::DrawFrustum(_batch.get(), frustum, colors[i % colors.size()]);
+
+				// Find the world space min/ max for each cascade
+				float4 min = frustum[0];
+				float4 max = frustum[0];
+				for (u32 j = 1; j < frustum.size(); ++j)
+				{
+					min = hlslpp::min(frustum[j], min);
+					max = hlslpp::max(frustum[j], max);
+				}
+
+				XMVECTOR xm_color;
+				hlslpp::store(colors[(i) % colors.size()], (float*)&xm_color);
+
+				// Visualize the bounding box in world space of our cascades
+				float3 center = ((max + min) / 2.0f).xyz;
+				float3 extents = ((max - min) / 2.0f).xyz;
+				XMFLOAT3 xm_center;
+				hlslpp::store(center, (float*)&xm_center);
+
+				XMFLOAT3 xm_extents;
+				hlslpp::store(extents, (float*)&xm_extents);
+				auto box = DirectX::BoundingBox(xm_center, xm_extents);
+				Debug::Draw(_batch.get(), box, xm_color);
+			}
+		}
+
+		if (world->get_light(0))
+		{
+			static const float4 c_basic_cascade = float4(1.0f, 1.0f, 0.0f, 1.0f);
+			static const float4 c_transformed = float4(0.0f, 1.0f, 0.0f, 1.0f);
+
+			static u32 s_visualize_cascade = 0;
+			{
+				CascadeInfo const& info = world->get_light(0)->get_cascade(s_visualize_cascade);
+				FrustumCorners corners;
+				calculate_frustum(corners, info.vp);
+				Debug::DrawFrustum(_batch.get(), corners, c_basic_cascade);
+
+				float3 center = hlslpp::mul(float4(0.0, 0.0, 0.0, 1.0f), hlslpp::inverse(info.vp)).xyz;
+				Debug::DrawRay(_batch.get(), float4(center.xyz, 1.0f), world->get_light(0)->get_view_direction(), true, c_basic_cascade);
+			}
+
+			auto box = DirectX::BoundingBox(XMFLOAT3{ s_center[s_visualize_cascade].x, s_center[s_visualize_cascade].y, s_center[s_visualize_cascade].z }, XMFLOAT3{ 1.0, 1.0, 1.0 });
+			Debug::Draw(_batch.get(), box);
+		}
+	}
+
+	_batch->End();
+}
+
+void RendererDebugTool::render_shader_tool()
+{
+	static bool s_open = true;
+	if (ImGui::Begin("Shaders", &s_open))
+	{
+		ImGui::BeginTable("##ShaderTable", 2);
+		ImGui::TableSetupScrollFreeze(0, 1); // Make row always visible
+		ImGui::TableSetupColumn("Path");
+		ImGui::TableSetupColumn("Button");
+		ImGui::TableHeadersRow();
+
+
+		auto shaders = ShaderCache::instance()->_shaders;
+		for(auto it : shaders)
+		{
+			ImGui::TableNextRow();
+			ImGui::TableNextColumn();
+			ImGui::Text("%s", it.first.path.c_str());
+
+			ImGui::TableNextColumn();
+			ImGui::PushID(it.first.path.c_str());
+			if (ImGui::Button("Build"))
+			{
+				ShaderCache::instance()->reload(it.first);
+			}
+			ImGui::PopID();
+		}
+		ImGui::EndTable();
+
+
+
+	}
+	ImGui::End();
+}
+
+void RendererDebugTool::render_debug_tool()
+{
 	if (ImGui::Begin("RendererDebug"), _isOpen)
 	{
-		if(ImGui::Button("Toggle Debug Cam"))
+		ImGui::Checkbox("Show Shadow Debug", &_show_shadow_debug);
+
+		if (ImGui::Button("Toggle Debug Cam"))
 		{
-			if(_renderer->_active_cam == 0)
+			if (_renderer->_active_cam == 0)
 			{
 				_renderer->_active_cam = 1;
 			}
@@ -783,96 +944,18 @@ void RendererDebugTool::render_overlay()
 		}
 		ImGui::Text("Active Camera: %d", _renderer->_active_cam);
 
-
 		ImVec2 current_size = ImGui::GetContentRegionAvail();
-		for(u32 i = 0; i < MAX_CASCADES; ++i)
+		for (u32 i = 0; i < MAX_CASCADES; ++i)
 		{
 			ImGui::Image(_renderer->_debug_shadow_map_srv[i].Get(), { 150, 150 });
-			if(i != MAX_CASCADES - 1)
+			if (i != MAX_CASCADES - 1)
 				ImGui::SameLine();
 		}
-	
-		ImGui::End();
+
+		ImGui::Image(_renderer->_output_depth_srv, { 150, 150 });
+
 	}
-
-
-}
-
-void RendererDebugTool::render_3d(ID3D11DeviceContext* ctx)
-{
-	if(!_batch)
-	{
-		_batch = std::make_shared<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>(ctx);
-	}
-
-	_batch->Begin();
-
-	Debug::DrawGrid(_batch.get(), float4(100.0, 0.0, 0.0, 0.0), float4(0.0, 0.0, 100.0, 0.0), float4(0.0, 0.0, 0.0, 0.0), 10, 10, float4(1.0f,1.0f,1.0f,0.5f));
-
-	float4 frustum_color = float4(0.7f, 0.0f, 0.0f, 1.0f);
-	auto world = GameEngine::instance()->get_render_world();
-	if (world->get_camera(0) != world->get_view_camera())
-	{
-		std::vector<float4> colors = {
-			float4(1.0f,0.0f,0.0f,1.0f),
-			float4(0.0f,1.0f,0.0f,1.0f),
-			float4(0.0f,0.0f,1.0f,1.0f),
-			float4(1.0f,0.0f,1.0f,1.0f),
-			float4(1.0f,1.0f,0.0f,1.0f),
-			float4(0.0f,1.0f,1.0f,1.0f)
-		};
-		u32 num_cascades = MAX_CASCADES;
-		for(u32 i = 0; i < num_cascades; ++i)
-		{
-			FrustumCorners frustum = _renderer->get_cascade_frustum(world->get_camera(0), i, num_cascades);
-			Debug::DrawFrustum(_batch.get(), frustum, colors[i % colors.size()]);
-
-			// Find the world space min/ max for each cascade
-			float4 min = frustum[0];
-			float4 max = frustum[0];
-			for(u32 j = 1; j < frustum.size(); ++j)
-			{
-				min = hlslpp::min(frustum[j], min);
-				max = hlslpp::max(frustum[j], max);
-			}
-
-			XMVECTOR xm_color;
-			hlslpp::store(colors[(i) % colors.size()], (float*)&xm_color);
-
-			// Visualize the bounding box in world space of our cascades
-			float3 center = ((max + min) / 2.0f).xyz;
-			float3 extents = ((max - min) / 2.0f).xyz;
-			XMFLOAT3 xm_center;
-			hlslpp::store(center, (float*)&xm_center);
-
-			XMFLOAT3 xm_extents;
-			hlslpp::store(extents, (float*)&xm_extents);
-			auto box = DirectX::BoundingBox(xm_center, xm_extents);
-			Debug::Draw(_batch.get(), box, xm_color);
-		}
-	}
-
-	if(world->get_light(0))
-	{
-		static const float4 c_basic_cascade = float4(1.0f, 1.0f, 0.0f, 1.0f);
-		static const float4 c_transformed = float4(0.0f, 1.0f, 0.0f, 1.0f);
-
-		static u32 s_visualize_cascade = 0;
-		{
-			CascadeInfo const& info = world->get_light(0)->get_cascade(s_visualize_cascade);
-			FrustumCorners corners;
-			calculate_frustum(corners, info.vp);
-			Debug::DrawFrustum(_batch.get(), corners, c_basic_cascade);
-
-			float3 center = hlslpp::mul(float4(0.0, 0.0, 0.0,1.0f), hlslpp::inverse(info.vp)).xyz;
-			Debug::DrawRay(_batch.get(), float4(center.xyz,1.0f), world->get_light(0)->get_view_direction(), true, c_basic_cascade);
-		}
-
-		auto box = DirectX::BoundingBox(XMFLOAT3{ s_center[s_visualize_cascade].x, s_center[s_visualize_cascade].y, s_center[s_visualize_cascade].z }, XMFLOAT3{ 1.0, 1.0, 1.0 });
-		Debug::Draw(_batch.get(), box);
-	}
-
-	_batch->End();
+	ImGui::End();
 }
 
 }

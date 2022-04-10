@@ -113,7 +113,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		params.defines.push_back({ "USE_PBR", "1" });
 		params.defines.push_back({ "IS_SHADOW_PASS" });
 		params.entry_point = "main";
-		params.stage = ShaderCompiler::ShaderStage::Pixel;
+		params.stage = ShaderCompiler::ShaderType::Pixel;
 		params.flags = ShaderCompiler::CompilerFlags::CompileDebug | ShaderCompiler::CompilerFlags::OptimizationLevel0;
 		bool result = ShaderCompiler::compile("Source/Engine/Shaders/debug_px.hlsl", params, data);
 	}
@@ -444,7 +444,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	Perf::shutdown();
 
 	ResourceLoader::instance()->unload_all();
-	ResourceLoader::Shutdown();
+	ResourceLoader::shutdown();
 
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
@@ -1176,6 +1176,10 @@ void GameEngine::render()
 		d3d_ctx->OMSetRenderTargets(0, NULL, d3d_output_dsv);
 		render_view(Graphics::RenderPass::ZPrePass);
 
+		// Do a copy to our dsv tex for sampling during the opaque pass
+		{
+			_renderer->copy_depth();
+		}
 		d3d_ctx->OMSetRenderTargets(1, &d3d_output_rtv, d3d_output_dsv);
 		render_view(Graphics::RenderPass::Opaque);
 	}
@@ -1208,8 +1212,9 @@ void GameEngine::render()
 		s_effect->GetVertexShaderBytecode(&shader_byte_code, &byte_code_length);
 		ENSURE_HR(d3d_device->CreateInputLayout(DirectX::VertexPositionColor::InputElements, DirectX::VertexPositionColor::InputElementCount, shader_byte_code, byte_code_length, s_layout.ReleaseAndGetAddressOf()));
 	}
+
 	d3d_ctx->OMSetBlendState(s_states->Opaque(), nullptr, 0xFFFFFFFF);
-	d3d_ctx->OMSetDepthStencilState(s_states->DepthDefault(), 0);
+	d3d_ctx->OMSetDepthStencilState(s_states->DepthRead(), 0);
 	d3d_ctx->RSSetState(s_states->CullNone());
 
 	d3d_ctx->IASetInputLayout(s_layout.Get());
@@ -1277,6 +1282,12 @@ void GameEngine::build_debug_log()
 		ImGui::InputText("Filter", s_filter, 512);
 		ImGui::SameLine();
 		ImGui::Checkbox("Scroll To Bottom", &s_scroll_to_bottom);
+		ImGui::SameLine();
+		if(ImGui::Button("Clear"))
+		{
+			Logger::instance()->clear();
+		}
+			
 
 		//ImGui::BeginTable("LogData", 3);
 		ImGui::BeginChild("123");
@@ -1337,6 +1348,7 @@ void GameEngine::build_viewport()
 	if (ImGui::Begin("Viewport##GameViewport", &_show_viewport))
 	{
 		static ImVec2 s_vp_size = ImGui::GetContentRegionAvail();
+		static ImVec2 s_vp_pos = ImGui::GetWindowContentRegionMin();
 		ImVec2 current_size = ImGui::GetContentRegionAvail();
 
 		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
@@ -1360,17 +1372,18 @@ void GameEngine::build_viewport()
 		}
 #endif
 
-		if (s_vp_size.x != current_size.x || s_vp_size.y != current_size.y)
+		if (s_vp_size.x != current_size.x || s_vp_size.y != current_size.y || s_vp_pos.x != vMin.x || s_vp_pos.y != vMin.y)
 		{
 			LOG_VERBOSE(Graphics, "Viewport resize detected! From {}x{} to {}x{}", current_size.x, current_size.y, s_vp_size.x, s_vp_size.y);
 
 
 			// Update the viewport sizes
 			s_vp_size = current_size;
+			s_vp_pos = vMin;
 			_viewport_width = (u32)s_vp_size.x;
 			_viewport_height = (u32)s_vp_size.y;
 
-			_renderer->update_viewport(s_vp_size.x, s_vp_size.y);
+			_renderer->update_viewport(vMin.x, vMin.y, s_vp_size.x, s_vp_size.y);
 		}
 
 		// Draw the actual scene image
@@ -1512,7 +1525,7 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 	result = GameEngine::instance()->run(hInstance, iCmdShow); // run the game engine and return the result
 
 	// Shutdown the game engine to make sure there's no leaks left.
-	GameEngine::Shutdown();
+	GameEngine::shutdown();
 
 #if defined(DEBUG) | defined(_DEBUG)
 	if (pDXGIDebug)

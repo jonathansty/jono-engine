@@ -15,12 +15,12 @@ bool compile(const char* shader, CompileParameters const& parameters, std::vecto
 	if (IO::IFileRef file = io->open(shader, IO::Mode::Read); file)
 	{
 		file->seek(0, IO::SeekMode::FromEnd);
-		u64 size = file->tell();
+		u64 file_size = file->tell();
 		file->seek(0, IO::SeekMode::FromBeginning);
 
-		char* data = (char*)malloc(size + 1);
-		memset(data, 0, size + 1);
-		file->read(data, (u32)size);
+		char* data = (char*)malloc(file_size + 1);
+		memset(data, 0, file_size + 1);
+		u32 bytes_read = file->read(data, (u32)file_size);
 
 		std::vector<D3D_SHADER_MACRO> defines = {};
 
@@ -44,7 +44,28 @@ bool compile(const char* shader, CompileParameters const& parameters, std::vecto
 
 		std::string entry_point = parameters.entry_point;
 		std::string target = get_target(parameters.stage);
-		HRESULT result = D3DCompile(data, size, shader, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entry_point.c_str(), target.c_str(), static_cast<u32>(parameters.flags), static_cast<u32>(parameters.effect_flags), &shadercode_result, &errors);
+
+
+		ComPtr<ID3DBlob> preprocessedData;
+		ComPtr<ID3DBlob> errorData;
+		HRESULT result = D3DPreprocess(data, bytes_read, shader, macros.data(), D3D_COMPILE_STANDARD_FILE_INCLUDE, preprocessedData.ReleaseAndGetAddressOf(), errorData.ReleaseAndGetAddressOf());
+		if(FAILED(result))
+		{
+			free(data);
+
+			std::string messages{ (char*)errorData->GetBufferPointer() };
+			LOG_ERROR(Graphics, "Shader compile failed with the following message: {}", messages);
+			return false;
+		}
+
+		std::string preprocessed_fn = fmt::format("Intermediate/{}.preprocessed", shader);
+		auto f = io->open(preprocessed_fn.c_str(), IO::Mode::Write, false);
+		if(f)
+		{
+			f->write(preprocessedData->GetBufferPointer(), static_cast<u32>(preprocessedData->GetBufferSize()));
+		}
+
+		result = D3DCompile(preprocessedData->GetBufferPointer(), preprocessedData->GetBufferSize(), shader, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entry_point.c_str(), target.c_str(), static_cast<u32>(parameters.flags), static_cast<u32>(parameters.effect_flags), &shadercode_result, &errors);
 		free(data);
 
 		if (FAILED(result))

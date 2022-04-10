@@ -1,6 +1,8 @@
 #pragma once
 
 #include "PrecisionTimer.h"
+#include "ShaderCompiler.h"
+#include "singleton.h"
 
 enum class DepthStencilState : u32
 {
@@ -34,6 +36,7 @@ ENUM_UNDERLYING_TYPE(RasterizerState);
 enum class SamplerState : u32
 {
 	MinMagMip_Linear,
+	MinMagMip_Point,
 	Num
 };
 ENUM_UNDERLYING_TYPE(SamplerState);
@@ -119,35 +122,125 @@ private:
 #define GPU_MARKER(ctx, name)
 #endif
 
-namespace Graphics {
 
-	struct DeviceContext;
+namespace Graphics
+{
+	struct ShaderCreateParams;
+}
 
-	// Entry point for the graphics. Initializes default D3D11 objects for usage later
-	void init(DeviceContext const& ctx);
 
-	// On shutdown the application should call this to release all handles to the device, context and the common states.
-	void deinit();
+namespace Graphics
+{
 
-	// Public API to retrieve the currently initialized graphics data and common states
-	ComPtr<ID3D11Device>            get_device();
-	ComPtr<ID3D11DeviceContext>     get_ctx();
-	ComPtr<ID3D11BlendState>        get_blend_state(BlendState blendState);
-	ComPtr<ID3D11RasterizerState>   get_rasterizer_state(RasterizerState rasterizerState);
-	ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState blendState);
-	ComPtr<ID3D11SamplerState>      get_sampler_state(SamplerState blendState);
+struct DeviceContext;
+
+// Entry point for the graphics. Initializes default D3D11 objects for usage later
+void init(DeviceContext const& ctx);
+
+// On shutdown the application should call this to release all handles to the device, context and the common states.
+void deinit();
+
+// Public API to retrieve the currently initialized graphics data and common states
+ComPtr<ID3D11Device> get_device();
+ComPtr<ID3D11DeviceContext> get_ctx();
+ComPtr<ID3D11BlendState> get_blend_state(BlendState blendState);
+ComPtr<ID3D11RasterizerState> get_rasterizer_state(RasterizerState rasterizerState);
+ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState blendState);
+ComPtr<ID3D11SamplerState> get_sampler_state(SamplerState blendState);
+
+std::shared_ptr<class Shader> get_error_shader_px();
+std::shared_ptr<class Shader> get_error_shader_vx();
+
+template <typename T>
+HRESULT set_debug_name(T* obj, std::string const& n)
+{
+	return obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(n.size()), n.data());
+}
+
+class Shader
+{
+public:
+	Shader(ShaderType type, const u8* byte_code, uint32_t size);
+
+	~Shader();
+
+	static std::unique_ptr<Shader> create(ShaderType type, const u8* byte_code, uint32_t size);
 
 	template <typename T>
-	HRESULT set_debug_name(T* obj, std::string const& n)
+	ComPtr<T> as()
 	{
-		return obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(n.size()), n.data());
+		ComPtr<T> result;
+		_shader->QueryInterface(__uuidof(T), (void**)result.GetAddressOf());
+		assert(result);
+		return result;
+	}
+	ComPtr<ID3D11Resource> get_shader() const { return _shader; }
+	ComPtr<ID3D11InputLayout> get_input_layout() const
+	{
+		assert(_type == ShaderType::Vertex);
+		return _input_layout;
 	}
 
+private:
+	ShaderType _type;
 
+	ComPtr<ID3D11ShaderReflection> _reflection;
+	ComPtr<ID3D11Resource> _shader;
+	ComPtr<ID3D11InputLayout> _input_layout;
+};
+
+struct ShaderCreateParams
+{
+	std::string path;
+	ShaderCompiler::CompileParameters params;
+};
+
+inline bool operator==(ShaderCreateParams const& lhs, ShaderCreateParams const& rhs)
+{
+	return lhs.path == rhs.path && lhs.params == rhs.params;
+}
+
+
+} // namespace Graphics
+
+template <>
+struct std::hash<Graphics::ShaderCreateParams>
+{
+	std::size_t operator()(Graphics::ShaderCreateParams const& params) const noexcept
+	{
+		// Just do a raw memory hash
+		size_t name_hash = std::hash<std::string> {}(params.path);
+
+		size_t params_hash = std::hash<ShaderCompiler::CompileParameters>{}(params.params);
+		Hash::combine(name_hash, params_hash);
+		return name_hash;
+	}
+};
+
+namespace Graphics
+{
+
+
+	class ShaderCache : public TSingleton<ShaderCache>
+	{
+	public:
+		
+		std::shared_ptr<Shader> find_or_create(ShaderCreateParams const& params);
+
+		bool reload_all();
+
+		bool reload(ShaderCreateParams const& params);
+
+	private:
+		std::unordered_map<ShaderCreateParams, std::shared_ptr<Shader>> _shaders;
+		friend class RendererDebugTool;
+	};
 
 
 
 } // Graphics
+
+
 
 namespace Perf
 {

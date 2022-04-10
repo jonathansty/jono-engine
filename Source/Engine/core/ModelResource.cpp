@@ -34,7 +34,7 @@ void ModelResource::load()
 
 	using namespace Assimp;
 	Importer importer{};
-	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded | aiProcess_CalcTangentSpace);
+	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded );
 	if (!scene)
 	{
 		LOG_ERROR(IO, importer.GetErrorString());

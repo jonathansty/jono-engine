@@ -11,44 +11,56 @@
 
 void MaterialResource::load()
 {
+	using namespace Graphics;
+
 	auto device = Graphics::get_device();
 
 	ShaderCompiler::CompileParameters params{};
 	params.entry_point = "main";
 	params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
-	params.stage = ShaderCompiler::ShaderStage::Pixel;
+	params.stage = ShaderType::Pixel;
 
 	std::vector<u8> pixel_bytecode;
 	std::vector<u8> vertex_bytecode;
 	std::vector<u8> debug_bytecode;
-	if(!ShaderCompiler::compile("./Source/Engine/Shaders/simple_px.hlsl", params, pixel_bytecode)) {
+	if(!ShaderCompiler::compile("Source/Engine/Shaders/simple_px.hlsl", params, pixel_bytecode)) {
 		// Use error shader
-		if(!ShaderCompiler::compile("./Source/Engine/Shaders/error_px.hlsl", params, pixel_bytecode)) {
+		if(!ShaderCompiler::compile("Source/Engine/Shaders/error_px.hlsl", params, pixel_bytecode)) {
 			LOG_FATAL(Graphics, "Couldn't compile basic error shader!");
 		}
 	}
 
-	if (!ShaderCompiler::compile("./Source/Engine/Shaders/debug_px.hlsl", params, debug_bytecode))
+	if (!ShaderCompiler::compile("Source/Engine/Shaders/debug_px.hlsl", params, debug_bytecode))
 	{
-		if (!ShaderCompiler::compile("./Source/Engine/Shaders/error_px.hlsl", params, pixel_bytecode))
+		if (!ShaderCompiler::compile("Source/Engine/Shaders/error_px.hlsl", params, pixel_bytecode))
 		{
 			LOG_FATAL(Graphics, "Couldn't compile basic error shader!");
 		}
 	}
 
 
-	params.stage = ShaderCompiler::ShaderStage::Vertex;
-	if (!ShaderCompiler::compile("./Source/Engine/Shaders/simple_vx.hlsl", params, vertex_bytecode))
+	params.stage = Graphics::ShaderType::Vertex;
+	if (!ShaderCompiler::compile("Source/Engine/Shaders/simple_vx.hlsl", params, vertex_bytecode))
 	{
-		if (!ShaderCompiler::compile("./Source/Engine/Shaders/error_vx.hlsl", params, pixel_bytecode))
+		if (!ShaderCompiler::compile("Source/Engine/Shaders/error_vx.hlsl", params, pixel_bytecode))
 		{
 			LOG_FATAL(Graphics, "Couldn't compile basic error shader!");
 		}
 	}
-	
 
-	_resource = Material::create((const char*)vertex_bytecode.data(), u32(vertex_bytecode.size()), (const char*)pixel_bytecode.data(), u32(pixel_bytecode.size()));
-	_resource->_debug_pixel_shader = Shader::create(ShaderType::Pixel, (const char*)debug_bytecode.data(), u32(debug_bytecode.size()));
+	ShaderCreateParams request{};
+	request.params = params;
+	request.params.stage = Graphics::ShaderType::Vertex;
+	request.path = "Source/Engine/Shaders/simple_vx.hlsl";
+	auto vertex_shader = ShaderCache::instance()->find_or_create(request);
+
+	request.params.stage = Graphics::ShaderType::Pixel;
+	request.path = "Source/Engine/Shaders/simple_px.hlsl";
+	auto pixel_shader = ShaderCache::instance()->find_or_create(request);
+	_resource = Material::create(vertex_shader, pixel_shader);
+
+	request.path = "Source/Engine/Shaders/debug_px.hlsl";
+	_resource->_debug_pixel_shader = ShaderCache::instance()->find_or_create(request);
 	_resource->_double_sided = get_init_parameters().double_sided;
 
 	// Initiate texture loads

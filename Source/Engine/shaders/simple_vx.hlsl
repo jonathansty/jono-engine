@@ -4,9 +4,6 @@ VS_OUT main(VS_IN vin)
 {
 	VS_OUT vout = (VS_OUT)(0);
 
-	// Calculate the world position 
-	float4 worldPosition = mul(World, float4(vin.position, 1.0));
-
 	vout.position = mul(WorldViewProjection, float4(vin.position,1.0));
 	vout.normal = float4(vin.normal, 1.0);
 	vout.colour = vin.colour;

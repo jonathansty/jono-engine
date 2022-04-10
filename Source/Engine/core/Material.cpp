@@ -5,45 +5,12 @@
 #include "ModelResource.h"
 #include "TextureResource.h"
 
-Shader::Shader(ShaderType type, const char* byte_code, uint32_t size)
-	: _type(type)
-{
-	ComPtr<ID3D11Device> device = Graphics::get_device();
-	switch (type)
-	{
-	case ShaderType::Vertex:
-	{
-		SUCCEEDED(device->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)_shader.GetAddressOf()));
-		using VertexType = ModelVertex;
-		SUCCEEDED(device->CreateInputLayout(VertexType::InputElements, VertexType::InputElementCount, byte_code, size, _input_layout.GetAddressOf()));
-	}break;
-	case ShaderType::Pixel:
-		SUCCEEDED(device->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)_shader.GetAddressOf()));
-		break;
-	default:
-		throw new std::exception("ShaderType not supported!");
-	}
 
-	D3DReflect(byte_code, size, IID_ID3D11ShaderReflection, &_reflection);
-	D3D11_SHADER_INPUT_BIND_DESC bindDesc;
-	_reflection->GetResourceBindingDescByName("g_Albedo", &bindDesc);
-
-}
-
-Shader::~Shader()
-{
-}
-
-std::unique_ptr<Shader> Shader::create(ShaderType type, const char* byte_code, uint32_t size)
-{
-	return std::make_unique<Shader>(type, byte_code, size);
-}
-
-std::unique_ptr<Material> Material::create(const char* vx_byte_code, uint32_t vx_byte_code_size, const char* px_byte_code, uint32_t px_byte_code_size)
+std::unique_ptr<Material> Material::create(std::shared_ptr<Graphics::Shader> vertex_shader, std::shared_ptr<Graphics::Shader> pixel_shader)
 {
 	auto obj = std::make_unique<Material>();
-	obj->_vertex_shader = Shader::create(ShaderType::Vertex, vx_byte_code, vx_byte_code_size);
-	obj->_pixel_shader = Shader::create(ShaderType::Pixel,  px_byte_code, px_byte_code_size);
+	obj->_vertex_shader = vertex_shader;
+	obj->_pixel_shader = pixel_shader;
 	return obj;
 }
 

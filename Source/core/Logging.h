@@ -116,6 +116,7 @@ public:
 	void deinit();
 	void log(LogEntry const& entry);
 
+	void clear() { _buffer.clear(); }
 	RingBuffer<LogEntry, c_buffer_size> const& GetBuffer() const { return _buffer; }
 
 	// Hack to scroll down to bottom if new data was received

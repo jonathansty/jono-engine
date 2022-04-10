@@ -101,6 +101,7 @@ using namespace D2D1;
 #include "Asserts.h"
 #include "identifier.h"
 #include "Math.h"
+#include "Hash.h"
 #include <chrono>
 
 namespace Tasks
