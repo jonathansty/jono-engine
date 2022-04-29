@@ -91,30 +91,29 @@ public:
 };
 #endif
 
-class SimpleMeshComponent final : public framework::Component
+class ModelComponent final : public framework::Component
 {
 	RTTR_ENABLE(framework::Component);
 
 public:
 	using Entity = framework::Entity;
 
-	SimpleMeshComponent();
-	virtual ~SimpleMeshComponent();
+	ModelComponent();
+	virtual ~ModelComponent();
 
 	virtual void on_attach(Entity* ent) override;
 	virtual void on_detach(Entity* ent) override;
 
-	virtual void render() override;
-
 	bool is_loaded() const;
-	void set_model_path(std::string mesh);
+	void set_model_path(std::string const& mesh);
 
-	std::string get_model_path();
-
-	std::shared_ptr<ModelResource> get_model_resource() const { return _resource; };
+	std::string const& get_model_path();
 
 private:
-	std::shared_ptr<ModelResource> _resource;
+	std::string _model_path;
+
+	RenderWorldInstanceRef _instance;
+
 };
 
 class LightComponent final : public framework::Component

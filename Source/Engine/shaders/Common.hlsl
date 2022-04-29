@@ -72,15 +72,16 @@ cbuffer WorldConstants : register(b0) {
 
 };
 
-cbuffer ModelConstants : register(b1) {
+cbuffer DebugCB : register(b1) {
+	int g_VisualizeMode;
+};
+
+cbuffer ModelConstants : register(b2) {
 	float4x4 World;
 	float4x4 WorldView;
 	float4x4 WorldViewProjection;
 };
 
-cbuffer DebugCB : register(b2) {
-	int g_VisualizeMode;
-};
 
 
 

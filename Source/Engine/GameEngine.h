@@ -43,10 +43,6 @@ using graphics::bitmap_interpolation_mode;
 #endif
 
 
-
-
-
-
 namespace framework
 {
 class Entity;

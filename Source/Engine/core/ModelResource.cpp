@@ -15,7 +15,7 @@ namespace Shaders
 #include "simple_vx.h"
 } // namespace Shaders
 
-const D3D11_INPUT_ELEMENT_DESC ModelVertex::InputElements[InputElementCount] = {
+const D3D11_INPUT_ELEMENT_DESC ModelUberVertex::InputElements[InputElementCount] = {
 	{ "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -26,7 +26,17 @@ const D3D11_INPUT_ELEMENT_DESC ModelVertex::InputElements[InputElementCount] = {
 void ModelResource::load()
 {
 	std::string const& path = get_init_parameters().path;
+	_resource = std::make_shared<Model>();
+	_resource->load(path);
+}
 
+ModelResource::ModelResource(FromFileResourceParameters params)
+		: TCachedResource(params)
+{
+}
+
+void Model::load(std::string const& path)
+{
 	std::filesystem::path dir_path = std::filesystem::path(path);
 	dir_path = dir_path.parent_path();
 	auto device = Graphics::get_device();
@@ -34,7 +44,7 @@ void ModelResource::load()
 
 	using namespace Assimp;
 	Importer importer{};
-	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded );
+	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded);
 	if (!scene)
 	{
 		LOG_ERROR(IO, importer.GetErrorString());
@@ -44,11 +54,12 @@ void ModelResource::load()
 	if (scene->HasMeshes())
 	{
 		std::vector<VertexType> vertices;
-		std::vector<uint32_t> indices;
+		std::vector<u32> indices;
 		_meshes.clear();
 
 		std::map<int, aiMatrix4x4> transforms;
 
+		// Helper structure to flatten a assimp scene and it's traansforms
 		struct Flattener
 		{
 			void operator()(aiMatrix4x4 parent, aiNode* node, std::map<int, aiMatrix4x4>& result)
@@ -65,11 +76,11 @@ void ModelResource::load()
 				}
 			}
 		};
+
 		aiNode* root = scene->mRootNode;
 		Flattener fn{};
 		fn(aiMatrix4x4(), root, transforms);
 
-		//TODO: Implement transforms from assimp
 		for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
 		{
 			aiMesh const* mesh = scene->mMeshes[i];
@@ -85,7 +96,7 @@ void ModelResource::load()
 			meshlet.firstIndex = indices.size();
 			meshlet.firstVertex = vertices.size();
 			meshlet.indexCount = uint32_t(mesh->mNumFaces) * 3;
-			meshlet.materialID = mesh->mMaterialIndex;
+			meshlet.material_index = mesh->mMaterialIndex;
 			_meshes.push_back(meshlet);
 
 			auto positions = mesh->mVertices;
@@ -175,7 +186,7 @@ void ModelResource::load()
 
 		data.pSysMem = vertices.data();
 
-		SUCCEEDED(device->CreateBuffer(&bufferDesc, &data, _vert_buffer.GetAddressOf()));
+		SUCCEEDED(device->CreateBuffer(&bufferDesc, &data, _vertex_buffer.GetAddressOf()));
 
 		bufferDesc.ByteWidth = UINT(indices.size() * sizeof(indices[0]));
 		bufferDesc.StructureByteStride = sizeof(indices[0]);
@@ -201,28 +212,21 @@ void ModelResource::load()
 			material->Get(AI_MATKEY_NAME, materialName);
 			parameters.name = name.C_Str();
 
-			// For now we rely on built-in hardcoded shaders but this should be refactored
-			// to allow more complicated shader selection (also probably load shader binaries from disk rather than compile them in)
-			// Runtime could compile/cache shaders on demand on disk
-			parameters.vs_shader_bytecode = (const char*)Shaders::cso_simple_vx;
-			parameters.vs_shader_bytecode_size = uint32_t(std::size(Shaders::cso_simple_vx));
-
-			parameters.ps_shader_bytecode = (const char*)Shaders::cso_simple_px;
-			parameters.ps_shader_bytecode_size = uint32_t(std::size(Shaders::cso_simple_px));
-
 			// Load the required textures from the assimp imported file
-			aiString texturePath;
-			if (material->GetTexture(aiTextureType_BASE_COLOR, 0, &texturePath) == aiReturn_SUCCESS)
+			aiString baseColorTexture;
+			aiString roughnessTexture;
+			aiString normalTexture;
+			if (material->GetTexture(aiTextureType_BASE_COLOR, 0, &baseColorTexture) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path.string() + "\\" + std::string(texturePath.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
 			}
-			if (material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &texturePath) == aiReturn_SUCCESS)
+			if (material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &roughnessTexture) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path.string() + "\\" + std::string(texturePath.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
 			}
-			if (material->GetTexture(aiTextureType_NORMAL_CAMERA, 0, &texturePath) == aiReturn_SUCCESS)
+			if (material->GetTexture(aiTextureType_NORMAL_CAMERA, 0, &normalTexture) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path.string() + "\\" + std::string(texturePath.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path.string() + "\\" + std::string(normalTexture.C_Str());
 			}
 
 			bool double_sided;
@@ -242,12 +246,6 @@ void ModelResource::load()
 	helpers::SetDebugObjectName(_index_buffer.Get(), name);
 
 	sprintf_s(name, "%s - Vertex Buffer", path.c_str());
-	helpers::SetDebugObjectName(_vert_buffer.Get(), name);
+	helpers::SetDebugObjectName(_vertex_buffer.Get(), name);
 #endif
-}
-
-ModelResource::ModelResource(FromFileResourceParameters params)
-		: TCachedResource(params)
-		, _index_count(0)
-{
 }

@@ -35,7 +35,8 @@ void Material::apply()
 	{
 		if (_textures[i])
 		{
-			views[i] = _textures[i]->get_srv();
+			Texture const* texture = _textures[i]->get();
+			views[i] = texture->get_srv();
 		}
 	}
 	ctx->PSSetShaderResources(0, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());

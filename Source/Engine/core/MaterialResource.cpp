@@ -23,44 +23,44 @@ void MaterialResource::load()
 	std::vector<u8> pixel_bytecode;
 	std::vector<u8> vertex_bytecode;
 	std::vector<u8> debug_bytecode;
-	if(!ShaderCompiler::compile("Source/Engine/Shaders/simple_px.hlsl", params, pixel_bytecode)) {
-		// Use error shader
-		if(!ShaderCompiler::compile("Source/Engine/Shaders/error_px.hlsl", params, pixel_bytecode)) {
-			LOG_FATAL(Graphics, "Couldn't compile basic error shader!");
-		}
-	}
 
-	if (!ShaderCompiler::compile("Source/Engine/Shaders/debug_px.hlsl", params, debug_bytecode))
+	// Get pixel shader
+	ShaderCreateParams create_params{};
+	create_params.params = params;
+	create_params.path = "Source/Engine/Shaders/simple_px.hlsl";
+	auto pixel_shader = ShaderCache::instance()->find_or_create(create_params);
+
+	// Get debug vertex shader
+	create_params.params = params;
+	create_params.path = "Source/Engine/Shaders/debug_px.hlsl";
+	auto debug_shader = ShaderCache::instance()->find_or_create(create_params);
+
+	create_params.params.stage = ShaderType::Vertex;
+	create_params.path = "Source/Engine/Shaders/simple_vx.hlsl";
+	auto vertex_shader = ShaderCache::instance()->find_or_create(create_params);
+
+	if (!pixel_shader)
 	{
-		if (!ShaderCompiler::compile("Source/Engine/Shaders/error_px.hlsl", params, pixel_bytecode))
-		{
-			LOG_FATAL(Graphics, "Couldn't compile basic error shader!");
-		}
+		pixel_shader = Graphics::get_error_shader_px();
+		LOG_ERROR(Graphics, "Failed to find base shader. Using error shader.");
 	}
 
-
-	params.stage = Graphics::ShaderType::Vertex;
-	if (!ShaderCompiler::compile("Source/Engine/Shaders/simple_vx.hlsl", params, vertex_bytecode))
+	if (!vertex_shader)
 	{
-		if (!ShaderCompiler::compile("Source/Engine/Shaders/error_vx.hlsl", params, pixel_bytecode))
-		{
-			LOG_FATAL(Graphics, "Couldn't compile basic error shader!");
-		}
+		vertex_shader = Graphics::get_error_shader_vx();
+		LOG_ERROR(Graphics, "Failed to find base shader. Using error shader.");
 	}
 
-	ShaderCreateParams request{};
-	request.params = params;
-	request.params.stage = Graphics::ShaderType::Vertex;
-	request.path = "Source/Engine/Shaders/simple_vx.hlsl";
-	auto vertex_shader = ShaderCache::instance()->find_or_create(request);
 
-	request.params.stage = Graphics::ShaderType::Pixel;
-	request.path = "Source/Engine/Shaders/simple_px.hlsl";
-	auto pixel_shader = ShaderCache::instance()->find_or_create(request);
+	if (debug_shader)
+	{
+		debug_shader = Graphics::get_error_shader_px();
+		LOG_ERROR(Graphics, "Failed to find base shader. Using error shader.");
+	}
+
 	_resource = Material::create(vertex_shader, pixel_shader);
 
-	request.path = "Source/Engine/Shaders/debug_px.hlsl";
-	_resource->_debug_pixel_shader = ShaderCache::instance()->find_or_create(request);
+	_resource->_debug_pixel_shader = debug_shader;
 	_resource->_double_sided = get_init_parameters().double_sided;
 
 	// Initiate texture loads

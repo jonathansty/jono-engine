@@ -210,7 +210,7 @@ Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size)
 		case ShaderType::Vertex:
 		{
 			SUCCEEDED(device->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)_shader.GetAddressOf()));
-			using VertexType = ModelVertex;
+			using VertexType = ModelUberVertex;
 			SUCCEEDED(device->CreateInputLayout(VertexType::InputElements, VertexType::InputElementCount, byte_code, size, _input_layout.GetAddressOf()));
 		}
 		break;

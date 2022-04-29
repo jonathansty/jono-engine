@@ -120,7 +120,8 @@ float4 compute_shadow(float4 world_pos, float4 view_pos, float4 proj_pos, in Lig
 
 			// Compute which cascade based on our unprojected depth
 			uint layer = compute_shadow_cascade(depth, info);
-			// return get_cascade_debug_color(layer);
+			shadow += get_cascade_debug_color(layer);
+			continue;
 
 			float3 light = normalize(info.direction);
 			float4 light_space_pos = mul(info.cascade[layer], reprojected_pos);
@@ -139,7 +140,7 @@ float4 compute_shadow(float4 world_pos, float4 view_pos, float4 proj_pos, in Lig
 				shadow += 0.0;
 				break;
 			}
-			shadow += ( (current_depth - bias) > closest_depth ? 1.0 : 0.0)* get_cascade_debug_color(layer);
+			shadow += ( (current_depth - bias) > closest_depth ? 1.0 : 0.0);
 		}
 	}
 	shadow /= 9.0;
@@ -149,7 +150,6 @@ float4 compute_shadow(float4 world_pos, float4 view_pos, float4 proj_pos, in Lig
 
 float4 main(VS_OUT vout) : SV_Target 
 {
-
 	float2 uv = vout.uv;
 
 	Material material = CreateMaterial();

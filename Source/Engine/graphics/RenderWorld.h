@@ -3,6 +3,11 @@
 #include "Graphics.h"
 #include "core/ModelResource.h"
 
+using RenderWorldRef = std::shared_ptr<class RenderWorld>;
+using RenderWorldInstanceRef = std::shared_ptr<class RenderWorldInstance>;
+using RenderWorldCameraRef = std::shared_ptr<class RenderWorldCamera>;
+using RenderWorldLightRef = std::shared_ptr<class RenderWorldLight>;
+
 class RenderWorldInstance
 {
 public:
@@ -12,11 +17,11 @@ public:
 
 	bool is_ready() const
 	{
-		return _mesh->is_loaded();
+		return _model->is_loaded();
 	}
 
 	float4x4 _transform;
-	std::shared_ptr<ModelResource> _mesh;
+	std::shared_ptr<ModelResource> _model;
 
 	struct ConstantBufferData
 	{

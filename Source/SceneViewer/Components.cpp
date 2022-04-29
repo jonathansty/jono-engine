@@ -33,9 +33,9 @@ RTTR_REGISTRATION{
 		.property("Intensity", &LightComponent::_intensity)
 		.property("Color", &LightComponent::_color);
 
-	registration::class_<SimpleMeshComponent>("SimpleMeshComponent")(Versioning::version(2))
+	registration::class_<ModelComponent>("SimpleMeshComponent")(Versioning::version(2))
 		.constructor()(rttr::policy::ctor::as_raw_ptr)
-		.property("ModelPath", &SimpleMeshComponent::get_model_path, &SimpleMeshComponent::set_model_path);
+		.property("ModelPath", &ModelComponent::get_model_path, &ModelComponent::set_model_path);
 }
 
 SimpleMovement2D::SimpleMovement2D(XMFLOAT2 pos, float speed) : Component()
@@ -83,65 +83,45 @@ void SimpleMovement2D::update(float dt)
 
 
 
-SimpleMeshComponent::SimpleMeshComponent()
+ModelComponent::ModelComponent()
 {
 
 }
 
-SimpleMeshComponent::~SimpleMeshComponent()
+ModelComponent::~ModelComponent()
 {
 
 }
 
-void SimpleMeshComponent::on_attach(Entity* ent)
+void ModelComponent::on_attach(Entity* ent)
 {
 	__super::on_attach(ent);
+
+	RenderWorldRef _render_world = GameEngine::instance()->get_render_world();
+	_instance = _render_world->create_instance(ent->get_world_transform(), get_model_path());
 }
 
-void SimpleMeshComponent::on_detach(Entity* ent)
+void ModelComponent::on_detach(Entity* ent)
 {
 	__super::on_detach(ent);
+
+	RenderWorldRef _render_world = GameEngine::instance()->get_render_world();
+	_render_world->remove_instance(_instance);
 }
 
-void SimpleMeshComponent::render()
+bool ModelComponent::is_loaded() const
 {
-	auto device = Graphics::get_device();
-	auto ctx = Graphics::get_ctx();
-
-
-	// Draw mesh
-	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	ctx->IASetIndexBuffer(_resource->_index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
-
-	UINT strides = { sizeof(ModelResource::VertexType) };
-	UINT offsets = { 0 };
-	ctx->IASetVertexBuffers(0, 1, _resource->_vert_buffer.GetAddressOf(), &strides, &offsets);
-
-	for (Mesh const& m : _resource->_meshes)
-	{
-		std::shared_ptr<MaterialResource> material = _resource->_materials[m.materialID]; 
-		(*material)->apply();
-		ctx->DrawIndexed((UINT)m.indexCount, (UINT)m.firstIndex, (INT)m.firstVertex);
-	}
-
+	return _instance->is_ready();
 }
 
-bool SimpleMeshComponent::is_loaded() const
+void ModelComponent::set_model_path(std::string const& mesh)
 {
-	return _resource && _resource->is_loaded();
+	_model_path = mesh;
 }
 
-void SimpleMeshComponent::set_model_path(std::string mesh)
+std::string const& ModelComponent::get_model_path() 
 {
-	_resource = ResourceLoader::instance()->load<ModelResource>({ mesh }, false);
-}
-
-std::string SimpleMeshComponent::get_model_path() {
-	if(_resource) {
-		return _resource->get_init_parameters().path;
-	} else {
-		return "";
-	}
+	return _model_path;
 }
 
 const float CameraComponent::DEFAULT_FOV = 45.0f;

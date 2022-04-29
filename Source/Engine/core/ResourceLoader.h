@@ -44,19 +44,19 @@ private:
 
 struct NoInit {};
 
-template<typename resource_type, typename init_type = NoInit>
+template <typename resource_type, typename init_type = NoInit>
 class TCachedResource : public Resource
 {
 public:
 	using init_parameters = init_type;
 
 	TCachedResource(init_type init_options = init_type())
-		: _init(init_options)
+			: _init(init_options)
 	{
-
 	}
 
-	resource_type* operator->() {
+	resource_type* operator->()
+	{
 		return _resource.get();
 	}
 
@@ -68,8 +68,8 @@ public:
 	virtual std::string get_name() const { return _init.to_string(); }
 
 protected:
-
 	std::shared_ptr<resource_type> _resource;
+
 private:
 	init_type _init;
 };
@@ -106,22 +106,23 @@ public:
 		}
 
 		std::vector<ResourceCache::iterator> models_to_remove;
-		for(auto it = _cache.begin(); it != _cache.end(); ++it) {
-	
-			if(it->second.use_count() == 1) {
+		for (auto it = _cache.begin(); it != _cache.end(); ++it)
+		{
+			if (it->second.use_count() == 1)
+			{
 				models_to_remove.push_back(it);
 			}
 		}
 
-		for(auto it : models_to_remove) {
+		for (auto it : models_to_remove)
+		{
 			LOG_VERBOSE(IO, "Unloading \"{}\"", it->second->get_name());
 			_cache.erase(it);
 		}
 	}
 
-	template<typename T>
+	template <typename T>
 	std::shared_ptr<T> load(typename T::init_parameters parameters, bool blocking = false);
-
 
 private:
 	std::mutex _cache_lock;
@@ -129,7 +130,6 @@ private:
 
 	std::mutex _tasks_lock;
 	std::list<enki::ITaskSet*> _tasks;
-
 };
 
 namespace std
@@ -148,7 +148,7 @@ template<typename T>
 std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool blocking )
 {
 	LOG_INFO(IO, "Load request {}", params.to_string());
-	std::size_t  h = std::hash<typename T::init_parameters>{}(params);
+	std::size_t h = std::hash<typename T::init_parameters>{}(params);
 
 	{
 		std::lock_guard lock{ _cache_lock };
@@ -156,8 +156,6 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 		{
 			LOG_INFO(IO, "Returned cached copy for {}", params.to_string());
 
-			// This is pretty nasty. When a blocking call to load happens we need to wait for the cached asset to be done loading 
-			// but we also don't want to schedule a new load on the same asset
 			if (blocking)
 			{
 				if (!it->second->_loaded)
@@ -177,10 +175,10 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 		_cache[h] = res;
 	}
 
-
 	res->_loaded = false;
 
-	auto do_load = [res, params]() {
+	auto do_load = [res, params]()
+	{
 		res->load();
 		res->_loaded = true;
 		res->_loaded_cv.notify_all();
@@ -191,12 +189,9 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 	{
 		do_load();
 	}
-	else 
+	else
 	{
-
-		enki::TaskSet* set = new enki::TaskSet([=](enki::TaskSetPartition partition, uint32_t thread_num) {
-			do_load();
-		});
+		enki::TaskSet* set = new enki::TaskSet([=](enki::TaskSetPartition partition, uint32_t thread_num) { do_load(); });
 
 		{
 			std::lock_guard<std::mutex> l{ _tasks_lock };

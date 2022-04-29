@@ -477,51 +477,62 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	RenderWorld::InstanceCollection const& instances = world->get_instances();
 	for (std::shared_ptr<RenderWorldInstance> const& inst : instances)
 	{
+		// A render world instance is ready when the whole model (and it's dependencies) has been loaded 
 		if (!inst->is_ready())
+		{
 			continue;
+		}
 
 		auto ctx = _device_ctx;
 
-		RenderWorldInstance::ConstantBufferData* data = (RenderWorldInstance::ConstantBufferData*)inst->_model_cb->map(_device_ctx);
+		Model const* model = inst->_model->get();
+		ConstantBufferRef const& model_cb = inst->_model_cb;
+
+		RenderWorldInstance::ConstantBufferData* data = (RenderWorldInstance::ConstantBufferData*)model_cb->map(_device_ctx);
 		data->world = inst->_transform;
-		data->wv = hlslpp::mul(data->world, params.view);
-		data->wvp = hlslpp::mul(data->world, vp);
-		inst->_model_cb->unmap(ctx);
+		data->wv    = hlslpp::mul(data->world, params.view);
+		data->wvp   = hlslpp::mul(data->world, vp);
+		model_cb->unmap(ctx);
 
 		ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ctx->IASetIndexBuffer(inst->_mesh->_index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+		ctx->IASetIndexBuffer(model->get_index_buffer().Get(), DXGI_FORMAT_R32_UINT, 0);
 
-		UINT strides = { sizeof(ModelResource::VertexType) };
+		UINT strides = { sizeof(Model::VertexType) };
 		UINT offsets = { 0 };
-		ctx->IASetVertexBuffers(0, 1, inst->_mesh->_vert_buffer.GetAddressOf(), &strides, &offsets);
+		ctx->IASetVertexBuffers(0, 1, model->get_vertex_buffer().GetAddressOf(), &strides, &offsets);
 
-		// #Hacky debug mode handling
+		// #TODO: Remove debug handling into a debug lighting system
 		extern int g_DebugMode;
 		if (g_DebugMode != 0)
 		{
 			ID3D11Buffer* buffers[3] = {
 				_cb_global->Get(),
-				inst->_model_cb->Get(),
 				_cb_debug->Get(),
+				model_cb->Get(),
 			};
 			ctx->VSSetConstantBuffers(0, 3, buffers);
 			ctx->PSSetConstantBuffers(0, 3, buffers);
 		}
 		else
 		{
-			ID3D11Buffer* buffers[2] = {
+			ID3D11Buffer* buffers[1] = {
 				_cb_global->Get(),
-				inst->_model_cb->Get()
 			};
-			ctx->VSSetConstantBuffers(0, 2, buffers);
-			ctx->PSSetConstantBuffers(0, 2, buffers);
+			ctx->VSSetConstantBuffers(0, 1, buffers);
+			ctx->PSSetConstantBuffers(0, 1, buffers);
+
+			buffers[0] = model_cb->Get();
+			ctx->VSSetConstantBuffers(2, 1, buffers);
+			ctx->PSSetConstantBuffers(2, 1, buffers);
+
 		}
 
-		for (Mesh const& m : inst->_mesh->_meshes)
+		for (Mesh const& mesh : model->get_meshes())
 		{
-			std::shared_ptr<MaterialResource> res = inst->_mesh->_materials[m.materialID];
+			MaterialRef const& material_res = model->get_material(mesh.material_index);
 
-			Material* material = res->get();
+			ASSERTMSG(material_res->is_loaded(), "Material resource for the model hasn't been loaded yet! Make sure the model load check is correct.");
+			Material* material = material_res->get();
 			if (material->is_double_sided())
 			{
 				ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullNone).Get());
@@ -546,7 +557,7 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 				_device_ctx->PSSetShaderResources(3, UINT(std::size(views)), views);
 			}
 
-			ctx->DrawIndexed((UINT)m.indexCount, (UINT)m.firstIndex, (INT)m.firstVertex);
+			ctx->DrawIndexed((UINT)mesh.indexCount, (UINT)mesh.firstIndex, (INT)mesh.firstVertex);
 
 			ID3D11ShaderResourceView* views[] = {
 				nullptr,
@@ -608,7 +619,6 @@ void Renderer::prepare_shadow_pass()
 	}
 }
 
-
 void calculate_frustum(FrustumCorners& out_corners, f32 n, f32 f, f32 fov, f32 vFov)
 {
 	f32 tan_half_fov = tanf(fov / 2.0f);
@@ -638,7 +648,6 @@ void transform_frustum(FrustumCorners& corners, float4x4 matrix)
 	}
 }
 
-
 void calculate_frustum(FrustumCorners& out_corners, float4x4 cam_vp)
 {
 	f32 n = -1.0f;
@@ -667,8 +676,6 @@ void calculate_frustum(FrustumCorners& out_corners, float4x4 cam_vp)
 		out_corners[i].w = 1.0f;
 	}
 }
-
-
 
 FrustumCorners Renderer::get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const
 {

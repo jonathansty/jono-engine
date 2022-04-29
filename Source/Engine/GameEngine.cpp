@@ -107,16 +107,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// Then we initialize the logger as this might create a log file
 	Logger::instance()->init();
 
-	{
-		std::vector<u8> data;
-		ShaderCompiler::CompileParameters params{};
-		params.defines.push_back({ "USE_PBR", "1" });
-		params.defines.push_back({ "IS_SHADOW_PASS" });
-		params.entry_point = "main";
-		params.stage = ShaderCompiler::ShaderType::Pixel;
-		params.flags = ShaderCompiler::CompilerFlags::CompileDebug | ShaderCompiler::CompilerFlags::OptimizationLevel0;
-		bool result = ShaderCompiler::compile("Source/Engine/Shaders/debug_px.hlsl", params, data);
-	}
 
 	// Now we can start logging information and we mount our resources volume.
 	LOG_INFO(IO, "Mounting resources directory.");
@@ -1383,7 +1373,7 @@ void GameEngine::build_viewport()
 			_viewport_width = (u32)s_vp_size.x;
 			_viewport_height = (u32)s_vp_size.y;
 
-			_renderer->update_viewport(vMin.x, vMin.y, s_vp_size.x, s_vp_size.y);
+			_renderer->update_viewport(static_cast<u32>(vMin.x), static_cast<u32>(vMin.y), static_cast<u32>(s_vp_size.x), static_cast<u32>(s_vp_size.y));
 		}
 
 		// Draw the actual scene image
