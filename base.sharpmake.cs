@@ -166,7 +166,7 @@ public class CompileHLSL : Project.Configuration.CustomFileBuildStep
         Output = $"{outputDir}/{resourceName}.h";
         Executable = "";
 
-        ExecutableArguments = string.Format("fxc /Zi /nologo /O2 /E\"{0}\" /T {1} /Fh\"{2}\" /Vn\"cso_{3}\" \"{4}\"", "main", profile.ToString(), Output, resourceName, filename);
+        ExecutableArguments = string.Format("fxc /Zi /nologo /O2 /E\"{0}\" /T {1} /Fh\"{2}\" /Vn\"cso_{3}\" \"{4}\" /DVS_COMPILE=1", "main", profile.ToString(), Output, resourceName, filename);
     }
 
 

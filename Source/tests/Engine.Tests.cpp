@@ -2,7 +2,7 @@
 
 #include "Core/Math.h"
 
-using namespace math;
+using namespace Math;
 
 TEST_CLASS(MathGeometryTests) 
 {

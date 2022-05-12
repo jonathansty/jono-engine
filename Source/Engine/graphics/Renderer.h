@@ -5,11 +5,17 @@
 #include "GameSettings.h"
 
 #include "debug_overlays/OverlayManager.h"
+#include "Core/Math.h"
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
 
+#ifdef _DEBUG
+#include "RendererDebug.h"
+#endif
+
 class RenderWorld;
 class RenderWorldCamera;
+class Material;
 
 namespace cli
 {
@@ -19,7 +25,8 @@ using CommandLine = std::vector<std::string>;
 namespace Graphics
 {
 
-using FrustumCorners = std::array<float4, 8>;
+using FrustumCorners = Math::FrustumCorners;
+
 
 struct RenderPass
 {
@@ -99,6 +106,7 @@ struct Viewport
 	float pad[2];
 };
 
+
 __declspec(align(16)) 
 struct GlobalCB
 {
@@ -107,6 +115,7 @@ struct GlobalCB
 	float4x4 proj;
 	float4x4 inv_proj;
 	float4x4 inv_view_projection;
+	
 	float4 view_direction;
 
 	Viewport vp;
@@ -198,6 +207,7 @@ private:
 
 	FrustumCorners get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const;
 
+	void setup_renderstate(ViewParams const& params, Material* const material);
 
 private:
 	// 0: Game camera | 1: Debug camera
@@ -250,8 +260,10 @@ private:
 	ConstantBufferRef _cb_global;
 	ConstantBufferRef _cb_debug;
 
+	#ifdef _DEBUG
 	std::unique_ptr<class RendererDebugTool> _debug_tool;
 	friend class RendererDebugTool;	
+	#endif
 
 	// Rendering parameters
 	u32 _viewport_width;
@@ -260,26 +272,5 @@ private:
 
 	
 };
-
-class RendererDebugTool : public DebugOverlay
-{
-public:
-	RendererDebugTool(Renderer* owner);
-
-	void render_overlay() override;
-
-	void render_3d(ID3D11DeviceContext* ctx) override;
-
-private:
-	void render_shader_tool();
-	void render_debug_tool();
-	Renderer* _renderer;
-
-	bool _show_shadow_debug;
-
-	std::shared_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>> _batch;
-};
-
-
 
 }

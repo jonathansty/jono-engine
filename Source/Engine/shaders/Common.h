@@ -1,10 +1,49 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-// DirectX::VertexPositionNormalColorTexture
+#define LIGHTING_MODEL_BLINN_PHONG 1
+#define LIGHTING_MODEL_PHONG 2
+#define LIGHTING_MODEL_PBR 3
 
 #define MAX_LIGHTS 4
-#define MAX_CASCADES 4 
+#define MAX_CASCADES 4
+
+// When compiling from VS specify the default lighting model as PBR
+struct AmbientInfo
+{
+	float4 ambient;
+};
+struct LightInfo
+{
+	float4 colour;
+	float4 direction;
+	float4x4 light_space;
+
+	int num_cascades;
+	float4x4 cascade[MAX_CASCADES];
+	float4 cascade_distance[MAX_CASCADES];
+};
+
+struct Viewport_t
+{
+	float HalfWidth;
+	float HalfHeight;
+	float TopLeftX;
+	float TopLeftY;
+	float MinDepth;
+	float MaxDepth;
+};
+
+#ifndef _cplusplus
+
+#if VS_COMPILE
+#define LIGHTING_MODEL LIGHTING_MODEL_PBR
+#endif
+
+// For now force it
+#define LIGHTING_MODEL LIGHTING_MODEL_BLINN_PHONG 
+// #define LIGHTING_MODEL LIGHTING_MODEL_PBR
+
 struct VS_IN
 {
 	float3 position : SV_Position;
@@ -32,31 +71,8 @@ struct VS_OUT
 	float4 worldBitangent : TANGENT1;
 };
 
-struct AmbientInfo {
-	float4 ambient;
-};
-struct LightInfo {
-	float4 colour;
-	float4 direction;
-	float4x4 light_space;
-
-	int num_cascades;
-	float4x4 cascade[MAX_CASCADES];
-	float4 cascade_distance[MAX_CASCADES];
-};
-
-
-struct Viewport_t
+cbuffer WorldConstants : register(b0)
 {
-	float HalfWidth;
-	float HalfHeight;
-	float TopLeftX;
-	float TopLeftY;
-	float MinDepth;
-	float MaxDepth;
-};
-
-cbuffer WorldConstants : register(b0) {
 	float4x4 View;
 	float4x4 InvView;
 	float4x4 Projection;
@@ -68,22 +84,19 @@ cbuffer WorldConstants : register(b0) {
 	AmbientInfo g_Ambient;
 	LightInfo g_Lights[MAX_LIGHTS];
 	unsigned int num_lights;
-
-
 };
 
-cbuffer DebugCB : register(b1) {
+cbuffer DebugCB : register(b1)
+{
 	int g_VisualizeMode;
 };
 
-cbuffer ModelConstants : register(b2) {
+cbuffer ModelConstants : register(b2)
+{
 	float4x4 World;
 	float4x4 WorldView;
 	float4x4 WorldViewProjection;
 };
-
-
-
-
+#endif
 
 #endif

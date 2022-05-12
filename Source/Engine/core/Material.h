@@ -1,37 +1,40 @@
 #pragma once
 
-
-
-// Default material
-interface IMaterial
+namespace Graphics
 {
-	virtual void apply() = 0;
-};
+	using ShaderRef = std::shared_ptr<class Shader>;
+}
 
 namespace Graphics
 {
 class Shader;
 }
 
-class Material final : public IMaterial
+class Material final 
 {
 public:
-	Material() {};
+	Material();
+
 	virtual ~Material() {}
 
-	static std::unique_ptr<Material> create(std::shared_ptr<Graphics::Shader> vertex_shader, std::shared_ptr<Graphics::Shader> pixel_shader);
-
-	void apply();
+	static std::unique_ptr<Material> create(Graphics::ShaderRef const& vertex_shader, Graphics::ShaderRef const& pixel_shader);
 
 	bool is_double_sided() const { return _double_sided; }
 
+	ComPtr<ID3D11InputLayout> get_input_layout() const;
+
+	Graphics::ShaderRef const& get_vertex_shader() const { return _vertex_shader; }
+	Graphics::ShaderRef const& get_pixel_shader() const  { return _pixel_shader; }
+	Graphics::ShaderRef const& get_debug_pixel_shader() const  { return _debug_pixel_shader; }
+
+	void get_texture_views(std::vector<ID3D11ShaderResourceView const*>& views);
+
 private:
 	bool _double_sided;
-	//TODO: Use pipelines?
-	std::shared_ptr<Graphics::Shader> _vertex_shader;
 
-	std::shared_ptr<Graphics::Shader> _pixel_shader;
-	std::shared_ptr<Graphics::Shader> _debug_pixel_shader;
+	Graphics::ShaderRef _vertex_shader;
+	Graphics::ShaderRef _pixel_shader;
+	Graphics::ShaderRef _debug_pixel_shader;
 
 	std::vector<std::shared_ptr<class TextureResource>> _textures;
 

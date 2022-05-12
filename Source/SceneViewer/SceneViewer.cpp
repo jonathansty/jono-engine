@@ -6,6 +6,8 @@
 #include "Engine/Core/TextureResource.h"
 #include "Engine/Core/MaterialResource.h"
 
+#include "Engine/Graphics/ShaderCache.h"
+
 #include "Framework/framework.h"
 #include "Components.h"
 #include "Overlays.h"
@@ -357,9 +359,10 @@ static const char* s_world_path = "Scenes/test_world.scene";
 
 void SceneViewer::rebuild_shaders()
 {
+	using namespace Graphics;
 	for (std::shared_ptr<RenderWorldInstance> const& inst : _render_world->get_instances())
 	{
-		Graphics::ShaderCache::instance()->reload_all();
+		ShaderCache::instance()->reload_all();
 	}
 }
 
