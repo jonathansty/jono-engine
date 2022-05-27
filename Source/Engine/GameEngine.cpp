@@ -532,7 +532,7 @@ bool GameEngine::register_wnd_class()
 bool GameEngine::open_window(int iCmdShow)
 {
 	// Calculate the window size and position based upon the game size
-	DWORD windowStyle = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_MAXIMIZEBOX | WS_OVERLAPPEDWINDOW;
+	DWORD windowStyle = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_MAXIMIZEBOX | WS_OVERLAPPEDWINDOW | WS_VISIBLE;
 	RECT R = { 0, 0, _window_width, _window_height };
 	AdjustWindowRect(&R, windowStyle, false);
 	int iWindowWidth = R.right - R.left;
@@ -780,6 +780,7 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 	usedClientRect.top = 0;
 	usedClientRect.right = get_width();
 	usedClientRect.bottom = get_height();
+	LOG_INFO(Unknown, "EVENT: {}", msg);
 
 	// Route Windows messages to game engine member functions
 	switch (msg)
@@ -793,7 +794,6 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 				return 0; // see win32 API : WM_KEYDOWN
 			else
 				break;
-
 		case WM_DESTROY:
 			GameEngine::instance()->quit_game();
 			return 0;
@@ -1136,15 +1136,7 @@ void GameEngine::render()
 	auto& timer = m_GpuTimings[idx];
 	timer.begin(_renderer->get_raw_device_context());
 
-
-	D3D11_VIEWPORT vp{};
-	vp.Width = static_cast<float>(this->get_viewport_size().x);
-	vp.Height = static_cast<float>(this->get_viewport_size().y);
-	vp.TopLeftX = 0.0f;
-	vp.TopLeftY = 0.0f;
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	d3d_ctx->RSSetViewports(1, &vp);
+	_renderer->begin_frame();
 
 	// Render 3D before 2D
 	if (_engine_settings.d3d_use)
@@ -1157,21 +1149,11 @@ void GameEngine::render()
 			_renderer->render_shadow_pass(_render_world);
 		}
 
-
-		// Clear the output targets
-		FLOAT color[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-		d3d_ctx->ClearRenderTargetView(d3d_output_rtv, color);
-		d3d_ctx->ClearDepthStencilView(d3d_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-		d3d_ctx->OMSetRenderTargets(0, NULL, d3d_output_dsv);
-		render_view(Graphics::RenderPass::ZPrePass);
-
-		// Do a copy to our dsv tex for sampling during the opaque pass
 		{
-			_renderer->copy_depth();
+			GPU_SCOPED_EVENT(d3d_annotation, L"Main");
+			_renderer->render_zprepass(_render_world);
+			_renderer->render_opaque_pass(_render_world);
 		}
-		d3d_ctx->OMSetRenderTargets(1, &d3d_output_rtv, d3d_output_dsv);
-		render_view(Graphics::RenderPass::Opaque);
 	}
 
 	// Render Direct2D to the swapchain
@@ -1185,47 +1167,8 @@ void GameEngine::render()
 #endif
 	}
 
-	// Resolve msaa to non msaa for imgui render
-	d3d_ctx->ResolveSubresource(d3d_output_non_msaa_tex, 0, d3d_output_tex, 0, _renderer->get_swapchain_format());
-
-	static std::unique_ptr<DirectX::CommonStates> s_states = nullptr;
-	static std::unique_ptr<DirectX::BasicEffect> s_effect = nullptr;
-	static ComPtr<ID3D11InputLayout> s_layout = nullptr;
-	if (!s_states)
-	{
-		s_states = std::make_unique<DirectX::CommonStates>(d3d_device);
-		s_effect = std::make_unique<DirectX::BasicEffect>(d3d_device);
-		s_effect->SetVertexColorEnabled(true);
-
-		void const* shader_byte_code;
-		size_t byte_code_length;
-		s_effect->GetVertexShaderBytecode(&shader_byte_code, &byte_code_length);
-		ENSURE_HR(d3d_device->CreateInputLayout(DirectX::VertexPositionColor::InputElements, DirectX::VertexPositionColor::InputElementCount, shader_byte_code, byte_code_length, s_layout.ReleaseAndGetAddressOf()));
-	}
-
-	d3d_ctx->OMSetBlendState(s_states->Opaque(), nullptr, 0xFFFFFFFF);
-	d3d_ctx->OMSetDepthStencilState(s_states->DepthRead(), 0);
-	d3d_ctx->RSSetState(s_states->CullNone());
-
-	d3d_ctx->IASetInputLayout(s_layout.Get());
-
-	auto view = _render_world->get_view_camera()->get_view();
-	auto proj = _render_world->get_view_camera()->get_proj();
-	XMMATRIX xm_view = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&view);
-	XMMATRIX xm_proj = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&proj);
-	s_effect->SetView(xm_view);
-	s_effect->SetProjection(xm_proj);
-
-	s_effect->Apply(d3d_ctx);
-
-	_overlay_manager->render_3d(_renderer->get_raw_device_context());
-
-	// Render main viewport ImGui
-	{
-		GPU_SCOPED_EVENT(d3d_annotation, L"ImGui");
-		d3d_ctx->OMSetRenderTargets(1, &d3d_swapchain_rtv, nullptr);
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-	}
+	_renderer->render_post(_render_world, _overlay_manager);
+	_renderer->end_frame();
 }
 
 void GameEngine::present()

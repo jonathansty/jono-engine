@@ -190,11 +190,27 @@ public:
 	void render_world(shared_ptr<RenderWorld> const& world, ViewParams const& params);
 
 
-	// Temp function 
 	void prepare_shadow_pass();
 
+	// Call at start of frame to setup default state
+	void begin_frame();
+
+	// Call at end to make sure the required systems are flushed
+	void end_frame();
+
+	// Renders the shadow pass for this world. (Currently just CSM)
 	void render_shadow_pass(shared_ptr<RenderWorld> const& world);
 
+	// Renders a zprepass for the world 
+	void render_zprepass(shared_ptr<RenderWorld> const& world);
+
+	// Renders the opaque pass 
+	void render_opaque_pass(shared_ptr<RenderWorld> const& world);
+
+	// Renders the final post processing pass. For now we also render ImGui and other debug code in here.
+	void render_post(shared_ptr<RenderWorld> const& world, shared_ptr<OverlayManager> const& overlays);
+
+	// Copies the last rendered main frustum depth to be used as input during the main pass
 	void copy_depth();
 
 private:
