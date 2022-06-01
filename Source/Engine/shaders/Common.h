@@ -7,6 +7,8 @@
 
 #define MAX_LIGHTS 4
 #define MAX_CASCADES 4
+		
+
 
 // When compiling from VS specify the default lighting model as PBR
 struct AmbientInfo
@@ -41,8 +43,8 @@ struct Viewport_t
 #endif
 
 // For now force it
-#define LIGHTING_MODEL LIGHTING_MODEL_BLINN_PHONG 
-// #define LIGHTING_MODEL LIGHTING_MODEL_PBR
+// #define LIGHTING_MODEL LIGHTING_MODEL_BLINN_PHONG 
+#define LIGHTING_MODEL LIGHTING_MODEL_PBR
 
 struct VS_IN
 {
@@ -63,8 +65,7 @@ struct VS_OUT
 	float2 uv : TEXCOORD0;
 
 	float4 viewPosition : POSITION0;
-	float4 lightSpacePos : POSITION1;
-	float4 worldPosition : POSITION2;
+	float4 worldPosition : POSITION1;
 	float4 worldNormal : NORMAL1;
 	float4 viewNormal : NORMAL2;
 	float4 worldTangent : TANGENT0;
@@ -78,7 +79,9 @@ cbuffer WorldConstants : register(b0)
 	float4x4 Projection;
 	float4x4 InvProjection;
 	float4x4 InvViewProjection;
+
 	float4 g_ViewDirection;
+	float4 g_ViewPosition;
 
 	Viewport_t Viewport;
 	AmbientInfo g_Ambient;

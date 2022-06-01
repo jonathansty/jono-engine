@@ -62,6 +62,7 @@ struct ViewParams
 {
 	float4x4 view;
 	float4x4 proj;
+	float3 view_position;
 	float3 view_direction;
 	D3D11_VIEWPORT viewport;
 	RenderPass::Value pass;
@@ -117,6 +118,7 @@ struct GlobalCB
 	float4x4 inv_view_projection;
 	
 	float4 view_direction;
+	float4 view_pos;
 
 	Viewport vp;
 	AmbientInfo ambient;

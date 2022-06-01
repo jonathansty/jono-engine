@@ -10,7 +10,7 @@
 
 #include "Graphics/ShaderCompiler.h"
 
-void MaterialResource::load()
+void MaterialResource::load(enki::ITaskSet* parent)
 {
 	using namespace Graphics;
 
@@ -75,9 +75,13 @@ void MaterialResource::load()
 				case MaterialInitParameters::TextureType_Albedo:
 					_resource->_textures.push_back(TextureResource::white());
 					break;
-				case MaterialInitParameters::TextureType_MetalnessRoughness:
+				case MaterialInitParameters::TextureType_Metalness:
+					_resource->_textures.push_back(TextureResource::black());
+					break;
+				case MaterialInitParameters::TextureType_Roughness:
 					_resource->_textures.push_back(TextureResource::default_roughness());
 					break;
+
 				case MaterialInitParameters::TextureType_Normal:
 					_resource->_textures.push_back(TextureResource::default_normal());
 					break;
@@ -88,7 +92,8 @@ void MaterialResource::load()
 		}
 		else
 		{
-			_resource->_textures.push_back(ResourceLoader::instance()->load<TextureResource>({ paths[textureType] }, true));
+			shared_ptr<TextureResource> res = ResourceLoader::instance()->load<TextureResource>({ paths[textureType] },true);
+			_resource->_textures.push_back(res);
 		}
 	}
 }

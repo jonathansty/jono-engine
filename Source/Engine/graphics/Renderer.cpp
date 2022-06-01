@@ -74,7 +74,9 @@ void Renderer::init_for_hwnd(HWND wnd)
 
 void Renderer::deinit()
 {
+	#ifdef _DEBUG
 	GameEngine::instance()->get_overlay_manager()->unregister_overlay(_debug_tool.get());
+	#endif
 
 	using helpers::SafeRelease;
 
@@ -393,6 +395,7 @@ void Renderer::render_view(shared_ptr<RenderWorld> const& world, RenderPass::Val
 
 	params.proj = camera->get_proj();
 	params.view = camera->get_view();
+	params.view_position = camera->get_position();
 
 	params.view_direction = camera->get_view_direction().xyz;
 	params.pass = pass;
@@ -446,6 +449,8 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	global->inv_proj = hlslpp::inverse(params.proj);
 	global->inv_view_projection = hlslpp::inverse(hlslpp::mul(params.view, params.proj));
 	global->view_direction = float4(params.view_direction.xyz, 0.0f);
+
+	global->view_pos = float4(params.view_position, 1.0f);
 	global->vp.vp_top_x = params.viewport.TopLeftX;
 	global->vp.vp_top_y = params.viewport.TopLeftY;
 	global->vp.vp_half_width = params.viewport.Width / 2.0f;
@@ -729,6 +734,7 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 	{
 		float4x4 view = world->get_light(0)->get_view();
 		float3 direction = world->get_light(0)->get_view_direction().xyz;
+		float3 position = world->get_light(0)->get_position().xyz;
 
 		std::vector<CascadeInfo> matrices;
 		for (u32 i = 0; i < MAX_CASCADES; ++i)
@@ -787,6 +793,7 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 			params.view = info.view;
 			params.proj = info.proj;
 #endif
+			params.view_position = position;
 			params.view_direction = direction;
 			params.pass = RenderPass::Shadow;
 			params.viewport = CD3D11_VIEWPORT(0.0f, 0.0f, 2048.0f, 2048.0f);

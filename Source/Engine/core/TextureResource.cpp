@@ -24,7 +24,16 @@ void TextureResource::initialise_default()
 
 std::shared_ptr<TextureResource> TextureResource::black()
 {
-	return invalid();
+	static std::shared_ptr<TextureResource> s_tex;
+	if (!s_tex)
+	{
+		s_tex = std::make_shared<TextureResource>();
+		std::array<u32, 4 * 4> data{};
+		std::fill(data.begin(), data.end(), 0);
+		s_tex->create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
+	}
+
+	return s_tex;
 }
 
 std::shared_ptr<TextureResource> TextureResource::white()
@@ -66,7 +75,7 @@ std::shared_ptr<TextureResource> TextureResource::default_roughness()
 	return s_default_normal;
 }
 
-void TextureResource::load()
+void TextureResource::load(enki::ITaskSet* parent)
 {
 	std::string const& path = get_init_parameters().path;
 	_resource = std::make_shared<Texture>();

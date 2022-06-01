@@ -5,7 +5,8 @@
 // PBR Inputs
 // TODO: Should this be packed into a texture array (assuming the textures are the same size)
 Texture2D<float4> g_albedo    : register(t0);
-Texture2D<float4> g_data      : register(t1); // .x: metalness, .y : roughness 
+Texture2D<float4> g_roughness      : register(t1);
+Texture2D<float4> g_metalness      : register(t2); 
 Texture2D<float4> g_normal    : register(t2);
 
 Texture2DArray<float> g_shadow_map : register(t3);
@@ -153,7 +154,7 @@ float4 main(VS_OUT vout) : SV_Target
 	float2 uv = vout.uv;
 
 	// Sample our 3 input textures
-	float4 data = g_data.Sample(g_all_linear_sampler, uv);
+	float4 data = float4(1.0f, g_roughness.Sample(g_all_linear_sampler, uv).r, g_metalness.Sample(g_all_linear_sampler, uv).r,0.0);
 	float3 albedo = g_albedo.Sample(g_all_linear_sampler, uv).rgb;
 	float3 normals = g_normal.Sample(g_all_linear_sampler, uv).rgb * 2.0 - 1.0;
 
@@ -164,9 +165,6 @@ float4 main(VS_OUT vout) : SV_Target
 	material.ao = data.r;
 	material.roughness = data.g;
 	material.metalness = data.b;
-
-	material.roughness =0.2f;
-
 
 	// Transform our tangent normal into world space
 	float4 normal = normalize(vout.worldNormal);
@@ -180,14 +178,10 @@ float4 main(VS_OUT vout) : SV_Target
 
 	float3 final_normal = normalize(mul(material.tangentNormal, tbn));
 	final_normal = normal;
-	// return float4(final_normal, 1.0f);
-	// return float4(normalize(float3(0.0,1.0,0.0)),1.0);
-	// return float4(normal.xyz, 1.0f);
-	// float3 final_normal = normal;
 
-	// The view vector is the vector that runs from the shaded point to the camera so we need 
-	// to invert the incoming view direction
-	float3 view = -normalize(g_ViewDirection.xyz);
+	// View vector is different dependent on the pixel that is being processed!
+	float3 view = normalize(g_ViewPosition - vout.worldPosition);
+
 	float3 final_colour = float3(0.0,0.0,0.0);
 
 	[loop]
@@ -200,7 +194,9 @@ float4 main(VS_OUT vout) : SV_Target
 		float4 shadow = compute_shadow(vout.worldPosition, vout.viewPosition, proj_pos, g_Lights[i], final_normal);
 
 		// Need to invert the light vector here because we pass in the direction.
-		final_colour += (1.0 - shadow); 
+		
+		const float g_shadow_intensity = 0.7f;
+		final_colour += 1.0 - (shadow * g_shadow_intensity); 
 
 		#if LIGHTING_MODEL == LIGHTING_MODEL_PBR
 			final_colour *= LightingModel_BRDF(material, view, light, final_normal) * light_colour;
@@ -219,6 +215,5 @@ float4 main(VS_OUT vout) : SV_Target
 		#endif
 	}
 
-	float3 ambient = g_Ambient.ambient;
-	return float4((final_colour + ambient), 1.0);
+	return float4((final_colour), 1.0);
 }

@@ -50,7 +50,7 @@ public:
 	static std::shared_ptr<TextureResource> default_normal();
 	static std::shared_ptr<TextureResource> default_roughness();
 
-	virtual void load() override;
+	virtual void load(enki::ITaskSet* parent) override;
 
 	void create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data);
 

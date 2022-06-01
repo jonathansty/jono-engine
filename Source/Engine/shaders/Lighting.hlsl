@@ -74,19 +74,20 @@ float3 F_CookTorrence(float NoH, float NoV, float NoL, float LoH, float VoH, in 
 
 float3 LightingModel_BRDF(in Material material, float3 v, float3 l, float3 n)
 {
-	float3 h = normalize(l + v);
+	float3 h = normalize(v+ l);
 
 	float NoV = clamp(dot(n, v), 0.0, 1.0);
 	float NoL = clamp(dot(n, l), 0.0, 1.0);
 	float NoH = clamp(dot(n, h), 0.0, 1.0);
 	float LoH = clamp(dot(l, h), 0.0, 1.0);
+	
+
 	float VoH = clamp(dot(v,h), 0.0, 1.0);
 
 	float k_s = 1.0f;
 	float k_d = 1.0f;
 
 	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, material);
-	return Fr;
 	float3 Fd = Fd_Lambert(material.albedo);
 
 
@@ -96,24 +97,22 @@ float3 LightingModel_BRDF(in Material material, float3 v, float3 l, float3 n)
 
 float3 LightingModel_Phong(Material material, float3 view, float3 light,float3 light_colour, float3 normal)
 {
-	float shininess = 32.0;
-	float ks = 0.9;
+	float3 ambient = (0.07f * light_colour);
 
-	float spec = 0.0;
+	float3 diffuse = saturate(dot(light,normal)) * light_colour;
+
+	float3 ref = reflect(-light, normal);
 	
-	float3 ref = reflect(light, normal);
-	float dp = max(dot(view, ref), 0.0);
-	spec = pow(dp, shininess);
+	float spec_strength =0.5;
+	float spec = pow(saturate(dot(view, ref)), 3);
+	float3 specular = spec_strength * spec * light_colour;
 
-	float  NoL = max(dot(normal, -light), 0.0);
-	float3 colour = ks * spec * light_colour;
-
-	float3 diffuse = material.albedo;
-	return NoL * (diffuse + colour);
+	return (diffuse + ambient + specular) * material.albedo;
 }
 
 float3 LightingModel_BlinnPhong(Material material, float3 view, float3 light, float3 light_colour, float3 normal)
 {
+	float3 ambient = (0.07f * light_colour);
 	float spec = 0.0;
 
 	float shininess = 32.0;
@@ -123,10 +122,9 @@ float3 LightingModel_BlinnPhong(Material material, float3 view, float3 light, fl
 	float dp = saturate(dot(normal, half_vector));
 	spec = pow(max(dot(normal, half_vector), 0.0), shininess);
 
-	float NoL = max(dot(normal, light), 0.0);
-	float3 diffuse = material.albedo;
+	float3 diff_colour = max(dot(normal, light), 0.0) * light_colour;
 	float3 spec_colour = ks * spec * light_colour;
-	return NoL * (diffuse + spec_colour);
+	return (diff_colour + spec_colour + ambient) * material.albedo;
 }
 
 

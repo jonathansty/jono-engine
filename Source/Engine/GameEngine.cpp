@@ -26,7 +26,7 @@
 #include "CommonStates.h"
 #include "Effects.h"
 
-static constexpr uint32_t max_task_threads = 4;
+static constexpr uint32_t max_task_threads = 8;
 
 // Static task scheduler used for loading assets and executing multi threaded work loads
 enki::TaskScheduler* GameEngine::s_TaskScheduler;
@@ -123,8 +123,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// initialize d2d for WIC
 	SUCCEEDED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED));
 
-	
-
 	// Setup our default overlays
 	_overlay_manager = std::make_shared<OverlayManager>();
 	_metrics_overlay = new MetricsOverlay(true);
@@ -148,6 +146,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 		void Execute() override
 		{
+			LOG_INFO(System, "Initializing Task thread {}.", threadNum);
+
+			std::wstring name = fmt::format(L"TaskThread {}", threadNum);
+			::SetThreadDescription(GetCurrentThread(), name.c_str());
 			SUCCEEDED(::CoInitialize(NULL));
 		}
 	};
@@ -160,6 +162,57 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	}
 	s_TaskScheduler->RunPinnedTasks();
 	s_TaskScheduler->WaitforAll();
+
+
+
+	// Task Set dependency testing. 
+	{
+		struct TaskA : enki::ITaskSet
+		{
+			void ExecuteRange(enki::TaskSetPartition range, u32 threadNum) override
+			{
+				LOG_INFO(System, "TaskA::Started");
+				enki::TaskSet taskSet = enki::TaskSet(100,[](enki::TaskSetPartition range, u32 threadNum)
+						{ 
+						PWSTR data;
+						::GetThreadDescription(GetCurrentThread(), &data);
+						std::wstring wbuff = data;
+						std::string threadName = std::string(wbuff.begin(), wbuff.end());
+						LOG_INFO(System, "{}: TaskA Logging from lambda taskset!", threadName);
+					});
+				s_TaskScheduler->AddTaskSetToPipe(&taskSet);
+				s_TaskScheduler->WaitforTask(&taskSet);
+				LOG_INFO(System, "TaskA::Ended");
+			}
+		};
+
+		struct TaskB : enki::ITaskSet
+		{
+			enki::Dependency m_Dependency;
+			void ExecuteRange(enki::TaskSetPartition range, u32 threadNum) override
+			{
+				LOG_INFO(System, "TaskB::Started");
+				enki::TaskSet taskSet = enki::TaskSet(
+					[](enki::TaskSetPartition range, u32 threadNum){ 
+						LOG_INFO(System, "TaskB Logging from lambda taskset!"); 
+					}
+				);
+				s_TaskScheduler->AddTaskSetToPipe(&taskSet);
+				s_TaskScheduler->WaitforTask(&taskSet);
+				LOG_INFO(System, "TaskB::Ended");
+			}
+		};
+
+		TaskA taskA;
+		TaskB taskB;
+		taskB.SetDependency(taskB.m_Dependency, &taskA);
+
+		s_TaskScheduler->AddTaskSetToPipe(&taskA);
+		s_TaskScheduler->WaitforTask(&taskB);
+	}
+
+
+
 
 	//Initialize the high precision timers
 	_game_timer = make_unique<PrecisionTimer>();
@@ -780,7 +833,6 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 	usedClientRect.top = 0;
 	usedClientRect.right = get_width();
 	usedClientRect.bottom = get_height();
-	LOG_INFO(Unknown, "EVENT: {}", msg);
 
 	// Route Windows messages to game engine member functions
 	switch (msg)
@@ -1120,13 +1172,6 @@ void GameEngine::build_ui()
 
 void GameEngine::render()
 {
-	auto d3d_ctx = _renderer->get_raw_device_context();
-	auto d3d_device = _renderer->get_raw_device();
-	auto d3d_swapchain_rtv = _renderer->get_raw_swapchain_rtv();
-	auto d3d_output_rtv = _renderer->get_raw_output_rtv();
-	auto d3d_output_dsv = _renderer->get_raw_output_dsv();
-	auto d3d_output_tex = _renderer->get_raw_output_tex();
-	auto d3d_output_non_msaa_tex = _renderer->get_raw_output_non_msaa_tex();
 	auto d3d_annotation = _renderer->get_raw_annotation();
 
 	GPU_SCOPED_EVENT(d3d_annotation, L"Frame");
@@ -1174,12 +1219,6 @@ void GameEngine::render()
 void GameEngine::present()
 {
 	auto d3d_ctx = _renderer->get_raw_device_context();
-	auto d3d_device = _renderer->get_raw_device();
-	auto d3d_swapchain_rtv = _renderer->get_raw_swapchain_rtv();
-	auto d3d_output_rtv = _renderer->get_raw_output_rtv();
-	auto d3d_output_dsv = _renderer->get_raw_output_dsv();
-	auto d3d_output_tex = _renderer->get_raw_output_tex();
-	auto d3d_output_non_msaa_tex = _renderer->get_raw_output_non_msaa_tex();
 	auto d3d_annotation = _renderer->get_raw_annotation();
 	auto d3d_swapchain = _renderer->get_raw_swapchain();
 

@@ -3,6 +3,7 @@
 
 struct ID3D11DeviceContext;
 
+#ifdef _DEBUG
 namespace Graphics
 {
 
@@ -29,3 +30,4 @@ private:
 
 
 }
+#endif

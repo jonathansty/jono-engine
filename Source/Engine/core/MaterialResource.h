@@ -22,7 +22,8 @@ struct MaterialInitParameters
 	enum TextureType
 	{
 		TextureType_Albedo,
-		TextureType_MetalnessRoughness,
+		TextureType_Roughness,
+		TextureType_Metalness,
 		TextureType_Normal,
 		TextureType_Count,
 	};
@@ -58,6 +59,6 @@ class MaterialResource final : public TCachedResource<Material, MaterialInitPara
 public:
 	MaterialResource(MaterialInitParameters params) : TCachedResource(params) {}
 
-	virtual void load() override;
+	void load(enki::ITaskSet* parent) override;
 };
 
