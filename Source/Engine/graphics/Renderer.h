@@ -9,9 +9,7 @@
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
 
-#ifdef _DEBUG
 #include "RendererDebug.h"
-#endif
 
 class RenderWorld;
 class RenderWorldCamera;
@@ -278,10 +276,8 @@ private:
 	ConstantBufferRef _cb_global;
 	ConstantBufferRef _cb_debug;
 
-	#ifdef _DEBUG
 	std::unique_ptr<class RendererDebugTool> _debug_tool;
 	friend class RendererDebugTool;	
-	#endif
 
 	// Rendering parameters
 	u32 _viewport_width;

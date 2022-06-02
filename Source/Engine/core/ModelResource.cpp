@@ -52,7 +52,7 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 	using namespace Assimp;
 	Importer importer{};
-	aiScene const* scene = importer.ReadFile(path.c_str(), 0);
+	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded);
 	if (!scene)
 	{
 		LOG_ERROR(IO, importer.GetErrorString());
@@ -246,7 +246,7 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 
 		// Texture load task
-		enki::TaskSet textureLoadTask = enki::TaskSet(mappings.size(),[&](enki::TaskSetPartition range, uint32_t threadnum) {
+		enki::TaskSet textureLoadTask = enki::TaskSet(u32(mappings.size()),[&](enki::TaskSetPartition range, uint32_t threadnum) {
 
 			std::vector<enki::ITaskSet*> tasks{};
 

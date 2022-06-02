@@ -88,7 +88,9 @@ using ConstantBufferRef = shared_ptr<ConstantBuffer>;
 // Debug
 // ---------------------------------------------------------------------------------
 
-#ifdef _DEBUG
+#define ENABLE_PROFILING 
+
+#ifdef ENABLE_PROFILING
 class scoped_gpu_event final
 {
 public:

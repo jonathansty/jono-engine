@@ -60,6 +60,7 @@ public abstract class JonaBaseProject : Project
 
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP20);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
+        conf.Options.Add(Options.Vc.ManifestTool.EnableDpiAwareness.PerMonitor);
 
         conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
             "4100", // Unused method variables

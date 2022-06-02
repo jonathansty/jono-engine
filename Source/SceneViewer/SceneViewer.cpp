@@ -119,8 +119,9 @@ void SceneViewer::start()
 	
 	auto render_world = GameEngine::instance()->get_render_world();
 	_render_world = render_world;
-	render_world->create_instance(float4x4::identity(), "Resources/Models/plane_big.glb");
+	//render_world->create_instance(float4x4::identity(), "Resources/Models/plane_big.glb");
 	_model = render_world->create_instance(float4x4::translation({0.0,1.0,0.0}), "Resources/Models/cube.glb");
+	//_model = render_world->create_instance(float4x4::scale({ 10.0, 10.0, 10.0 }), "Resources/Scenes/Main/NewSponza_Main_Blender_glTF.gltf");
 
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
 	const float aspect = (float)size.x / (float)size.y;

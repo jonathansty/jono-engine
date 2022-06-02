@@ -177,7 +177,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 						PWSTR data;
 						::GetThreadDescription(GetCurrentThread(), &data);
 						std::wstring wbuff = data;
-						std::string threadName = std::string(wbuff.begin(), wbuff.end());
+						std::string threadName = std::string(wbuff.c_str(), wbuff.c_str() + wbuff.length());
 						LOG_INFO(System, "{}: TaskA Logging from lambda taskset!", threadName);
 					});
 				s_TaskScheduler->AddTaskSetToPipe(&taskSet);
@@ -285,6 +285,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;
+	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
 
 	Graphics::DeviceContext ctx = _renderer->get_ctx();
 	ImGui_ImplWin32_Init(get_window());
@@ -1246,8 +1248,9 @@ void GameEngine::build_debug_log()
 	if (!_show_debuglog)
 		return;
 
-	if (ImGui::Begin("Output Log", &_show_debuglog))
+	if (ImGui::Begin("Output Log", &_show_debuglog, 0))
 	{
+
 		static bool s_scroll_to_bottom = true;
 		static bool s_shorten_file = true;
 		static char s_filter[256] = {};
@@ -1262,7 +1265,7 @@ void GameEngine::build_debug_log()
 			
 
 		//ImGui::BeginTable("LogData", 3);
-		ImGui::BeginChild("123");
+		ImGui::BeginChild("123", ImVec2(0, 0),false, ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 		auto const& buffer = Logger::instance()->GetBuffer();
 		for (auto it = buffer.begin(); it != buffer.end(); ++it)
 		{

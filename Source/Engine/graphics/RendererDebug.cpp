@@ -6,7 +6,6 @@
 #include "Debug.h"
 #include "RendererDebug.h"
 
-#ifdef _DEBUG
 namespace Graphics
 {
 RendererDebugTool::RendererDebugTool(Renderer* owner)
@@ -170,4 +169,3 @@ void RendererDebugTool::render_debug_tool()
 }
 
 }
-#endif

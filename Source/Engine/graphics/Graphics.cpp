@@ -6,9 +6,7 @@
 #include "ShaderCache.h"
 #include "Renderer.h"
 
-#ifdef _DEBUG
 #include "RendererDebug.h"
-#endif
 
 
 namespace Graphics

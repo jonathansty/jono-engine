@@ -10,10 +10,8 @@
 
 #include "GameEngine.h"
 
-#ifdef _DEBUG
 #include "Debug.h"
 #include "RendererDebug.h"
-#endif
 
 #include "CommonStates.h"
 #include "Effects.h"
@@ -21,9 +19,7 @@
 namespace Graphics
 {
 
-#ifdef _DEBUG
 static f32 s_box_size = 15.0f;
-#endif
 
 void Renderer::init(EngineSettings const& settings, GameSettings const& game_settings, cli::CommandLine const& cmdline)
 {
@@ -33,10 +29,8 @@ void Renderer::init(EngineSettings const& settings, GameSettings const& game_set
 
 	create_factories(settings, cmdline);
 
-#if defined(_DEBUG)
 	_debug_tool = std::make_unique<RendererDebugTool>(this);
 	GameEngine::instance()->get_overlay_manager()->register_overlay(_debug_tool.get());
-#endif
 
 	_cb_global = ConstantBuffer::create(_device, sizeof(GlobalCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 	_cb_debug = ConstantBuffer::create(_device, sizeof(DebugCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
@@ -74,9 +68,7 @@ void Renderer::init_for_hwnd(HWND wnd)
 
 void Renderer::deinit()
 {
-	#ifdef _DEBUG
 	GameEngine::instance()->get_overlay_manager()->unregister_overlay(_debug_tool.get());
-	#endif
 
 	using helpers::SafeRelease;
 
@@ -124,14 +116,8 @@ void Renderer::create_factories(EngineSettings const& settings, cli::CommandLine
 		if (debug_layer)
 		{
 			creation_flag |= D3D11_CREATE_DEVICE_DEBUG;
-		}
-#if defined(_DEBUG)
-		else
-		{
-			creation_flag |= D3D11_CREATE_DEVICE_DEBUG;
 			debug_layer = true;
 		}
-#endif
 
 		ENSURE_HR(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flag, featureLevels, UINT(std::size(featureLevels)), D3D11_SDK_VERSION, &_device, &featureLevel, &_device_ctx));
 
@@ -414,10 +400,8 @@ void Renderer::render_view(shared_ptr<RenderWorld> const& world, RenderPass::Val
 
 void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams const& params)
 {
-#ifdef _DEBUG
 	std::string passName = RenderPass::ToString(params.pass);
 	GPU_SCOPED_EVENT(_user_defined_annotation, passName);
-#endif
 
 	// Setup some defaults. At the moment these are applied for each pass. However
 	// ideally we would be able to have more detailed logic here to decided based on pass and mesh/material
