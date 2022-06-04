@@ -15,6 +15,8 @@
 
 #include "CommonStates.h"
 #include "Effects.h"
+#include "ShaderCache.h"
+#include "ShaderType.h"
 
 namespace Graphics
 {
@@ -34,6 +36,8 @@ void Renderer::init(EngineSettings const& settings, GameSettings const& game_set
 
 	_cb_global = ConstantBuffer::create(_device, sizeof(GlobalCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 	_cb_debug = ConstantBuffer::create(_device, sizeof(DebugCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
+	_cb_post = ConstantBuffer::create(_device, sizeof(PostCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
+
 }
 
 void Renderer::init_for_hwnd(HWND wnd)
@@ -246,7 +250,10 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	if (_swapchain)
 	{
 		helpers::SafeRelease(_non_msaa_output_tex);
+		helpers::SafeRelease(_non_msaa_output_tex_copy);
 		helpers::SafeRelease(_non_msaa_output_srv);
+		helpers::SafeRelease(_non_msaa_output_srv_copy);
+		helpers::SafeRelease(_non_msaa_output_rtv);
 		helpers::SafeRelease(_output_tex);
 		helpers::SafeRelease(_output_rtv);
 		helpers::SafeRelease(_output_srv);
@@ -276,7 +283,10 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 		output_desc.SampleDesc.Count = 1;
 		output_desc.SampleDesc.Quality = 0;
 		ENSURE_HR(_device->CreateTexture2D(&output_desc, nullptr, &_non_msaa_output_tex));
+		ENSURE_HR(_device->CreateTexture2D(&output_desc, nullptr, &_non_msaa_output_tex_copy));
 		ENSURE_HR(_device->CreateShaderResourceView(_non_msaa_output_tex, nullptr, &_non_msaa_output_srv));
+		ENSURE_HR(_device->CreateShaderResourceView(_non_msaa_output_tex_copy, nullptr, &_non_msaa_output_srv_copy));
+		ENSURE_HR(_device->CreateRenderTargetView(_non_msaa_output_tex, nullptr, &_non_msaa_output_rtv));
 	}
 
 	// Create the 3D depth target
@@ -698,6 +708,51 @@ void Renderer::setup_renderstate(ViewParams const& params, Material* const mater
 	}
 }
 
+void Renderer::VSSetShader(ShaderRef const& vertex_shader)
+{
+	ASSERT(vertex_shader->get_type() == ShaderType::Vertex);
+	_device_ctx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
+}
+
+void Renderer::PSSetShader(ShaderRef const& pixel_shader)
+{
+	ASSERT(pixel_shader->get_type() == ShaderType::Pixel);
+	_device_ctx->PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);
+}
+
+void Renderer::render_post_predebug()
+{
+	ShaderCreateParams params = ShaderCreateParams::pixel_shader("Source/Engine/Shaders/default_post_px.hlsl");
+	ShaderRef post_shader = ShaderCache::instance()->find_or_create(params);
+
+	params = ShaderCreateParams::vertex_shader("Source/Engine/Shaders/default_post_vx.hlsl");
+	ShaderRef post_vs_shader = ShaderCache::instance()->find_or_create(params);
+
+	VSSetShader(post_vs_shader);
+	_device_ctx->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN,0);
+	_device_ctx->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+	_device_ctx->IASetInputLayout(nullptr);
+	_device_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	PSSetShader(post_shader);
+	_device_ctx->PSSetShaderResources(0, 1, &_non_msaa_output_srv_copy);
+	ID3D11Buffer* buffer = _cb_post->Get();
+	_device_ctx->PSSetConstantBuffers(0, 1, &buffer);
+
+	ID3D11SamplerState* sampler_states[] = {
+		Graphics::get_sampler_state(SamplerState::MinMagMip_Linear).Get(),
+		Graphics::get_sampler_state(SamplerState::MinMagMip_Point).Get()
+	};
+	_device_ctx->PSSetSamplers(0, 2, sampler_states);
+	_device_ctx->Draw(3, 0);
+
+}
+
+void Renderer::render_post_postdebug()
+{
+
+}
+
 void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, L"Shadows");
@@ -815,8 +870,14 @@ void Renderer::render_opaque_pass(shared_ptr<RenderWorld> const& world)
 
 void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<OverlayManager> const& overlays)
 {
-	// Resolve msaa to non msaa for imgui render
-	_device_ctx->ResolveSubresource(_non_msaa_output_tex, 0, _output_tex, 0, _swapchain_format);
+	GPU_SCOPED_EVENT(_user_defined_annotation, L"Post");
+
+	PostCB* data = (PostCB*)_cb_post->map(_device_ctx);
+	data->m_ViewportWidth = GameEngine::instance()->get_width();
+	data->m_ViewportHeight = GameEngine::instance()->get_height();
+	_cb_post->unmap(_device_ctx);
+
+
 
 	static std::unique_ptr<DirectX::CommonStates> s_states = nullptr;
 	static std::unique_ptr<DirectX::BasicEffect> s_effect = nullptr;
@@ -850,12 +911,24 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 
 	overlays->render_3d(_device_ctx);
 
+		// Resolve msaa to non msaa for imgui render
+	_device_ctx->ResolveSubresource(_non_msaa_output_tex, 0, _output_tex, 0, _swapchain_format);
+
+	// Copy the non-msaa world render so we can sample from it in the post pass
+	_device_ctx->CopyResource(_non_msaa_output_tex_copy, _non_msaa_output_tex);
+	_device_ctx->OMSetRenderTargets(1, &_non_msaa_output_rtv, nullptr);
+	render_post_predebug();
+
+
+	render_post_postdebug();
+
 	// Render main viewport ImGui
 	{
 		GPU_SCOPED_EVENT(_user_defined_annotation, L"ImGui");
 		_device_ctx->OMSetRenderTargets(1, &_swapchain_rtv, nullptr);
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}
+
 }
 
 void Renderer::copy_depth()

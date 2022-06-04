@@ -119,9 +119,9 @@ void SceneViewer::start()
 	
 	auto render_world = GameEngine::instance()->get_render_world();
 	_render_world = render_world;
-	//render_world->create_instance(float4x4::identity(), "Resources/Models/plane_big.glb");
+	render_world->create_instance(float4x4::identity(), "Resources/Models/plane_big.glb");
 	_model = render_world->create_instance(float4x4::translation({0.0,1.0,0.0}), "Resources/Models/cube.glb");
-	//_model = render_world->create_instance(float4x4::scale({ 10.0, 10.0, 10.0 }), "Resources/Scenes/Main/NewSponza_Main_Blender_glTF.gltf");
+	//_model = render_world->create_instance(float4x4::scale({ 1.0, 1.0, 1.0 }), "Resources/Scenes/Main/NewSponza_Main_Blender_glTF.gltf");
 
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
 	const float aspect = (float)size.x / (float)size.y;
@@ -153,7 +153,9 @@ void SceneViewer::start()
 	settings.height = 20.0f;
 	settings.projection_type = RenderWorldCamera::Projection::Ortographic;
 	l->set_settings(settings);
-	l->set_colour({ 1.0f, 1.0f, 1.0f });
+
+	constexpr f32 c_scale = 2.0f;
+	l->set_colour({ 1.0f * c_scale, 1.0f * c_scale, 1.0f * c_scale });
 	l->set_casts_shadow(true);
 	l->set_position({ 10.0, 10.0f, 0.0f });
 	l->look_at(float3{0.0f, 0.0f, 0.0f });

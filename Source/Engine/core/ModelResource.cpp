@@ -52,7 +52,7 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 	using namespace Assimp;
 	Importer importer{};
-	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded);
+	aiScene const* scene = importer.ReadFile(path.c_str(),  aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast);
 	if (!scene)
 	{
 		LOG_ERROR(IO, importer.GetErrorString());
@@ -354,14 +354,12 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 		Tasks::get_scheduler()->WaitforTask(materialLoadTask);
 	}
 
-#ifdef _DEBUG
 	char name[512];
 	sprintf_s(name, "%s - Index Buffer", path.c_str());
 	helpers::SetDebugObjectName(_index_buffer.Get(), name);
 
 	sprintf_s(name, "%s - Vertex Buffer", path.c_str());
 	helpers::SetDebugObjectName(_vertex_buffer.Get(), name);
-#endif
 
 	timer.Stop();
 	LOG_VERBOSE(IO, "Loading model \"{}\" took {} ", path.c_str(), timer.GetTime());

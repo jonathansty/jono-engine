@@ -36,6 +36,9 @@ public:
 		return _input_layout;
 	}
 
+
+	ShaderType get_type() const { return _type; }
+
 private:
 	ShaderType _type;
 

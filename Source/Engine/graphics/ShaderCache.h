@@ -6,13 +6,35 @@
 
 namespace Graphics
 {
-
 class Shader;
 
 struct ShaderCreateParams
 {
 	std::string path;
 	ShaderCompiler::CompileParameters params;
+
+	static ShaderCreateParams create(std::string const& path, ShaderType stage, std::string const& entry)
+	{
+		ShaderCreateParams parameters{};
+		parameters.params.entry_point = entry;
+		parameters.params.stage = stage;
+		parameters.path = path;
+
+		return parameters;
+	}
+	static ShaderCreateParams compute_shader(std::string const& path)
+	{
+		return create(path, ShaderType::Compute, "main");
+	}
+	static ShaderCreateParams pixel_shader(std::string const& path)
+	{
+		return create(path, ShaderType::Pixel, "main");
+	
+	}
+	static ShaderCreateParams vertex_shader(std::string const& path)
+	{
+		return create(path, ShaderType::Vertex, "main");
+	}
 };
 }
 

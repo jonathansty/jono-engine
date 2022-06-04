@@ -1366,7 +1366,7 @@ void GameEngine::build_viewport()
 		max_uv.x = s_vp_size.x / get_width();
 		max_uv.y = s_vp_size.y / get_height();
 
-		ImGui::Image(_renderer->get_raw_output_srv(), s_vp_size, ImVec2(0, 0), max_uv);
+		ImGui::Image(_renderer->get_raw_output_non_msaa_srv(), s_vp_size, ImVec2(0, 0), max_uv);
 
 		ImGuizmo::SetDrawlist();
 		ImGuizmo::SetRect(_viewport_pos.x, _viewport_pos.y, float1(_viewport_width), float1(_viewport_height));

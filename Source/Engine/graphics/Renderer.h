@@ -14,6 +14,7 @@
 class RenderWorld;
 class RenderWorldCamera;
 class Material;
+using ShaderRef = shared_ptr<class Shader>;
 
 namespace cli
 {
@@ -133,6 +134,14 @@ struct DebugCB
 	uint8_t pad[12];
 };
 
+__declspec(align(16)) 
+struct PostCB
+{
+	float m_ViewportWidth;
+	float m_ViewportHeight;
+	float padding[2];
+};
+
 struct DeviceContext
 {
 	ComPtr<ID3D11Device> _device;
@@ -225,6 +234,12 @@ private:
 
 	void setup_renderstate(ViewParams const& params, Material* const material);
 
+	void VSSetShader(ShaderRef const& vertex_shader);
+	void PSSetShader(ShaderRef const& pixel_hader);
+
+	void render_post_predebug();
+	void render_post_postdebug();
+
 private:
 	// 0: Game camera | 1: Debug camera
 	u32 _active_cam = 0;
@@ -252,6 +267,10 @@ private:
 	ID3D11ShaderResourceView* _output_srv;
 	ID3D11Texture2D*          _non_msaa_output_tex;
 	ID3D11ShaderResourceView* _non_msaa_output_srv;
+	ID3D11Texture2D*	      _non_msaa_output_tex_copy;
+	ID3D11ShaderResourceView* _non_msaa_output_srv_copy;
+
+	ID3D11RenderTargetView*	  _non_msaa_output_rtv;
 	ID3D11RenderTargetView*   _output_rtv;
 	ID3D11Texture2D*          _output_depth;
 	ID3D11Texture2D*          _output_depth_copy;
@@ -275,6 +294,7 @@ private:
 
 	ConstantBufferRef _cb_global;
 	ConstantBufferRef _cb_debug;
+	ConstantBufferRef _cb_post;
 
 	std::unique_ptr<class RendererDebugTool> _debug_tool;
 	friend class RendererDebugTool;	
@@ -283,8 +303,6 @@ private:
 	u32 _viewport_width;
 	u32 _viewport_height;
 	float2 _viewport_pos;
-
-	
 };
 
 }
