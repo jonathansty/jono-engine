@@ -5,7 +5,7 @@
 void mb_error(const char* file, int line, std::string const& msg);
 
 #define ASSERT(condition) \
-	if (!condition)       \
+	if (!(condition))       \
 	mb_error(__FILE__, __LINE__, "")
 
 #define ASSERTMSG(condition, msg, ...) \

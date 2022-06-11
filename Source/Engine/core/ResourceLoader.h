@@ -12,11 +12,19 @@ struct FromFileResourceParameters
 	std::string const& to_string() const { return path; }
 };
 
+enum class ResourceStatus
+{
+	Error,
+	Loading,
+	Loaded
+};
+
 // template resource class
 class Resource
 {
 public:
-	Resource() : _loaded(false)
+	friend class ResourceLoader;
+	Resource() : _loaded(true), _status(ResourceStatus::Error)
 	{
 	}
 
@@ -24,22 +32,28 @@ public:
 	{
 	}
 
+	ResourceStatus get_status() const { return _status; }
+
 	bool is_loaded() 
 	{
-		return _loaded;
+		return _status == ResourceStatus::Loaded;
 	}
 
-	virtual void load() = 0;
+	virtual void load(enki::ITaskSet* parent) = 0;
 
 	virtual std::string get_name() const { return ""; }
 
-private:
+	virtual void build_load_graph(enki::ITaskSet* parent){}
+
+
 	std::atomic<bool> _loaded;
+	std::atomic<ResourceStatus> _status;
 
 	std::mutex _loaded_mutex;
 	std::condition_variable _loaded_cv;
 
 	friend class ResourceLoader;
+	friend struct CompletionActionMarkLoaded;
 };
 
 struct NoInit {};
@@ -75,6 +89,58 @@ private:
 };
 
 
+struct CompletionActionMarkLoaded : enki::ICompletable
+{
+	enki::Dependency _dependency;
+
+	// Resource to mark as loaded
+	std::shared_ptr<Resource> _resource;
+
+	void OnDependenciesComplete(enki::TaskScheduler* pTaskScheduler_, uint32_t threadNum_) override
+	{
+		ICompletable::OnDependenciesComplete(pTaskScheduler_, threadNum_);
+
+		LOG_VERBOSE(IO, "Asset finished loading. (\"{}\")", _resource->get_name());
+
+		_resource->_status = ResourceStatus::Loaded;
+		_resource->_loaded = true;
+		_resource->_loaded_cv.notify_all();
+	}
+};
+
+template<typename T>
+struct LoadResourceTask : public enki::ITaskSet
+{
+	LoadResourceTask(std::shared_ptr<T> resource)
+		: _resource(resource)
+	{
+
+	}
+
+	~LoadResourceTask()
+	{
+
+	}
+
+	std::shared_ptr<T> _resource;
+	std::function<void(std::shared_ptr<T>)> _complete;
+
+	void ExecuteRange(enki::TaskSetPartition range_, uint32_t threadnum_) override
+	{
+		_resource->_status = ResourceStatus::Loading;
+		_resource->load(this);
+		_resource->_status = ResourceStatus::Loaded;
+		_resource->_loaded = true;
+		_resource->_loaded_cv.notify_all();
+		if(_complete)
+		{
+			_complete(_resource);
+		}
+
+
+	}
+};
+
 class ResourceLoader final : public TSingleton<ResourceLoader>
 {
 public:
@@ -85,6 +151,15 @@ public:
 	void unload_all()
 	{
 		_cache.clear();
+	}
+
+	void wait_for(shared_ptr<Resource> resource)
+	{
+		if(resource->get_status() == ResourceStatus::Loading)
+		{
+			std::unique_lock lk{ resource->_loaded_mutex };
+			resource->_loaded_cv.wait(lk);
+		}
 	}
 
 	void update()
@@ -122,9 +197,31 @@ public:
 	}
 
 	template <typename T>
-	std::shared_ptr<T> load(typename T::init_parameters parameters, bool blocking = false);
+	std::shared_ptr<T> load(typename T::init_parameters parameters,bool dependencyLoad, bool blocking = false);
 
+	template<typename T>
+	static LoadResourceTask<T>* create_load_task(std::shared_ptr<T> const& resource)
+	{
+		return new LoadResourceTask<T>(resource);
+	}
 private:
+
+
+
+	// Returns a lambda that can be used for inline resource loading
+	template <typename T>
+	static std::function<void()> load_fn(std::shared_ptr<T> const& resource)
+	{
+		return [resource]() {
+			resource->load(nullptr);
+			resource->_loaded = true;
+			resource->_status = ResourceStatus::Loaded;
+			resource->_loaded_cv.notify_all();
+			LOG_INFO(IO, "{} finished", resource->get_init_parameters().to_string());
+		};
+	}
+
+
 	std::mutex _cache_lock;
 	ResourceCache _cache;
 
@@ -145,7 +242,7 @@ namespace std
 }
 
 template<typename T>
-std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool blocking )
+std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool dependencyLoad, bool blocking )
 {
 	LOG_INFO(IO, "Load request {}", params.to_string());
 	std::size_t h = std::hash<typename T::init_parameters>{}(params);
@@ -176,23 +273,19 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 	}
 
 	res->_loaded = false;
+	res->_status = ResourceStatus::Loading;
 
-	auto do_load = [res, params]()
-	{
-		res->load();
-		res->_loaded = true;
-		res->_loaded_cv.notify_all();
-		LOG_INFO(IO, "{} finished", params.to_string());
-	};
+	auto do_load = load_fn(res);
+
+	enki::ITaskSet* set = create_load_task(res);
 
 	if (blocking)
 	{
-		do_load();
+		Tasks::get_scheduler()->AddTaskSetToPipe(set);
+		Tasks::get_scheduler()->WaitforTask(set);
 	}
 	else
 	{
-		enki::TaskSet* set = new enki::TaskSet([=](enki::TaskSetPartition partition, uint32_t thread_num) { do_load(); });
-
 		{
 			std::lock_guard<std::mutex> l{ _tasks_lock };
 			_tasks.push_back(set);

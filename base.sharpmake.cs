@@ -60,6 +60,7 @@ public abstract class JonaBaseProject : Project
 
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP20);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
+        conf.Options.Add(Options.Vc.ManifestTool.EnableDpiAwareness.PerMonitor);
 
         conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
             "4100", // Unused method variables
@@ -166,7 +167,7 @@ public class CompileHLSL : Project.Configuration.CustomFileBuildStep
         Output = $"{outputDir}/{resourceName}.h";
         Executable = "";
 
-        ExecutableArguments = string.Format("fxc /Zi /nologo /O2 /E\"{0}\" /T {1} /Fh\"{2}\" /Vn\"cso_{3}\" \"{4}\"", "main", profile.ToString(), Output, resourceName, filename);
+        ExecutableArguments = string.Format("fxc /Zi /nologo /O2 /E\"{0}\" /T {1} /Fh\"{2}\" /Vn\"cso_{3}\" \"{4}\" /DVS_COMPILE=1", "main", profile.ToString(), Output, resourceName, filename);
     }
 
 

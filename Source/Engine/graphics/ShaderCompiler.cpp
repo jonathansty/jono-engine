@@ -58,12 +58,12 @@ bool compile(const char* shader, CompileParameters const& parameters, std::vecto
 			return false;
 		}
 
-		std::string preprocessed_fn = fmt::format("Intermediate/{}.preprocessed", shader);
-		auto f = io->open(preprocessed_fn.c_str(), IO::Mode::Write, false);
-		if(f)
-		{
-			f->write(preprocessedData->GetBufferPointer(), static_cast<u32>(preprocessedData->GetBufferSize()));
-		}
+		//std::string preprocessed_fn = fmt::format("Intermediate/{}.preprocessed", shader);
+		//auto f = io->open(preprocessed_fn.c_str(), IO::Mode::Write, false);
+		//if(f)
+		//{
+		//	f->write(preprocessedData->GetBufferPointer(), static_cast<u32>(preprocessedData->GetBufferSize()));
+		//}
 
 		result = D3DCompile(preprocessedData->GetBufferPointer(), preprocessedData->GetBufferSize(), shader, nullptr, D3D_COMPILE_STANDARD_FILE_INCLUDE, entry_point.c_str(), target.c_str(), static_cast<u32>(parameters.flags), static_cast<u32>(parameters.effect_flags), &shadercode_result, &errors);
 		free(data);

@@ -5,11 +5,12 @@
 #include "ModelResource.h"
 #include "TextureResource.h"
 
+#include "Graphics/ShaderCache.h"
 #include "Material.h"
 
 #include "Graphics/ShaderCompiler.h"
 
-void MaterialResource::load()
+void MaterialResource::load(enki::ITaskSet* parent)
 {
 	using namespace Graphics;
 
@@ -17,6 +18,7 @@ void MaterialResource::load()
 
 	ShaderCompiler::CompileParameters params{};
 	params.entry_point = "main";
+	params.defines.push_back({ "LIGHTING_MODEL", "LIGHTING_MODEL_BLINN_PHONG" });
 	params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
 	params.stage = ShaderType::Pixel;
 
@@ -42,20 +44,20 @@ void MaterialResource::load()
 	if (!pixel_shader)
 	{
 		pixel_shader = Graphics::get_error_shader_px();
-		LOG_ERROR(Graphics, "Failed to find base shader. Using error shader.");
+		LOG_ERROR(Graphics, "Failed to find base pixel shader. Using error shader.");
 	}
 
 	if (!vertex_shader)
 	{
 		vertex_shader = Graphics::get_error_shader_vx();
-		LOG_ERROR(Graphics, "Failed to find base shader. Using error shader.");
+		LOG_ERROR(Graphics, "Failed to find base vertex shader. Using error shader.");
 	}
 
 
-	if (debug_shader)
+	if (!debug_shader)
 	{
 		debug_shader = Graphics::get_error_shader_px();
-		LOG_ERROR(Graphics, "Failed to find base shader. Using error shader.");
+		LOG_ERROR(Graphics, "Failed to find base debug shader. Using error shader.");
 	}
 
 	_resource = Material::create(vertex_shader, pixel_shader);
@@ -73,9 +75,13 @@ void MaterialResource::load()
 				case MaterialInitParameters::TextureType_Albedo:
 					_resource->_textures.push_back(TextureResource::white());
 					break;
-				case MaterialInitParameters::TextureType_MetalnessRoughness:
+				case MaterialInitParameters::TextureType_Metalness:
+					_resource->_textures.push_back(TextureResource::black());
+					break;
+				case MaterialInitParameters::TextureType_Roughness:
 					_resource->_textures.push_back(TextureResource::default_roughness());
 					break;
+
 				case MaterialInitParameters::TextureType_Normal:
 					_resource->_textures.push_back(TextureResource::default_normal());
 					break;
@@ -86,7 +92,8 @@ void MaterialResource::load()
 		}
 		else
 		{
-			_resource->_textures.push_back(ResourceLoader::instance()->load<TextureResource>({ paths[textureType] }, true));
+			shared_ptr<TextureResource> res = ResourceLoader::instance()->load<TextureResource>({ paths[textureType] },true);
+			_resource->_textures.push_back(res);
 		}
 	}
 }

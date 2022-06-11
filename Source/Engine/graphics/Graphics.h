@@ -88,7 +88,9 @@ using ConstantBufferRef = shared_ptr<ConstantBuffer>;
 // Debug
 // ---------------------------------------------------------------------------------
 
-#ifdef _DEBUG
+#define ENABLE_PROFILING 
+
+#ifdef ENABLE_PROFILING
 class scoped_gpu_event final
 {
 public:
@@ -157,88 +159,11 @@ HRESULT set_debug_name(T* obj, std::string const& n)
 	return obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(n.size()), n.data());
 }
 
-class Shader
-{
-public:
-	Shader(ShaderType type, const u8* byte_code, uint32_t size);
-
-	~Shader();
-
-	static std::unique_ptr<Shader> create(ShaderType type, const u8* byte_code, uint32_t size);
-
-	template <typename T>
-	ComPtr<T> as()
-	{
-		ComPtr<T> result;
-		_shader->QueryInterface(__uuidof(T), (void**)result.GetAddressOf());
-		assert(result);
-		return result;
-	}
-	ComPtr<ID3D11Resource> get_shader() const { return _shader; }
-	ComPtr<ID3D11InputLayout> get_input_layout() const
-	{
-		assert(_type == ShaderType::Vertex);
-		return _input_layout;
-	}
-
-private:
-	ShaderType _type;
-
-	ComPtr<ID3D11ShaderReflection> _reflection;
-	ComPtr<ID3D11Resource> _shader;
-	ComPtr<ID3D11InputLayout> _input_layout;
-};
-
-struct ShaderCreateParams
-{
-	std::string path;
-	ShaderCompiler::CompileParameters params;
-};
-
-inline bool operator==(ShaderCreateParams const& lhs, ShaderCreateParams const& rhs)
-{
-	return lhs.path == rhs.path && lhs.params == rhs.params;
-}
 
 
 } // namespace Graphics
 
-template <>
-struct std::hash<Graphics::ShaderCreateParams>
-{
-	std::size_t operator()(Graphics::ShaderCreateParams const& params) const noexcept
-	{
-		// Just do a raw memory hash
-		size_t name_hash = std::hash<std::string> {}(params.path);
 
-		size_t params_hash = std::hash<ShaderCompiler::CompileParameters>{}(params.params);
-		Hash::combine(name_hash, params_hash);
-		return name_hash;
-	}
-};
-
-namespace Graphics
-{
-
-
-	class ShaderCache : public TSingleton<ShaderCache>
-	{
-	public:
-		
-		std::shared_ptr<Shader> find_or_create(ShaderCreateParams const& params);
-
-		bool reload_all();
-
-		bool reload(ShaderCreateParams const& params);
-
-	private:
-		std::unordered_map<ShaderCreateParams, std::shared_ptr<Shader>> _shaders;
-		friend class RendererDebugTool;
-	};
-
-
-
-} // Graphics
 
 
 

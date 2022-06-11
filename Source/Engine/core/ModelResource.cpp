@@ -23,11 +23,16 @@ const D3D11_INPUT_ELEMENT_DESC ModelUberVertex::InputElements[InputElementCount]
 	{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 };
-void ModelResource::load()
+
+void ModelResource::build_load_graph(enki::ITaskSet* parent)
+{
+}
+
+void ModelResource::load(enki::ITaskSet* parent)
 {
 	std::string const& path = get_init_parameters().path;
 	_resource = std::make_shared<Model>();
-	_resource->load(path);
+	_resource->load(parent, path);
 }
 
 ModelResource::ModelResource(FromFileResourceParameters params)
@@ -35,8 +40,11 @@ ModelResource::ModelResource(FromFileResourceParameters params)
 {
 }
 
-void Model::load(std::string const& path)
+void Model::load(enki::ITaskSet* parent, std::string const& path)
 {
+	Timer timer{}; 
+	timer.Start();
+
 	std::filesystem::path dir_path = std::filesystem::path(path);
 	dir_path = dir_path.parent_path();
 	auto device = Graphics::get_device();
@@ -44,7 +52,7 @@ void Model::load(std::string const& path)
 
 	using namespace Assimp;
 	Importer importer{};
-	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_Triangulate | aiProcess_CalcTangentSpace | aiProcess_ConvertToLeftHanded);
+	aiScene const* scene = importer.ReadFile(path.c_str(),  aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast);
 	if (!scene)
 	{
 		LOG_ERROR(IO, importer.GetErrorString());
@@ -198,54 +206,161 @@ void Model::load(std::string const& path)
 
 	if (scene->HasMaterials())
 	{
-		for (unsigned int i = 0; i < scene->mNumMaterials; ++i)
+		// Resize our materials and textures 
+		_materials.resize(scene->mNumMaterials);
+
+		struct TextureMappings
+		{
+			u32 tex_idx;
+			u32 mat_idx;
+
+			std::string path;
+		};
+		std::vector<TextureMappings> mappings;
+		for(u32 i = 0; i < scene->mNumMaterials; ++i)
 		{
 			aiMaterial* material = scene->mMaterials[i];
-			aiString name = material->GetName();
-
-			MaterialInitParameters parameters{};
-			parameters.load_type = MaterialInitParameters::LoadType_FromMemory;
-			parameters.name = "[Built-in] Material";
-
-			// Get the name of the material
-			aiString materialName;
-			material->Get(AI_MATKEY_NAME, materialName);
-			parameters.name = name.C_Str();
-
-			// Load the required textures from the assimp imported file
-			aiString baseColorTexture;
-			aiString roughnessTexture;
-			aiString normalTexture;
-			if (material->GetTexture(aiTextureType_BASE_COLOR, 0, &baseColorTexture) == aiReturn_SUCCESS)
+			aiString texturePath;
+			if (material->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &texturePath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
+				mappings.push_back(TextureMappings{ u32(_textures.size()), i, dir_path.string() + "\\" + std::string(texturePath.C_Str()) });
+				_textures.push_back({});
 			}
-			if (material->GetTexture(aiTextureType_DIFFUSE_ROUGHNESS, 0, &roughnessTexture) == aiReturn_SUCCESS)
+			if (material->GetTexture(AI_MATKEY_ROUGHNESS_TEXTURE, &texturePath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
+				mappings.push_back(TextureMappings{ u32(_textures.size()), i, dir_path.string() + "\\" + std::string(texturePath.C_Str()) });
+				_textures.push_back({});
 			}
-			if (material->GetTexture(aiTextureType_NORMAL_CAMERA, 0, &normalTexture) == aiReturn_SUCCESS)
+			if (material->GetTexture(AI_MATKEY_METALLIC_TEXTURE, &texturePath) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path.string() + "\\" + std::string(normalTexture.C_Str());
+				mappings.push_back(TextureMappings{ u32(_textures.size()), i, dir_path.string() + "\\" + std::string(texturePath.C_Str()) });
+				_textures.push_back({});
 			}
-
-			bool double_sided;
-			if (material->Get(AI_MATKEY_TWOSIDED, double_sided) == aiReturn_SUCCESS)
+			if (material->GetTexture(aiTextureType_NORMALS, 0, &texturePath) == aiReturn_SUCCESS)
 			{
-				parameters.double_sided = double_sided;
+				mappings.push_back(TextureMappings{ u32(_textures.size()), i, dir_path.string() + "\\" + std::string(texturePath.C_Str()) });
+				_textures.push_back({});
 			}
-
-			auto handle = ResourceLoader::instance()->load<MaterialResource>(parameters, true);
-			_materials.push_back(handle);
 		}
+
+
+
+		// Texture load task
+		enki::TaskSet textureLoadTask = enki::TaskSet(u32(mappings.size()),[&](enki::TaskSetPartition range, uint32_t threadnum) {
+
+			std::vector<enki::ITaskSet*> tasks{};
+
+			for (u32 i = range.start; i < range.end; ++i)
+			{
+				TextureMappings const& mapping = mappings[i];
+
+				FromFileResourceParameters params{ mapping.path };
+				LoadResourceTask<TextureResource>* texture_resource = ResourceLoader::create_load_task<TextureResource>(std::make_shared<TextureResource>(params));
+				texture_resource->_complete = [&](shared_ptr<TextureResource> resource) 
+				{
+					_textures[mapping.tex_idx] = resource;
+				};
+
+				tasks.push_back(texture_resource);
+			}
+
+			// Kick off tasks
+			for (auto const& t : tasks)
+			{
+				Tasks::get_scheduler()->AddTaskSetToPipe(t);
+			}
+
+			// Wait for tasks
+			for (auto const& t : tasks)
+			{
+				Tasks::get_scheduler()->WaitforTaskSet(t);
+				delete t;
+			}
+		});
+
+		Tasks::get_scheduler()->AddTaskSetToPipe(&textureLoadTask);
+		Tasks::get_scheduler()->WaitforTask(&textureLoadTask);
+
+		// Material load tas
+		_materials.resize(scene->mNumMaterials);
+		enki::TaskSet* materialLoadTask = new enki::TaskSet(scene->mNumMaterials, [&](enki::TaskSetPartition range, uint32_t threadNum) 
+		{
+				std::vector<enki::ITaskSet*> tasks;
+				for (u32 i = range.start; i < range.end; ++i)
+				{
+					aiMaterial* material = scene->mMaterials[i];
+					aiString name = material->GetName();
+
+					MaterialInitParameters parameters{};
+					parameters.load_type = MaterialInitParameters::LoadType_FromMemory;
+					parameters.name = "[Built-in] Material";
+					// Get the name of the material
+					aiString materialName;
+					material->Get(AI_MATKEY_NAME, materialName);
+					parameters.name = name.C_Str();
+
+					// Load the required textures from the assimp imported file
+					aiString baseColorTexture;
+					aiString roughnessTexture;
+					aiString normalTexture;
+					aiString metalnessTexture;
+
+					if (material->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &baseColorTexture) == aiReturn_SUCCESS)
+					{
+						parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
+					}
+					if (material->GetTexture(AI_MATKEY_ROUGHNESS_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
+					{
+						parameters.m_texture_paths[MaterialInitParameters::TextureType_Roughness] = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
+					}
+					if (material->GetTexture(AI_MATKEY_METALLIC_TEXTURE, &metalnessTexture) == aiReturn_SUCCESS)
+					{
+						parameters.m_texture_paths[MaterialInitParameters::TextureType_Metalness] = dir_path.string() + "\\" + std::string(metalnessTexture.C_Str());
+					}
+					if (material->GetTexture(aiTextureType_NORMALS, 0, &normalTexture) == aiReturn_SUCCESS)
+					{
+						parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path.string() + "\\" + std::string(normalTexture.C_Str());
+					}
+
+					bool double_sided;
+					if (material->Get(AI_MATKEY_TWOSIDED, double_sided) == aiReturn_SUCCESS)
+					{
+						parameters.double_sided = double_sided;
+					}
+
+					auto res = std::make_shared<MaterialResource>(parameters);
+
+					// Kick off material load
+					LoadResourceTask<MaterialResource>* nextLoadTask = ResourceLoader::create_load_task<MaterialResource>(res);
+					nextLoadTask->_complete = [i, this](MaterialRef resource) {
+						_materials[i] = resource;
+					};
+					tasks.push_back(nextLoadTask);
+				}
+				for(auto const& t : tasks)
+				{
+					Tasks::get_scheduler()->AddTaskSetToPipe(t);
+				}
+
+				for(auto const& t : tasks)
+				{
+					Tasks::get_scheduler()->WaitforTask(t);
+					delete t;
+				}
+				
+
+		});
+		Tasks::get_scheduler()->AddTaskSetToPipe(materialLoadTask);
+		Tasks::get_scheduler()->WaitforTask(materialLoadTask);
 	}
 
-#ifdef _DEBUG
 	char name[512];
 	sprintf_s(name, "%s - Index Buffer", path.c_str());
 	helpers::SetDebugObjectName(_index_buffer.Get(), name);
 
 	sprintf_s(name, "%s - Vertex Buffer", path.c_str());
 	helpers::SetDebugObjectName(_vertex_buffer.Get(), name);
-#endif
+
+	timer.Stop();
+	LOG_VERBOSE(IO, "Loading model \"{}\" took {} ", path.c_str(), timer.GetTime());
 }

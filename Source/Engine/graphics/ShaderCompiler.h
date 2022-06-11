@@ -73,7 +73,15 @@ struct std::hash<ShaderCompiler::CompileParameters>
 		Hash::combine(h, Hash::fnv1a(params.effect_flags));
 		Hash::combine(h, Hash::fnv1a(params.flags));
 		Hash::combine(h, Hash::fnv1a(params.stage));
-		Hash::combine(h, Hash::fnv1a(params.defines));
+		for (ShaderCompiler::CompileParameters::Define const& define : params.defines)
+		{
+			Hash::combine(h, Hash::fnv1a(define.name));
+
+			if(define.value.has_value())
+			{
+				Hash::combine(h, Hash::fnv1a(define.value.value()));
+			}
+		}
 		Hash::combine(h, Hash::fnv1a(params.entry_point));
 		return h;
 	}

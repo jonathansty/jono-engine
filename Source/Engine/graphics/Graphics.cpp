@@ -1,9 +1,13 @@
 #include "engine.pch.h"
 
 #include "Graphics.h"
+#include "Core/ModelResource.h"
+#include "Shader.h"
+#include "ShaderCache.h"
 #include "Renderer.h"
 
-#include "Core/ModelResource.h"
+#include "RendererDebug.h"
+
 
 namespace Graphics
 {
@@ -34,6 +38,8 @@ void init(DeviceContext const& ctx)
 		parameters.params.entry_point = "main";
 		parameters.params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
 		parameters.params.stage = ShaderType::Pixel;
+		parameters.params.defines.push_back({ "LIGHTING_MODEL", "LIGHTING_MODEL_BLINN_PHONG" });
+
 		s_error_pixel_shader = ShaderCache::instance()->find_or_create(parameters);
 		ASSERTMSG(s_error_pixel_shader, "Failed to create error shader (\"{}\")", parameters.path.c_str());
 
@@ -149,91 +155,6 @@ std::shared_ptr<Graphics::Shader> get_error_shader_vx()
 	return s_error_vertex_shader;
 }
 
-std::shared_ptr<Shader> ShaderCache::find_or_create(ShaderCreateParams const& creation_params)
-{
-	if (auto it = _shaders.find(creation_params); it != _shaders.end())
-	{
-		return it->second;
-	}
-
-	// Shader doesn't exist? Then compile it.
-
-	std::vector<u8> bytecode;
-	if (!ShaderCompiler::compile(creation_params.path.c_str(), creation_params.params, bytecode))
-	{
-		// TODO: Error
-		return nullptr;
-	}
-
-	_shaders[creation_params] = Shader::create(creation_params.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
-	return _shaders[creation_params];
-}
-
-bool ShaderCache::reload_all()
-{
-	bool success = true;
-	for(auto it : _shaders)
-	{
-		std::vector<u8> bytecode;
-		if (!ShaderCompiler::compile(it.first.path.c_str(), it.first.params, bytecode))
-		{
-			success = false;
-		}
-
-		auto tmp = Shader::create(it.first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
-		*it.second = *tmp;
-	}
-	return success;
-}
-
-bool ShaderCache::reload(ShaderCreateParams const& params)
-{
-	auto it = _shaders.find(params);
-	std::vector<u8> bytecode;
-	if (!ShaderCompiler::compile(it->first.path.c_str(), it->first.params, bytecode))
-	{
-		return false;
-	}
-
-	auto tmp = Shader::create(it->first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
-	*it->second = *tmp;
-	return true;
-
-}
-
-Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size)
-		: _type(type)
-{
-	ComPtr<ID3D11Device> device = Graphics::get_device();
-	switch (type)
-	{
-		case ShaderType::Vertex:
-		{
-			SUCCEEDED(device->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)_shader.GetAddressOf()));
-			using VertexType = ModelUberVertex;
-			SUCCEEDED(device->CreateInputLayout(VertexType::InputElements, VertexType::InputElementCount, byte_code, size, _input_layout.GetAddressOf()));
-		}
-		break;
-		case ShaderType::Pixel:
-			SUCCEEDED(device->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)_shader.GetAddressOf()));
-			break;
-		default:
-			throw new std::exception("ShaderType not supported!");
-	}
-
-	D3DReflect(byte_code, size, IID_ID3D11ShaderReflection, &_reflection);
-	D3D11_SHADER_INPUT_BIND_DESC bindDesc;
-	_reflection->GetResourceBindingDescByName("g_Albedo", &bindDesc);
-}
-
-Shader::~Shader()
-{
-}
-
-std::unique_ptr<Shader> Shader::create(ShaderType type, const u8* byte_code, uint32_t size)
-{
-	return std::make_unique<Shader>(type, byte_code, size);
-}
 
 
 } // namespace Graphics

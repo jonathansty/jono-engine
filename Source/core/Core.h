@@ -69,6 +69,7 @@ using namespace D2D1;
 #include <fmt/format.h>
 #include <fmt/printf.h>
 #include <fmt/ostream.h>
+#include <fmt/xchar.h>
 
 #include <rttr/registration>
 #include <rttr/registration_friend>

@@ -2,6 +2,8 @@
 #include "ResourceLoader.h"
 
 
+class TextureResource;
+
 using MaterialRef = std::shared_ptr<class MaterialResource>;
 
 struct ModelUberVertex
@@ -50,7 +52,7 @@ public:
 	
 	}
 
-	void load(std::string const& path);
+	void load(enki::ITaskSet* parent, std::string const& path);
 
 	ComPtr<ID3D11Buffer> get_vertex_buffer() const { return _vertex_buffer; }
 	ComPtr<ID3D11Buffer> get_index_buffer() const { return _index_buffer; }
@@ -66,7 +68,13 @@ public:
 private:
 	u64 _index_count;
 
+	std::mutex _textures_cs;
+	std::vector<shared_ptr<TextureResource>> _textures;
+
+	std::mutex _material_cs;
 	std::vector<MaterialRef> _materials;
+
+	std::mutex _meshes_cs;
 	std::vector<Mesh> _meshes;
 
 	ComPtr<ID3D11Buffer> _vertex_buffer;
@@ -82,5 +90,7 @@ public:
 
 	~ModelResource() {}
 
-	void load() override;
+	void build_load_graph(enki::ITaskSet* parent) override;
+
+	void load(enki::ITaskSet* parent) override;
 };
