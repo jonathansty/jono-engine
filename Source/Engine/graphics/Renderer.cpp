@@ -877,8 +877,6 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 	data->m_ViewportHeight = GameEngine::instance()->get_height();
 	_cb_post->unmap(_device_ctx);
 
-
-
 	static std::unique_ptr<DirectX::CommonStates> s_states = nullptr;
 	static std::unique_ptr<DirectX::BasicEffect> s_effect = nullptr;
 	static ComPtr<ID3D11InputLayout> s_layout = nullptr;

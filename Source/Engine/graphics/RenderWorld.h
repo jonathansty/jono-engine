@@ -246,7 +246,14 @@ public:
 
 	void remove_instance(std::shared_ptr<RenderWorldInstance> const& instance);
 
-	std::shared_ptr<RenderWorldCamera> get_view_camera() const { return _cameras[_active_camera]; }
+	std::shared_ptr<RenderWorldCamera> get_view_camera() const
+	{
+		if (_active_camera >= 0 && _active_camera < _cameras.size())
+		{
+			return _cameras[_active_camera];
+		}
+		return nullptr;
+	}
 
 	void set_active_camera(u32 idx) { _active_camera = idx; }
 

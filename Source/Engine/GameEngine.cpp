@@ -45,7 +45,7 @@ LRESULT CALLBACK GameEngine::WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPAR
 
 // #TODO: Remove this once full 2D graphics has been refactored into it's own context
 #if FEATURE_D2D
-using graphics::bitmap_interpolation_mode;
+using Graphics::bitmap_interpolation_mode;
 #endif
 
 GameEngine::GameEngine()
@@ -179,7 +179,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 						PWSTR data;
 						::GetThreadDescription(GetCurrentThread(), &data);
 						std::wstring wbuff = data;
-						std::string threadName = std::string(wbuff.c_str(), wbuff.c_str() + wbuff.length());
+						std::string threadName = std::string(wbuff.begin(), wbuff.end());
 						LOG_INFO(System, "{}: TaskA Logging from lambda taskset!", threadName);
 					});
 				s_TaskScheduler->AddTaskSetToPipe(&taskSet);
@@ -519,10 +519,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 #if FEATURE_D2D
 void GameEngine::d2d_render()
 {
-	#if 0
-	GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Game2D");
-
-	graphics::D2DRenderContext context{ _d2d_factory, _d2d_rt, _color_brush, _default_font.get() };
+#if 1
+	Graphics::D2DRenderContext context{ _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get() };
 	context.begin_paint();
 	_d2d_ctx = &context;
 

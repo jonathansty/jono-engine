@@ -48,7 +48,7 @@ void GameTest2D::end()
 
 }
 
-void GameTest2D::paint(graphics::D2DRenderContext& ctx)
+void GameTest2D::paint(Graphics::D2DRenderContext& ctx)
 {
 	ctx.draw_background(MK_COLOR(153, 217, 234,255));
 

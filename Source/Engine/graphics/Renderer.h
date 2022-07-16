@@ -11,6 +11,11 @@
 
 #include "RendererDebug.h"
 
+#if FEATURE_D2D
+#include "2DRenderContext.h"
+#endif
+#include <Source/Engine/graphics/2DRenderContext.h>
+
 class RenderWorld;
 class RenderWorldCamera;
 class Material;
@@ -177,6 +182,7 @@ public:
 #if FEATURE_D2D
 	ID2D1Factory*              get_raw_d2d_factory() const { return _d2d_factory; }
 	ID2D1RenderTarget*         get_2d_draw_ctx() const { return _d2d_rt; }
+	ID2D1SolidColorBrush*      get_2d_color_brush() const { return _color_brush; }
 #endif
 	IDWriteFactory*            get_raw_dwrite_factory() const { return _dwrite_factory; }
 	DXGI_FORMAT get_swapchain_format() const { return _swapchain_format; }

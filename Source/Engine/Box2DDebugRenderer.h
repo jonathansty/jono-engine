@@ -1,7 +1,7 @@
 #pragma once
 
 #if FEATURE_D2D
-namespace graphics {
+namespace Graphics {
 	class D2DRenderContext;
 }
 
@@ -36,10 +36,10 @@ public:
 
 	void DrawPoint(const b2Vec2& pos, float size, const b2Color& color) override;;
 
-	void set_draw_ctx(class graphics::D2DRenderContext* context);
+	void set_draw_ctx(class Graphics::D2DRenderContext* context);
 
 private:
-	class graphics::D2DRenderContext *_context;
+	class Graphics::D2DRenderContext *_context;
 	u32 m_Color;
 	float3x3 _mat_scale;
 };

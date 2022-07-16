@@ -237,8 +237,8 @@ void Timer::end(ComPtr<ID3D11DeviceContext> const& ctx)
 void Timer::flush(ComPtr<ID3D11DeviceContext> const& ctx, UINT64& start, UINT64& end, f64& cpuTime)
 {
 	_flushed = true;
-	ENSURE_HR(ctx->GetData(_begin.Get(), &start, sizeof(UINT64), 0));
-	ENSURE_HR(ctx->GetData(_end.Get(), &end, sizeof(UINT64), 0));
+	(ctx->GetData(_begin.Get(), &start, sizeof(UINT64), 0));
+	(ctx->GetData(_end.Get(), &end, sizeof(UINT64), 0));
 
 	cpuTime = _timer.get_delta_time();
 }

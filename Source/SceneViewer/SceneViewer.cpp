@@ -223,7 +223,7 @@ void SceneViewer::end()
 }
 
 #if FEATURE_D2D
-void SceneViewer::paint(graphics::D2DRenderContext& ctx)
+void SceneViewer::paint(Graphics::D2DRenderContext& ctx)
 {
 }
 #endif

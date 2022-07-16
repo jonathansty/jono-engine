@@ -11,7 +11,7 @@ class Bitmap;
 
 using hlslpp::float2;
 
-namespace graphics {
+namespace Graphics {
 
 // Bitmap interpolation mode enum
 enum class bitmap_interpolation_mode {

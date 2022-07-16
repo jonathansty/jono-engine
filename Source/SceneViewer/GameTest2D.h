@@ -21,7 +21,7 @@ public:
 
 	void end() override;
 
-	void paint(graphics::D2DRenderContext& ctx) override;
+	void paint(Graphics::D2DRenderContext& ctx) override;
 
 	void tick(double deltaTime) override;
 

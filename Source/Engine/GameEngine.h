@@ -40,7 +40,7 @@ class Timer;
 
 
 #if FEATURE_D2D
-using graphics::bitmap_interpolation_mode;
+using Graphics::bitmap_interpolation_mode;
 #endif
 
 
@@ -328,7 +328,7 @@ private:
 	EngineSettings _engine_settings;
 
 #if FEATURE_D2D
-	graphics::D2DRenderContext* _d2d_ctx;
+	Graphics::D2DRenderContext* _d2d_ctx;
 #endif
 
 	std::shared_ptr<IO::IPlatformIO> _platform_io;

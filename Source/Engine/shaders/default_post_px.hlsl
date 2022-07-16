@@ -27,6 +27,6 @@ float4 main(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target
 	float3 world_colour = g_world.Sample(g_point_sampler, scaled_pos).rgb;
 	float3 gray_scale_colour = Grayscale(world_colour.rgb).rrr;
 
-	float3 final = lerp(world_colour, gray_scale_colour, 1.0f);
+	float3 final = lerp(world_colour, gray_scale_colour, 0.0f);
 	return float4(final, 1.0f);
 }

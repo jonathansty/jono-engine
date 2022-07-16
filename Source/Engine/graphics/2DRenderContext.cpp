@@ -2,23 +2,24 @@
 
 #if FEATURE_D2D
 #include "2DRenderContext.h"
+#include "Renderer.h"
 
 #include "Font.h"
 #include "Bitmap.h"
 
 using hlslpp::float3x3;
 
-namespace graphics {
+namespace Graphics {
 
 D2DRenderContext::D2DRenderContext(ID2D1Factory *factory, ID2D1RenderTarget *rt, ID2D1SolidColorBrush *brush, Font* font) 
-		: _rt(rt)
-		, _brush(brush)
-		, _factory(factory)
-		, _interpolation_mode(D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR)
-		, _default_font(font)
-		, _font(font)
-		, _mat_view(float3x3::identity())
-		, _mat_world(float3x3::identity()) {
+: _rt(rt)
+, _brush(brush)
+, _factory(factory)
+, _interpolation_mode(D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR)
+, _default_font(font)
+, _font(font)
+, _mat_view(float3x3::identity())
+, _mat_world(float3x3::identity()) {
 }
 
 bool D2DRenderContext::begin_paint() {
@@ -44,7 +45,7 @@ bool D2DRenderContext::end_paint() {
 }
 
 bool D2DRenderContext::draw_background(u32 color) {
-	_rt->Clear(D2D1::ColorF(color, 1.0));
+	_rt->Clear(D2D1::ColorF(color >> 8, 1.0));
 	return true;
 }
 
