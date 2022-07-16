@@ -162,6 +162,31 @@ public class SceneViewerProject : JonaBaseProject
     }
 }
 
+[Generate]
+public class PathFindingProject : JonaBaseProject
+{
+    public PathFindingProject() : base()
+    {
+        Name = "PathFindingTest";
+    }
+
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+        conf.SolutionFolder = "games";
+
+        CompileHLSL.ConfigureShaderIncludes(conf);
+
+        conf.AddPrivateDependency<EngineProject>(target);
+
+        conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
+        conf.Output = Configuration.OutputType.Exe;
+
+        conf.IncludePaths.Add(@"[project.SourceRootPath]");
+
+    }
+}
+
 
 [Generate]
 public abstract class ToolsProject : JonaBaseProject
@@ -210,6 +235,7 @@ public class EngineSolution : Solution
 
         conf.AddProject<EngineProject>(target);
         conf.AddProject<SceneViewerProject>(target);
+        conf.AddProject<PathFindingProject>(target);
         conf.AddProject<EngineTestProject>(target);
 
 

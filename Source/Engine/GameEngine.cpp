@@ -26,6 +26,8 @@
 #include "CommonStates.h"
 #include "Effects.h"
 
+int g_DebugMode = 0;
+
 static constexpr uint32_t max_task_threads = 8;
 
 // Static task scheduler used for loading assets and executing multi threaded work loads
