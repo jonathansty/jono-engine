@@ -58,10 +58,16 @@ public abstract class JonaBaseProject : Project
         conf.PrecompHeader = "[project.Name].pch.h";
         conf.PrecompSource = "[project.Name].pch.cpp";
 
+        conf.Defines.Add("WIN32_LEAN_AND_MEAN");
+        conf.Defines.Add("NOMINMAX");
+
+        conf.Defines.Add("FEATURE_D2D");
+        conf.Defines.Add("FEATURE_XAUDIO");
+
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP20);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
-        conf.Options.Add(Options.Vc.ManifestTool.EnableDpiAwareness.PerMonitor);
 
+        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
         conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
             "4100", // Unused method variables
             "4189"  // Unused local variables
@@ -90,7 +96,6 @@ public abstract class JonaBaseProject : Project
     virtual public void ConfigureDebug(Configuration config, Target target)
     {
         config.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDebugDLL);
-        config.Options.Add(Options.Vc.Compiler.Inline.Disable);
     }
 
     [Configure(Optimization.Release), ConfigurePriority(3)]
@@ -167,7 +172,7 @@ public class CompileHLSL : Project.Configuration.CustomFileBuildStep
         Output = $"{outputDir}/{resourceName}.h";
         Executable = "";
 
-        ExecutableArguments = string.Format("fxc /Zi /nologo /O2 /E\"{0}\" /T {1} /Fh\"{2}\" /Vn\"cso_{3}\" \"{4}\" /DVS_COMPILE=1", "main", profile.ToString(), Output, resourceName, filename);
+        ExecutableArguments = string.Format("fxc /Zi /nologo /O2 /E\"{0}\" /T {1} /Fh\"{2}\" /Vn\"cso_{3}\" \"{4}\"", "main", profile.ToString(), Output, resourceName, filename);
     }
 
 

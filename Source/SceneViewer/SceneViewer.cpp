@@ -38,7 +38,7 @@ struct DebugVisualizeMode
 };
 
 
-int g_DebugMode = 0;
+extern int g_DebugMode;
 
 void SceneViewer::configure_engine(EngineSettings &engineSettings) {
 	engineSettings.d2d_use = false;
