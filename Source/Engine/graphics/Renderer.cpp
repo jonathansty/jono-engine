@@ -900,8 +900,13 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 
 	_device_ctx->IASetInputLayout(s_layout.Get());
 
-	auto view = world->get_view_camera()->get_view();
-	auto proj = world->get_view_camera()->get_proj();
+	float4x4 view = float4x4::identity();
+	float4x4 proj = float4x4::identity();
+	if(world->get_view_camera())
+	{
+		view = world->get_view_camera()->get_view();
+		proj = world->get_view_camera()->get_proj();
+	}
 	XMMATRIX xm_view = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&view);
 	XMMATRIX xm_proj = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&proj);
 	s_effect->SetView(xm_view);
