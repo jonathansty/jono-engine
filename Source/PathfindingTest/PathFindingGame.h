@@ -13,19 +13,19 @@ struct NavGridCell
 struct NavGrid
 {
 	// Dimensions of the grid
-	u32 m_Width;
-	u32 m_Height;
+	u32 _width;
+	u32 _height;
 
-	u32 m_CellSize;
+	u32 _cell_size;
 
-	std::vector<NavGridCell> m_GridCells;
+	std::vector<NavGridCell> _cells;
 };
 
 inline NavGridCell* get_cell(NavGrid& grid, u32 x, u32 y)
 {
-	if (x >= 0 && x < grid.m_Width && y >= 0 && y < grid.m_Height)
+	if (x >= 0 && x < grid._width && y >= 0 && y < grid._height)
 	{
-		return &grid.m_GridCells[x + y * grid.m_Width];
+		return &grid._cells[x + y * grid._width];
 	}
 	return nullptr;
 }
@@ -93,7 +93,7 @@ struct NavPathGrid
 			NavCell& current = _cells[i];
 
 			// Copy from grid to nav cell
-			current.passable = grid.m_GridCells[i].passable;
+			current.passable = grid._cells[i].passable;
 
 			// Horizontal
 			if (NavCell* c = get_cell(x- 1, y)) current.neighbours.push_back(c);
@@ -118,10 +118,10 @@ struct NavPathGrid
 	static NavPathGrid from(NavGrid const& grid)
 	{
 		NavPathGrid result{};
-		u32 size = grid.m_GridCells.size();
+		u32 size = grid._cells.size();
 
-		result._width = grid.m_Width;
-		result._height = grid.m_Height;
+		result._width = grid._width;
+		result._height = grid._height;
 		result._cells.resize(size);
 
 		result.setup_links(grid);
@@ -153,13 +153,12 @@ public:
 	void debug_ui() override;
 
 private:
-	float2 m_ViewTranslation;
-	f32 m_ViewZoom = 1.0f;
+	float2 _view_translation;
+	f32 _zoom = 1.0f;
 
-	uint2 m_Start;
-	uint2 m_End;
+	uint2 _start;
+	uint2 _end;
 
-	NavGrid m_Grid;
-	NavPathGrid m_NavigationGrid;
-
+	NavGrid _grid;
+	NavPathGrid _nav_grid;
 };

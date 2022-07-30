@@ -700,14 +700,15 @@ float2 GameEngine::get_mouse_pos_in_window() const
 	RECT rect;
 	if (GetWindowRect(get_window(), &rect))
 	{
-		return float2{ (float)_input_manager->get_mouse_position().x, (float)_input_manager->get_mouse_position().y } + float2(rect.left, rect.top);
+		return float2{ (float)_input_manager->get_mouse_position().x, (float)_input_manager->get_mouse_position().y } - float2(rect.left, rect.top);
 	}
 	return {};
 }
 
 float2 GameEngine::get_mouse_pos_in_viewport() const
 {
-	return float2{ (float)_input_manager->get_mouse_position().x, (float)_input_manager->get_mouse_position().y } - _viewport_pos;
+	float2 tmp = float2(_input_manager->get_mouse_position());
+	return float2{ (float)tmp.x, (float)tmp.y } - _viewport_pos;
 }
 
 unique_ptr<XAudioSystem> const& GameEngine::get_audio_system() const
@@ -1322,12 +1323,16 @@ void GameEngine::build_viewport()
 
 	if (ImGui::Begin("Viewport##GameViewport", &_show_viewport))
 	{
+		ImGui::SetCursorPos(ImVec2(0, 0));
+
 		static ImVec2 s_vp_size = ImGui::GetContentRegionAvail();
 		static ImVec2 s_vp_pos = ImGui::GetWindowContentRegionMin();
 		ImVec2 current_size = ImGui::GetContentRegionAvail();
 
 		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
 		ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+
+		ImVec2 window_pos = ImGui::GetWindowPos();
 
 		_is_viewport_focused = ImGui::IsWindowHovered();
 
@@ -1357,6 +1362,7 @@ void GameEngine::build_viewport()
 			s_vp_pos = vMin;
 			_viewport_width = (u32)s_vp_size.x;
 			_viewport_height = (u32)s_vp_size.y;
+			_viewport_pos = float2(s_vp_pos.x, s_vp_pos.y);
 
 			_renderer->update_viewport(static_cast<u32>(vMin.x), static_cast<u32>(vMin.y), static_cast<u32>(s_vp_size.x), static_cast<u32>(s_vp_size.y));
 		}
@@ -1366,10 +1372,12 @@ void GameEngine::build_viewport()
 		max_uv.x = s_vp_size.x / get_width();
 		max_uv.y = s_vp_size.y / get_height();
 
+		_viewport_pos = float2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
 		ImGui::Image(_renderer->get_raw_output_non_msaa_srv(), s_vp_size, ImVec2(0, 0), max_uv);
 
-		ImGuizmo::SetDrawlist();
-		ImGuizmo::SetRect(_viewport_pos.x, _viewport_pos.y, float1(_viewport_width), float1(_viewport_height));
+
+		//ImGuizmo::SetDrawlist();
+		//ImGuizmo::SetRect(_viewport_pos.x, _viewport_pos.y, float1(_viewport_width), float1(_viewport_height));
 
 		get_overlay_manager()->render_viewport();
 
