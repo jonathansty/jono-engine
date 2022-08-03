@@ -41,6 +41,6 @@ public:
 private:
 	class Graphics::D2DRenderContext *_context;
 	u32 m_Color;
-	float3x3 _mat_scale;
+	float4x4 _mat_scale;
 };
 #endif

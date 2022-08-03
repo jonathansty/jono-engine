@@ -9,7 +9,7 @@
 namespace Graphics
 {
 RendererDebugTool::RendererDebugTool(Renderer* owner)
-		: DebugOverlay(true, "RendererDebug")
+		: DebugOverlay(false, "RendererDebug")
 		, _renderer(owner)
 		, _show_shadow_debug(false)
 {

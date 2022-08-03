@@ -1,7 +1,6 @@
 #pragma once
 
 #include "singleton.h"
-
 #include "EnkiTS/TaskScheduler.h"
 
 #include "Box2DDebugRenderer.h"
@@ -18,8 +17,8 @@
 #include "PlatformIO.h"
 #include "Framework/World.h"
 #include "Graphics/RenderWorld.h"
-#include "PrecisionTimer.h"
 #include "EngineSettings.h"
+#include "Graphics/Perf.h"
 
 
 class Bitmap;
@@ -154,6 +153,7 @@ public:
 	WORD get_icon() const;
 	WORD get_small_icon() const;
 	ImVec2 get_viewport_size(int id = 0) const;
+	ImVec2 get_viewport_pos(int id = 0) const;
 	ImVec2 get_window_size() const;
 	int get_width() const;
 	int get_height() const;
@@ -188,6 +188,8 @@ public:
 	void set_physics_step(bool bEnabled);
 
 	bool is_viewport_focused() const;
+	bool is_input_captured() const;
+
 
 	// Returns the platform IO interface
 	shared_ptr<IO::IPlatformIO> get_io() const { return _platform_io; }

@@ -81,9 +81,11 @@ bool compile(const char* shader, CompileParameters const& parameters, std::vecto
 
 		bytecode.resize(s);
 		memcpy(bytecode.data(), d, s);
+		return true;
 	}
 
-	return true;
+	LOG_ERROR(Graphics, "Shader compile failed with reading the input shader file: {}", shader);
+	return false;
 }
 
 } // namespace ShaderCompiler

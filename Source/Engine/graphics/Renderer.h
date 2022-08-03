@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Graphics.h"
+#include "ConstantBuffer.h"
 #include "EngineSettings.h"
 #include "GameSettings.h"
 

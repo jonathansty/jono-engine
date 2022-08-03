@@ -382,6 +382,8 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 
 void Renderer::render_view(shared_ptr<RenderWorld> const& world, RenderPass::Value pass)
 {
+	GPU_SCOPED_EVENT(_user_defined_annotation, L"Renderer::render_view");
+
 	// Setup global constant buffer
 	std::shared_ptr<RenderWorldCamera> camera = world->get_view_camera();
 
@@ -722,18 +724,20 @@ void Renderer::PSSetShader(ShaderRef const& pixel_shader)
 
 void Renderer::render_post_predebug()
 {
+	GPU_SCOPED_EVENT(_user_defined_annotation, L"Post:PreDebug");
+
 	ShaderCreateParams params = ShaderCreateParams::pixel_shader("Source/Engine/Shaders/default_post_px.hlsl");
 	ShaderRef post_shader = ShaderCache::instance()->find_or_create(params);
 
 	params = ShaderCreateParams::vertex_shader("Source/Engine/Shaders/default_post_vx.hlsl");
 	ShaderRef post_vs_shader = ShaderCache::instance()->find_or_create(params);
 
-	VSSetShader(post_vs_shader);
 	_device_ctx->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN,0);
 	_device_ctx->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
-	_device_ctx->IASetInputLayout(nullptr);
+	_device_ctx->IASetInputLayout(post_vs_shader->get_input_layout().Get());
 	_device_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	VSSetShader(post_vs_shader);
 	PSSetShader(post_shader);
 	_device_ctx->PSSetShaderResources(0, 1, &_non_msaa_output_srv_copy);
 	ID3D11Buffer* buffer = _cb_post->Get();
@@ -750,6 +754,8 @@ void Renderer::render_post_predebug()
 
 void Renderer::render_post_postdebug()
 {
+	GPU_SCOPED_EVENT(_user_defined_annotation, L"Post:PostDebug");
+
 
 }
 
@@ -873,8 +879,8 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 	GPU_SCOPED_EVENT(_user_defined_annotation, L"Post");
 
 	PostCB* data = (PostCB*)_cb_post->map(_device_ctx);
-	data->m_ViewportWidth = GameEngine::instance()->get_width();
-	data->m_ViewportHeight = GameEngine::instance()->get_height();
+	data->m_ViewportWidth = f32(GameEngine::instance()->get_width());
+	data->m_ViewportHeight = f32(GameEngine::instance()->get_height());
 	_cb_post->unmap(_device_ctx);
 
 	static std::unique_ptr<DirectX::CommonStates> s_states = nullptr;
@@ -909,10 +915,12 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 	XMMATRIX xm_proj = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&proj);
 	s_effect->SetView(xm_view);
 	s_effect->SetProjection(xm_proj);
-
 	s_effect->Apply(_device_ctx);
 
-	overlays->render_3d(_device_ctx);
+	{
+		GPU_SCOPED_EVENT(_user_defined_annotation, L"Post:RenderOverlays");
+		overlays->render_3d(_device_ctx);
+	}
 
 		// Resolve msaa to non msaa for imgui render
 	_device_ctx->ResolveSubresource(_non_msaa_output_tex, 0, _output_tex, 0, _swapchain_format);
@@ -921,7 +929,6 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 	_device_ctx->CopyResource(_non_msaa_output_tex_copy, _non_msaa_output_tex);
 	_device_ctx->OMSetRenderTargets(1, &_non_msaa_output_rtv, nullptr);
 	render_post_predebug();
-
 
 	render_post_postdebug();
 

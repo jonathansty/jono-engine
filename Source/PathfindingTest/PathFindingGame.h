@@ -4,7 +4,7 @@
 
 struct NavGridCell
 {
-	u32 idx = -1;
+	u32 idx = u32(-1);
 
 	float2 centre = float2(0,0);
 	bool passable = true;
@@ -16,7 +16,7 @@ struct NavGrid
 	u32 _width;
 	u32 _height;
 
-	u32 _cell_size;
+	f32 _cell_size;
 
 	std::vector<NavGridCell> _cells;
 };
@@ -118,7 +118,7 @@ struct NavPathGrid
 	static NavPathGrid from(NavGrid const& grid)
 	{
 		NavPathGrid result{};
-		u32 size = grid._cells.size();
+		u32 size = u32(grid._cells.size());
 
 		result._width = grid._width;
 		result._height = grid._height;
@@ -153,7 +153,7 @@ public:
 	void debug_ui() override;
 
 private:
-	float2 _view_translation;
+	float3 _view_translation;
 	f32 _zoom = 1.0f;
 
 	uint2 _start;

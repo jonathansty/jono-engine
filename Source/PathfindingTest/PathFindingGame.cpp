@@ -1,6 +1,7 @@
 #include "PathFindingTest.pch.h"
 #include "PathFindingGame.h"
 #include "InputManager.h"
+#include "Graphics/ShaderCache.h"
 
 #include <queue>
 
@@ -64,7 +65,7 @@ void PathFindingGame::start(void)
 	_grid._width = 10;
 	_grid._height = 10;
 	_grid._cells.resize(_grid._width * _grid._height);
-	for (size_t i = 0; i < _grid._cells.size(); ++i)
+	for (u32 i = 0; i < u32(_grid._cells.size()); ++i)
 	{
 		int x = i % _grid._width;
 		int y = i / _grid._height; 
@@ -95,7 +96,7 @@ void PathFindingGame::start(void)
 	_start = float2(0.0);
 	_end = float2(9, 9);
 
-	_view_translation = float2(0.0, 0.0);
+	_view_translation = float3(0.0, 0.0,0.0);
 }
 
 void PathFindingGame::end(void)
@@ -105,14 +106,14 @@ void PathFindingGame::end(void)
 void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 {
 	
-	float3x3 zoom = float3x3::scale(_zoom);
+	float4x4 zoom = float4x4::scale(_zoom);
 	auto engine = GameEngine::instance();
-	float3x3 view = hlslpp::mul(float3x3::translation(-_view_translation), zoom);
+	float4x4 view = hlslpp::mul(float4x4::translation(-_view_translation), zoom);
 	ctx.set_view_matrix(view);
 	ctx.draw_background(MK_COLOR(33, 33, 33, 255));
 
 	ctx.set_color(MK_COLOR(0, 255, 0, 255));
-	// Paint the navigation grid
+
 	for (size_t i = 0; i < _grid._cells.size(); ++i)
 	{
 		NavGridCell const& cell = _grid._cells[i];
@@ -121,12 +122,10 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 		ctx.fill_ellipse(cell.centre, 1.0, 1.0);
 		if (cell.passable)
 		{
-			//ctx.draw_ellipse(cell.centre, m_Grid.m_CellSize * 0.5f, m_Grid.m_CellSize * 0.5f);
 			ctx.draw_rect(cell.centre - float2(_grid._cell_size * 0.5f), cell.centre + float2(_grid._cell_size * 0.5f));
 		}
 		else
 		{
-			//ctx.fill_ellipse(cell.centre, m_Grid.m_CellSize * 0.5f, m_Grid.m_CellSize * 0.5f);
 			ctx.fill_rect(cell.centre - float2(_grid._cell_size * 0.5f), cell.centre + float2(_grid._cell_size * 0.5f));
 		}
 
@@ -178,58 +177,77 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 	}
 }
 
+void rebuild_shaders()
+{
+	using namespace Graphics;
+
+	ShaderCache::instance()->reload_all();
+}
+
 void PathFindingGame::tick(double deltaTime)
 {
-	auto& input = GameEngine::instance()->get_input();
+	if (!GameEngine::instance()->is_input_captured())
+	{
+		auto& input = GameEngine::instance()->get_input();
 
-	float2 pos = GameEngine::instance()->get_mouse_pos_in_viewport();
-	float2 world_pos = _view_translation + pos;
-	float2 grid_pos = world_pos / _grid._cell_size;
-	grid_pos = hlslpp::clamp(grid_pos, float2(0, 0), float2(_grid._width, _grid._height));
+		float2 pos = GameEngine::instance()->get_mouse_pos_in_viewport();
+		float4x4 view = hlslpp::mul(float4x4::translation(-_view_translation), float4x4::scale(_zoom));
 
-	if (input->is_key_down(KeyCode::Shift) && input->is_mouse_button_pressed(0))
-	{
-		_start = uint2(u32(grid_pos.x), u32(grid_pos.y));
-		_nav_grid = construct_grid_from_pos(_grid, _start.x, _start.y);
-	}
-	else if (input->is_key_down(KeyCode::Control) && input->is_mouse_button_pressed(0))
-	{
-		_end = uint2(u32(grid_pos.x), u32(grid_pos.y));
-	}
-	else if (input->is_key_down(KeyCode::LeftAlt) && input->is_mouse_button_pressed(0))
-	{
-		if (auto cell = get_cell(_grid, grid_pos.x, grid_pos.y); cell)
+		pos = hlslpp::mul(hlslpp::inverse(view), float4(pos, 0.4f, 1.0f)).xy;
+
+		float2 world_pos = _view_translation.xy + pos;
+		float2 grid_pos = world_pos / _grid._cell_size;
+		grid_pos = hlslpp::clamp(grid_pos, float2(0, 0), float2(_grid._width, _grid._height));
+
+		if (input->is_key_down(KeyCode::Shift) && input->is_mouse_button_pressed(0))
 		{
-			cell->passable = !cell->passable;
+			_start = uint2(u32(grid_pos.x), u32(grid_pos.y));
+			_nav_grid = construct_grid_from_pos(_grid, _start.x, _start.y);
 		}
-		_nav_grid = construct_grid_from_pos(_grid, _start.x, _start.y);
-	}
-	else if(input->is_mouse_button_down(0))
-	{
-		int2 delta = input->get_mouse_delta();
-		_view_translation -= delta;
-	}
+		else if (input->is_key_down(KeyCode::Control) && input->is_mouse_button_pressed(0))
+		{
+			_end = uint2(u32(grid_pos.x), u32(grid_pos.y));
+		}
+		else if (input->is_key_down(KeyCode::LeftAlt) && input->is_mouse_button_pressed(0))
+		{
+			if (auto cell = get_cell(_grid, u32(grid_pos.x), u32(grid_pos.y)); cell)
+			{
+				cell->passable = !cell->passable;
+			}
+			_nav_grid = construct_grid_from_pos(_grid, _start.x, _start.y);
+		}
+		else if (input->is_mouse_button_down(0))
+		{
+			int2 delta = input->get_mouse_delta();
+			_view_translation -= float3(delta, 0.0f);
+		}
 
-	if(f32 scroll = input->get_scroll_delta(); scroll != 0.0f)
-	{
-		_zoom += scroll * 0.05f;
-	}
+		if (f32 scroll = input->get_scroll_delta(); scroll != 0.0f)
+		{
+			_zoom += scroll * 0.05f;
+		}
 
-	if (input->is_key_down(KeyCode::Right))
-	{
-		_view_translation.x += 10.0f;
-	}
-	if (input->is_key_down(KeyCode::Left))
-	{
-		_view_translation.x -= 10.0f;
-	}
-	if (input->is_key_down(KeyCode::Up))
-	{
-		_view_translation.y -= 10.0f;
-	}
-	if (input->is_key_down(KeyCode::Down))
-	{
-		_view_translation.y += 10.0f;
+		if (input->is_key_down(KeyCode::Right))
+		{
+			_view_translation.x += 10.0f;
+		}
+		if (input->is_key_down(KeyCode::Left))
+		{
+			_view_translation.x -= 10.0f;
+		}
+		if (input->is_key_down(KeyCode::Up))
+		{
+			_view_translation.y -= 10.0f;
+		}
+		if (input->is_key_down(KeyCode::Down))
+		{
+			_view_translation.y += 10.0f;
+		}
+
+		if (input->is_key_pressed(KeyCode::R) && input->is_key_down(KeyCode::Control))
+		{
+			rebuild_shaders();
+		}
 	}
 }
 
@@ -237,15 +255,15 @@ void PathFindingGame::debug_ui()
 {
 	ImGui::Begin("PathFindingGame");
 
-	int tmp[2] = { _start.x, _start.y };
-	if(ImGui::InputInt2("Start", tmp))
+	u32 tmp[2] = { _start.x, _start.y };
+	if(ImGui::InputScalarN("Start",ImGuiDataType_U32, &tmp, 2))
 	{
 		_start = { tmp[0], tmp[1] };
 	}
 
 	tmp[0] = _end.x;
 	tmp[1] = _end.y;
-	if (ImGui::InputInt2("End", tmp))
+	if(ImGui::InputScalarN("End",ImGuiDataType_U32, &tmp, 2))
 	{
 		_end = { tmp[0], tmp[1] };
 	}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Graphics.h"
+#include "ConstantBuffer.h"
 #include "core/ModelResource.h"
 
 using RenderWorldRef = std::shared_ptr<class RenderWorld>;

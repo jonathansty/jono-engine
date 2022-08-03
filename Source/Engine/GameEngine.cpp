@@ -25,6 +25,7 @@
 
 #include "CommonStates.h"
 #include "Effects.h"
+#include "Graphics/Perf.h"
 
 int g_DebugMode = 0;
 
@@ -174,16 +175,16 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			void ExecuteRange(enki::TaskSetPartition range, u32 threadNum) override
 			{
 				LOG_INFO(System, "TaskA::Started");
-				enki::TaskSet taskSet = enki::TaskSet(100,[](enki::TaskSetPartition range, u32 threadNum)
-						{ 
-						PWSTR data;
-						::GetThreadDescription(GetCurrentThread(), &data);
-						std::wstring wbuff = data;
-						std::string threadName = std::string(wbuff.begin(), wbuff.end());
-						LOG_INFO(System, "{}: TaskA Logging from lambda taskset!", threadName);
-					});
-				s_TaskScheduler->AddTaskSetToPipe(&taskSet);
-				s_TaskScheduler->WaitforTask(&taskSet);
+				//enki::TaskSet taskSet = enki::TaskSet(100,[](enki::TaskSetPartition range, u32 threadNum)
+				//		{ 
+				//		PWSTR data;
+				//		::GetThreadDescription(GetCurrentThread(), &data);
+				//		std::wstring wbuff = data;
+				//		std::string threadName = std::string(wbuff.begin(), wbuff.end());
+				//		LOG_INFO(System, "{}: TaskA Logging from lambda taskset!", threadName);
+				//	});
+				//s_TaskScheduler->AddTaskSetToPipe(&taskSet);
+				//s_TaskScheduler->WaitforTask(&taskSet);
 				LOG_INFO(System, "TaskA::Ended");
 			}
 		};
@@ -519,26 +520,38 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 #if FEATURE_D2D
 void GameEngine::d2d_render()
 {
-#if 1
-	Graphics::D2DRenderContext context{ _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get() };
-	context.begin_paint();
+	// Plan to modernize the 2D and deprecate Direct2D
+	// 1. Collect all the draw commands in buffers and capture the required data
+	// 2. during end_paint 'flush' draw commands and create required vertex buffers
+	// 3. Execute each draw command binding the right buffers and views
+	static std::unique_ptr<Graphics::D2DRenderContext> s_context = nullptr;
+	if (!s_context)
+	{
+		s_context = std::make_unique<Graphics::D2DRenderContext>( _renderer.get(), _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get() );
+	}
+	Graphics::D2DRenderContext& context = *s_context;
+	context.begin_paint(_renderer.get(), _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get());
 	_d2d_ctx = &context;
 
 	auto size = this->get_viewport_size();
 
 	_can_paint = true;
 	// make sure tvp.Heighthe view matrix is taken in account
-	context.set_world_matrix(float3x3::identity());
-	_game->paint(context);
+	context.set_world_matrix(float4x4::identity());
+
+	{
+		GPU_SCOPED_EVENT(_renderer->get_raw_annotation(), "D2D:Paint");
+		_game->paint(context);
+	}
 
 	// draw Box2D debug rendering
 	// http://www.iforce2d.net/b2dtut/debug-draw
 	if (_debug_physics_rendering)
 	{
 		// dimming rect in screenspace
-		context.set_world_matrix(float3x3::identity());
-		float3x3 matView = context.get_view_matrix();
-		context.set_view_matrix(float3x3::identity());
+		context.set_world_matrix(float4x4::identity());
+		float4x4 matView = context.get_view_matrix();
+		context.set_view_matrix(float4x4::identity());
 		context.set_color(MK_COLOR(0, 0, 0, 127));
 		context.fill_rect(0, 0, get_width(), get_height());
 		context.set_view_matrix(matView);
@@ -554,8 +567,9 @@ void GameEngine::d2d_render()
 
 	// if drawing failed, terminate the game
 	if (!result)
+	{
 		PostMessage(GameEngine::get_window(), WM_DESTROY, 0, 0);
-#endif
+	}
 }
 #endif
 
@@ -680,6 +694,16 @@ ImVec2 GameEngine::get_viewport_size(int) const
 	return { (float)_viewport_width, (float)_viewport_height };
 }
 
+ImVec2 GameEngine::get_viewport_pos(int id /*= 0*/) const
+{
+	RECT rect;
+	GetWindowRect(get_window(), &rect);
+
+	return {
+		(float)_viewport_pos.x - rect.left, (float)_viewport_pos.y - rect.top
+	};
+}
+
 int GameEngine::get_width() const
 {
 	return _window_width;
@@ -746,6 +770,17 @@ void GameEngine::set_physics_step(bool bEnabled)
 bool GameEngine::is_viewport_focused() const
 {
 	return _is_viewport_focused;
+}
+
+bool GameEngine::is_input_captured() const
+{
+	if (is_viewport_focused())
+	{
+		return false;
+	}
+
+	return ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
+
 }
 
 void GameEngine::set_sleep(bool bSleep)

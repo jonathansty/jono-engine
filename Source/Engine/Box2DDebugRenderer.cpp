@@ -9,7 +9,7 @@
 Box2DDebugRenderer::Box2DDebugRenderer()
 {
 	m_Color = MK_COLOR(255, 255, 255, 187);
-	_mat_scale = float3x3::scale(PhysicsActor::SCALE);
+	_mat_scale = float4x4::scale(PhysicsActor::SCALE);
 }
 
 Box2DDebugRenderer::~Box2DDebugRenderer()

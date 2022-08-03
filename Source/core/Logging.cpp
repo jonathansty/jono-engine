@@ -47,8 +47,10 @@ void Logger::log(LogEntry const& entry)
 	{
 		std::string txt = fmt::format("{}\n", msg);
 		_to_flush.push_back(txt);
+		OutputDebugStringA(txt.c_str());
 
 		_cv.notify_one();
+
 	}
 }
 

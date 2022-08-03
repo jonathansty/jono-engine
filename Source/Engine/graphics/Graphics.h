@@ -10,9 +10,11 @@ enum class DepthStencilState : u32
 	GreaterEqual = Default,
 	Equal,
 	LessEqual,
+	NoDepth,
 	Num
 };
 ENUM_UNDERLYING_TYPE(DepthStencilState);
+const char* DepthStencilStateToString(DepthStencilState state);
 
 enum class BlendState : u32
 {
@@ -20,6 +22,7 @@ enum class BlendState : u32
 	Num
 };
 ENUM_UNDERLYING_TYPE(BlendState);
+const char* BlendStateToString(BlendState state);
 
 
 enum class RasterizerState : u32
@@ -31,6 +34,8 @@ enum class RasterizerState : u32
 	Num
 };
 ENUM_UNDERLYING_TYPE(RasterizerState);
+const char* RasterizerStateToString(RasterizerState state);
+
 
 
 enum class SamplerState : u32
@@ -40,89 +45,8 @@ enum class SamplerState : u32
 	Num
 };
 ENUM_UNDERLYING_TYPE(SamplerState);
+const char* SamplerStateToString(SamplerState state);
 
-class ConstantBuffer
-{
-public:
-	enum class BufferUsage
-	{
-		Default,
-		Dynamic,
-		Staging,
-		Immutable
-	};
-
-	static std::shared_ptr<ConstantBuffer> create(ID3D11Device* device, u32 size, bool cpu_write = false, BufferUsage usage = BufferUsage::Default, void* initialData = nullptr);
-
-	ID3D11Buffer* Get() const { return _buffer.Get(); }
-
-	void* map(ID3D11DeviceContext* ctx)
-	{
-		D3D11_MAPPED_SUBRESOURCE resource{};
-		ctx->Map(_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-		return resource.pData;
-	}
-	void unmap(ID3D11DeviceContext* ctx)
-	{
-		ctx->Unmap(_buffer.Get(), 0);
-	}
-
-	ConstantBuffer()
-			: _buffer()
-			, _size(0)
-			, _cpu_writeable(false)
-	{
-	}
-
-	~ConstantBuffer() {}
-
-private:
-	ComPtr<ID3D11Buffer> _buffer;
-	u32 _size;
-	bool _cpu_writeable;
-	BufferUsage _usage;
-};
-using ConstantBufferRef = shared_ptr<ConstantBuffer>;
-
-// ---------------------------------------------------------------------------------
-// Debug
-// ---------------------------------------------------------------------------------
-
-#define ENABLE_PROFILING 
-
-#ifdef ENABLE_PROFILING
-class scoped_gpu_event final
-{
-public:
-	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::wstring name)
-			: _name(name), _annotation(annotation)
-	{
-		annotation->BeginEvent(name.c_str());
-	}
-	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::string name)
-			: _annotation(annotation)
-	{
-		_name = std::wstring(name.begin(), name.end());
-		annotation->BeginEvent(_name.c_str());
-	}
-	~scoped_gpu_event()
-	{
-		_annotation->EndEvent();
-	}
-
-private:
-	std::wstring _name;
-	ID3DUserDefinedAnnotation* _annotation;
-};
-
-#define COMBINE1(X, Y) X##Y // helper macro
-#define COMBINE(X, Y) COMBINE1(X, Y)
-#define GPU_SCOPED_EVENT(ctx, name) scoped_gpu_event COMBINE(perfEvent, __LINE__) = scoped_gpu_event(ctx, name)
-#define GPU_MARKER(ctx, name) ctx->SetMarker(name);
-#else
-#define GPU_SCOPED_EVENT(ctx, name)
-#define GPU_MARKER(ctx, name)
-#endif
 
 
 namespace Graphics
@@ -163,114 +87,84 @@ HRESULT set_debug_name(T* obj, std::string const& n)
 
 } // namespace Graphics
 
-
-
-
-
-namespace Perf
+// Shaders namespace contains utility functions to convert from and to predictable memory layouts for shaders
+namespace Shaders
 {
-
-inline void sleep(u32 ms)
-{
-	Sleep(ms);
-}
-
-// Blog post talking about the inaccuracy of the windows sleep function and how they arrived at this solution
-// https://blat-blatnik.github.io/computerBear/making-accurate-sleep-function/
-inline void precise_sleep(f64 seconds)
-{
-	using namespace std;
-	using namespace std::chrono;
-
-	static f64 estimate = 5e-3;
-	static f64 mean = 5e-3;
-	static f64 m2 = 0;
-	static int64_t count = 1;
-
-	while (seconds > estimate)
+	struct float2
 	{
-		auto start = high_resolution_clock::now();
-		this_thread::sleep_for(milliseconds(1));
-		auto end = high_resolution_clock::now();
+		float2(hlslpp::float2 const& pos)
+				: _x(pos.x)
+				, _y(pos.y)
+		{
+		}
 
-		f64 observed = (end - start).count() / 1e9;
-		seconds -= observed;
+		operator hlslpp::float2()
+		{
+			return hlslpp::float2(_x, _y);
+		}
 
-		++count;
-		double delta = observed - mean;
-		mean += delta / count;
-		m2 += delta * (observed - mean);
-		f64 stddev = sqrt(m2 / (count - 1));
-		estimate = mean + stddev;
-	}
+		f32 _x;
+		f32 _y;
+	};
 
-	// spin lock
-	auto start = high_resolution_clock::now();
-	while ((high_resolution_clock::now() - start).count() / 1e9 < seconds)
-		;
-}
-
-// Initializes our buffer with query objects for usage each frame
-void initialize(ComPtr<ID3D11Device> const& device);
-
-// Frees the query objects
-void shutdown();
-
-// inserts a begin call for our disjoint query
-void begin_frame(ComPtr<ID3D11DeviceContext> const& ctx);
-
-// inserts a end call for our disjoint query
-void end_frame(ComPtr<ID3D11DeviceContext> const& ctx);
-
-// Waits and collects the disjoint data
-bool collect_disjoint(ComPtr<ID3D11DeviceContext> const& ctx, D3D11_QUERY_DATA_TIMESTAMP_DISJOINT& disjoint);
-
-// Indicates if we can already collect our disjoint data
-bool can_collect();
-
-// Retrieves the amount of frames tracked in our perf layer
-s64 get_frame_count();
-
-// Retrieves the current frame it's resource index. 
-// 
-// The resource index being the index into our N buffered arrays
-s64 get_current_frame_resource_index();
-
-// Retrieves the previous frame it's resource index. 
-// 
-// The resource index being the index into our N buffered arrays
-s64 get_previous_frame_resource_index();
-
-// Timer that exposes CPU and GPU functionality
-class Timer
-{
-public:
-	Timer()
+	struct float3
 	{
-	}
+		float3(hlslpp::float3 const& pos)
+			: _x(pos.x)
+			, _y(pos.y)
+			, _z(pos.z)
+		{
+		}
 
-	Timer(ComPtr<ID3D11Device> const& device)
+		operator hlslpp::float3()
+		{
+			return hlslpp::float3(_x, _y, _z);
+		}
+
+
+		f32 _x;
+		f32 _y;
+		f32 _z;
+	};
+
+	struct float4
 	{
-		D3D11_QUERY_DESC desc{};
-		desc.Query = D3D11_QUERY_TIMESTAMP;
-		desc.MiscFlags = 0;
-		device->CreateQuery(&desc, _begin.ReleaseAndGetAddressOf());
-		device->CreateQuery(&desc, _end.ReleaseAndGetAddressOf());
-	}
+		float4(hlslpp::float4 const& pos)
+				: _x(pos.x)
+				, _y(pos.y)
+				, _z(pos.z)
+				, _w(pos.w)
+		{
+		}
 
-	~Timer() {}
+		operator hlslpp::float4()
+		{
+			return hlslpp::float4(_x, _y, _z, _w);
+		}
 
-	void begin(ComPtr<ID3D11DeviceContext> const& ctx);
-	void end(ComPtr<ID3D11DeviceContext> const& ctx);
+		f32 _x;
+		f32 _y;
+		f32 _z;
+		f32 _w;
+	};
 
-	void flush(ComPtr<ID3D11DeviceContext> const& ctx, UINT64& begin, UINT64& end, f64& cpuTime);
 
-private:
-	ComPtr<ID3D11Query> _begin;
-	ComPtr<ID3D11Query> _end;
-	bool _flushed = true;
+	struct float4x4
+	{
+		float4x4(hlslpp::float4x4 const& mat)
+		{
+			hlslpp::store(mat, _data);
+		}
 
-	PrecisionTimer _timer;
-};
+		operator hlslpp::float4x4() 
+		{
+			hlslpp::float4x4 result;
+			hlslpp::load(result, _data);
+			return result;
+		}
 
-} // namespace Perf
+
+		f32 _data[16];
+	};
+
+} // namespace Shaders

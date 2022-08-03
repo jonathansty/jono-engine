@@ -27,7 +27,7 @@ public:
 
 	private:
 		struct DrawElement {
-			float3x3 matrix;
+			float4x4 matrix;
 			unique_ptr<Bitmap> bmp;
 		};
 		vector<DrawElement> _bitmaps;
