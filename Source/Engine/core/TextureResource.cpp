@@ -116,6 +116,9 @@ void Texture::load(std::string const& path)
 	stbi_uc* data = stbi_load(path.c_str(), &x, &y, &comp, 4);
 	ASSERTMSG(data, "Failed to  load image from {}", path);
 
+	this->_width = u32(x);
+	this->_height = u32(y);
+
 	this->create_from_memory(x, y, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, (void*)data);
 	stbi_image_free(data);
 	// SUCCEEDED(DirectX::CreateWICTextureFromFile(device, wpath.c_str(), _resource.GetAddressOf(), _srv.GetAddressOf()));

@@ -25,6 +25,8 @@ std::shared_ptr<Shader> s_error_vertex_shader = nullptr;
 void CreateDSS(ComPtr<ID3D11Device> const& device, CD3D11_DEPTH_STENCIL_DESC const& ds_desc, DepthStencilState state);
 void CreateRSS(ComPtr<ID3D11Device> const& device, CD3D11_RASTERIZER_DESC const& rs_desc, RasterizerState state);
 void CreateSS(ComPtr<ID3D11Device> const& device, CD3D11_SAMPLER_DESC const& ss_desc, SamplerState state);
+void CreateBS(ComPtr<ID3D11Device> const& device, CD3D11_BLEND_DESC const& bs_desc, BlendState state);
+
 
 void init(DeviceContext const& ctx)
 {
@@ -74,9 +76,20 @@ void init(DeviceContext const& ctx)
 	// Blend states
 	{
 		CD3D11_BLEND_DESC bs_desc{ CD3D11_DEFAULT() };
-		SUCCEEDED(device->CreateBlendState(&bs_desc, s_blend_states[0].GetAddressOf()));
-		helpers::SetDebugObjectName(s_blend_states[*BlendState::Default].Get(), "Default");
+		CreateBS(device, bs_desc, BlendState::Default);
+
+		bs_desc.IndependentBlendEnable = FALSE;
+		bs_desc.RenderTarget[0].BlendEnable = true;
+		bs_desc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD; 
+		bs_desc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+		bs_desc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+		bs_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+		bs_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
+		bs_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+		CreateBS(device, bs_desc, BlendState::AlphaBlend);
+
 	}
+
 
 	// Rasterizer states
 	{
@@ -179,6 +192,13 @@ void CreateSS(ComPtr<ID3D11Device> const& device, CD3D11_SAMPLER_DESC const& ss_
 	helpers::SetDebugObjectName(s_sampler_states[*state].Get(), SamplerStateToString(state));
 }
 
+void CreateBS(ComPtr<ID3D11Device> const& device, CD3D11_BLEND_DESC const& bs_desc, BlendState state)
+{
+	SUCCEEDED(device->CreateBlendState(&bs_desc, s_blend_states[*state].GetAddressOf()));
+	helpers::SetDebugObjectName(s_blend_states[*state].Get(), BlendStateToString(state));
+}
+
+
 } // namespace Graphics
 
 
@@ -200,7 +220,8 @@ const char* DepthStencilStateToString(DepthStencilState state)
 const char* BlendStateToString(BlendState state)
 {
 	static const char* s_strings[*BlendState::Num] = {
-		"Default"
+		"Default",
+		"AlphaBlend"
 	};
 	return s_strings[*state];
 }

@@ -19,8 +19,10 @@ public:
 	void create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data);
 
 	// Gets the raw SRV for this texture resource
-	ID3D11ShaderResourceView const* get_srv() const { return _srv.Get(); }
+	ID3D11ShaderResourceView* get_srv() const { return _srv.Get(); }
 
+	u32 get_width() const { return _width; };
+	u32 get_height() const { return _height; };
 
 private:
 	ComPtr<ID3D11Resource> _resource;
@@ -28,6 +30,8 @@ private:
 	// Should we use texture resource for textures create from code?
 	// ComPtr<ID3D11RenderTargetView> _rtv;
 	ComPtr<ID3D11ShaderResourceView> _srv;
+	u32 _width;
+	u32 _height;
 };
 
 class TextureResource : public TCachedResource<Texture, FromFileResourceParameters>

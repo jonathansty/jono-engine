@@ -294,9 +294,16 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth));
 	ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth_copy));
 
-	auto dsv_desc = CD3D11_DEPTH_STENCIL_VIEW_DESC(_output_depth, D3D11_DSV_DIMENSION_TEXTURE2D, DXGI_FORMAT_D16_UNORM);
+	auto view_dim = D3D11_DSV_DIMENSION_TEXTURE2D;
+	auto srv_view_dim = D3D11_SRV_DIMENSION_TEXTURE2D;
+	if(_msaa != MSAAMode::Off)
+	{
+		view_dim = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+		srv_view_dim = D3D11_SRV_DIMENSION_TEXTURE2DMS;
+	}
+	auto dsv_desc = CD3D11_DEPTH_STENCIL_VIEW_DESC(_output_depth, view_dim, DXGI_FORMAT_D16_UNORM);
 	ENSURE_HR(_device->CreateDepthStencilView(_output_depth, &dsv_desc, &_output_dsv));
-	auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(_output_depth, D3D11_SRV_DIMENSION_TEXTURE2D, DXGI_FORMAT_R16_UNORM);
+	auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(_output_depth, srv_view_dim, DXGI_FORMAT_R16_UNORM);
 	ENSURE_HR(_device->CreateShaderResourceView(_output_depth, &srv_desc, &_output_depth_srv));
 	ENSURE_HR(_device->CreateShaderResourceView(_output_depth_copy, &srv_desc, &_output_depth_srv_copy));
 

@@ -2,6 +2,7 @@
 
 #if FEATURE_D2D
 struct ID2D1Bitmap;
+class TextureResource;
 
 class Bitmap
 {
@@ -21,6 +22,7 @@ public:
 	//-------------------------------------------------
 	// Internal use only. Do not use this method unless you really know what you are doing
 	ID2D1Bitmap*	GetBitmapPtr() const;
+	ID3D11ShaderResourceView* get_srv() const;
 
 	//! Returns the width of this image
 	int	get_width() const;
@@ -43,15 +45,19 @@ public:
     //! Gets the filename of the bitmap.
     string GetFileName();
 private:
+	#if 0 
 	static HRESULT LoadBitmapFromFile(ID2D1RenderTarget* renderTargetPtr, IWICImagingFactory* wICFactoryPtr, const string& uriRef, UINT destinationWidth, UINT destinationHeight, IWICFormatConverter** formatConvertorPtrPtr);
+	#endif
 
 	//-------------------------------------------------
 	// Datamembers								
 	//-------------------------------------------------
-	ComPtr<ID2D1Bitmap>			m_BitmapPtr;
-	ComPtr<IWICFormatConverter>	m_ConvertorPtr;
+	std::shared_ptr<TextureResource> _resource;
+
+	//ComPtr<ID2D1Bitmap>			m_BitmapPtr;
+	//ComPtr<IWICFormatConverter>	m_ConvertorPtr;
 	double					m_Opacity;//range: between 0 and 1
 	string					m_FileName;
-	int						m_ResourceID;
+	//int						m_ResourceID;
 };
 #endif

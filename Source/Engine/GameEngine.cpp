@@ -643,7 +643,7 @@ void GameEngine::quit_game()
 
 void GameEngine::enable_aa(bool isEnabled)
 {
-	#if 0
+#if 0
 	_d2d_aa_mode = isEnabled ? D2D1_ANTIALIAS_MODE_ALIASED : D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
 #if FEATURE_D2D
 	if (_d2d_rt)

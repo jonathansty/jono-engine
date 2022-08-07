@@ -19,6 +19,7 @@ const char* DepthStencilStateToString(DepthStencilState state);
 enum class BlendState : u32
 {
 	Default,
+	AlphaBlend,
 	Num
 };
 ENUM_UNDERLYING_TYPE(BlendState);

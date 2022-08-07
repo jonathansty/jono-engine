@@ -48,6 +48,7 @@ void PathFindingGame::configure_engine(EngineSettings& settings)
 	settings.d2d_use = true;
 	settings.d3d_use = false;
 	settings.d2d_use_aa = true;
+	settings.d3d_msaa_mode = MSAAMode::MSAA_4x;
 	settings.max_frame_time = 1.0f / 60.0f;
 }
 
@@ -97,6 +98,8 @@ void PathFindingGame::start(void)
 	_end = float2(9, 9);
 
 	_view_translation = float3(0.0, 0.0,0.0);
+
+	_bitmap = Bitmap::load("Resources/Tests/Bitmaps/character.png");
 }
 
 void PathFindingGame::end(void)
@@ -137,11 +140,11 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 			u32 previous_index = _nav_grid.get_cell_idx(nav_cell.previous);
 			float2 direction = _grid._cells[previous_index].centre - cell.centre;
 			direction = hlslpp::normalize(direction);
-			ctx.draw_line(cell.centre, cell.centre + line_length * direction , 0.2f);
+			ctx.draw_line(cell.centre, cell.centre + line_length * direction , 1.0f);
 		}
 	}
 
-	ctx.set_color(MK_COLOR(255, 255, 0, 255));
+	ctx.set_color(MK_COLOR(255, 255, 0, 125));
 
 	NavCell* result = _nav_grid.find_path(_end.x, _end.y);
 	while(result)
@@ -154,7 +157,7 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 		{
 			u32 prev_idx = _nav_grid.get_cell_idx(result->previous);
 			NavGridCell const& prev_cell = _grid._cells[prev_idx];
-			ctx.draw_line(cell.centre, prev_cell.centre, 0.5f);
+			ctx.draw_line(cell.centre, prev_cell.centre, 1.0f);
 		}
 
 		result = result->previous;
@@ -168,13 +171,27 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 		ctx.draw_ellipse(cell->centre, _grid._cell_size * 0.5f, _grid._cell_size * 0.5f);
 	}
 
-	ctx.set_color(MK_COLOR(0, 0, 255, 255));
+	ctx.set_color(MK_COLOR(0, 0, 255, 125));
 
 	if (NavGridCell* cell = get_cell(_grid, _start.x, _start.y); cell)
 	{
 		ctx.fill_ellipse(cell->centre, 1.0, 1.0);
 		ctx.draw_ellipse(cell->centre, _grid._cell_size * 0.5f, _grid._cell_size * 0.5f);
 	}
+
+
+	static u32 s_counter = 0;
+	constexpr u32 s_frame_height = 61;
+	constexpr f32 s_frame_width = 50.667;
+	D2D1_RECT_F re;
+	re.top = 0;
+	re.bottom = s_frame_height;
+
+	re.left = (s_counter) * s_frame_width;
+	re.right = (s_counter+1) * s_frame_width;
+	ctx.draw_bitmap(_bitmap.get(), { 0, 0 }, re);
+
+	s_counter = (s_counter + 1) % 6;
 }
 
 void rebuild_shaders()

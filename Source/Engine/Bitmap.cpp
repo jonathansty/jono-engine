@@ -3,12 +3,15 @@
 #include "Bitmap.h"
 #include "GameEngine.h"
 
+#include "Core/ResourceLoader.h"
+#include "Core/TextureResource.h"
+
 #if FEATURE_D2D
 //---------------------------
 // Bitmap methods
 //---------------------------
 // Load an Bitmap using a filename
-Bitmap::Bitmap() : m_BitmapPtr(nullptr), m_ConvertorPtr(nullptr), m_Opacity(1.0), m_ResourceID(0)
+Bitmap::Bitmap() : m_Opacity(1.0)
 {
 }
 
@@ -18,6 +21,13 @@ Bitmap::~Bitmap()
 
 unique_ptr<Bitmap> Bitmap::load(string const& filename) {
 	auto bmp = make_unique<Bitmap>();
+	bmp->m_FileName = filename;
+
+	FromFileResourceParameters params{ filename };
+	bmp->_resource = ResourceLoader::instance()->load<TextureResource>(params, false, true);
+
+	// for now we don't support async bitmap loading and we assume in our rendering that bitmaps are always loaded and ready to render
+	LOG_WARNING(IO, "Bitmap sync load!");
 
 	#if 0
 	string path = GameEngine::instance()->get_io()->resolve_path(filename);
@@ -38,10 +48,11 @@ unique_ptr<Bitmap> Bitmap::load(string const& filename) {
 
 	return bmp;
 	#else
-	return nullptr;
+	return bmp;
 	#endif
 }
 
+#if 0 
 HRESULT Bitmap::LoadBitmapFromFile(ID2D1RenderTarget *renderTargetPtr, IWICImagingFactory *wICFactoryPtr, const string& uriRef, UINT destinationWidth, UINT destinationHeight, IWICFormatConverter **FormatConverterPtr)
 {
 	IWICBitmapDecoder*		decoderPtr = nullptr;
@@ -113,15 +124,21 @@ ID2D1Bitmap* Bitmap::GetBitmapPtr() const
 {
 	return m_BitmapPtr.Get();
 }
+#endif
+
+ID3D11ShaderResourceView* Bitmap::get_srv() const
+{
+	return _resource->get()->get_srv();
+}
 
 int Bitmap::get_width() const
 {
-	return m_BitmapPtr->GetPixelSize().width;
+	return _resource->get()->get_width();
 }
 
 int	Bitmap::get_height() const
 {
-	return m_BitmapPtr->GetPixelSize().height;
+	return _resource->get()->get_height();
 }
 
 double Bitmap::GetOpacity() const

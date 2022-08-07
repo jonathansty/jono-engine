@@ -8,6 +8,7 @@
 #include "Font.h"
 #include "ShaderCache.h"
 #include "GameEngine.h"
+#include "Core/TextureResource.h"
 
 using hlslpp::float3x3;
 
@@ -40,6 +41,10 @@ bool D2DRenderContext::begin_paint(Renderer* renderer, ID2D1Factory* factory, ID
 	_brush = brush;
 	_font = font;
 	_renderer = _renderer;
+
+	CD3D11_VIEWPORT viewport = CD3D11_VIEWPORT(_renderer->get_raw_output_tex(), _renderer->get_raw_output_rtv());
+	D3D11_RECT rect{ (LONG)viewport.TopLeftX, (LONG)viewport.TopLeftY, (LONG)viewport.TopLeftX + (LONG)viewport.Width, (LONG)viewport.TopLeftY + (LONG)viewport.Height };
+	_proj = float4x4::orthographic(hlslpp::projection(hlslpp::frustum(viewport.TopLeftX, viewport.TopLeftX + viewport.Width, viewport.TopLeftY + viewport.Height, viewport.TopLeftY, 0.01f, 1.0f), hlslpp::zclip::zero));
 
 	_total_vertices = 0;
 	_total_indices = 0;
@@ -90,8 +95,8 @@ bool D2DRenderContext::end_paint()
 			u32 vtx_offset = 0;
 			for (DrawCmd& cmd : _draw_cmds)
 			{
-				cmd._idx_offset = indices.size();
-				cmd._vtx_offset = vertices.size();
+				cmd._idx_offset = u32(indices.size());
+				cmd._vtx_offset = u32(vertices.size());
 
 				for (Vert const& vert : cmd._vtx_buffer)
 				{
@@ -106,12 +111,14 @@ bool D2DRenderContext::end_paint()
 
 			if(_total_vertices > _current_vertices)
 			{
+				_vertex_buffer.Reset();
+
 				_current_vertices = _total_vertices + 5000;
 
 				CD3D11_BUFFER_DESC desc = CD3D11_BUFFER_DESC(_current_vertices * sizeof(Vert), D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE, 0, sizeof(Vert));
 				D3D11_SUBRESOURCE_DATA initial_data{};
 				initial_data.pSysMem = vertices.data();
-				ENSURE_HR(Graphics::get_device()->CreateBuffer(&desc, &initial_data, _vertex_buffer.ReleaseAndGetAddressOf()));
+				ENSURE_HR(Graphics::get_device()->CreateBuffer(&desc, &initial_data, _vertex_buffer.GetAddressOf()));
 			}
 			else
 			{
@@ -126,12 +133,14 @@ bool D2DRenderContext::end_paint()
 
 			if(_total_indices > _current_indices)
 			{
+				_index_buffer.Reset();
+
 				_current_indices = _total_indices + 5000;
 
 				CD3D11_BUFFER_DESC desc = CD3D11_BUFFER_DESC(_current_indices * sizeof(u32), D3D11_BIND_INDEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE, 0, 0);
 				D3D11_SUBRESOURCE_DATA initial_data{};
 				initial_data.pSysMem = indices.data();
-				ENSURE_HR(Graphics::get_device()->CreateBuffer(&desc, &initial_data, _index_buffer.ReleaseAndGetAddressOf()));
+				ENSURE_HR(Graphics::get_device()->CreateBuffer(&desc, &initial_data, _index_buffer.GetAddressOf()));
 			}
 			else
 			{
@@ -151,11 +160,10 @@ bool D2DRenderContext::end_paint()
 			auto ctx = Graphics::get_ctx();
 
 			CD3D11_VIEWPORT viewport = CD3D11_VIEWPORT(_renderer->get_raw_output_tex(), _renderer->get_raw_output_rtv());
-			D3D11_RECT rect{ viewport.TopLeftX, viewport.TopLeftY , viewport.TopLeftX + viewport.Width, viewport.TopLeftY + viewport.Height };
+			D3D11_RECT rect{ (LONG)viewport.TopLeftX, (LONG)viewport.TopLeftY, (LONG)viewport.TopLeftX + (LONG)viewport.Width, (LONG)viewport.TopLeftY + (LONG)viewport.Height };
 			ctx->RSSetViewports(1, &viewport);
 			ctx->RSSetScissorRects(1, &rect);
 
-			float4x4 proj = float4x4::orthographic(hlslpp::projection(hlslpp::frustum(viewport.TopLeftX, viewport.TopLeftX + viewport.Width, viewport.TopLeftY + viewport.Height, viewport.TopLeftY, 0.01f, 1.0f), hlslpp::zclip::zero));
 
 			ctx->IASetIndexBuffer(_index_buffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
@@ -170,22 +178,32 @@ bool D2DRenderContext::end_paint()
 			ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 			ctx->VSSetShader(_vs->as<ID3D11VertexShader>().Get(), nullptr, 0);
+
+
 			ctx->PSSetShader(_ps->as<ID3D11PixelShader>().Get(), nullptr, 0);
 
 			auto cb = _global_cb->Get();
 			ctx->VSSetConstantBuffers(0, 1, &cb);
 
 			ComPtr<ID3D11RasterizerState> rss = Graphics::get_rasterizer_state(RasterizerState::CullNone);
-			ComPtr<ID3D11BlendState> bss = Graphics::get_blend_state(BlendState::Default);
+			ComPtr<ID3D11BlendState> bss = Graphics::get_blend_state(BlendState::AlphaBlend);
 			ComPtr<ID3D11DepthStencilState> dss = Graphics::get_depth_stencil_state(DepthStencilState::NoDepth);
 			ctx->RSSetState(rss.Get());
 			ctx->OMSetBlendState(bss.Get(), nullptr, 0xFFFFFF);
 			ctx->OMSetDepthStencilState(dss.Get(), 0);
 
+			ID3D11SamplerState* samplers[] = {
+				Graphics::get_sampler_state(SamplerState::MinMagMip_Linear).Get()
+			};
+			ctx->PSSetSamplers(0, 1, samplers);
 			for (DrawCmd const& cmd : _draw_cmds)
 			{
+				ID3D11ShaderResourceView* srvs[] = {
+					cmd._texture ? cmd._texture : TextureResource::white()->get()->get_srv()
+				};
+				ctx->PSSetShaderResources(0, 1, srvs);
 				float4x4 wv = cmd._wv;
-				float4x4 result = hlslpp::mul(wv, proj);
+				float4x4 result = hlslpp::mul(wv, _proj);
 				result._13 = 0.0f;
 				result._23 = 0.0f;
 				result._33 = 1.0f;
@@ -203,7 +221,7 @@ bool D2DRenderContext::end_paint()
 				dst->colour = cmd._colour;
 				_global_cb->unmap(ctx.Get());
 
-				ctx->DrawIndexed(cmd._idx_buffer.size(), cmd._idx_offset, cmd._vtx_offset);
+				ctx->DrawIndexed((UINT)cmd._idx_buffer.size(), (UINT)cmd._idx_offset, (UINT)cmd._vtx_offset);
 			}
 		}
 	}
@@ -219,7 +237,36 @@ bool D2DRenderContext::draw_background(u32 color)
 
 bool D2DRenderContext::draw_line(float2 p1, float2 p2, double strokeWidth /*= 1.0*/)
 {
-	_rt->DrawLine(D2D1::Point2F((FLOAT)p1.x, (FLOAT)p1.y), D2D1::Point2F((FLOAT)p2.x, (FLOAT)p2.y), _brush, (FLOAT)strokeWidth);
+	//_rt->DrawLine(D2D1::Point2F((FLOAT)p1.x, (FLOAT)p1.y), D2D1::Point2F((FLOAT)p2.x, (FLOAT)p2.y), _brush, (FLOAT)strokeWidth);
+	//return true;
+
+	float4x4 mat = hlslpp::mul(_mat_world, _mat_view);
+
+	f32 width = hlslpp::mul(_proj, strokeWidth).x * 10.0f;
+
+	float3 dir = float3(p2 - p1,0.0f);
+	float3 tangent = hlslpp::cross(dir, float3(0.0, 0.0, 1.0f));
+
+	DrawCmd command{};
+	command._idx_buffer = {
+		// Top
+		0, 1, 2,
+		1, 3, 2
+	};
+	command._vtx_buffer = {
+		Vert{ Shaders::float2(p1 + tangent.xy * width * 0.5f), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2(p2 + tangent.xy * width * 0.5f), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2(p1 - tangent.xy * width * 0.5f), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2(p2 - tangent.xy * width * 0.5f), Shaders::float2({ 0.0f, 0.0f }) },
+	};
+
+	command._wv = mat;
+	command._colour = float4(_colour.r, _colour.g, _colour.b, _colour.a);
+
+	// Transform vertices to new
+	_total_vertices += u32(command._vtx_buffer.size());
+	_total_indices += u32(command._idx_buffer.size());
+	_draw_cmds.push_back(command);
 	return true;
 }
 
@@ -384,8 +431,47 @@ bool D2DRenderContext::draw_rect(Rect rect, double strokeWidth /*= 1*/)
 		return false;
 	}
 
-	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
-	_rt->DrawRectangle(d2dRect, _brush, (FLOAT)strokeWidth);
+	//D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
+	//_rt->DrawRectangle(d2dRect, _brush, (FLOAT)strokeWidth);
+	
+	DrawCmd command{};
+	command._idx_buffer = {
+		// Top
+		0,1,4,
+		4,1,5,
+
+		// Right
+		1,6,5,
+		1,2,6,
+
+		// Bottom
+		3,7,2,
+		7,6,2,
+
+		// Left
+		0,4,7,
+		3,0,7
+	};
+	command._vtx_buffer = {
+		Vert{ Shaders::float2({ rect.left, rect.top }), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2({ rect.right, rect.top }), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2({ rect.right, rect.bottom }), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2({ rect.left, rect.bottom }), Shaders::float2({ 0.0f, 0.0f }) },
+
+		Vert{ Shaders::float2({ rect.left + strokeWidth, rect.top + strokeWidth }), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2({ rect.right - strokeWidth, rect.top + strokeWidth }), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2({ rect.right - strokeWidth, rect.bottom - strokeWidth }), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2({ rect.left + strokeWidth, rect.bottom - strokeWidth }), Shaders::float2({ 0.0f, 0.0f }) },
+
+	};
+
+	command._wv = hlslpp::mul(_mat_world, _mat_view);
+	command._colour = float4(_colour.r, _colour.g, _colour.b, _colour.a);
+
+	// Transform vertices to new
+	_total_vertices += u32(command._vtx_buffer.size());
+	_total_indices += u32(command._idx_buffer.size());
+	_draw_cmds.push_back(command);
 	return true;
 }
 
@@ -413,9 +499,6 @@ bool D2DRenderContext::fill_rect(Rect rect)
 	{
 		return false;
 	}
-
-	//D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
-	//_rt->FillRectangle(d2dRect, _brush);
 
 	DrawCmd command{};
 	command._idx_buffer = {
@@ -588,12 +671,14 @@ bool D2DRenderContext::draw_bitmap(Bitmap* imagePtr, float2 position, Rect srcRe
 	{
 		return false;
 	}
+	f32 width = imagePtr->get_width();
+	f32 height = imagePtr->get_height();
 	// The size and position, in device-independent pixels in the bitmap's coordinate space, of the area within the bitmap to draw.
 	D2D1_RECT_F srcRect_f;
-	srcRect_f.left = (FLOAT)srcRect.left;
-	srcRect_f.right = (FLOAT)srcRect.right;
-	srcRect_f.top = (FLOAT)srcRect.top;
-	srcRect_f.bottom = (FLOAT)srcRect.bottom;
+	srcRect_f.left = (FLOAT)srcRect.left / width;
+	srcRect_f.right = (FLOAT)srcRect.right / width;
+	srcRect_f.top = (FLOAT)srcRect.top / height;
+	srcRect_f.bottom = (FLOAT)srcRect.bottom / height;
 
 	// http://msdn.microsoft.com/en-us/library/dd371880(v=VS.85).aspx
 	// The size and position, in device-independent pixels in the render target's coordinate space,
@@ -605,8 +690,29 @@ bool D2DRenderContext::draw_bitmap(Bitmap* imagePtr, float2 position, Rect srcRe
 	dstRect_f.top = (FLOAT)position.y;
 	dstRect_f.bottom = dstRect_f.top + (FLOAT)(srcRect.bottom - srcRect.top);
 
-	_rt->DrawBitmap(imagePtr->GetBitmapPtr(), dstRect_f, (FLOAT)imagePtr->GetOpacity(), _interpolation_mode, srcRect_f);
+	//_rt->DrawBitmap(imagePtr->GetBitmapPtr(), dstRect_f, (FLOAT)imagePtr->GetOpacity(), _interpolation_mode, srcRect_f);
 
+	DrawCmd command{};
+	command._idx_buffer = {
+		0, 1, 2,
+		0, 2, 3
+	};
+	command._vtx_buffer = {
+		Vert{ Shaders::float2({ dstRect_f.left, dstRect_f.top }), Shaders::float2({ srcRect_f.left, srcRect_f.top }) },
+		Vert{ Shaders::float2({ dstRect_f.right, dstRect_f.top }), Shaders::float2({ srcRect_f.right, srcRect_f.top }) },
+		Vert{ Shaders::float2({ dstRect_f.right, dstRect_f.bottom }), Shaders::float2({ srcRect_f.right, srcRect_f.bottom }) },
+		Vert{ Shaders::float2({ dstRect_f.left, dstRect_f.bottom }), Shaders::float2({ srcRect_f.left, srcRect_f.bottom }) },
+	};
+
+	command._wv = hlslpp::mul(_mat_world, _mat_view);
+	command._colour = float4(_colour.r, _colour.g, _colour.b, _colour.a);
+	command._colour = float4(1.0f, 1.0f, 1.0f, 1.0f);
+	command._texture = imagePtr->get_srv();
+
+	// Transform vertices to new
+	_total_vertices += 4;
+	_total_indices += 6;
+	_draw_cmds.push_back(command);
 	return true;
 }
 

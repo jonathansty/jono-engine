@@ -222,6 +222,8 @@ private:
 
 		float4 _colour;
 		float4x4 _wv;
+
+		ID3D11ShaderResourceView* _texture = nullptr;
 	};
 	std::vector<DrawCmd> _draw_cmds;
 	u32 _total_vertices;
@@ -237,6 +239,8 @@ private:
 	ConstantBufferRef _global_cb;
 	ShaderRef _vs;
 	ShaderRef _ps;
+
+	hlslpp::float4x4 _proj;
 
 	void update_transforms();
 };

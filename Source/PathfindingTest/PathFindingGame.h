@@ -153,6 +153,8 @@ public:
 	void debug_ui() override;
 
 private:
+	std::unique_ptr<Bitmap> _bitmap;
+
 	float3 _view_translation;
 	f32 _zoom = 1.0f;
 
