@@ -26,14 +26,14 @@ public:
 	static T* instance();
 
 	static void create();
-	static void Shutdown();
+	static void shutdown();
 private:
 
 	static T* _obj;
 };
 
 template<typename T>
-void TSingleton<T>::Shutdown()
+void TSingleton<T>::shutdown()
 {
 	if (_obj)
 	{

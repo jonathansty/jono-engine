@@ -1,4 +1,4 @@
-#include "Common.hlsl"
+#include "Common.h"
 #include "Lighting.hlsl"
 
 
@@ -42,7 +42,7 @@ float4 main(VS_OUT vout) : SV_Target
 	}
 	else if (g_VisualizeMode == VisualizeMode_Normals)
 	{
-		output = (material.tangentNormal + 1.0) * 0.5;
+		output = (material.tangentNormal * 0.5f) + 0.5f;
 	}
 	else if (g_VisualizeMode == VisualizeMode_Roughness)
 	{
@@ -65,7 +65,8 @@ float4 main(VS_OUT vout) : SV_Target
 			);
 
 		float3 final_normal = mul(material.tangentNormal, TBN);
-		output = final_normal;
+
+		output = (final_normal *0.5f) + 0.5f;
 	}
 	else if (g_VisualizeMode == VisualizeMode_AO)
 	{

@@ -2,6 +2,9 @@
 
 #if FEATURE_D2D
 
+#include "Graphics.h"
+#include "Renderer.h"
+#include "Shader.h"
 
 struct ID2D1Factory;
 struct ID2D1RenderTarget;
@@ -11,7 +14,7 @@ class Bitmap;
 
 using hlslpp::float2;
 
-namespace graphics {
+namespace Graphics {
 
 // Bitmap interpolation mode enum
 enum class bitmap_interpolation_mode {
@@ -24,10 +27,10 @@ enum class bitmap_interpolation_mode {
 class D2DRenderContext {
 
 public:
-	D2DRenderContext(ID2D1Factory* factory,ID2D1RenderTarget *rt, ID2D1SolidColorBrush *brush, Font* font);
+	D2DRenderContext(Renderer* renderer, ID2D1Factory* factory,ID2D1RenderTarget *rt, ID2D1SolidColorBrush *brush, Font* font);
 	~D2DRenderContext() = default;
 
-	bool begin_paint();
+	bool begin_paint(Renderer* renderer, ID2D1Factory* factory, ID2D1RenderTarget* rt, ID2D1SolidColorBrush* brush, Font* font);
 	bool end_paint();
 
 	bool draw_background(u32 backgroundColor);
@@ -167,11 +170,11 @@ public:
 	void set_color(u32 color);
 	u32 get_color() const;
 
-	void set_world_matrix(const hlslpp::float3x3& mat); 
-	hlslpp::float3x3 get_world_matrix() const;
+	void set_world_matrix(const hlslpp::float4x4& mat); 
+	hlslpp::float4x4 get_world_matrix() const;
 
-	void set_view_matrix(hlslpp::float3x3 const& mat); 
-	hlslpp::float3x3 get_view_matrix() const;
+	void set_view_matrix(hlslpp::float4x4 const& mat); 
+	hlslpp::float4x4 get_view_matrix() const;
 
 	void set_bitmap_interpolation_mode(bitmap_interpolation_mode mode);
 
@@ -183,13 +186,16 @@ public:
 	}
 	Font *get_font() const { return _font; }
 
-	private:
+private:
+
+	Renderer* _renderer;
 	ID2D1Factory *_factory;
 	ID2D1RenderTarget* _rt;
 	Font *_default_font;
 
 	// Currently in-use brush (non-owning)
 	ID2D1SolidColorBrush *_brush;
+	D2D1::ColorF _colour;
 
 
 	// Currently in-use font (non-owning)
@@ -197,9 +203,44 @@ public:
 
 	D2D1_BITMAP_INTERPOLATION_MODE _interpolation_mode;
 
-	hlslpp::float3x3 _mat_world;
-	hlslpp::float3x3 _mat_view;
+	hlslpp::float4x4 _mat_world;
+	hlslpp::float4x4 _mat_view;
 
+	struct Vert
+	{
+		Shaders::float2 _pos;
+		Shaders::float2 _uv;
+	};
+
+	struct DrawCmd
+	{
+		std::vector<u32>  _idx_buffer;
+		std::vector<Vert> _vtx_buffer;
+
+		u32 _idx_offset;
+		u32 _vtx_offset;
+
+		float4 _colour;
+		float4x4 _wv;
+
+		ID3D11ShaderResourceView* _texture = nullptr;
+	};
+	std::vector<DrawCmd> _draw_cmds;
+	u32 _total_vertices;
+	u32 _total_indices;
+
+
+	u32 _current_vertices;
+	u32 _current_indices;
+	ComPtr<ID3D11Buffer> _vertex_buffer;
+	ComPtr<ID3D11Buffer> _index_buffer;
+	ComPtr<ID3D11InputLayout> _input_layout;
+
+	ConstantBufferRef _global_cb;
+	ShaderRef _vs;
+	ShaderRef _ps;
+
+	hlslpp::float4x4 _proj;
 
 	void update_transforms();
 };

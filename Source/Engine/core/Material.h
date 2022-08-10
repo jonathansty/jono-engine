@@ -1,65 +1,40 @@
 #pragma once
 
-enum class ShaderType
+namespace Graphics
 {
-	Vertex,
-	Pixel,
-	Num
-};
+	using ShaderRef = std::shared_ptr<class Shader>;
+}
 
-class Shader
+namespace Graphics
 {
-public:
-	Shader(ShaderType type, const char* byte_code, uint32_t size);
+class Shader;
+}
 
-	~Shader();
-
-	static std::unique_ptr<Shader> create(ShaderType type, const char* byte_code, uint32_t size);
-
-	template<typename T>
-	ComPtr<T> as()
-	{
-		ComPtr<T> result;
-		_shader->QueryInterface(__uuidof(T), (void**)result.GetAddressOf());
-		assert(result);
-		return result;
-	}
-	ComPtr<ID3D11Resource> get_shader() const { return _shader; }
-	ComPtr<ID3D11InputLayout> get_input_layout() const { assert(_type == ShaderType::Vertex); return _input_layout; }
-
-private:
-	ShaderType _type;
-
-	ComPtr<ID3D11ShaderReflection> _reflection;
-	ComPtr<ID3D11Resource> _shader;
-	ComPtr<ID3D11InputLayout> _input_layout;
-};
-
-// Default material
-interface IMaterial
-{
-	virtual void apply() = 0;
-};
-
-class Material final : public IMaterial
+class Material final 
 {
 public:
-	Material() {};
+	Material();
+
 	virtual ~Material() {}
 
-	static std::unique_ptr<Material> create(const char* vx_byte_code , uint32_t vx_byte_code_size, const char* px_byte_code, uint32_t px_byte_code_size );
-
-	void apply();
+	static std::unique_ptr<Material> create(Graphics::ShaderRef const& vertex_shader, Graphics::ShaderRef const& pixel_shader);
 
 	bool is_double_sided() const { return _double_sided; }
 
+	ComPtr<ID3D11InputLayout> get_input_layout() const;
+
+	Graphics::ShaderRef const& get_vertex_shader() const { return _vertex_shader; }
+	Graphics::ShaderRef const& get_pixel_shader() const  { return _pixel_shader; }
+	Graphics::ShaderRef const& get_debug_pixel_shader() const  { return _debug_pixel_shader; }
+
+	void get_texture_views(std::vector<ID3D11ShaderResourceView const*>& views);
+
 private:
 	bool _double_sided;
-	//TODO: Use pipelines?
-	std::unique_ptr<Shader> _vertex_shader;
 
-	std::unique_ptr<Shader> _pixel_shader;
-	std::unique_ptr<Shader> _debug_pixel_shader;
+	Graphics::ShaderRef _vertex_shader;
+	Graphics::ShaderRef _pixel_shader;
+	Graphics::ShaderRef _debug_pixel_shader;
 
 	std::vector<std::shared_ptr<class TextureResource>> _textures;
 

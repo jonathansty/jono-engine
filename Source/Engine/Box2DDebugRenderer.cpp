@@ -9,7 +9,7 @@
 Box2DDebugRenderer::Box2DDebugRenderer()
 {
 	m_Color = MK_COLOR(255, 255, 255, 187);
-	_mat_scale = float3x3::scale(PhysicsActor::SCALE);
+	_mat_scale = float4x4::scale(PhysicsActor::SCALE);
 }
 
 Box2DDebugRenderer::~Box2DDebugRenderer()
@@ -113,7 +113,7 @@ void Box2DDebugRenderer::DrawPoint(const b2Vec2 &pos, float size, const b2Color 
 	_context->draw_ellipse(float2(x, y), size / (2.0*PhysicsActor::SCALE), size / (2.0 * PhysicsActor::SCALE));
 }
 
-void Box2DDebugRenderer::set_draw_ctx(class graphics::D2DRenderContext *context) {
+void Box2DDebugRenderer::set_draw_ctx(class Graphics::D2DRenderContext *context) {
 	_context = context;
 }
 #endif

@@ -21,13 +21,13 @@ public:
 
 	void end() override;
 
-	void paint(graphics::D2DRenderContext& ctx) override;
+	void paint(Graphics::D2DRenderContext& ctx) override;
 
 	void tick(double deltaTime) override;
 
 	private:
 		struct DrawElement {
-			float3x3 matrix;
+			float4x4 matrix;
 			unique_ptr<Bitmap> bmp;
 		};
 		vector<DrawElement> _bitmaps;

@@ -25,8 +25,11 @@
 
 #include "CommonStates.h"
 #include "Effects.h"
+#include "Graphics/Perf.h"
 
-static constexpr uint32_t max_task_threads = 4;
+int g_DebugMode = 0;
+
+static constexpr uint32_t max_task_threads = 8;
 
 // Static task scheduler used for loading assets and executing multi threaded work loads
 enki::TaskScheduler* GameEngine::s_TaskScheduler;
@@ -43,7 +46,7 @@ LRESULT CALLBACK GameEngine::WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPAR
 
 // #TODO: Remove this once full 2D graphics has been refactored into it's own context
 #if FEATURE_D2D
-using graphics::bitmap_interpolation_mode;
+using Graphics::bitmap_interpolation_mode;
 #endif
 
 GameEngine::GameEngine()
@@ -107,16 +110,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// Then we initialize the logger as this might create a log file
 	Logger::instance()->init();
 
-	{
-		std::vector<u8> data;
-		ShaderCompiler::CompileParameters params{};
-		params.defines.push_back({ "USE_PBR", "1" });
-		params.defines.push_back({ "IS_SHADOW_PASS" });
-		params.entry_point = "main";
-		params.stage = ShaderCompiler::ShaderStage::Pixel;
-		params.flags = ShaderCompiler::CompilerFlags::CompileDebug | ShaderCompiler::CompilerFlags::OptimizationLevel0;
-		bool result = ShaderCompiler::compile("Source/Engine/Shaders/debug_px.hlsl", params, data);
-	}
 
 	// Now we can start logging information and we mount our resources volume.
 	LOG_INFO(IO, "Mounting resources directory.");
@@ -132,8 +125,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 	// initialize d2d for WIC
 	SUCCEEDED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED));
-
-	
 
 	// Setup our default overlays
 	_overlay_manager = std::make_shared<OverlayManager>();
@@ -158,6 +149,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 		void Execute() override
 		{
+			LOG_INFO(System, "Initializing Task thread {}.", threadNum);
+
+			std::wstring name = fmt::format(L"TaskThread {}", threadNum);
+			::SetThreadDescription(GetCurrentThread(), name.c_str());
 			SUCCEEDED(::CoInitialize(NULL));
 		}
 	};
@@ -170,6 +165,57 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	}
 	s_TaskScheduler->RunPinnedTasks();
 	s_TaskScheduler->WaitforAll();
+
+
+
+	// Task Set dependency testing. 
+	{
+		struct TaskA : enki::ITaskSet
+		{
+			void ExecuteRange(enki::TaskSetPartition range, u32 threadNum) override
+			{
+				LOG_INFO(System, "TaskA::Started");
+				//enki::TaskSet taskSet = enki::TaskSet(100,[](enki::TaskSetPartition range, u32 threadNum)
+				//		{ 
+				//		PWSTR data;
+				//		::GetThreadDescription(GetCurrentThread(), &data);
+				//		std::wstring wbuff = data;
+				//		std::string threadName = std::string(wbuff.begin(), wbuff.end());
+				//		LOG_INFO(System, "{}: TaskA Logging from lambda taskset!", threadName);
+				//	});
+				//s_TaskScheduler->AddTaskSetToPipe(&taskSet);
+				//s_TaskScheduler->WaitforTask(&taskSet);
+				LOG_INFO(System, "TaskA::Ended");
+			}
+		};
+
+		struct TaskB : enki::ITaskSet
+		{
+			enki::Dependency m_Dependency;
+			void ExecuteRange(enki::TaskSetPartition range, u32 threadNum) override
+			{
+				LOG_INFO(System, "TaskB::Started");
+				enki::TaskSet taskSet = enki::TaskSet(
+					[](enki::TaskSetPartition range, u32 threadNum){ 
+						LOG_INFO(System, "TaskB Logging from lambda taskset!"); 
+					}
+				);
+				s_TaskScheduler->AddTaskSetToPipe(&taskSet);
+				s_TaskScheduler->WaitforTask(&taskSet);
+				LOG_INFO(System, "TaskB::Ended");
+			}
+		};
+
+		TaskA taskA;
+		TaskB taskB;
+		taskB.SetDependency(taskB.m_Dependency, &taskA);
+
+		s_TaskScheduler->AddTaskSetToPipe(&taskA);
+		s_TaskScheduler->WaitforTask(&taskB);
+	}
+
+
+
 
 	//Initialize the high precision timers
 	_game_timer = make_unique<PrecisionTimer>();
@@ -242,6 +288,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 	ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;
+	//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
 
 	Graphics::DeviceContext ctx = _renderer->get_ctx();
 	ImGui_ImplWin32_Init(get_window());
@@ -444,7 +492,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	Perf::shutdown();
 
 	ResourceLoader::instance()->unload_all();
-	ResourceLoader::Shutdown();
+	ResourceLoader::shutdown();
 
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplWin32_Shutdown();
@@ -472,28 +520,38 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 #if FEATURE_D2D
 void GameEngine::d2d_render()
 {
-	#if 0
-	GPU_SCOPED_EVENT(_d3d_user_defined_annotation, L"Game2D");
-
-	graphics::D2DRenderContext context{ _d2d_factory, _d2d_rt, _color_brush, _default_font.get() };
-	context.begin_paint();
+	// Plan to modernize the 2D and deprecate Direct2D
+	// 1. Collect all the draw commands in buffers and capture the required data
+	// 2. during end_paint 'flush' draw commands and create required vertex buffers
+	// 3. Execute each draw command binding the right buffers and views
+	static std::unique_ptr<Graphics::D2DRenderContext> s_context = nullptr;
+	if (!s_context)
+	{
+		s_context = std::make_unique<Graphics::D2DRenderContext>( _renderer.get(), _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get() );
+	}
+	Graphics::D2DRenderContext& context = *s_context;
+	context.begin_paint(_renderer.get(), _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get());
 	_d2d_ctx = &context;
 
 	auto size = this->get_viewport_size();
 
 	_can_paint = true;
 	// make sure tvp.Heighthe view matrix is taken in account
-	context.set_world_matrix(float3x3::identity());
-	_game->paint(context);
+	context.set_world_matrix(float4x4::identity());
+
+	{
+		GPU_SCOPED_EVENT(_renderer->get_raw_annotation(), "D2D:Paint");
+		_game->paint(context);
+	}
 
 	// draw Box2D debug rendering
 	// http://www.iforce2d.net/b2dtut/debug-draw
 	if (_debug_physics_rendering)
 	{
 		// dimming rect in screenspace
-		context.set_world_matrix(float3x3::identity());
-		float3x3 matView = context.get_view_matrix();
-		context.set_view_matrix(float3x3::identity());
+		context.set_world_matrix(float4x4::identity());
+		float4x4 matView = context.get_view_matrix();
+		context.set_view_matrix(float4x4::identity());
 		context.set_color(MK_COLOR(0, 0, 0, 127));
 		context.fill_rect(0, 0, get_width(), get_height());
 		context.set_view_matrix(matView);
@@ -509,8 +567,9 @@ void GameEngine::d2d_render()
 
 	// if drawing failed, terminate the game
 	if (!result)
+	{
 		PostMessage(GameEngine::get_window(), WM_DESTROY, 0, 0);
-#endif
+	}
 }
 #endif
 
@@ -542,7 +601,7 @@ bool GameEngine::register_wnd_class()
 bool GameEngine::open_window(int iCmdShow)
 {
 	// Calculate the window size and position based upon the game size
-	DWORD windowStyle = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_MAXIMIZEBOX | WS_OVERLAPPEDWINDOW;
+	DWORD windowStyle = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_MAXIMIZEBOX | WS_OVERLAPPEDWINDOW | WS_VISIBLE;
 	RECT R = { 0, 0, _window_width, _window_height };
 	AdjustWindowRect(&R, windowStyle, false);
 	int iWindowWidth = R.right - R.left;
@@ -584,7 +643,7 @@ void GameEngine::quit_game()
 
 void GameEngine::enable_aa(bool isEnabled)
 {
-	#if 0
+#if 0
 	_d2d_aa_mode = isEnabled ? D2D1_ANTIALIAS_MODE_ALIASED : D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
 #if FEATURE_D2D
 	if (_d2d_rt)
@@ -635,6 +694,16 @@ ImVec2 GameEngine::get_viewport_size(int) const
 	return { (float)_viewport_width, (float)_viewport_height };
 }
 
+ImVec2 GameEngine::get_viewport_pos(int id /*= 0*/) const
+{
+	RECT rect;
+	GetWindowRect(get_window(), &rect);
+
+	return {
+		(float)_viewport_pos.x - rect.left, (float)_viewport_pos.y - rect.top
+	};
+}
+
 int GameEngine::get_width() const
 {
 	return _window_width;
@@ -655,14 +724,15 @@ float2 GameEngine::get_mouse_pos_in_window() const
 	RECT rect;
 	if (GetWindowRect(get_window(), &rect))
 	{
-		return float2{ (float)_input_manager->get_mouse_position().x, (float)_input_manager->get_mouse_position().y } + float2(rect.left, rect.top);
+		return float2{ (float)_input_manager->get_mouse_position().x, (float)_input_manager->get_mouse_position().y } - float2(rect.left, rect.top);
 	}
 	return {};
 }
 
 float2 GameEngine::get_mouse_pos_in_viewport() const
 {
-	return float2{ (float)_input_manager->get_mouse_position().x, (float)_input_manager->get_mouse_position().y } - _viewport_pos;
+	float2 tmp = float2(_input_manager->get_mouse_position());
+	return float2{ (float)tmp.x, (float)tmp.y } - _viewport_pos;
 }
 
 unique_ptr<XAudioSystem> const& GameEngine::get_audio_system() const
@@ -700,6 +770,17 @@ void GameEngine::set_physics_step(bool bEnabled)
 bool GameEngine::is_viewport_focused() const
 {
 	return _is_viewport_focused;
+}
+
+bool GameEngine::is_input_captured() const
+{
+	if (is_viewport_focused())
+	{
+		return false;
+	}
+
+	return ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
+
 }
 
 void GameEngine::set_sleep(bool bSleep)
@@ -803,7 +884,6 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 				return 0; // see win32 API : WM_KEYDOWN
 			else
 				break;
-
 		case WM_DESTROY:
 			GameEngine::instance()->quit_game();
 			return 0;
@@ -1130,13 +1210,6 @@ void GameEngine::build_ui()
 
 void GameEngine::render()
 {
-	auto d3d_ctx = _renderer->get_raw_device_context();
-	auto d3d_device = _renderer->get_raw_device();
-	auto d3d_swapchain_rtv = _renderer->get_raw_swapchain_rtv();
-	auto d3d_output_rtv = _renderer->get_raw_output_rtv();
-	auto d3d_output_dsv = _renderer->get_raw_output_dsv();
-	auto d3d_output_tex = _renderer->get_raw_output_tex();
-	auto d3d_output_non_msaa_tex = _renderer->get_raw_output_non_msaa_tex();
 	auto d3d_annotation = _renderer->get_raw_annotation();
 
 	GPU_SCOPED_EVENT(d3d_annotation, L"Frame");
@@ -1146,15 +1219,7 @@ void GameEngine::render()
 	auto& timer = m_GpuTimings[idx];
 	timer.begin(_renderer->get_raw_device_context());
 
-
-	D3D11_VIEWPORT vp{};
-	vp.Width = static_cast<float>(this->get_viewport_size().x);
-	vp.Height = static_cast<float>(this->get_viewport_size().y);
-	vp.TopLeftX = 0.0f;
-	vp.TopLeftY = 0.0f;
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	d3d_ctx->RSSetViewports(1, &vp);
+	_renderer->begin_frame();
 
 	// Render 3D before 2D
 	if (_engine_settings.d3d_use)
@@ -1167,17 +1232,11 @@ void GameEngine::render()
 			_renderer->render_shadow_pass(_render_world);
 		}
 
-
-		// Clear the output targets
-		FLOAT color[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-		d3d_ctx->ClearRenderTargetView(d3d_output_rtv, color);
-		d3d_ctx->ClearDepthStencilView(d3d_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
-		d3d_ctx->OMSetRenderTargets(0, NULL, d3d_output_dsv);
-		render_view(Graphics::RenderPass::ZPrePass);
-
-		d3d_ctx->OMSetRenderTargets(1, &d3d_output_rtv, d3d_output_dsv);
-		render_view(Graphics::RenderPass::Opaque);
+		{
+			GPU_SCOPED_EVENT(d3d_annotation, L"Main");
+			_renderer->render_zprepass(_render_world);
+			_renderer->render_opaque_pass(_render_world);
+		}
 	}
 
 	// Render Direct2D to the swapchain
@@ -1191,57 +1250,13 @@ void GameEngine::render()
 #endif
 	}
 
-	// Resolve msaa to non msaa for imgui render
-	d3d_ctx->ResolveSubresource(d3d_output_non_msaa_tex, 0, d3d_output_tex, 0, _renderer->get_swapchain_format());
-
-	static std::unique_ptr<DirectX::CommonStates> s_states = nullptr;
-	static std::unique_ptr<DirectX::BasicEffect> s_effect = nullptr;
-	static ComPtr<ID3D11InputLayout> s_layout = nullptr;
-	if (!s_states)
-	{
-		s_states = std::make_unique<DirectX::CommonStates>(d3d_device);
-		s_effect = std::make_unique<DirectX::BasicEffect>(d3d_device);
-		s_effect->SetVertexColorEnabled(true);
-
-		void const* shader_byte_code;
-		size_t byte_code_length;
-		s_effect->GetVertexShaderBytecode(&shader_byte_code, &byte_code_length);
-		ENSURE_HR(d3d_device->CreateInputLayout(DirectX::VertexPositionColor::InputElements, DirectX::VertexPositionColor::InputElementCount, shader_byte_code, byte_code_length, s_layout.ReleaseAndGetAddressOf()));
-	}
-	d3d_ctx->OMSetBlendState(s_states->Opaque(), nullptr, 0xFFFFFFFF);
-	d3d_ctx->OMSetDepthStencilState(s_states->DepthDefault(), 0);
-	d3d_ctx->RSSetState(s_states->CullNone());
-
-	d3d_ctx->IASetInputLayout(s_layout.Get());
-
-	auto view = _render_world->get_view_camera()->get_view();
-	auto proj = _render_world->get_view_camera()->get_proj();
-	XMMATRIX xm_view = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&view);
-	XMMATRIX xm_proj = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&proj);
-	s_effect->SetView(xm_view);
-	s_effect->SetProjection(xm_proj);
-
-	s_effect->Apply(d3d_ctx);
-
-	_overlay_manager->render_3d(_renderer->get_raw_device_context());
-
-	// Render main viewport ImGui
-	{
-		GPU_SCOPED_EVENT(d3d_annotation, L"ImGui");
-		d3d_ctx->OMSetRenderTargets(1, &d3d_swapchain_rtv, nullptr);
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-	}
+	_renderer->render_post(_render_world, _overlay_manager);
+	_renderer->end_frame();
 }
 
 void GameEngine::present()
 {
 	auto d3d_ctx = _renderer->get_raw_device_context();
-	auto d3d_device = _renderer->get_raw_device();
-	auto d3d_swapchain_rtv = _renderer->get_raw_swapchain_rtv();
-	auto d3d_output_rtv = _renderer->get_raw_output_rtv();
-	auto d3d_output_dsv = _renderer->get_raw_output_dsv();
-	auto d3d_output_tex = _renderer->get_raw_output_tex();
-	auto d3d_output_non_msaa_tex = _renderer->get_raw_output_non_msaa_tex();
 	auto d3d_annotation = _renderer->get_raw_annotation();
 	auto d3d_swapchain = _renderer->get_raw_swapchain();
 
@@ -1269,17 +1284,24 @@ void GameEngine::build_debug_log()
 	if (!_show_debuglog)
 		return;
 
-	if (ImGui::Begin("Output Log", &_show_debuglog))
+	if (ImGui::Begin("Output Log", &_show_debuglog, 0))
 	{
+
 		static bool s_scroll_to_bottom = true;
 		static bool s_shorten_file = true;
 		static char s_filter[256] = {};
 		ImGui::InputText("Filter", s_filter, 512);
 		ImGui::SameLine();
 		ImGui::Checkbox("Scroll To Bottom", &s_scroll_to_bottom);
+		ImGui::SameLine();
+		if(ImGui::Button("Clear"))
+		{
+			Logger::instance()->clear();
+		}
+			
 
 		//ImGui::BeginTable("LogData", 3);
-		ImGui::BeginChild("123");
+		ImGui::BeginChild("123", ImVec2(0, 0),false, ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
 		auto const& buffer = Logger::instance()->GetBuffer();
 		for (auto it = buffer.begin(); it != buffer.end(); ++it)
 		{
@@ -1336,11 +1358,16 @@ void GameEngine::build_viewport()
 
 	if (ImGui::Begin("Viewport##GameViewport", &_show_viewport))
 	{
+		ImGui::SetCursorPos(ImVec2(0, 0));
+
 		static ImVec2 s_vp_size = ImGui::GetContentRegionAvail();
+		static ImVec2 s_vp_pos = ImGui::GetWindowContentRegionMin();
 		ImVec2 current_size = ImGui::GetContentRegionAvail();
 
 		ImVec2 vMin = ImGui::GetWindowContentRegionMin();
 		ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+
+		ImVec2 window_pos = ImGui::GetWindowPos();
 
 		_is_viewport_focused = ImGui::IsWindowHovered();
 
@@ -1360,17 +1387,19 @@ void GameEngine::build_viewport()
 		}
 #endif
 
-		if (s_vp_size.x != current_size.x || s_vp_size.y != current_size.y)
+		if (s_vp_size.x != current_size.x || s_vp_size.y != current_size.y || s_vp_pos.x != vMin.x || s_vp_pos.y != vMin.y)
 		{
 			LOG_VERBOSE(Graphics, "Viewport resize detected! From {}x{} to {}x{}", current_size.x, current_size.y, s_vp_size.x, s_vp_size.y);
 
 
 			// Update the viewport sizes
 			s_vp_size = current_size;
+			s_vp_pos = vMin;
 			_viewport_width = (u32)s_vp_size.x;
 			_viewport_height = (u32)s_vp_size.y;
+			_viewport_pos = float2(s_vp_pos.x, s_vp_pos.y);
 
-			_renderer->update_viewport(s_vp_size.x, s_vp_size.y);
+			_renderer->update_viewport(static_cast<u32>(vMin.x), static_cast<u32>(vMin.y), static_cast<u32>(s_vp_size.x), static_cast<u32>(s_vp_size.y));
 		}
 
 		// Draw the actual scene image
@@ -1378,10 +1407,12 @@ void GameEngine::build_viewport()
 		max_uv.x = s_vp_size.x / get_width();
 		max_uv.y = s_vp_size.y / get_height();
 
-		ImGui::Image(_renderer->get_raw_output_srv(), s_vp_size, ImVec2(0, 0), max_uv);
+		_viewport_pos = float2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
+		ImGui::Image(_renderer->get_raw_output_non_msaa_srv(), s_vp_size, ImVec2(0, 0), max_uv);
 
-		ImGuizmo::SetDrawlist();
-		ImGuizmo::SetRect(_viewport_pos.x, _viewport_pos.y, float1(_viewport_width), float1(_viewport_height));
+
+		//ImGuizmo::SetDrawlist();
+		//ImGuizmo::SetRect(_viewport_pos.x, _viewport_pos.y, float1(_viewport_width), float1(_viewport_height));
 
 		get_overlay_manager()->render_viewport();
 
@@ -1512,7 +1543,7 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 	result = GameEngine::instance()->run(hInstance, iCmdShow); // run the game engine and return the result
 
 	// Shutdown the game engine to make sure there's no leaks left.
-	GameEngine::Shutdown();
+	GameEngine::shutdown();
 
 #if defined(DEBUG) | defined(_DEBUG)
 	if (pDXGIDebug)

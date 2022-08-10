@@ -1,4 +1,4 @@
-#include "Common.hlsl"
+#include "Common.h"
 
 VS_OUT main(VS_IN vin)
 {

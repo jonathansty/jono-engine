@@ -1,7 +1,13 @@
 #pragma once
 
 #include "Graphics.h"
+#include "ConstantBuffer.h"
 #include "core/ModelResource.h"
+
+using RenderWorldRef = std::shared_ptr<class RenderWorld>;
+using RenderWorldInstanceRef = std::shared_ptr<class RenderWorldInstance>;
+using RenderWorldCameraRef = std::shared_ptr<class RenderWorldCamera>;
+using RenderWorldLightRef = std::shared_ptr<class RenderWorldLight>;
 
 class RenderWorldInstance
 {
@@ -12,11 +18,11 @@ public:
 
 	bool is_ready() const
 	{
-		return _mesh->is_loaded();
+		return _model->is_loaded();
 	}
 
 	float4x4 _transform;
-	std::shared_ptr<ModelResource> _mesh;
+	std::shared_ptr<ModelResource> _model;
 
 	struct ConstantBufferData
 	{
@@ -153,6 +159,7 @@ protected:
 
 struct CascadeInfo 
 {
+	float3 center;
 	float4x4 view;
 	float4x4 proj;
 	float4x4 vp;
@@ -240,7 +247,14 @@ public:
 
 	void remove_instance(std::shared_ptr<RenderWorldInstance> const& instance);
 
-	std::shared_ptr<RenderWorldCamera> get_view_camera() const { return _cameras[_active_camera]; }
+	std::shared_ptr<RenderWorldCamera> get_view_camera() const
+	{
+		if (_active_camera >= 0 && _active_camera < _cameras.size())
+		{
+			return _cameras[_active_camera];
+		}
+		return nullptr;
+	}
 
 	void set_active_camera(u32 idx) { _active_camera = idx; }
 

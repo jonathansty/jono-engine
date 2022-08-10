@@ -5,6 +5,7 @@ enum class KeyCode : u32
 {
 	Back = 0x08,
 	Tab = 0x09,
+	LeftAlt = 18,
 	Clear = 0x0C,
 	Return = 0x0D,
 	// 0x0E-0x0F undefined
@@ -66,7 +67,7 @@ enum class KeyCode : u32
 	W,
 	X,
 	Y,
-	Z = 0x5A,
+	Z = 0x5A
 };
 
 inline u32 get_raw(KeyCode code)

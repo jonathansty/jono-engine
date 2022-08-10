@@ -44,6 +44,7 @@ using hlslpp::quaternion;
 using hlslpp::int4;
 using hlslpp::int3;
 using hlslpp::int2;
+using hlslpp::uint2;
 
 // Default C++ types
 using std::shared_ptr;

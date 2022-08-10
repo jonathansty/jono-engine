@@ -1,4 +1,5 @@
 #include "engine.pch.h"
+
 #include "TextureResource.h"
 
 #include "GameEngine.h"
@@ -7,38 +8,52 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-//#include <DirectXTK/WICTextureLoader.h>
 
-TextureResource::TextureResource(FromFileResourceParameters params) : TCachedResource(params)
+TextureResource::TextureResource(FromFileResourceParameters params)
+		: TCachedResource(params)
 {
-
 }
 
-void TextureResource::initialise_default() {
+void TextureResource::initialise_default()
+{
 	TextureResource::black();
 	TextureResource::white();
 	TextureResource::default_normal();
 	TextureResource::default_roughness();
 }
 
-std::shared_ptr<TextureResource> TextureResource::black() {
-	return invalid();
+std::shared_ptr<TextureResource> TextureResource::black()
+{
+	static std::shared_ptr<TextureResource> s_tex;
+	if (!s_tex)
+	{
+		s_tex = std::make_shared<TextureResource>();
+		std::array<u32, 4 * 4> data{};
+		std::fill(data.begin(), data.end(), 0);
+		s_tex->create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
+	}
+
+	return s_tex;
 }
 
-std::shared_ptr<TextureResource> TextureResource::white() {
+std::shared_ptr<TextureResource> TextureResource::white()
+{
 	static std::shared_ptr<TextureResource> s_white;
-	if(!s_white) {
+	if (!s_white)
+	{
 		s_white = std::make_shared<TextureResource>();
-		std::array<u32, 4*4> data{};
+		std::array<u32, 4 * 4> data{};
 		std::fill(data.begin(), data.end(), 0xFFFFFFFF);
 		s_white->create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
 	}
 	return s_white;
 }
 
-std::shared_ptr<TextureResource> TextureResource::default_normal() {
+std::shared_ptr<TextureResource> TextureResource::default_normal()
+{
 	static std::shared_ptr<TextureResource> s_default_normal;
-	if (!s_default_normal) {
+	if (!s_default_normal)
+	{
 		s_default_normal = std::make_shared<TextureResource>();
 		std::array<u32, 16> data{};
 		std::fill(data.begin(), data.end(), 0xFFFF7D7D);
@@ -47,9 +62,11 @@ std::shared_ptr<TextureResource> TextureResource::default_normal() {
 	return s_default_normal;
 }
 
-std::shared_ptr<TextureResource> TextureResource::default_roughness() {
+std::shared_ptr<TextureResource> TextureResource::default_roughness()
+{
 	static std::shared_ptr<TextureResource> s_default_normal;
-	if (!s_default_normal) {
+	if (!s_default_normal)
+	{
 		s_default_normal = std::make_shared<TextureResource>();
 		std::array<u32, 16> data{};
 		std::fill(data.begin(), data.end(), 0xFF007DFF);
@@ -58,27 +75,23 @@ std::shared_ptr<TextureResource> TextureResource::default_roughness() {
 	return s_default_normal;
 }
 
-void TextureResource::load()
+void TextureResource::load(enki::ITaskSet* parent)
 {
 	std::string const& path = get_init_parameters().path;
-	auto device = Graphics::get_device();
-	auto ctx = Graphics::get_ctx();
-
-
-	int x, y, comp;
-	stbi_uc* data = stbi_load(path.c_str(), &x, &y, &comp, 4); 
-	ASSERTMSG(data, "Failed to  load image from {}", path);
-
-	this->create_from_memory(x, y, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, (void*)data);
-	stbi_image_free(data);
-	//SUCCEEDED(DirectX::CreateWICTextureFromFile(device, wpath.c_str(), _resource.GetAddressOf(), _srv.GetAddressOf()));
+	_resource = std::make_shared<Texture>();
+	_resource->load(path);
 }
 
-void TextureResource::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data) {
+void TextureResource::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data)
+{
+	_resource = std::make_shared<Texture>();
+	_resource->create_from_memory(width, height, format, type, data);
+}
 
+void Texture::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data)
+{
 	auto device = Graphics::get_device();
 	auto ctx = Graphics::get_ctx();
-
 
 	auto desc = CD3D11_TEXTURE2D_DESC(format, width, height);
 	desc.MipLevels = desc.ArraySize = 1;
@@ -91,7 +104,22 @@ void TextureResource::create_from_memory(uint32_t width, uint32_t height, DXGI_F
 
 	auto view_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(texture.Get(), D3D11_SRV_DIMENSION_TEXTURE2D, format);
 	SUCCEEDED(texture.As(&_resource));
-	device->CreateShaderResourceView(_resource.Get(), &view_desc, _srv.GetAddressOf());
+	ENSURE_HR(device->CreateShaderResourceView(_resource.Get(), &view_desc, _srv.GetAddressOf()));
+}
 
+void Texture::load(std::string const& path)
+{
+	auto device = Graphics::get_device();
+	auto ctx = Graphics::get_ctx();
 
+	int x, y, comp;
+	stbi_uc* data = stbi_load(path.c_str(), &x, &y, &comp, 4);
+	ASSERTMSG(data, "Failed to  load image from {}", path);
+
+	this->_width = u32(x);
+	this->_height = u32(y);
+
+	this->create_from_memory(x, y, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, (void*)data);
+	stbi_image_free(data);
+	// SUCCEEDED(DirectX::CreateWICTextureFromFile(device, wpath.c_str(), _resource.GetAddressOf(), _srv.GetAddressOf()));
 }

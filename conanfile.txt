@@ -4,7 +4,6 @@ enkits/1.10
 # rttr/0.9.6
 fmt/8.1.1
 box2d/2.4.0
-assimp/5.1.0
+assimp/5.2.2
 freetype/2.10.4
 glslang/8.13.3559
-stb/cci.20210713

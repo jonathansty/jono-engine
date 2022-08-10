@@ -1,8 +1,13 @@
 #pragma once
 
 #ifdef WIN64
+#ifndef WIN32_LEAN_AND_MEAN	
 #define WIN32_LEAN_AND_MEAN
+#endif
+
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <Windows.h>
 #include <commdlg.h>
 
@@ -42,8 +47,8 @@ using namespace D2D1;
 #include <rttr/type>
 
 // Feature Defines used to control compile time behaviour
-#define FEATURE_D2D    true    // Flag to control if D2D can be used or not
-#define FEATURE_XAUDIO true    // Flag to control if XAudio can be used or not
+//#define FEATURE_D2D    true    // Flag to control if D2D can be used or not
+//#define FEATURE_XAUDIO true    // Flag to control if XAudio can be used or not
 
 
 #define HLSLPP_FEATURE_TRANSFORM
@@ -69,6 +74,7 @@ using namespace D2D1;
 #include <fmt/format.h>
 #include <fmt/printf.h>
 #include <fmt/ostream.h>
+#include <fmt/xchar.h>
 
 #include <rttr/registration>
 #include <rttr/registration_friend>
@@ -101,6 +107,7 @@ using namespace D2D1;
 #include "Asserts.h"
 #include "identifier.h"
 #include "Math.h"
+#include "Hash.h"
 #include <chrono>
 
 namespace Tasks

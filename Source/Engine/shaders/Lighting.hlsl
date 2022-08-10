@@ -12,6 +12,7 @@ struct Material
 	float metalness;
 	float ao;
 };
+
 Material CreateMaterial()
 {
 	Material material;
@@ -28,49 +29,103 @@ Material CreateMaterial()
 //
 float D_GGX(float NoH, float a) {
 	float a2 = a * a;
-	float f = (NoH * a2 - NoH) * NoH + 1.0;
-	return a2 / (PI * f * f);
+	
+	float NoH2 = NoH*NoH;
+	
+	float nom = a2;
+	float denom = (NoH2 * (a2 - 1.0) + 1.0);
+	denom = PI * denom * denom;
+	return nom / denom;
 }
 
-float3 F_Schlick(float u, float3 f0) {
-	return (f0 + (float3(1.0, 1.0, 1.0) - f0) * pow(1.0 - u, 5.0));
+float3 F_Schlick(float HoV, float3 f0) {
+	return (f0 + (float3(1.0, 1.0, 1.0) - f0) * pow(1.0 - HoV, 5.0));
 }
 
-float V_SmithGGXCorrelated(float NoV, float NoL, float a) {
-	float a2 = a * a;
-	float GGXL = NoV * sqrt((-NoL * a2 + NoL) * NoL + a2);
-	float GGXV = NoL * sqrt((-NoV * a2 + NoV) * NoV + a2);
-	return 0.5 / (GGXV + GGXL);
+// float V_SmithGGXCorrelated(float NoV, float NoL, float a) {
+// 	float a2 = a * a;
+// 	float GGXL = NoV * sqrt((-NoL * a2 + NoL) * NoL + a2);
+// 	float GGXV = NoL * sqrt((-NoV * a2 + NoV) * NoV + a2);
+// 	return 0.5 / (GGXV + GGXL);
+// }
+
+float G_SchlickGGX(float NoV, float k)
+{
+	float nom = NoV;
+	float denom = NoV * (1.0 - k) + k;
+	return nom / denom;
 }
 
-float Fd_Lambert() {
-	return 1.0 / PI;
+float3 Fd_Lambert(float3 colour) {
+	return colour / PI;
+}
+
+float3 F_CookTorrence(float NoH, float NoV, float NoL, float LoH, float VoH, in Material material)
+{
+	// perceptually linear roughness to roughness (see parameterization)
+	float r2 = material.roughness * material.roughness;
+
+	float  D = D_GGX(NoH, r2);
+	float  G = G_SchlickGGX(NoV, r2);
+	float3 F = F_Schlick(VoH, material.F0);
+	return (D*F*G) * rcp(max(4.0*NoV*NoL, 1.0));
 }
 // FILAMENT end
 
-// TODO: Implenent D_GGX, F_SCHLICK and geometry function
-float3 SimpleBlinnPhong(float3 v, float3 l, float3 n, Material material)
+float3 LightingModel_BRDF(in Material material, float3 v, float3 l, float3 n)
 {
-	float3 h = normalize(v + l);
+	float3 h = normalize(v+ l);
 
-	float NoV = abs(dot(n, v)) + 1e-5;
+	float NoV = clamp(dot(n, v), 0.0, 1.0);
 	float NoL = clamp(dot(n, l), 0.0, 1.0);
 	float NoH = clamp(dot(n, h), 0.0, 1.0);
 	float LoH = clamp(dot(l, h), 0.0, 1.0);
+	
 
-	// perceptually linear roughness to roughness (see parameterization)
-	float roughness = material.roughness * material.roughness;
+	float VoH = clamp(dot(v,h), 0.0, 1.0);
 
-	float D = D_GGX(NoH, roughness);
-	float3 F = F_Schlick(LoH, material.F0);
-	float V = V_SmithGGXCorrelated(NoV, NoL, roughness);
+	float k_s = 1.0f;
+	float k_d = 1.0f;
 
-	// specular BRDF
-	float3 Fr = (D * V) * F;
+	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, material);
+	float3 Fd = Fd_Lambert(material.albedo);
 
-	// diffuse BRDF
-	float3 Fd = material.albedo * Fd_Lambert();
 
-	return (Fd + Fr) * NoL;
+	float3 result = k_s * Fr + k_d * Fd;
+	return NoL * Fd + Fr * k_s;
 }
+
+float3 LightingModel_Phong(Material material, float3 view, float3 light,float3 light_colour, float3 normal)
+{
+	float3 ambient = (0.07f * light_colour);
+
+	float3 diffuse = saturate(dot(light,normal)) * light_colour;
+
+	float3 ref = reflect(-light, normal);
+	
+	float spec_strength =0.5;
+	float spec = pow(saturate(dot(view, ref)), 3);
+	float3 specular = spec_strength * spec * light_colour;
+
+	return (diffuse + ambient + specular) * material.albedo;
+}
+
+float3 LightingModel_BlinnPhong(Material material, float3 view, float3 light, float3 light_colour, float3 normal)
+{
+	float3 ambient = (0.07f * light_colour);
+	float spec = 0.0;
+
+	float shininess = 32.0;
+	float ks = 0.5;
+
+	float3 half_vector = normalize(light + view);
+	float dp = saturate(dot(normal, half_vector));
+	spec = pow(max(dot(normal, half_vector), 0.0), shininess);
+
+	float3 diff_colour = max(dot(normal, light), 0.0) * light_colour;
+	float3 spec_colour = ks * spec * light_colour;
+	return (diff_colour + spec_colour + ambient) * material.albedo;
+}
+
+
 #endif

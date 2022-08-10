@@ -29,11 +29,11 @@ public:
 	virtual Mode get_mode() const { return _mode; }
 
 	virtual uint32_t write(void* src, uint32_t size) {
-		return static_cast<uint32_t>(fwrite(src, size, 1, _stream));
+		return static_cast<uint32_t>(fwrite(src, sizeof(u8), size, _stream));
 	}
 
 	virtual u32 read(void* dst, u32 size) {
-		return static_cast<u32>(fread(dst, size, 1, _stream));
+		return static_cast<u32>(fread(dst, sizeof(u8), size, _stream));
 	}
 
 	virtual void seek(s64 offset, SeekMode mode) {
@@ -63,7 +63,10 @@ public:
 
 	virtual bool create_directory(const char* path) override {
 		std::error_code ec;
-		return std::filesystem::create_directory(path, ec);
+		std::filesystem::path p{ path };
+
+		auto parent = p.parent_path();
+		return std::filesystem::create_directories(parent, ec);
 	}
 
 	virtual bool exists(const char* path) override {
@@ -85,7 +88,8 @@ public:
 		}
 
 		// Relative paths need to be resolved to the root
-		if (!path.starts_with("..") && !path.starts_with('.')) {
+		if (path.starts_with("res:"))
+		{
 			char tmp[512];
 			sprintf_s(tmp, "%s/%s", _root.c_str(), path.c_str());
 			return tmp;
@@ -94,6 +98,12 @@ public:
 	}
 
 	virtual std::shared_ptr<IFile> open(const char* path, Mode mode, bool binary) override {
+
+		if(!exists(path))
+		{
+			create_directory(path);
+		
+		}
 
 		if(exists(path) || mode == Mode::Write) {
 			std::string t = "";

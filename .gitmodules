@@ -19,3 +19,6 @@
 [submodule "External/DirectXTK"]
 	path = External/DirectXTK
 	url = https://github.com/microsoft/DirectXTK.git
+[submodule "External/rttr"]
+	path = External/rttr
+	url = https://github.com/rttrorg/rttr.git

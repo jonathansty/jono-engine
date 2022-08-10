@@ -151,10 +151,14 @@ void InputManager::update()
 		it.second[s_prev_frame] = it.second[s_curr_frame];
 	}
 
+	// Alt key has to be tracked manually because windows...
+	_keys[MapVirtualKey(VK_MENU, MAPVK_VK_TO_VSC)][s_curr_frame] = GetKeyState(VK_MENU) & 0x8000;
+
 	for (auto& button : _mouse_buttons)
 	{
 		button[s_prev_frame] = button[s_curr_frame];
 	}
+
 
 	// Update the previous mouse position
 	_mouse_pos[s_prev_frame] = _mouse_pos[s_curr_frame];

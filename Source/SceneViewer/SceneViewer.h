@@ -23,12 +23,14 @@ public:
 	virtual void end() override;
 
 	#if FEATURE_D2D
-	virtual void paint(graphics::D2DRenderContext& ctx) override;
+	virtual void paint(Graphics::D2DRenderContext& ctx) override;
 	#endif
 	virtual void tick(double deltaTime) override;
 	virtual void debug_ui() override;
 
 private:
+
+	void rebuild_shaders();
 
 	bool load_world(const char* path);
 	void save_world(const char* path);
