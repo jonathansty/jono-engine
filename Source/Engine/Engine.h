@@ -9,7 +9,8 @@
 #include <VertexTypes.h>
 
 //#pragma GCC diagnostic ignored "-Wpragma-pack"
-#include <assimp/pbrmaterial.h>
+#include <assimp/GltfMaterial.h>
+#include <assimp/material.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>

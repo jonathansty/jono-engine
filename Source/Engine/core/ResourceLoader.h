@@ -164,6 +164,7 @@ public:
 
 	void update()
 	{
+		JONO_EVENT();
 		std::lock_guard<std::mutex> l{ _tasks_lock };
 		std::vector<std::list<enki::ITaskSet*>::iterator> to_remove;
 		for (auto it = _tasks.begin(); it != _tasks.end(); ++it)

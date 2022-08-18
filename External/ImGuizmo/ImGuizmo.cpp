@@ -1320,7 +1320,7 @@ namespace IMGUIZMO_NAMESPACE
          {
             continue;
          }
-         const bool usingAxis = (gContext.mbUsing && type == MT_SCALE_X + i);
+         const bool usingAxis = (gContext.mbUsing && type == int(MT_SCALE_X + i));
          if (!gContext.mbUsing || usingAxis)
          {
             vec_t dirPlaneX, dirPlaneY, dirAxis;
@@ -1407,7 +1407,7 @@ namespace IMGUIZMO_NAMESPACE
          {
             continue;
          }
-         const bool usingAxis = (gContext.mbUsing && type == MT_SCALE_X + i);
+         const bool usingAxis = (gContext.mbUsing && type == int(MT_SCALE_X + i));
          if (!gContext.mbUsing || usingAxis)
          {
             vec_t dirPlaneX, dirPlaneY, dirAxis;
@@ -1489,7 +1489,7 @@ namespace IMGUIZMO_NAMESPACE
          vec_t dirPlaneX, dirPlaneY, dirAxis;
          ComputeTripodAxisAndVisibility(i, dirAxis, dirPlaneX, dirPlaneY, belowAxisLimit, belowPlaneLimit);
 
-         if (!gContext.mbUsing || (gContext.mbUsing && type == MT_MOVE_X + i))
+         if (!gContext.mbUsing || (gContext.mbUsing && type == int(MT_MOVE_X + i)))
          {
             // draw axis
             if (belowAxisLimit && Intersects(op, static_cast<OPERATION>(TRANSLATE_X << i)))
@@ -1518,7 +1518,7 @@ namespace IMGUIZMO_NAMESPACE
             }
          }
          // draw plane
-         if (!gContext.mbUsing || (gContext.mbUsing && type == MT_MOVE_YZ + i))
+         if (!gContext.mbUsing || (gContext.mbUsing && type == int(MT_MOVE_YZ + i)))
          {
             if (belowPlaneLimit && Contains(op, TRANSLATE_PLANS[i]))
             {

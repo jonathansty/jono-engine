@@ -99,6 +99,8 @@ void GameEngine::set_title(const string& titleRef)
 
 int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 {
+	JONO_THREAD("MainThread");
+
 	// Create the IO first as our logging depends on creating the right folder
 	_platform_io = IO::create();
 	IO::set(_platform_io);
@@ -337,10 +339,13 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_running = true;
 	while (_running)
 	{
+		JONO_FRAME("Frame");
 
 		full_frame_timer.start();
 
 		{
+			JONO_EVENT("PollInput");
+
 			Timer t{};
 			t.Start();
 			// Process all window messages
@@ -361,13 +366,12 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			break;
 		}
 
-
-
 		{
 
 
 			// Execute the game simulation loop
 			{
+				JONO_EVENT("Simulation");
 				f64 current = time_elapsed;
 				f64 elapsed = current - time_previous; 
 				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::FrameTime, (float)(elapsed * 1000.0f));
@@ -400,8 +404,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
 			}
 
-			Perf::begin_frame(_renderer->get_raw_device_context());
 
+			Perf::begin_frame(_renderer->get_raw_device_context());
 			if (_recreate_swapchain)
 			{
 				_renderer->resize_swapchain(_window_width, _window_height);
@@ -409,23 +413,26 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			}
 
 			// Recreating the game viewport texture needs to happen before running IMGUI and the actual rendering
-			ImGui_ImplDX11_NewFrame();
-			ImGui_ImplWin32_NewFrame();
-			ImGui::NewFrame();
-			ImGuizmo::BeginFrame();
+			{
+				JONO_EVENT("DebugUI");
+				ImGui_ImplDX11_NewFrame();
+				ImGui_ImplWin32_NewFrame();
+				ImGui::NewFrame();
+				ImGuizmo::BeginFrame();
 
-			build_ui();
-			ImVec2 game_width = { get_width() / 2.0f, get_height() / 2.0f };
-			ImGui::SetNextWindowSize(game_width, ImGuiCond_FirstUseEver);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-			ImGui::PopStyleVar(1);
+				build_ui();
+				ImVec2 game_width = { get_width() / 2.0f, get_height() / 2.0f };
+				ImGui::SetNextWindowSize(game_width, ImGuiCond_FirstUseEver);
+				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
+				ImGui::PopStyleVar(1);
 
-			_game->debug_ui();
-			_overlay_manager->render_overlay();
+				_game->debug_ui();
+				_overlay_manager->render_overlay();
 
-			ImGui::EndFrame();
-			ImGui::UpdatePlatformWindows();
-			ImGui::Render();
+				ImGui::EndFrame();
+				ImGui::UpdatePlatformWindows();
+				ImGui::Render();
+			}
 
 		}
 
@@ -434,6 +441,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		// Process the previous frame gpu timers here to allow our update thread to run first
 		if (Perf::can_collect())
 		{
+			JONO_EVENT("PerfCollect");
 			size_t current = Perf::get_previous_frame_resource_index();
 
 			D3D11_QUERY_DATA_TIMESTAMP_DISJOINT timestampDisjoint;
@@ -463,18 +471,20 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 
 		// Update CPU only timings
-		_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::PresentCPU, present_timer.get_delta_time() * 1000.0);
-		if (_engine_settings.max_frame_time > 0.0)
 		{
-			f64 targetTimeMs = _engine_settings.max_frame_time;
+			JONO_EVENT("FrameLimiter");
+			_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::PresentCPU, present_timer.get_delta_time() * 1000.0);
+			if (_engine_settings.max_frame_time > 0.0)
+			{
+				f64 targetTimeMs = _engine_settings.max_frame_time;
 
-			// Get the current frame time
-			f64 framet = full_frame_timer.get_delta_time();
-			f64 time_to_sleep = targetTimeMs - framet;
+				// Get the current frame time
+				f64 framet = full_frame_timer.get_delta_time();
+				f64 time_to_sleep = targetTimeMs - framet;
 
-			Perf::precise_sleep(time_to_sleep);
+				Perf::precise_sleep(time_to_sleep);
+			}
 		}
-
 		full_frame_timer.stop();
 		f64 framet = full_frame_timer.get_delta_time();
 		time_elapsed += framet;
@@ -1210,9 +1220,10 @@ void GameEngine::build_ui()
 
 void GameEngine::render()
 {
+	JONO_EVENT();
 	auto d3d_annotation = _renderer->get_raw_annotation();
-
 	GPU_SCOPED_EVENT(d3d_annotation, L"Frame");
+
 	size_t idx = Perf::get_current_frame_resource_index();
 
 	// Begin frame gpu timer
@@ -1256,6 +1267,7 @@ void GameEngine::render()
 
 void GameEngine::present()
 {
+	JONO_EVENT();
 	auto d3d_ctx = _renderer->get_raw_device_context();
 	auto d3d_annotation = _renderer->get_raw_annotation();
 	auto d3d_swapchain = _renderer->get_raw_swapchain();
@@ -1477,7 +1489,10 @@ void GameEngine::build_menubar()
 			if (ImGui::MenuItem("Entity Editor"))
 			{
 				_show_entity_editor = !_show_entity_editor;
-				get_overlay_manager()->get_overlay("EntityDebugOverlay")->set_visible(_show_entity_editor);
+				if (auto editor = get_overlay_manager()->get_overlay("EntityEditor"))
+				{
+					get_overlay_manager()->get_overlay("EntityDebugOverlay")->set_visible(_show_entity_editor);
+				}
 			}
 
 			if (ImGui::BeginMenu("Overlays"))
@@ -1526,13 +1541,15 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 
 	// Enable run-time memory leak check for debug builds.
 	typedef HRESULT(__stdcall * fPtr)(const IID&, void**);
-	HMODULE const h_dll = LoadLibrary(L"dxgidebug.dll");
-	assert(h_dll);
-	fPtr const dxgi_get_debug_interface = reinterpret_cast<fPtr>(GetProcAddress(h_dll, "DXGIGetDebugInterface"));
-	assert(dxgi_get_debug_interface);
+	HMODULE const h_dll = GetModuleHandleW(L"dxgidebug.dll");
+	IDXGIDebug* pDXGIDebug = nullptr;
+	if (h_dll)
+	{
+		fPtr const dxgi_get_debug_interface = reinterpret_cast<fPtr>(GetProcAddress(h_dll, "DXGIGetDebugInterface"));
+		assert(dxgi_get_debug_interface);
 
-	IDXGIDebug* pDXGIDebug;
-	dxgi_get_debug_interface(__uuidof(IDXGIDebug), reinterpret_cast<void**>(&pDXGIDebug));
+		dxgi_get_debug_interface(__uuidof(IDXGIDebug), reinterpret_cast<void**>(&pDXGIDebug));
+	}
 #endif
 
 	int result = 0;

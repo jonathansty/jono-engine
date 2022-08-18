@@ -317,7 +317,7 @@ HRESULT AudioDecoder::WriteWaveData(
 HRESULT AudioDecoder::GetDuration(IMFSourceReader *pReader, LONGLONG *phnsDuration) const
 {
 	PROPVARIANT var;
-	HRESULT hr = pReader->GetPresentationAttribute(MF_SOURCE_READER_MEDIASOURCE,
+	HRESULT hr = pReader->GetPresentationAttribute((DWORD)MF_SOURCE_READER_MEDIASOURCE,
 		MF_PD_DURATION, &var);
 	if (SUCCEEDED(hr))
 	{

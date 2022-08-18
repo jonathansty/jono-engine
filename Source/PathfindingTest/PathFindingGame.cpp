@@ -6,10 +6,12 @@
 #include <queue>
 
 
-
+static u32 s_counter = 0;
+static f32 s_time = 0.0f;
 
 NavPathGrid construct_grid_from_pos(NavGrid& grid, u32 x0, u32 y0)
 {
+	JONO_EVENT();
 	NavPathGrid temp = NavPathGrid::from(grid);
 	u32 width = grid._width;
 	u32 idx = x0 + y0 * width;
@@ -99,7 +101,7 @@ void PathFindingGame::start(void)
 
 	_view_translation = float3(0.0, 0.0,0.0);
 
-	_bitmap = Bitmap::load("Resources/Tests/Bitmaps/character.png");
+	_bitmap = Bitmap::load("Resources/Bitmaps/Adventurer/adventurer_tilesheet.png");
 }
 
 void PathFindingGame::end(void)
@@ -108,6 +110,7 @@ void PathFindingGame::end(void)
 
 void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 {
+	JONO_EVENT();
 	
 	float4x4 zoom = float4x4::scale(_zoom);
 	auto engine = GameEngine::instance();
@@ -180,18 +183,21 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 	}
 
 
-	static u32 s_counter = 0;
-	constexpr u32 s_frame_height = 61;
-	constexpr f32 s_frame_width = 50.667;
+
+	constexpr u32 s_frame_height = 110;
+	constexpr f32 s_frame_width = 80;
 	D2D1_RECT_F re;
-	re.top = 0;
-	re.bottom = s_frame_height;
+	re.top = s_frame_height;
+	re.bottom = 2.0f * s_frame_height;
 
 	re.left = (s_counter) * s_frame_width;
 	re.right = (s_counter+1) * s_frame_width;
 	ctx.draw_bitmap(_bitmap.get(), { 0, 0 }, re);
 
-	s_counter = (s_counter + 1) % 6;
+	ctx.set_color(MK_COLOR(255, 0, 0, 255));
+	ctx.draw_ellipse(0, 0, 50, 50);
+	ctx.fill_ellipse(0, -60, 45, 45);
+
 }
 
 void rebuild_shaders()
@@ -203,6 +209,8 @@ void rebuild_shaders()
 
 void PathFindingGame::tick(double deltaTime)
 {
+	JONO_EVENT();
+
 	if (!GameEngine::instance()->is_input_captured())
 	{
 		auto& input = GameEngine::instance()->get_input();
@@ -265,6 +273,13 @@ void PathFindingGame::tick(double deltaTime)
 		{
 			rebuild_shaders();
 		}
+	}
+
+	s_time -= (f32)deltaTime;
+	if(s_time < 0.0f)
+	{
+		s_counter = (s_counter + 1) % 2;
+		s_time = 0.25f;
 	}
 }
 

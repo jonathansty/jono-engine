@@ -76,6 +76,7 @@ public abstract class JonaBaseProject : Project
         conf.Options.Add(new Options.Vc.Linker.DisableSpecificWarnings(
             "4099" // No PDB with library.
         ));
+        conf.Options.Add(Options.Vc.General.TreatWarningsAsErrors.Enable);
 
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
         conf.IncludePaths.Add(@"[project.SourceRootPath]/" + Utils.SourceFolderName);
@@ -147,6 +148,8 @@ public abstract class ExternalProject : JonaBaseProject
     override public void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
+        
+        conf.Options.Add(Options.Vc.General.TreatWarningsAsErrors.Disable);
 
         conf.SolutionFolder = "libraries";
 

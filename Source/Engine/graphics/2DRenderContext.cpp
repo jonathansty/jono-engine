@@ -431,9 +431,6 @@ bool D2DRenderContext::draw_rect(Rect rect, double strokeWidth /*= 1*/)
 		return false;
 	}
 
-	//D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
-	//_rt->DrawRectangle(d2dRect, _brush, (FLOAT)strokeWidth);
-	
 	DrawCmd command{};
 	command._idx_buffer = {
 		// Top
@@ -608,28 +605,123 @@ bool D2DRenderContext::fill_rounded_rect(int left, int top, int right, int botto
 bool D2DRenderContext::draw_ellipse(float2 centerPt, double radiusX, double radiusY, double strokeWidth /*= 1.0*/)
 {
 	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerPt.x, (FLOAT)centerPt.y), (FLOAT)radiusX, (FLOAT)radiusY);
-	_rt->DrawEllipse(ellipse, _brush, (FLOAT)strokeWidth);
+
+	constexpr u32 c_ellipse_resolution = 32;
+
+	DrawCmd command{};
+	u32 expected_idx_count = c_ellipse_resolution * 6;
+	u32 expected_vtx_count = c_ellipse_resolution * 4;
+	command._vtx_buffer.reserve(expected_vtx_count);
+	command._idx_buffer.reserve(expected_idx_count);
+
+	float2 center = float2(centerPt.x, centerPt.y);
+
+	f32 step = 2.0f * M_PI / c_ellipse_resolution;
+	for(f32 dt = 0.0f; dt<= 2.0f * M_PI; dt += step)
+	{
+		f32 dt_a = dt - step;
+		f32 dt_b = dt;
+		f32 dt_c = dt + step;
+		f32 dt_d = dt + step + step;
+
+		float2 a_pt = center + float2(cos(dt_a) * radiusX, sin(dt_a) * radiusY);
+		float2 b_pt = center + float2(cos(dt_b) * radiusX, sin(dt_b) * radiusY);
+		float2 c_pt = center + float2(cos(dt_c) * radiusX, sin(dt_c) * radiusY);
+		float2 d_pt = center + float2(cos(dt_d) * radiusX, sin(dt_d) * radiusY);
+
+		float2 tangent_ab = hlslpp::cross(float3(a_pt - b_pt, 0.0f), float3(0.0f, 0.0f, 1.0f)).xy;
+		float2 tangent_bc = hlslpp::cross(float3(b_pt - c_pt, 0.0f), float3(0.0f, 0.0f, 1.0f)).xy;
+		float2 tangent_cd = hlslpp::cross(float3(c_pt - d_pt, 0.0f), float3(0.0f, 0.0f, 1.0f)).xy;
+
+		float2 tangent_b = hlslpp::normalize(tangent_ab + tangent_bc);
+		float2 tangent_c = hlslpp::normalize(tangent_bc + tangent_cd);
+
+
+		// Push the plane of this line segment
+		u32 start_index = u32(command._vtx_buffer.size());
+		f32 half_stroke_width = (f32)strokeWidth / 2.0f;
+		command._vtx_buffer.push_back(Vert{ Shaders::float2(b_pt - tangent_b * half_stroke_width), Shaders::float2{} });
+		command._vtx_buffer.push_back(Vert{ Shaders::float2(c_pt - tangent_c * half_stroke_width), Shaders::float2{} });
+		command._vtx_buffer.push_back(Vert{ Shaders::float2(c_pt + tangent_c * half_stroke_width), Shaders::float2{} });
+		command._vtx_buffer.push_back(Vert{ Shaders::float2(b_pt + tangent_b * half_stroke_width), Shaders::float2{} });
+
+		// Push the indices of this line segment
+		command._idx_buffer.push_back(start_index);
+		command._idx_buffer.push_back(start_index + 1);
+		command._idx_buffer.push_back(start_index + 2);
+		command._idx_buffer.push_back(start_index);
+		command._idx_buffer.push_back(start_index + 2);
+		command._idx_buffer.push_back(start_index + 3);
+	}
+
+	command._wv = hlslpp::mul(_mat_world, _mat_view);
+	command._colour = float4(_colour.r, _colour.g, _colour.b, _colour.a);
+
+	// Transform vertices to new
+	_total_vertices += u32(command._vtx_buffer.size());
+	_total_indices += u32(command._idx_buffer.size());
+	_draw_cmds.push_back(command);
+
 	return true;
 }
 
 bool D2DRenderContext::draw_ellipse(int centerX, int centerY, int radiusX, int radiusY)
 {
-	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerX, (FLOAT)centerY), (FLOAT)radiusX, (FLOAT)radiusY);
-	_rt->DrawEllipse(ellipse, _brush, 1.0);
+	draw_ellipse(float2(centerX, centerY), radiusX, radiusY);
 	return true;
 }
 
 bool D2DRenderContext::fill_ellipse(float2 centerPt, double radiusX, double radiusY)
 {
-	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerPt.x, (FLOAT)centerPt.y), (FLOAT)radiusX, (FLOAT)radiusY);
-	_rt->FillEllipse(ellipse, _brush);
+	constexpr u32 c_ellipse_resolution = 32;
+
+	DrawCmd command{};
+	u32 expected_idx_count = c_ellipse_resolution * 6;
+	u32 expected_vtx_count = c_ellipse_resolution * 4;
+	command._vtx_buffer.reserve(expected_vtx_count);
+	command._idx_buffer.reserve(expected_idx_count);
+
+	float2 center = float2(centerPt.x, centerPt.y);
+
+	f32 step = 2.0f * M_PI / c_ellipse_resolution;
+
+	// Add the center vertex
+	command._vtx_buffer.push_back(Vert{ Shaders::float2(center), Shaders::float2{} });
+
+	// Populate all the vertices
+	u32 n_points = c_ellipse_resolution;
+	for (f32 dt = 0.0f; dt <= 2.0f * M_PI; dt += step)
+	{
+		f32 dt_a = dt;
+		float2 start_pt = center + float2(cos(dt_a) * radiusX, sin(dt_a) * radiusY);
+		command._vtx_buffer.push_back(Vert{ Shaders::float2(start_pt), Shaders::float2{} });
+	}
+
+	// Add the indices
+	for (u32 i = 0; i < n_points; ++i)
+	{
+		command._idx_buffer.push_back(0);
+		command._idx_buffer.push_back(i);
+		command._idx_buffer.push_back(std::max<u32>((i + 1) % n_points, 1));
+	}
+
+
+	command._wv = hlslpp::mul(_mat_world, _mat_view);
+	command._colour = float4(_colour.r, _colour.g, _colour.b, _colour.a);
+
+	// Transform vertices to new
+	_total_vertices += u32(command._vtx_buffer.size());
+	_total_indices += u32(command._idx_buffer.size());
+	_draw_cmds.push_back(command);
+
 	return true;
 }
 
 bool D2DRenderContext::fill_ellipse(int centerX, int centerY, int radiusX, int radiusY)
 {
-	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerX, (FLOAT)centerY), (FLOAT)radiusX, (FLOAT)radiusY);
-	_rt->FillEllipse(ellipse, _brush);
+	//D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerX, (FLOAT)centerY), (FLOAT)radiusX, (FLOAT)radiusY);
+	//_rt->FillEllipse(ellipse, _brush);
+	fill_ellipse(float2(centerX, centerY), radiusX, radiusY);
 	return true;
 }
 
@@ -645,7 +737,7 @@ bool D2DRenderContext::draw_string(std::string const& text, float2 topLeft, doub
 	D2D1_RECT_F layoutRect = (D2D1::RectF)((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(right), (FLOAT)(bottom));
 
 	tstring wText(text.begin(), text.end());
-	_rt->DrawText(wText.c_str(), wText.length(), _font->GetTextFormat(), layoutRect, _brush, options);
+	_rt->DrawText(wText.c_str(), (UINT32)wText.length(), _font->GetTextFormat(), layoutRect, _brush, options);
 
 	return true;
 }
@@ -671,8 +763,8 @@ bool D2DRenderContext::draw_bitmap(Bitmap* imagePtr, float2 position, Rect srcRe
 	{
 		return false;
 	}
-	f32 width = imagePtr->get_width();
-	f32 height = imagePtr->get_height();
+	f32 width = (f32)imagePtr->get_width();
+	f32 height = (f32)imagePtr->get_height();
 	// The size and position, in device-independent pixels in the bitmap's coordinate space, of the area within the bitmap to draw.
 	D2D1_RECT_F srcRect_f;
 	srcRect_f.left = (FLOAT)srcRect.left / width;
@@ -720,13 +812,13 @@ bool D2DRenderContext::draw_bitmap(Bitmap* imagePtr, float2 position)
 {
 	assert(imagePtr);
 
-	Rect srcRect2{ 0, 0, imagePtr->get_width(), imagePtr->get_height() };
+	Rect srcRect2{ 0, 0, (f32)imagePtr->get_width(), (f32)imagePtr->get_height() };
 	return draw_bitmap(imagePtr, position, srcRect2);
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap* imagePtr, int x, int y, RECT srcRect)
 {
-	Rect srcRect2{ srcRect.left, srcRect.top, srcRect.right, srcRect.bottom };
+	Rect srcRect2{ (f32)srcRect.left, (f32)srcRect.top, (f32)srcRect.right, (f32)srcRect.bottom };
 	return draw_bitmap(imagePtr, float2(x, y), srcRect2);
 }
 
@@ -734,13 +826,13 @@ bool D2DRenderContext::draw_bitmap(Bitmap* imagePtr, int x, int y)
 {
 	assert(imagePtr);
 
-	Rect srcRect2{ 0, 0, imagePtr->get_width(), imagePtr->get_height() };
+	Rect srcRect2{ 0, 0, (f32)imagePtr->get_width(), (f32)imagePtr->get_height() };
 	return draw_bitmap(imagePtr, float2(x, y), srcRect2);
 }
 
 bool D2DRenderContext::draw_bitmap(Bitmap* imagePtr, RECT srcRect)
 {
-	Rect srcRect2{ srcRect.left, srcRect.top, srcRect.right, srcRect.bottom };
+	Rect srcRect2{ (f32)srcRect.left, (f32)srcRect.top, (f32)srcRect.right, (f32)srcRect.bottom };
 	return draw_bitmap(imagePtr, float2(0, 0), srcRect2);
 }
 
@@ -748,7 +840,7 @@ bool D2DRenderContext::draw_bitmap(Bitmap* imagePtr)
 {
 	assert(imagePtr);
 
-	Rect srcRect2{ 0, 0, imagePtr->get_width(), imagePtr->get_height() };
+	Rect srcRect2{ 0, 0, (f32)imagePtr->get_width(), (f32)imagePtr->get_height() };
 	return draw_bitmap(imagePtr, float2(0, 0), srcRect2);
 }
 

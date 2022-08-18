@@ -37,7 +37,7 @@ public class CoreProject : JonaBaseProject
         conf.SolutionFolder = "engine";
         conf.Output = Configuration.OutputType.Lib;
 
-
+        conf.AddPublicDependency<OpTick>(target);
         conf.AddPublicDependency<Rttr>(target);
         conf.AddPublicDependency<Hlslpp>(target);
     }
@@ -108,7 +108,7 @@ public class EngineProject : JonaBaseProject
     {
         base.ExcludeOutputFiles();
 
-        CompileHLSL.ClaimAllShaderFiles(this);
+        // CompileHLSL.ClaimAllShaderFiles(this);
     }
 }
 
@@ -236,10 +236,6 @@ public class EngineSolution : Solution
         conf.AddProject<EngineProject>(target);
         conf.AddProject<SceneViewerProject>(target);
         conf.AddProject<PathFindingProject>(target);
-        conf.AddProject<EngineTestProject>(target);
-
-
-
     }
 }
 
@@ -251,6 +247,37 @@ public class ToolsOnlySolution : Solution
     {
         // The name of the solution.
         Name = "Tools";
+
+        // As with the project, define which target this solution builds for.
+        // It's usually the same thing.
+        AddTargets(Utils.Targets);
+    }
+
+    // Configure for all 4 generated targets. Note that the type of the
+    // configuration object is of type Solution.Configuration this time.
+    // (Instead of Project.Configuration.)
+    [Configure]
+    public void ConfigureAll(Solution.Configuration conf, Target target)
+    {
+        // Puts the generated solution in the /generated folder too.
+        conf.SolutionPath = @"[solution.SharpmakeCsPath]/build";
+        conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
+
+        conf.AddProject<EngineProject>(target);
+        conf.AddProject<SceneViewerProject>(target);
+        conf.AddProject<PathFindingProject>(target);
+        conf.AddProject<EngineTestProject>(target);
+    }
+}
+
+[Generate]
+public class TestSolution : Solution
+{
+    public TestSolution()
+        : base()
+    {
+        // The name of the solution.
+        Name = "Tests";
 
         // As with the project, define which target this solution builds for.
         // It's usually the same thing.
@@ -300,6 +327,7 @@ public static class Main
         sharpmakeArgs.Generate<EngineSolution>();
 
         // Generate just tools projects
+        sharpmakeArgs.Generate<TestSolution>();
         sharpmakeArgs.Generate<ToolsOnlySolution>();
     }
 

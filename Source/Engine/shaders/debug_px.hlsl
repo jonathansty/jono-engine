@@ -1,7 +1,6 @@
 #include "Common.h"
 #include "Lighting.hlsl"
 
-
 #define VisualizeMode_Default 0
 #define VisualizeMode_Albedo 1 
 #define VisualizeMode_Roughness 2 

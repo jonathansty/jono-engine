@@ -197,6 +197,38 @@ public class Hlslpp : ExternalProject
 }
 
 [Generate]
+public class OpTick : ExternalProject
+{
+    public OpTick() : base()
+    {
+        Name = "OpTick";
+        SourceRootPath = Path.Combine(ExternalDir, "OpTick/src");
+    }
+
+    override public void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        conf.Output = Configuration.OutputType.Lib;
+        conf.IncludePaths.Add(Path.Combine(ExternalDir, "optick/include"));
+        // conf.LibraryFiles.AddRange(new string[] { 
+        //     "OpTickCore.lib"
+        // });
+    }
+
+    override public void ConfigureDebug(Configuration config, Target target)
+    {
+        base.ConfigureDebug(config, target);
+        // config.LibraryPaths.Add(Path.Combine(ExternalDir, "OpTick/lib/x64/debug"));
+    }
+    override public void ConfigureRelease(Configuration config, Target target)
+    {
+        base.ConfigureRelease(config, target);
+        // config.LibraryPaths.Add(Path.Combine(ExternalDir, "OpTick/lib/x64/release"));
+    }
+}
+
+[Generate]
 public class DirectXTK : ExternalProject
 {
     public DirectXTK() : base()

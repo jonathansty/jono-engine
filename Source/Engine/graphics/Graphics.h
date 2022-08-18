@@ -93,6 +93,8 @@ namespace Shaders
 {
 	struct float2
 	{
+		float2() = default;
+
 		float2(hlslpp::float2 const& pos)
 				: _x(pos.x)
 				, _y(pos.y)
@@ -110,6 +112,8 @@ namespace Shaders
 
 	struct float3
 	{
+		float3() = default;
+
 		float3(hlslpp::float3 const& pos)
 			: _x(pos.x)
 			, _y(pos.y)
@@ -130,6 +134,8 @@ namespace Shaders
 
 	struct float4
 	{
+		float4() = default;
+
 		float4(hlslpp::float4 const& pos)
 				: _x(pos.x)
 				, _y(pos.y)
@@ -152,6 +158,8 @@ namespace Shaders
 
 	struct float4x4
 	{
+		float4x4() = default;
+
 		float4x4(hlslpp::float4x4 const& mat)
 		{
 			hlslpp::store(mat, _data);

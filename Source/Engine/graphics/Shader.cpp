@@ -77,7 +77,7 @@ Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size)
 		
 		}
 	
-		SUCCEEDED(device->CreateInputLayout(inputs.data(), inputs.size(), byte_code, size, _input_layout.GetAddressOf()));
+		SUCCEEDED(device->CreateInputLayout(inputs.data(), (UINT)inputs.size(), byte_code, size, _input_layout.GetAddressOf()));
 	}
 
 	//D3D11_SHADER_INPUT_BIND_DESC bindDesc;
