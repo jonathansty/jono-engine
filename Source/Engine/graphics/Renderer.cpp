@@ -1,5 +1,5 @@
-#include "Renderer.h"
 #include "engine.pch.h"
+#include "Renderer.h"
 
 #include "CommandLine.h"
 #include "Core/Material.h"
@@ -20,6 +20,7 @@
 
 namespace Graphics
 {
+using Helpers::SafeRelease;
 
 static f32 s_box_size = 15.0f;
 
@@ -75,38 +76,12 @@ void Renderer::deinit()
 
 	GameEngine::instance()->get_overlay_manager()->unregister_overlay(_debug_tool.get());
 
-	using Helpers::SafeRelease;
-
-	SafeRelease(_color_brush);
-	SafeRelease(_d2d_rt);
-
-	SafeRelease(_swapchain);
-	SafeRelease(_swapchain_rtv);
-	SafeRelease(_swapchain_srv);
-
-	SafeRelease(_output_tex);
-	SafeRelease(_output_rtv);
-	SafeRelease(_output_srv);
-	SafeRelease(_output_depth);
-	SafeRelease(_output_depth_srv);
-	SafeRelease(_output_dsv);
-
-	SafeRelease(_output_depth_copy);
-	SafeRelease(_output_depth_srv_copy);
-
-	SafeRelease(_user_defined_annotation);
-
 
 	_device_ctx->ClearState();
 	_device_ctx->Flush();
 
-	SafeRelease(_device_ctx);
-	SafeRelease(_device);
-	SafeRelease(_dwrite_factory);
-	SafeRelease(_wic_factory);
-	SafeRelease(_d2d_factory);
-	SafeRelease(_factory);
-
+	release_frame_resources();
+	release_device_resources();
 }
 
 void Renderer::create_factories(EngineSettings const& settings, cli::CommandLine const& cmdline)
@@ -225,6 +200,44 @@ void Renderer::create_write_factory()
 	}
 }
 
+void Renderer::release_device_resources()
+{
+	SafeRelease(_color_brush);
+	SafeRelease(_user_defined_annotation);
+
+	SafeRelease(_device_ctx);
+	SafeRelease(_device);
+	SafeRelease(_dwrite_factory);
+	SafeRelease(_wic_factory);
+	SafeRelease(_d2d_factory);
+	SafeRelease(_factory);
+}
+
+void Renderer::release_frame_resources()
+{
+	// Release all the MSAA copies
+	SafeRelease(_non_msaa_output_tex);
+	SafeRelease(_non_msaa_output_tex_copy);
+	SafeRelease(_non_msaa_output_srv);
+	SafeRelease(_non_msaa_output_srv_copy);
+	SafeRelease(_non_msaa_output_rtv);
+
+	SafeRelease(_d2d_rt);
+
+	SafeRelease(_swapchain);
+	SafeRelease(_swapchain_rtv);
+	SafeRelease(_swapchain_srv);
+
+	SafeRelease(_output_tex);
+	SafeRelease(_output_rtv);
+	SafeRelease(_output_srv);
+	SafeRelease(_output_depth);
+	SafeRelease(_output_depth_copy);
+	SafeRelease(_output_depth_srv);
+	SafeRelease(_output_depth_srv_copy);
+	SafeRelease(_output_dsv);
+}
+
 void Renderer::resize_swapchain(u32 w, u32 h)
 {
 	assert(_wnd);
@@ -257,20 +270,7 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	// Release the textures before re-creating the swapchain
 	if (_swapchain)
 	{
-		Helpers::SafeRelease(_non_msaa_output_tex);
-		Helpers::SafeRelease(_non_msaa_output_tex_copy);
-		Helpers::SafeRelease(_non_msaa_output_srv);
-		Helpers::SafeRelease(_non_msaa_output_srv_copy);
-		Helpers::SafeRelease(_non_msaa_output_rtv);
-		Helpers::SafeRelease(_output_tex);
-		Helpers::SafeRelease(_output_rtv);
-		Helpers::SafeRelease(_output_srv);
-
-		Helpers::SafeRelease(_output_depth);
-		Helpers::SafeRelease(_output_dsv);
-		Helpers::SafeRelease(_swapchain_rtv);
-		Helpers::SafeRelease(_swapchain_srv);
-		Helpers::SafeRelease(_d2d_rt);
+		release_frame_resources();
 	}
 
 	// Create the 3D output target
@@ -651,6 +651,7 @@ void Renderer::begin_frame()
 void Renderer::end_frame()
 {
 }
+
 
 FrustumCorners Renderer::get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const
 {

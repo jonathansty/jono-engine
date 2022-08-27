@@ -82,6 +82,7 @@ std::string show_file_dialog(HWND owner)
 
 void SceneViewer::start()
 {
+
 	auto ge = GameEngine::instance();
 
 	ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order) {
@@ -118,9 +119,8 @@ void SceneViewer::start()
 	_world = GameEngine::instance()->get_world();
 	
 	auto render_world = GameEngine::instance()->get_render_world();
-	_render_world = render_world;
 	render_world->create_instance(float4x4::identity(), "Resources/Models/plane_big.glb");
-	_model = render_world->create_instance(float4x4::translation({0.0,1.0,0.0}), "Resources/Models/cube.glb");
+	_model = render_world->create_instance(float4x4::translation({ 0.0, 1.0, 0.0 }), "Resources/Models/cube.glb");
 	//_model = render_world->create_instance(float4x4::scale({ 1.0, 1.0, 1.0 }), "Resources/Scenes/Main/NewSponza_Main_Blender_glTF.gltf");
 
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
@@ -219,7 +219,6 @@ void SceneViewer::start()
 
 void SceneViewer::end()
 {
-
 }
 
 #if FEATURE_D2D
@@ -230,6 +229,7 @@ void SceneViewer::paint(Graphics::D2DRenderContext& ctx)
 
 void SceneViewer::tick(double deltaTime)
 {
+
 	f32 f32_dt = (f32)deltaTime;
 	auto& input_manager = GameEngine::instance()->get_input();
 	if (input_manager->is_key_pressed(KeyCode::Right)) {
@@ -254,7 +254,8 @@ void SceneViewer::tick(double deltaTime)
 
 	auto imgui = ImGui::GetIO();
 
-	auto camera = _render_world->get_view_camera();
+	RenderWorldRef world = GameEngine::instance()->get_render_world();
+	auto camera = world->get_view_camera();
 	bool has_viewport_focus = GameEngine::instance()->is_viewport_focused();
 	if (has_viewport_focus) {
 		f32 scroll_delta = input_manager->get_scroll_delta();
@@ -304,10 +305,16 @@ void SceneViewer::tick(double deltaTime)
 	camera->set_position(_center + _zoom*newUnitPos);
 	camera->look_at(_center);
 
-	_light->set_position(float3{ radius * sin(_light_tick), 5.0f, radius * cos(_light_tick) });
-	_light->look_at(float3{ 0.0f, 0.0f, 0.0f });
+	if(_light)
+	{
+		_light->set_position(float3{ radius * sin(_light_tick), 5.0f, radius * cos(_light_tick) });
+		_light->look_at(float3{ 0.0f, 0.0f, 0.0f });
+	}
 
-	_world->update((float)deltaTime);
+	if(_world)
+	{
+		_world->update((float)deltaTime);
+	}
 
 }
 
@@ -363,7 +370,8 @@ static const char* s_world_path = "Scenes/test_world.scene";
 void SceneViewer::rebuild_shaders()
 {
 	using namespace Graphics;
-	for (std::shared_ptr<RenderWorldInstance> const& inst : _render_world->get_instances())
+	auto world = GameEngine::instance()->get_render_world();
+	for (std::shared_ptr<RenderWorldInstance> const& inst : world->get_instances())
 	{
 		ShaderCache::instance()->reload_all();
 	}
@@ -474,8 +482,8 @@ void SceneViewer::save_world(const char* path) {
 }
 
 void SceneViewer::swap_model(const char* path) {
-	_render_world->remove_instance(_model);
+	GameEngine::instance()->get_render_world()->remove_instance(_model);
 
-	_model = _render_world->create_instance(float4x4::identity(), path);
+	_model = GameEngine::instance()->get_render_world()->create_instance(float4x4::identity(), path);
 
 }

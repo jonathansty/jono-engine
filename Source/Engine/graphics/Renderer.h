@@ -169,10 +169,7 @@ public:
 
 	ID3D11Device*              get_raw_device() const { return _device; };
 	ID3D11DeviceContext*       get_raw_device_context() const { return _device_ctx; };
-	ID3D11RenderTargetView*    get_raw_swapchain_rtv() const { return _swapchain_rtv; };
 	ID3D11RenderTargetView*    get_raw_output_rtv() const { return _output_rtv; };
-	ID3D11ShaderResourceView*  get_raw_output_srv() const { return _output_srv; };
-	ID3D11DepthStencilView*    get_raw_output_dsv() const { return _output_dsv; };
 	ID3D11Texture2D*           get_raw_output_tex() const { return _output_tex; };
 	ID3D11Texture2D*           get_raw_output_non_msaa_tex() const { return _non_msaa_output_tex; };
 	ID3D11ShaderResourceView*  get_raw_output_non_msaa_srv() const { return _non_msaa_output_srv; };
@@ -234,6 +231,9 @@ private:
 	void create_d2d_factory(EngineSettings const& settings);
 	void create_wic_factory();
 	void create_write_factory();
+
+	void release_frame_resources();
+	void release_device_resources();
 
 	FrustumCorners get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const;
 

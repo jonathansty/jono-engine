@@ -117,7 +117,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_platform_io->mount("Resources");
 
 	ASSERTMSG(_game, "No game has been setup! Make sure to first create a game instance before launching the engine!");
-	_game->configure_engine(this->_engine_settings);
+	if (_game)
+	{
+		_game->configure_engine(this->_engine_settings);
+	}
 
 	// Validate engine settings
 	ASSERTMSG(!(_engine_settings.d2d_use && (_engine_settings.d3d_use && _engine_settings.d3d_msaa_mode != MSAAMode::Off)), " Currently the engine does not support rendering D2D with MSAA because DrawText does not respond correctly!");
@@ -251,7 +254,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	_renderer->init(_engine_settings, _game_settings, _command_line);
 
 	// Game Initialization
-	_game->initialize(_game_settings);
+	if (_game)
+	{
+		_game->initialize(_game_settings);
+	}
 	apply_settings(_game_settings);
 
 	// Open the window
@@ -317,7 +323,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 #pragma endregion
 
 	// User defined functions for start of the game
-	_game->start();
+	if (_game)
+	{
+		_game->start();
+	}
 
 	// Ensure world has default setup
 	if (!get_render_world()->get_view_camera())
@@ -357,6 +366,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	f64 time_lag = 0.0; 
 
 	_running = true;
+	if (!_game)
+	{
+		_running = false;
+	}
 	while (_running)
 	{
 		JONO_FRAME("Frame");
@@ -404,7 +417,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				while (time_lag >= _physics_timestep)
 				{
 					// Call the Game Tick method
-					_game->tick(_physics_timestep);
+					if (_game)
+					{
+						_game->tick(_physics_timestep);
+					}
 
 					int32 velocityIterations = 6;
 					int32 positionIterations = 2;
@@ -445,7 +461,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 				ImGui::PopStyleVar(1);
 
-				_game->debug_ui();
+				if (_game)
+				{
+					_game->debug_ui();
+				}
 				_overlay_manager->render_overlay();
 
 				ImGui::EndFrame();
@@ -512,7 +531,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 
 	// User defined code for exiting the game
-	_game->end();
+	if (_game)
+	{
+		_game->end();
+	}
 	_game.reset();
 
 	// Make sure all tasks have finished before shutting down
@@ -552,14 +574,12 @@ void GameEngine::d2d_render()
 	// 1. Collect all the draw commands in buffers and capture the required data
 	// 2. during end_paint 'flush' draw commands and create required vertex buffers
 	// 3. Execute each draw command binding the right buffers and views
-	static std::unique_ptr<Graphics::D2DRenderContext> s_context = nullptr;
-	if (!s_context)
+	if (!_d2d_render_context)
 	{
-		s_context = std::make_unique<Graphics::D2DRenderContext>( _renderer.get(), _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get() );
+		_d2d_render_context = std::make_unique<Graphics::D2DRenderContext>(_renderer.get(), _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get());
 	}
-	Graphics::D2DRenderContext& context = *s_context;
+	Graphics::D2DRenderContext& context = *_d2d_render_context;
 	context.begin_paint(_renderer.get(), _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get());
-	_d2d_ctx = &context;
 
 	auto size = this->get_viewport_size();
 
@@ -569,7 +589,10 @@ void GameEngine::d2d_render()
 
 	{
 		GPU_SCOPED_EVENT(_renderer->get_raw_annotation(), "D2D:Paint");
-		_game->paint(context);
+		if (_game)
+		{
+			_game->paint(context);
+		}
 	}
 
 	// draw Box2D debug rendering

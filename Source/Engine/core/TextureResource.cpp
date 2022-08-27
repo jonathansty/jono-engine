@@ -97,7 +97,7 @@ void TextureResource::create_from_memory(uint32_t width, uint32_t height, DXGI_F
 }
 
 
-void Texture::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data)
+void Texture::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data, const char* debug_name)
 {
 	auto device = Graphics::get_device();
 	auto ctx = Graphics::get_ctx();
@@ -110,12 +110,12 @@ void Texture::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT fo
 	tex_data.pSysMem = data;
 	tex_data.SysMemPitch = sizeof(u32) * width;
 	SUCCEEDED(device->CreateTexture2D(&desc, &tex_data, texture.GetAddressOf()));
-	Helpers::SetDebugObjectName(texture.Get(), "Texture::CreateFromMemory");
+	Helpers::SetDebugObjectName(texture.Get(), debug_name ? debug_name : "Texture::CreateFromMemory");
 
 	auto view_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(texture.Get(), D3D11_SRV_DIMENSION_TEXTURE2D, format);
 	SUCCEEDED(texture.As(&_resource));
 	ENSURE_HR(device->CreateShaderResourceView(_resource.Get(), &view_desc, _srv.GetAddressOf()));
-	Helpers::SetDebugObjectName(_srv.Get(), "Texture::CreateFromMemory");
+	Helpers::SetDebugObjectName(_srv.Get(), debug_name ? debug_name : "Texture::CreateFromMemory");
 }
 
 void Texture::load(std::string const& path)
@@ -130,7 +130,7 @@ void Texture::load(std::string const& path)
 	this->_width = u32(x);
 	this->_height = u32(y);
 
-	this->create_from_memory(x, y, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, (void*)data);
+	this->create_from_memory(x, y, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, (void*)data, path.c_str());
 	stbi_image_free(data);
 	// SUCCEEDED(DirectX::CreateWICTextureFromFile(device, wpath.c_str(), _resource.GetAddressOf(), _srv.GetAddressOf()));
 }

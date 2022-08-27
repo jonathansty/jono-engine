@@ -359,6 +359,7 @@ private:
 	ImGuiID _viewport_id;
 
 	std::shared_ptr<Graphics::Renderer> _renderer;
+	std::unique_ptr<Graphics::D2DRenderContext> _d2d_render_context;
 
 	friend class MetricsOverlay;
 };

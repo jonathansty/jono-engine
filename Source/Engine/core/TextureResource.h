@@ -16,7 +16,7 @@ public:
 
 	void load(std::string const& path);
 
-	void create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data);
+	void create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data, const char* debug_name = nullptr);
 
 	// Gets the raw SRV for this texture resource
 	ID3D11ShaderResourceView* get_srv() const { return _srv.Get(); }

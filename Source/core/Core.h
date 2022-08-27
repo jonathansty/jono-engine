@@ -12,10 +12,6 @@
 #include <commdlg.h>
 #endif
 
-#include <array>
-#include <mutex>
-#include <thread>
-#include <vector>
 
 #include <rttr/registration>
 #include <rttr/registration_friend>
@@ -35,6 +31,10 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <array>
+#include <mutex>
+#include <thread>
+#include <vector>
 
 #include <Identifier.h>
 

@@ -276,17 +276,15 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 	res->_loaded = false;
 	res->_status = ResourceStatus::Loading;
 
-	auto do_load = load_fn(res);
-
-	enki::ITaskSet* set = create_load_task(res);
-
 	if (blocking)
 	{
-		Tasks::get_scheduler()->AddTaskSetToPipe(set);
-		Tasks::get_scheduler()->WaitforTask(set);
+		auto task = LoadResourceTask<T>(res);
+		Tasks::get_scheduler()->AddTaskSetToPipe(&task);
+		Tasks::get_scheduler()->WaitforTask(&task);
 	}
 	else
 	{
+		enki::ITaskSet* set = new LoadResourceTask<T>(res);
 		{
 			std::lock_guard<std::mutex> l{ _tasks_lock };
 			_tasks.push_back(set);
