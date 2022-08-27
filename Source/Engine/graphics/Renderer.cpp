@@ -74,7 +74,7 @@ void Renderer::deinit()
 {
 	GameEngine::instance()->get_overlay_manager()->unregister_overlay(_debug_tool.get());
 
-	using helpers::SafeRelease;
+	using Helpers::SafeRelease;
 
 	SafeRelease(_color_brush);
 	SafeRelease(_d2d_rt);
@@ -106,7 +106,7 @@ void Renderer::create_factories(EngineSettings const& settings, cli::CommandLine
 	// Create Direct3D 11 factory
 	{
 		ENSURE_HR(CreateDXGIFactory(IID_PPV_ARGS(&_factory)));
-		helpers::SetDebugObjectName(_factory, "Main DXGI Factory");
+		Helpers::SetDebugObjectName(_factory, "Main DXGI Factory");
 
 		// Define the ordering of feature levels that Direct3D attempts to create.
 		D3D_FEATURE_LEVEL featureLevels[] = {
@@ -249,20 +249,20 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	// Release the textures before re-creating the swapchain
 	if (_swapchain)
 	{
-		helpers::SafeRelease(_non_msaa_output_tex);
-		helpers::SafeRelease(_non_msaa_output_tex_copy);
-		helpers::SafeRelease(_non_msaa_output_srv);
-		helpers::SafeRelease(_non_msaa_output_srv_copy);
-		helpers::SafeRelease(_non_msaa_output_rtv);
-		helpers::SafeRelease(_output_tex);
-		helpers::SafeRelease(_output_rtv);
-		helpers::SafeRelease(_output_srv);
+		Helpers::SafeRelease(_non_msaa_output_tex);
+		Helpers::SafeRelease(_non_msaa_output_tex_copy);
+		Helpers::SafeRelease(_non_msaa_output_srv);
+		Helpers::SafeRelease(_non_msaa_output_srv_copy);
+		Helpers::SafeRelease(_non_msaa_output_rtv);
+		Helpers::SafeRelease(_output_tex);
+		Helpers::SafeRelease(_output_rtv);
+		Helpers::SafeRelease(_output_srv);
 
-		helpers::SafeRelease(_output_depth);
-		helpers::SafeRelease(_output_dsv);
-		helpers::SafeRelease(_swapchain_rtv);
-		helpers::SafeRelease(_swapchain_srv);
-		helpers::SafeRelease(_d2d_rt);
+		Helpers::SafeRelease(_output_depth);
+		Helpers::SafeRelease(_output_dsv);
+		Helpers::SafeRelease(_swapchain_rtv);
+		Helpers::SafeRelease(_swapchain_srv);
+		Helpers::SafeRelease(_d2d_rt);
 	}
 
 	// Create the 3D output target
@@ -810,6 +810,7 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 			float3 center = ((min_extents + max_extents) / 2.0f).xyz;
 			float3 extents = ((max_extents - min_extents) / 2.0f).xyz;
 
+			using namespace DirectX;
 			XMFLOAT3 xm_center;
 			XMFLOAT3 xm_extents;
 			hlslpp::store(center, (float*)&xm_center);
@@ -918,6 +919,8 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 		view = world->get_view_camera()->get_view();
 		proj = world->get_view_camera()->get_proj();
 	}
+
+	using namespace DirectX;
 	XMMATRIX xm_view = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&view);
 	XMMATRIX xm_proj = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&proj);
 	s_effect->SetView(xm_view);

@@ -61,16 +61,16 @@ void RendererDebugTool::render_3d(ID3D11DeviceContext* ctx)
 					max = hlslpp::max(frustum[j], max);
 				}
 
-				XMVECTOR xm_color;
+				Shaders::float4 xm_color;
 				hlslpp::store(colors[(i) % colors.size()], (float*)&xm_color);
 
 				// Visualize the bounding box in world space of our cascades
 				float3 center = ((max + min) / 2.0f).xyz;
 				float3 extents = ((max - min) / 2.0f).xyz;
-				XMFLOAT3 xm_center;
+				Shaders::float3 xm_center;
 				hlslpp::store(center, (float*)&xm_center);
 
-				XMFLOAT3 xm_extents;
+				Shaders::float3 xm_extents;
 				hlslpp::store(extents, (float*)&xm_extents);
 				auto box = DirectX::BoundingBox(xm_center, xm_extents);
 				Debug::Draw(_batch.get(), box, xm_color);
@@ -93,7 +93,7 @@ void RendererDebugTool::render_3d(ID3D11DeviceContext* ctx)
 				Debug::DrawRay(_batch.get(), float4(center.xyz, 1.0f), light->get_view_direction(), true, c_basic_cascade);
 
 				float3 cascade_center = light->get_cascade(s_visualize_cascade).center;
-				auto box = DirectX::BoundingBox(XMFLOAT3{ cascade_center.x, cascade_center.y, cascade_center.z }, XMFLOAT3{ 1.0, 1.0, 1.0 });
+				auto box = DirectX::BoundingBox(DirectX::XMFLOAT3{ cascade_center.x, cascade_center.y, cascade_center.z }, DirectX::XMFLOAT3{ 1.0, 1.0, 1.0 });
 				Debug::Draw(_batch.get(), box);
 			}
 

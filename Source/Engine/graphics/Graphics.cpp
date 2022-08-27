@@ -96,15 +96,15 @@ void init(DeviceContext const& ctx)
 		CD3D11_RASTERIZER_DESC rs_desc{ CD3D11_DEFAULT() };
 		rs_desc.CullMode = D3D11_CULL_NONE;
 		SUCCEEDED(device->CreateRasterizerState(&rs_desc, s_raster_states[*RasterizerState::CullNone].GetAddressOf()));
-		helpers::SetDebugObjectName(s_raster_states[*RasterizerState::CullNone].Get(), "CullNone");
+		Helpers::SetDebugObjectName(s_raster_states[*RasterizerState::CullNone].Get(), "CullNone");
 
 		rs_desc.CullMode = D3D11_CULL_FRONT;
 		SUCCEEDED(device->CreateRasterizerState(&rs_desc, s_raster_states[*RasterizerState::CullFront].GetAddressOf()));
-		helpers::SetDebugObjectName(s_raster_states[*RasterizerState::CullFront].Get(), "CullFront");
+		Helpers::SetDebugObjectName(s_raster_states[*RasterizerState::CullFront].Get(), "CullFront");
 
 		rs_desc.CullMode = D3D11_CULL_BACK;
 		SUCCEEDED(device->CreateRasterizerState(&rs_desc, s_raster_states[*RasterizerState::CullBack].GetAddressOf()));
-		helpers::SetDebugObjectName(s_raster_states[*RasterizerState::CullBack].Get(), "CullBack");
+		Helpers::SetDebugObjectName(s_raster_states[*RasterizerState::CullBack].Get(), "CullBack");
 	}
 
 	// Samplers
@@ -177,25 +177,25 @@ std::shared_ptr<Graphics::Shader> get_error_shader_vx()
 void CreateDSS(ComPtr<ID3D11Device> const& device, CD3D11_DEPTH_STENCIL_DESC const& ds_desc, DepthStencilState state)
 {
 	SUCCEEDED(device->CreateDepthStencilState(&ds_desc, s_depth_stencil_states[*state].GetAddressOf()));
-	helpers::SetDebugObjectName(s_depth_stencil_states[*state].Get(), DepthStencilStateToString(state));
+	Helpers::SetDebugObjectName(s_depth_stencil_states[*state].Get(), DepthStencilStateToString(state));
 }
 
 void CreateRSS(ComPtr<ID3D11Device> const& device, CD3D11_RASTERIZER_DESC const& rs_desc, RasterizerState state)
 {
 	SUCCEEDED(device->CreateRasterizerState(&rs_desc, s_raster_states[*state].GetAddressOf()));
-	helpers::SetDebugObjectName(s_raster_states[*state].Get(), RasterizerStateToString(state));
+	Helpers::SetDebugObjectName(s_raster_states[*state].Get(), RasterizerStateToString(state));
 }
 
 void CreateSS(ComPtr<ID3D11Device> const& device, CD3D11_SAMPLER_DESC const& ss_desc, SamplerState state)
 {
 	SUCCEEDED(device->CreateSamplerState(&ss_desc, s_sampler_states[*state].GetAddressOf()));
-	helpers::SetDebugObjectName(s_sampler_states[*state].Get(), SamplerStateToString(state));
+	Helpers::SetDebugObjectName(s_sampler_states[*state].Get(), SamplerStateToString(state));
 }
 
 void CreateBS(ComPtr<ID3D11Device> const& device, CD3D11_BLEND_DESC const& bs_desc, BlendState state)
 {
 	SUCCEEDED(device->CreateBlendState(&bs_desc, s_blend_states[*state].GetAddressOf()));
-	helpers::SetDebugObjectName(s_blend_states[*state].Get(), BlendStateToString(state));
+	Helpers::SetDebugObjectName(s_blend_states[*state].Get(), BlendStateToString(state));
 }
 
 

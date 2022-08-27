@@ -12,19 +12,19 @@ namespace Debug
 
 void Draw(DirectX::PrimitiveBatch<DirectX::VertexPositionColor>* batch,
 		const DirectX::BoundingSphere& sphere,
-		DirectX::XMVECTOR color = DirectX::Colors::White);
+		float4 color = float4(1.0f, 1.0f, 1.0f, 1.0f));
 
 void Draw(DirectX::PrimitiveBatch<DirectX::VertexPositionColor>* batch,
 		const DirectX::BoundingBox& box,
-		DirectX::XMVECTOR color = DirectX::Colors::White);
+		float4 color = float4(1.0f, 1.0f, 1.0f, 1.0f));
 
 void Draw(DirectX::PrimitiveBatch<DirectX::VertexPositionColor>* batch,
 		const DirectX::BoundingOrientedBox& obb,
-		DirectX::XMVECTOR color = DirectX::Colors::White);
+		float4 color = float4(1.0f, 1.0f, 1.0f, 1.0f));
 
 void Draw(DirectX::PrimitiveBatch<DirectX::VertexPositionColor>* batch,
 		const DirectX::BoundingFrustum& frustum,
-		DirectX::XMVECTOR color = DirectX::Colors::White);
+		float4 color = float4(1.0f, 1.0f, 1.0f, 1.0f));
 
 void DrawGrid(DirectX::PrimitiveBatch<DirectX::VertexPositionColor>* batch,
 		float4 xAxis, float4 yAxis,
@@ -32,8 +32,8 @@ void DrawGrid(DirectX::PrimitiveBatch<DirectX::VertexPositionColor>* batch,
 		float4 color = float4(1.0f, 1.0f, 1.0f, 1.0f));
 
 void DrawRing(DirectX::PrimitiveBatch<DirectX::VertexPositionColor>* batch,
-		DirectX::XMVECTOR origin, DirectX::XMVECTOR majorAxis, DirectX::XMVECTOR minorAxis,
-		DirectX::GXMVECTOR color = DirectX::Colors::White);
+		float4 const& origin, float4 const& majorAxis, float4 const& minorAxis,
+		float4 const& color = float4(1.0f, 1.0f, 1.0f, 1.0f));
 
 void DrawRay(DirectX::PrimitiveBatch<DirectX::VertexPositionColor>* batch,
 		float4 origin, float4 direction, bool normalize = true,

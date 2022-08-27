@@ -1,5 +1,15 @@
 #include "engine.pch.h"
 #include "Debug.h"
+#include "ShaderTypes.h"
+
+namespace
+{
+float4 g_hlslpp_identity_R0 = { 1.0f, 0.0f, 0.0f, 0.0f };
+float4 g_hlslpp_identity_R1 = { 0.0f, 1.0f, 0.0f, 0.0f };
+float4 g_hlslpp_identity_R2 = { 0.0f, 0.0f, 1.0f, 0.0f };
+float4 g_hlslpp_identity_R3 = { 0.0f, 0.0f, 0.0f, 1.0f };
+} // namespace
+
 namespace Graphics
 {
 
@@ -8,21 +18,21 @@ namespace Debug
 using namespace DirectX;
 
 inline void DrawCube(PrimitiveBatch<VertexPositionColor>* batch,
-		CXMMATRIX matWorld,
-		FXMVECTOR color)
+		float4x4 matWorld,
+		float4 color)
 {
-	static const XMVECTORF32 s_verts[8] = {
-		{ { { -1.f, -1.f, -1.f, 0.f } } },
-		{ { { 1.f, -1.f, -1.f, 0.f } } },
-		{ { { 1.f, -1.f, 1.f, 0.f } } },
-		{ { { -1.f, -1.f, 1.f, 0.f } } },
-		{ { { -1.f, 1.f, -1.f, 0.f } } },
-		{ { { 1.f, 1.f, -1.f, 0.f } } },
-		{ { { 1.f, 1.f, 1.f, 0.f } } },
-		{ { { -1.f, 1.f, 1.f, 0.f } } }
+	static const float4 s_verts[8] = {
+		float4{ -1.f, -1.f, -1.f, 0.f },
+		float4{ 1.f, -1.f, -1.f, 0.f },
+		float4{ 1.f, -1.f, 1.f, 0.f },
+		float4{ -1.f, -1.f, 1.f, 0.f },
+		float4{ -1.f, 1.f, -1.f, 0.f },
+		float4{ 1.f, 1.f, -1.f, 0.f },
+		float4{ 1.f, 1.f, 1.f, 0.f },
+		float4{ -1.f, 1.f, 1.f, 0.f }
 	};
 
-	static const WORD s_indices[] = {
+	static const u16 s_indices[] = {
 		0, 1,
 		1, 2,
 		2, 3,
@@ -40,9 +50,9 @@ inline void DrawCube(PrimitiveBatch<VertexPositionColor>* batch,
 	VertexPositionColor verts[8];
 	for (size_t i = 0; i < 8; ++i)
 	{
-		XMVECTOR v = XMVector3Transform(s_verts[i], matWorld);
-		XMStoreFloat3(&verts[i].position, v);
-		XMStoreFloat4(&verts[i].color, color);
+		float4 v = hlslpp::mul(s_verts[i], matWorld);
+		hlslpp::store(v, (float*)&verts[i].position);
+		hlslpp::store(color, (float*)&verts[i].color);
 	}
 
 	batch->DrawIndexed(D3D_PRIMITIVE_TOPOLOGY_LINELIST, s_indices, static_cast<UINT>(std::size(s_indices)), verts, 8);
@@ -50,15 +60,16 @@ inline void DrawCube(PrimitiveBatch<VertexPositionColor>* batch,
 
 void Draw(PrimitiveBatch<VertexPositionColor>* batch,
 		const BoundingSphere& sphere,
-		FXMVECTOR color)
+		float4 color)
 {
-	XMVECTOR origin = XMLoadFloat3(&sphere.Center);
+	float4 origin{};
+	hlslpp::load(origin, (float*)&sphere.Center);
 
 	const float radius = sphere.Radius;
 
-	XMVECTOR xaxis = g_XMIdentityR0 * radius;
-	XMVECTOR yaxis = g_XMIdentityR1 * radius;
-	XMVECTOR zaxis = g_XMIdentityR2 * radius;
+	float4 xaxis = g_hlslpp_identity_R1 * radius;
+	float4 yaxis = g_hlslpp_identity_R2 * radius;
+	float4 zaxis = g_hlslpp_identity_R3 * radius;
 
 	DrawRing(batch, origin, xaxis, zaxis, color);
 	DrawRing(batch, origin, xaxis, yaxis, color);
@@ -67,31 +78,39 @@ void Draw(PrimitiveBatch<VertexPositionColor>* batch,
 
 void Draw(PrimitiveBatch<VertexPositionColor>* batch,
 		const BoundingBox& box,
-		FXMVECTOR color)
+		float4 color)
 {
-	XMMATRIX matWorld = XMMatrixScaling(box.Extents.x, box.Extents.y, box.Extents.z);
-	XMVECTOR position = XMLoadFloat3(&box.Center);
-	matWorld.r[3] = XMVectorSelect(matWorld.r[3], position, g_XMSelect1110);
+	float4x4 matWorld = float4x4::scale(box.Extents.x, box.Extents.y, box.Extents.z);
+
+	float4 position = {};
+	hlslpp::load(position, (float*)&box.Center);
+	matWorld.vec3 = position.vec;
 
 	DrawCube(batch, matWorld, color);
 }
 
-void  Draw(PrimitiveBatch<VertexPositionColor>* batch,
+void Draw(PrimitiveBatch<VertexPositionColor>* batch,
 		const BoundingOrientedBox& obb,
-		FXMVECTOR color)
+		float4 color)
 {
-	XMMATRIX matWorld = XMMatrixRotationQuaternion(XMLoadFloat4(&obb.Orientation));
-	XMMATRIX matScale = XMMatrixScaling(obb.Extents.x, obb.Extents.y, obb.Extents.z);
-	matWorld = XMMatrixMultiply(matScale, matWorld);
-	XMVECTOR position = XMLoadFloat3(&obb.Center);
-	matWorld.r[3] = XMVectorSelect(matWorld.r[3], position, g_XMSelect1110);
+	hlslpp::float4 rot;
+	hlslpp::load(rot, (float*)&obb.Orientation);
+
+	auto rotation = hlslpp::quaternion(rot);
+	float4x4 matWorld = float4x4(rotation);
+	float4x4 matScale = float4x4::scale(obb.Extents.x, obb.Extents.y, obb.Extents.z);
+	matWorld = hlslpp::mul(matScale, matWorld);
+
+	float4 position = {};
+	hlslpp::load(position, (float*)&obb.Center);
+	matWorld.vec3 = position.vec;
 
 	DrawCube(batch, matWorld, color);
 }
 
 void Draw(PrimitiveBatch<VertexPositionColor>* batch,
 		const BoundingFrustum& frustum,
-		FXMVECTOR color)
+		float4 color)
 {
 	XMFLOAT3 corners[BoundingFrustum::CORNER_COUNT];
 	frustum.GetCorners(corners);
@@ -126,7 +145,7 @@ void Draw(PrimitiveBatch<VertexPositionColor>* batch,
 
 	for (size_t j = 0; j < std::size(verts); ++j)
 	{
-		XMStoreFloat4(&verts[j].color, color);
+		verts[j].color = { color.x, color.y, color.z, color.w };
 	}
 
 	batch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINELIST, verts, static_cast<UINT>(std::size(verts)));
@@ -181,10 +200,10 @@ void DrawGrid(PrimitiveBatch<VertexPositionColor>* batch,
 }
 
 void DrawRing(PrimitiveBatch<VertexPositionColor>* batch,
-		FXMVECTOR origin,
-		FXMVECTOR majorAxis,
-		FXMVECTOR minorAxis,
-		GXMVECTOR color)
+		float4 const& origin,
+		float4 const& majorAxis,
+		float4 const& minorAxis,
+		float4 const& color)
 {
 	static const size_t c_ringSegments = 32;
 
@@ -194,22 +213,21 @@ void DrawRing(PrimitiveBatch<VertexPositionColor>* batch,
 	// Instead of calling cos/sin for each segment we calculate
 	// the sign of the angle delta and then incrementally calculate sin
 	// and cosine from then on.
-	XMVECTOR cosDelta = XMVectorReplicate(cosf(fAngleDelta));
-	XMVECTOR sinDelta = XMVectorReplicate(sinf(fAngleDelta));
-	XMVECTOR incrementalSin = XMVectorZero();
-	static const XMVECTORF32 s_initialCos = {
-		1.f, 1.f, 1.f, 1.f
-	};
-	XMVECTOR incrementalCos = s_initialCos.v;
+	float4 cosDelta = float4(cosf(fAngleDelta));
+	float4 sinDelta = float4(sinf(fAngleDelta));
+
+	float4 incrementalSin = float4(0.0f,0.0f,0.f,0.0f);
+	float4 incrementalCos = float4(1.0f, 1.0f, 1.0f, 1.0f);
 	for (size_t i = 0; i < c_ringSegments; i++)
 	{
-		XMVECTOR pos = XMVectorMultiplyAdd(majorAxis, incrementalCos, origin);
-		pos = XMVectorMultiplyAdd(minorAxis, incrementalSin, pos);
-		XMStoreFloat3(&verts[i].position, pos);
-		XMStoreFloat4(&verts[i].color, color);
+		float4 pos = hlslpp::mad(majorAxis, incrementalCos, origin);
+		pos = hlslpp::mad(minorAxis, incrementalSin, pos);
+		verts[i].position = { pos.x, pos.y, pos.z };
+		verts[i].color = { color.x, color.y, color.z, color.w };
+
 		// Standard formula to rotate a vector.
-		XMVECTOR newCos = incrementalCos * cosDelta - incrementalSin * sinDelta;
-		XMVECTOR newSin = incrementalCos * sinDelta + incrementalSin * cosDelta;
+		float4 newCos = incrementalCos * cosDelta - incrementalSin * sinDelta;
+		float4 newSin = incrementalCos * sinDelta + incrementalSin * cosDelta;
 		incrementalCos = newCos;
 		incrementalSin = newSin;
 	}
@@ -230,11 +248,11 @@ void DrawRay(PrimitiveBatch<VertexPositionColor>* batch,
 	float3 normDirection = hlslpp::normalize(direction.xyz);
 	float3 rayDirection = (normalize) ? normDirection : direction.xyz;
 
-	float3 perpVector = hlslpp::cross(normDirection.xyz, float3(0.0f,1.0f,0.0f));
+	float3 perpVector = hlslpp::cross(normDirection.xyz, float3(0.0f, 1.0f, 0.0f));
 
 	if (hlslpp::length(perpVector) == float1(0.0f))
 	{
-		perpVector = hlslpp::cross(normDirection.xyz, float3(0.0f,0.0f,1.0f));
+		perpVector = hlslpp::cross(normDirection.xyz, float3(0.0f, 0.0f, 1.0f));
 	}
 	perpVector = hlslpp::normalize(perpVector);
 
@@ -242,12 +260,12 @@ void DrawRay(PrimitiveBatch<VertexPositionColor>* batch,
 	perpVector = perpVector * 0.0625f;
 	normDirection = normDirection * -0.25f;
 	rayDirection = perpVector + rayDirection;
-	rayDirection = normDirection+ rayDirection;
+	rayDirection = normDirection + rayDirection;
 	hlslpp::store(rayDirection + origin.xyz, (float*)&verts[2].position);
 
-	hlslpp::store(color,(float*)&verts[0].color);
-	hlslpp::store(color,(float*)&verts[1].color);
-	hlslpp::store(color,(float*)&verts[2].color);
+	hlslpp::store(color, (float*)&verts[0].color);
+	hlslpp::store(color, (float*)&verts[1].color);
+	hlslpp::store(color, (float*)&verts[2].color);
 
 	batch->Draw(D3D_PRIMITIVE_TOPOLOGY_LINESTRIP, verts, 2);
 }

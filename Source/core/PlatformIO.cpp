@@ -1,24 +1,27 @@
 #include "core.pch.h"
 #include "PlatformIO.h"
 
-
-namespace IO {
+namespace IO
+{
 
 #ifdef WIN64
 
-class Win64File final : public IFile {
+class Win64File final : public IFile
+{
 public:
-	Win64File(const char* path, FILE* s, Mode m, bool binary) 
-		: _path(path)
-		, _stream(s)
-		, _mode(m)
-		, _binary(binary)
+	Win64File(const char* path, FILE* s, Mode m, bool binary)
+			: _path(path)
+			, _stream(s)
+			, _mode(m)
+			, _binary(binary)
 	{
 	}
 
-	virtual ~Win64File() {
+	virtual ~Win64File()
+	{
 		// When a file goes out of scope force a close
-		if (_stream) {
+		if (_stream)
+		{
 			fclose(_stream);
 			_stream = nullptr;
 		}
@@ -28,20 +31,25 @@ public:
 
 	virtual Mode get_mode() const { return _mode; }
 
-	virtual uint32_t write(void* src, uint32_t size) {
+	virtual uint32_t write(void* src, uint32_t size)
+	{
 		return static_cast<uint32_t>(fwrite(src, sizeof(u8), size, _stream));
 	}
 
-	virtual u32 read(void* dst, u32 size) {
+	virtual u32 read(void* dst, u32 size)
+	{
 		return static_cast<u32>(fread(dst, sizeof(u8), size, _stream));
 	}
 
-	virtual void seek(s64 offset, SeekMode mode) {
+	virtual void seek(s64 offset, SeekMode mode)
+	{
 		int m = SEEK_CUR;
-		if (mode == SeekMode::FromBeginning) {
+		if (mode == SeekMode::FromBeginning)
+		{
 			m = SEEK_SET;
 		}
-		if(mode == SeekMode::FromEnd) {
+		if (mode == SeekMode::FromEnd)
+		{
 			m = SEEK_END;
 		}
 		fseek(_stream, long(offset), m);
@@ -55,13 +63,16 @@ public:
 	bool _binary;
 };
 
-class Win64IO final : public IPlatformIO {
+class Win64IO final : public IPlatformIO
+{
 public:
 	Win64IO()
-			: _root(".") {
+			: _root(".")
+	{
 	}
 
-	virtual bool create_directory(const char* path) override {
+	virtual bool create_directory(const char* path) override
+	{
 		std::error_code ec;
 		std::filesystem::path p{ path };
 
@@ -69,21 +80,25 @@ public:
 		return std::filesystem::create_directories(parent, ec);
 	}
 
-	virtual bool exists(const char* path) override {
+	virtual bool exists(const char* path) override
+	{
 		std::string tmp = resolve_path(path);
 		return std::filesystem::exists(tmp);
 	}
 
-	virtual void mount(const char* path) override {
+	virtual void mount(const char* path) override
+	{
 		_root = path;
 	}
 
-	virtual std::string resolve_path(std::string const& path) override {
+	virtual std::string resolve_path(std::string const& path) override
+	{
 		// Check if path is relative
 		std::filesystem::path p{ path };
 
 		// Absolute paths just get resolved straight
-		if (p.is_absolute()) {
+		if (p.is_absolute())
+		{
 			return path;
 		}
 
@@ -97,17 +112,18 @@ public:
 		return path;
 	}
 
-	virtual std::shared_ptr<IFile> open(const char* path, Mode mode, bool binary) override {
-
-		if(!exists(path))
+	virtual std::shared_ptr<IFile> open(const char* path, Mode mode, bool binary) override
+	{
+		if (!exists(path))
 		{
 			create_directory(path);
-		
 		}
 
-		if(exists(path) || mode == Mode::Write) {
+		if (exists(path) || mode == Mode::Write)
+		{
 			std::string t = "";
-			switch (mode) {
+			switch (mode)
+			{
 				case Mode::Read:
 					t = "r";
 					break;
@@ -118,17 +134,19 @@ public:
 					break;
 			}
 
-			if (binary) {
+			if (binary)
+			{
 				t += "b";
 			}
 
 			std::string tmp = resolve_path(path);
 			FILE* s;
 			auto err = fopen_s(&s, tmp.c_str(), t.c_str());
-			if (s == nullptr) {
+			if (s == nullptr)
+			{
 				char buffer[256];
 				strerror_s(buffer, err);
-				fmt::print("Failed to open file. Error: {}",buffer);
+				fmt::print("Failed to open file. Error: {}", buffer);
 				return nullptr;
 			}
 			return std::make_shared<Win64File>(tmp.c_str(), s, mode, binary);
@@ -137,10 +155,11 @@ public:
 		return nullptr;
 	}
 
-	virtual void close(IFileRef const& file) override {
-
+	virtual void close(IFileRef const& file) override
+	{
 		Win64File* winFile = (Win64File*)file.get();
-		if(winFile->_stream) {
+		if (winFile->_stream)
+		{
 			fclose(winFile->_stream);
 		}
 
@@ -148,35 +167,36 @@ public:
 		winFile->_stream = nullptr;
 	}
 
-
-	private:
-		std::string _root;
+private:
+	std::string _root;
 };
 
 #endif
 
-IPlatformIORef create() {
+IPlatformIORef create()
+{
 #if defined(WIN64)
 	return std::make_shared<Win64IO>();
-#else 
+#else
 	throw std::exception("Platform not supported!");
 	return nullptr;
 #endif
 }
 
 static IPlatformIORef s_io;
-void set(IPlatformIORef io) 
+void set(IPlatformIORef io)
 {
 	s_io = io;
 }
 
-IPlatformIORef const& get() {
+IPlatformIORef const& get()
+{
 	// Create IO if it doesn't exist yet!
-	if (!s_io) {
+	if (!s_io)
+	{
 		s_io = create();
 	}
 	return s_io;
 }
 
-
-}
+} // namespace IO

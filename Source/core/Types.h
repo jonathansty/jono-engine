@@ -25,13 +25,6 @@ using s64 = int64_t;
 using f32 = float;
 using f64 = double;
 
-using DirectX::XMFLOAT2;
-using DirectX::XMFLOAT3;
-using DirectX::XMFLOAT4;
-using DirectX::XMFLOAT4X4;
-using DirectX::XMFLOAT3X3;
-using DirectX::XMMATRIX;
-using DirectX::XMVECTOR;
 
 using hlslpp::double2;
 using hlslpp::float1;
@@ -86,13 +79,15 @@ struct ImpulseData
 	void *actAPtr = nullptr, *actBPtr = nullptr;
 };
 
-namespace helpers {
+namespace Helpers {
 
 // Wraps around hlslpp float4 to provide support for RTTR
-struct WrapperFloat4 {
+struct WrapperFloat4
+{
 	hlslpp::float4 value;
 
-	operator hlslpp::float4() {
+	operator hlslpp::float4()
+	{
 		return value;
 	}
 
@@ -109,9 +104,11 @@ private:
 	void set_w(float v) { value.w = v; }
 };
 
-struct WrapperQuat {
+struct WrapperQuat
+{
 	hlslpp::quaternion value;
-	operator hlslpp::quaternion() {
+	operator hlslpp::quaternion()
+	{
 		return value;
 	}
 
@@ -128,17 +125,19 @@ struct WrapperQuat {
 };
 
 // Wraps around hlslpp float3 to provide support for RTTR
-struct WrapperFloat3 {
+struct WrapperFloat3
+{
 	hlslpp::float3 value;
 
-	operator hlslpp::float3() {
+	operator hlslpp::float3()
+	{
 		return value;
 	}
 
-	private:
+private:
 	RTTR_REGISTRATION_FRIEND;
 
-	public:
+public:
 	float get_x() { return value.x; }
 	float get_y() { return value.y; }
 	float get_z() { return value.z; }
@@ -146,36 +145,33 @@ struct WrapperFloat3 {
 	void set_x(float v) { value.x = v; }
 	void set_y(float v) { value.y = v; }
 	void set_z(float v) { value.z = v; }
-
-
 };
 
 } // namespace helpers
 
-using helpers::WrapperFloat3;
-using helpers::WrapperFloat4;
-using helpers::WrapperQuat;
+using Helpers::WrapperFloat3;
+using Helpers::WrapperFloat4;
+using Helpers::WrapperQuat;
 
-namespace helpers {
-
+namespace Helpers
+{
 
 rttr::type const& get_type_by_id(u64 id);
 
 GUID StringToGuid(const std::string& str);
 std::string GuidToString(GUID guid);
 
-void SetDebugObjectName(ID3D11DeviceChild* res, std::string const& name);
-void SetDebugObjectName(IDXGIObject* obj, std::string const& name);
-
 template <typename T>
-void SafeRelease(T*& obj) {
-	if (obj != nullptr) {
+void SafeRelease(T*& obj)
+{
+	if (obj != nullptr)
+	{
 		obj->Release();
 		obj = nullptr;
 	}
 }
 
-}
+} // namespace helpers
 
 #define MK_COLOR(r, g, b, a) ((u32)((r & 0xFF) << 24 | (g & 0xFF) << 16 | (b & 0xFF) << 8 | a))
 #define COLOR_R(c) ( c & 0xFF000000)
@@ -183,14 +179,11 @@ void SafeRelease(T*& obj) {
 #define COLOR_B(c) ( c & 0x0000FF00)
 #define COLOR_A(c) ( c & 0x000000FF)
 
-
 #define ENSURE_HR(result)     \
 	{                         \
 		HRESULT __COUNTER__##_result = result;  \
 		assert(S_OK == (__COUNTER__##_result)); \
 	}
-
-
 
 // Enum related implementation macros
 

@@ -418,7 +418,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				ImGui_ImplDX11_NewFrame();
 				ImGui_ImplWin32_NewFrame();
 				ImGui::NewFrame();
-				ImGuizmo::BeginFrame();
 
 				build_ui();
 				ImVec2 game_width = { get_width() / 2.0f, get_height() / 2.0f };
@@ -932,10 +931,10 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 
 	if (ImGui::GetCurrentContext() != nullptr)
 	{
-		bool bWantImGuiCapture = ImGui::GetIO().WantCaptureKeyboard ||
-								 ImGui::GetIO().WantCaptureMouse;
+		//bool bWantImGuiCapture = ImGui::GetIO().WantCaptureKeyboard ||
+		//						 ImGui::GetIO().WantCaptureMouse;
 
-		if (bWantImGuiCapture)
+		//if (bWantImGuiCapture)
 		{
 			extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 			if (LRESULT v = ImGui_ImplWin32_WndProcHandler(hWindow, msg, wParam, lParam); v != 0)
@@ -1567,7 +1566,7 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 	{
 		pDXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
 	}
-	helpers::SafeRelease(pDXGIDebug);
+	Helpers::SafeRelease(pDXGIDebug);
 #endif
 
 	return result;

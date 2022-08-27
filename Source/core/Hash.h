@@ -27,8 +27,8 @@ inline uint32_t fnv1a(const void* data, size_t numBytes, uint32_t hash = Seed)
 	}
 	return hash;
 }
-template<typename T>
-inline uint32_t fnv1a(T const& data, uint32_t hash = Seed) 
+template <typename T>
+inline uint32_t fnv1a(T const& data, uint32_t hash = Seed)
 {
 	return fnv1a((void*)&data, sizeof(T), hash);
 }
@@ -47,4 +47,4 @@ inline uint32_t fnv1a(std::string const& data, uint32_t hash = Seed)
 	return fnv1a(data.data(), data.size() * sizeof(data[0]), hash);
 }
 
-} // namespace std
+} // namespace Hash

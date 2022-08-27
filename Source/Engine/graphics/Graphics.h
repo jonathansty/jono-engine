@@ -4,6 +4,21 @@
 #include "ShaderCompiler.h"
 #include "singleton.h"
 
+namespace Helpers
+{
+
+inline void SetDebugObjectName(IDXGIObject* obj, std::string const& name)
+{
+	ENSURE_HR(obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.c_str()));
+}
+
+inline  void SetDebugObjectName(ID3D11DeviceChild* res, std::string const& name)
+{
+	ENSURE_HR(res->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.c_str()));
+}
+
+} // namespace Helpers
+
 enum class DepthStencilState : u32
 {
 	Default,
@@ -88,92 +103,3 @@ HRESULT set_debug_name(T* obj, std::string const& n)
 
 } // namespace Graphics
 
-// Shaders namespace contains utility functions to convert from and to predictable memory layouts for shaders
-namespace Shaders
-{
-	struct float2
-	{
-		float2() = default;
-
-		float2(hlslpp::float2 const& pos)
-				: _x(pos.x)
-				, _y(pos.y)
-		{
-		}
-
-		operator hlslpp::float2()
-		{
-			return hlslpp::float2(_x, _y);
-		}
-
-		f32 _x;
-		f32 _y;
-	};
-
-	struct float3
-	{
-		float3() = default;
-
-		float3(hlslpp::float3 const& pos)
-			: _x(pos.x)
-			, _y(pos.y)
-			, _z(pos.z)
-		{
-		}
-
-		operator hlslpp::float3()
-		{
-			return hlslpp::float3(_x, _y, _z);
-		}
-
-
-		f32 _x;
-		f32 _y;
-		f32 _z;
-	};
-
-	struct float4
-	{
-		float4() = default;
-
-		float4(hlslpp::float4 const& pos)
-				: _x(pos.x)
-				, _y(pos.y)
-				, _z(pos.z)
-				, _w(pos.w)
-		{
-		}
-
-		operator hlslpp::float4()
-		{
-			return hlslpp::float4(_x, _y, _z, _w);
-		}
-
-		f32 _x;
-		f32 _y;
-		f32 _z;
-		f32 _w;
-	};
-
-
-	struct float4x4
-	{
-		float4x4() = default;
-
-		float4x4(hlslpp::float4x4 const& mat)
-		{
-			hlslpp::store(mat, _data);
-		}
-
-		operator hlslpp::float4x4() 
-		{
-			hlslpp::float4x4 result;
-			hlslpp::load(result, _data);
-			return result;
-		}
-
-
-		f32 _data[16];
-	};
-
-} // namespace Shaders

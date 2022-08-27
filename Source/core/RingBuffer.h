@@ -1,29 +1,34 @@
 #pragma once
 
 template <typename _Ty, size_t _Size>
-class RingBuffer {
+class RingBuffer
+{
 public:
 	using SelfType = RingBuffer<_Ty, _Size>;
 	RingBuffer()
 			: _start(0)
 			, _end(0)
-			, _data() {
+			, _data()
+	{
 	}
 
 	~RingBuffer() {}
 
-	void push(_Ty val) {
+	void push(_Ty val)
+	{
 		// Copy the value to the end value
 		_data[_end] = val;
 
 		// Update our variables. If end runs over start we move start and overwrite the data
 		_end = (_end + 1) % _Size;
-		if (_end == _start) {
+		if (_end == _start)
+		{
 			_start = (_start + 1) % _Size;
 		}
 	}
 
-	void clear() {
+	void clear()
+	{
 		_start = 0;
 		_end = 0;
 	}
@@ -31,7 +36,8 @@ public:
 	bool empty() const { return _start == _end; }
 
 	template <typename _Ty, size_t _Size>
-	struct Iterator {
+	struct Iterator
+	{
 		using iterator_category = std::forward_iterator_tag;
 		using difference_type = std::atomic_ptrdiff_t;
 		using value_type = _Ty;
@@ -40,25 +46,30 @@ public:
 
 		Iterator(RingBuffer<_Ty, _Size> const* owner, size_t idx)
 				: _idx(idx)
-				, _owner(owner) {
+				, _owner(owner)
+		{
 		}
 
-		Iterator& operator++() {
+		Iterator& operator++()
+		{
 			_idx = (_idx + 1) % _Size;
 			return *this;
 		}
 
-		Iterator operator++(int) {
+		Iterator operator++(int)
+		{
 			Iterator tmp = *this;
 			++(*this);
 			return tmp;
 		}
 
-		pointer operator->() {
+		pointer operator->()
+		{
 			return &_owner->_data[_idx];
 		}
 
-		pointer operator*() {
+		pointer operator*()
+		{
 			return &_owner->_data[_idx];
 		}
 

@@ -1,29 +1,31 @@
 #pragma once
-#include <memory>
 
 #include "Core.h"
 
-namespace IO {
+namespace IO
+{
 
 // File mode to indicate if a file can be read/written to.
-enum class Mode {
+enum class Mode
+{
 	Read,
 	Write,
 };
 
-enum class SeekMode {
+enum class SeekMode
+{
 	FromBeginning,
 	FromCurrent,
 	FromEnd,
 };
 
 // IFile
-// 
-// Interface to define operations that can be executed 
+//
+// Interface to define operations that can be executed
 // on a file. Each platform it's IO implementation will return a pointer to a derived IFile object.
-struct IFile {
-
-	virtual ~IFile(){}
+struct IFile
+{
+	virtual ~IFile() {}
 
 	virtual bool is_binary() const = 0;
 
@@ -40,9 +42,10 @@ struct IFile {
 using IFileRef = std::shared_ptr<IFile>;
 
 // IPlatformIO
-// 
-// Interface defining the available operations to interact with the file system. 
-struct IPlatformIO {
+//
+// Interface defining the available operations to interact with the file system.
+struct IPlatformIO
+{
 	virtual ~IPlatformIO() = default;
 
 	virtual string resolve_path(string const& path) = 0;
@@ -56,11 +59,8 @@ struct IPlatformIO {
 	virtual IFileRef open(const char* path, Mode mode, bool binary = false) = 0;
 
 	virtual void close(IFileRef const& file) = 0;
-
-
 };
 using IPlatformIORef = std::shared_ptr<IPlatformIO>;
-
 
 IPlatformIORef create();
 

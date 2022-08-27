@@ -9,7 +9,7 @@ using hlslpp::float4;
 
 RTTR_REGISTRATION{
 	using namespace rttr;
-	using namespace helpers;
+	using namespace Helpers;
 
 	registration::class_<WrapperFloat4>("float4")
 		.property("X", &WrapperFloat4::get_x, &WrapperFloat4::set_x)
@@ -36,9 +36,16 @@ struct GlobalData {
 	std::mutex mutex;
 	std::unordered_map<u64, rttr::type const*> mappings;
 };
-GlobalData g_data{};
 
-GUID StringToGuid(const std::string& str) {
+// Global type storage that we query to find a type based on an ID
+GlobalData g_TypeStorage{};
+
+
+namespace Helpers
+{
+
+GUID StringToGuid(const std::string& str)
+{
 	GUID guid;
 	sscanf_s(str.c_str(),
 			"{%8x-%4hx-%4hx-%2hhx%2hhx-%2hhx%2hhx%2hhx%2hhx%2hhx%2hhx}",
@@ -49,9 +56,8 @@ GUID StringToGuid(const std::string& str) {
 	return guid;
 }
 
-namespace helpers {
-
-std::string GuidToString(GUID guid) {
+std::string GuidToString(GUID guid)
+{
 	char guid_cstr[39];
 	snprintf(guid_cstr, sizeof(guid_cstr),
 			"{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
@@ -62,25 +68,20 @@ std::string GuidToString(GUID guid) {
 	return std::string(guid_cstr);
 }
 
-void SetDebugObjectName(IDXGIObject* obj, std::string const& name) {
-	ENSURE_HR(obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.c_str()));
-}
 
-void SetDebugObjectName(ID3D11DeviceChild* res, std::string const& name) {
-	ENSURE_HR(res->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.c_str()));
-}
-
-rttr::type const& helpers::get_type_by_id(u64 id) {
-	if (!g_data.initialised) {
-		std::lock_guard g{ g_data.mutex };
-		std::for_each(rttr::type::get_types().begin(), rttr::type::get_types().end(), [&](rttr::type const& type) {
+rttr::type const& Helpers::get_type_by_id(u64 id)
+{
+	if (!g_TypeStorage.initialised)
+	{
+		std::lock_guard g{ g_TypeStorage.mutex };
+		std::for_each(rttr::type::get_types().begin(), rttr::type::get_types().end(), [&](rttr::type const& type)
+				{
 			Identifier64 h = Identifier64(type.get_name().begin());
-			g_data.mappings[h.get_hash()] = &type;
-		});
-		g_data.initialised = true;
+			g_TypeStorage.mappings[h.get_hash()] = &type; });
+		g_TypeStorage.initialised = true;
 	}
 
-	return *g_data.mappings[id];
+	return *g_TypeStorage.mappings[id];
 }
 
-}
+} // namespace helpers

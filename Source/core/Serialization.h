@@ -6,45 +6,52 @@ namespace serialization {
 
 // Writing binary
 template <typename T>
-inline void write(IO::IFileRef const& f, T const& obj) {
+inline void write(IO::IFileRef const& f, T const& obj)
+{
 	f->write((void*)&obj, sizeof(T));
 }
 
-template<typename T>
-inline void write(IO::IFileRef const& f, Identifier<T> const& obj) {
+template <typename T>
+inline void write(IO::IFileRef const& f, Identifier<T> const& obj)
+{
 	T v = obj.get_hash();
 	f->write(&v, sizeof(T));
 }
 
 template <typename T>
-inline void write(IO::IFileRef const& f, std::vector<T> const& obj) {
+inline void write(IO::IFileRef const& f, std::vector<T> const& obj)
+{
 	uint32_t size = obj.size();
 	f->write(&size, sizeof(uint32_t));
 	f->write((void*)obj.data(), sizeof(T));
 }
 
 template <>
-inline void write(IO::IFileRef const& f, std::string const& obj) {
+inline void write(IO::IFileRef const& f, std::string const& obj)
+{
 	uint32_t size = static_cast<uint32_t>(obj.size());
 	f->write(&size, sizeof(uint32_t));
-	f->write((void*)obj.data(), sizeof(char) *size);
+	f->write((void*)obj.data(), sizeof(char) * size);
 }
 
-template<typename T>
-inline T read(IO::IFileRef const& f) {
+template <typename T>
+inline T read(IO::IFileRef const& f)
+{
 	T el{};
 	f->read((void*)&el, sizeof(T));
 	return el;
 }
 
-inline Identifier64 read(IO::IFileRef const& f) {
+inline Identifier64 read(IO::IFileRef const& f)
+{
 	u64 val;
 	f->read(&val, sizeof(u64));
 	return Identifier64(val);
 }
 
 template <>
-inline std::string read(IO::IFileRef const& f) {
+inline std::string read(IO::IFileRef const& f)
+{
 	uint32_t size;
 	f->read(&size, sizeof(uint32_t));
 
@@ -85,12 +92,15 @@ bool read_associative_container(IO::IFileRef const& file, rttr::instance obj);
 /// <param name="file"></param>
 /// <param name="obj">Input/output data</param>
 template <typename T, IO::Mode Enum>
-void serialize(IO::IFileRef const& file, T& obj) {
+void serialize(IO::IFileRef const& file, T& obj)
+{
 	assert(file->is_binary());
-	if constexpr (Enum == IO::Mode::Read) {
+	if constexpr (Enum == IO::Mode::Read)
+	{
 		obj = read<T>(file);
 	}
-	else {
+	else
+	{
 		write<T>(file, obj);
 	}
 }
@@ -103,7 +113,8 @@ void serialize(IO::IFileRef const& file, T& obj) {
 /// <param name="instance">The data to serialize</param>
 /// <returns>Boolean to indicate success or failure</returns>
 template <IO::Mode Mode>
-bool serialize_instance(IO::IFileRef const& file, rttr::instance instance) {
+bool serialize_instance(IO::IFileRef const& file, rttr::instance instance) 
+{
 	assert(file->is_binary() && Mode == file->get_mode());
 
 	// Read type hash of the instance
@@ -123,17 +134,18 @@ bool serialize_instance(IO::IFileRef const& file, rttr::instance instance) {
 	bool handled_all_props = true;
 
 	auto it_prop = t.get_properties().begin();
-	for (u32 i = 0; i < n_properties; ++i) {
-
-		// First use the property retrieved from the type. If we are 
-		// writing we want to write the correct property, when 
+	for (u32 i = 0; i < n_properties; ++i)
+	{
+		// First use the property retrieved from the type. If we are
+		// writing we want to write the correct property, when
 		// reading this will get overriden with the right property from the file.
 		std::string name = it_prop->get_name().begin();
 		serialize<std::string, Mode>(file, name);
 
 		// Check that our runtime type contains the property
 		rttr::property prop = t.get_property(name);
-		if (!prop.is_valid()) {
+		if (!prop.is_valid())
+		{
 			continue;
 		}
 
@@ -142,7 +154,8 @@ bool serialize_instance(IO::IFileRef const& file, rttr::instance instance) {
 		rttr::type const& t_prop = prop.get_type();
 
 		// Deal with reading
-		if constexpr(Mode == IO::Mode::Read) {
+		if constexpr (Mode == IO::Mode::Read)
+		{
 			rttr::variant value = prop.get_value(obj);
 
 			if (read_atomic_types(file, value)) {} 
@@ -155,7 +168,8 @@ bool serialize_instance(IO::IFileRef const& file, rttr::instance instance) {
 		}
 
 		// Deal with writing
-		if constexpr(Mode == IO::Mode::Write) {
+		if constexpr (Mode == IO::Mode::Write)
+		{
 			rttr::variant prop_value = prop.get_value(obj);
 			if (write_atomic_types(file, prop_value)) {
 			} else if(write_container(file, prop_value)) {

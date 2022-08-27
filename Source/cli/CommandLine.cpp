@@ -1,7 +1,7 @@
-#include "CommandLine.h"
 #include "cli.pch.h"
 
-#include <algorithm>
+#include "CommandLine.h"
+
 
 cli::CommandLine cli::parse(const char** argvs, const int argc)
 {
@@ -129,12 +129,12 @@ bool cli::get_string(CommandLine const& cmd_args, std::string const& arg, std::s
 	}
 
 	std::string lhs;
-	helpers::split_string(argument, "=", lhs, val);
+	Helpers::split_string(argument, "=", lhs, val);
 
 	return true;
 }
 
-void helpers::split_string(std::string const& in, std::string const& delim, std::string& lhs, std::string& rhs)
+void Helpers::split_string(std::string const& in, std::string const& delim, std::string& lhs, std::string& rhs)
 {
 	size_t pos = in.find(delim);
 	lhs = in.substr(0, pos);

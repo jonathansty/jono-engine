@@ -1,6 +1,6 @@
 #pragma once
 
-template<typename T>
+template <typename T>
 void safe_delete(T*& obj)
 {
 	if (obj)
@@ -10,13 +10,12 @@ void safe_delete(T*& obj)
 	}
 }
 
-template<typename T>
+template <typename T>
 class TSingleton
 {
 public:
-	TSingleton() 
+	TSingleton()
 	{
-
 	}
 
 	virtual ~TSingleton()
@@ -27,12 +26,12 @@ public:
 
 	static void create();
 	static void shutdown();
-private:
 
+private:
 	static T* _obj;
 };
 
-template<typename T>
+template <typename T>
 void TSingleton<T>::shutdown()
 {
 	if (_obj)
@@ -40,17 +39,16 @@ void TSingleton<T>::shutdown()
 		delete _obj;
 		_obj = nullptr;
 	}
-
 }
 
-template<typename T>
+template <typename T>
 T* TSingleton<T>::instance()
 {
 	ASSERT(_obj);
 	return _obj;
 }
 
-template<typename T>
+template <typename T>
 void TSingleton<T>::create()
 {
 	if (!_obj)
@@ -59,5 +57,5 @@ void TSingleton<T>::create()
 	}
 }
 
-template<typename T>
+template <typename T>
 __declspec(selectany) T* TSingleton<T>::_obj;

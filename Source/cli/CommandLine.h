@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-namespace helpers
+namespace Helpers
 {
 
 // Helper function to split strings

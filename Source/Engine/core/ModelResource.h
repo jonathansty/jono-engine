@@ -1,6 +1,7 @@
 #pragma once
 #include "ResourceLoader.h"
 
+#include "Graphics/ShaderTypes.h"
 
 class TextureResource;
 
@@ -8,12 +9,12 @@ using MaterialRef = std::shared_ptr<class MaterialResource>;
 
 struct ModelUberVertex
 {
-	XMFLOAT3 position;
-	XMFLOAT3 normal;
-	XMFLOAT4 tangent;
-	XMFLOAT4 bitangent;
-	XMFLOAT4 color;
-	XMFLOAT2 uv;
+	Shaders::float3 position;
+	Shaders::float3 normal;
+	Shaders::float4 tangent;
+	Shaders::float4 bitangent;
+	Shaders::float4 color;
+	Shaders::float2 uv;
 
 	static const std::size_t InputElementCount = 6;
 	static const D3D11_INPUT_ELEMENT_DESC InputElements[InputElementCount];

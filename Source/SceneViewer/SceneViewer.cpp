@@ -402,7 +402,7 @@ bool SceneViewer::load_world(const char* path) {
 				u64 hash = serialization::read<u64>(file);
 				file->seek(pos, IO::SeekMode::FromBeginning);
 
-				auto t = helpers::get_type_by_id(hash);
+				auto t = Helpers::get_type_by_id(hash);
 				rttr::variant inst = t.create();
 				serialization::serialize_instance<IO::Mode::Read>(file, inst);
 

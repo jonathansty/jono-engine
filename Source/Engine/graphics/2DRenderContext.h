@@ -5,6 +5,7 @@
 #include "Graphics.h"
 #include "Renderer.h"
 #include "Shader.h"
+#include "ShaderTypes.h"
 
 struct ID2D1Factory;
 struct ID2D1RenderTarget;

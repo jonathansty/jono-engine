@@ -18,7 +18,7 @@ class SimpleMovement2D final : public framework::Component
 public:
 	SimpleMovement2D();
 
-	SimpleMovement2D(XMFLOAT2 pos, float speed);
+	SimpleMovement2D(float2 pos, float speed);
 
 	~SimpleMovement2D();
 
@@ -135,7 +135,7 @@ public:
 	hlslpp::float3 get_color() { return _color; }
 
 private:
-	helpers::WrapperFloat3 _color;
+	Helpers::WrapperFloat3 _color;
 	float _intensity;
 };
 

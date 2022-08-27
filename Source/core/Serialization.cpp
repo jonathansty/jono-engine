@@ -6,7 +6,8 @@ using hlslpp::float3;
 
 
 
-bool serialization::write_atomic_types(IO::IFileRef const& file, rttr::variant const& variant) {
+bool serialization::write_atomic_types(IO::IFileRef const& file, rttr::variant const& variant)
+{
 
 	auto const& t = variant.get_type();
 	auto const& var = variant;
@@ -39,24 +40,32 @@ bool serialization::write_atomic_types(IO::IFileRef const& file, rttr::variant c
 			write(file, var.to_double());
 		}
 		return true;
-	} else if (t.is_enumeration()) {
+	}
+	else if (t.is_enumeration())
+	{
 		bool ok = false;
 		auto value = var.to_uint64(&ok);
 		if (ok) {
 			write(file, value);
 		}
 		return true;
-	} else if (t == type::get<std::string>()) {
+	}
+	else if (t == type::get<std::string>())
+	{
 		write(file, var.to_string());
 		return true;
-	} else if (t == type::get<WrapperFloat4>()) {
+	}
+	else if (t == type::get<WrapperFloat4>())
+	{
 		float4 value = var.get_value<WrapperFloat4>().value;
 		write(file, float(value.x));
 		write(file, float(value.y));
 		write(file, float(value.z));
 		write(file, float(value.w));
 		return true;
-	} else if (t == type::get<WrapperFloat3>()) {
+	}
+	else if (t == type::get<WrapperFloat3>())
+	{
 		float3 value = var.get_value<WrapperFloat3>().value;
 		write(file, float(value.x));
 		write(file, float(value.y));
@@ -68,7 +77,8 @@ bool serialization::write_atomic_types(IO::IFileRef const& file, rttr::variant c
 	return false;
 }
 
-bool serialization::write_instance(IO::IFileRef const& file, rttr::instance const& instance) {
+bool serialization::write_instance(IO::IFileRef const& file, rttr::instance const& instance)
+{
 	rttr::instance obj = instance.get_type().get_raw_type().is_wrapper() ? instance.get_wrapped_instance() : instance;
 	rttr::type t = obj.get_type().get_raw_type();
 	rttr::array_range<rttr::property> properties = obj.get_derived_type().get_properties();
@@ -102,11 +112,13 @@ bool serialization::write_instance(IO::IFileRef const& file, rttr::instance cons
 	return true;
 }
 
-bool serialization::read_atomic_types(IO::IFileRef const& file, rttr::variant& variant) {
+bool serialization::read_atomic_types(IO::IFileRef const& file, rttr::variant& variant)
+{
 	using namespace rttr;
 	rttr::type t = variant.get_type();
 
-	if (t.is_arithmetic()) {
+	if (t.is_arithmetic())
+	{
 		if (t == type::get<bool>()) {
 			variant = read<bool>(file);
 			return true;
@@ -144,13 +156,19 @@ bool serialization::read_atomic_types(IO::IFileRef const& file, rttr::variant& v
 			variant = read<double>(file);
 			return true;
 		}
-	} else if (t.is_enumeration()) {
+	}
+	else if (t.is_enumeration())
+	{
 		variant = read<uint64_t>(file);
 		return true;
-	} else if (t == type::get<std::string>()) {
+	}
+	else if (t == type::get<std::string>())
+	{
 		variant = read<std::string>(file);
 		return true;
-	} else if (t == type::get<WrapperFloat4>()) {
+	}
+	else if (t == type::get<WrapperFloat4>())
+	{
 		float4 value{};
 		value.x = read<float>(file);
 		value.y = read<float>(file);
@@ -160,7 +178,9 @@ bool serialization::read_atomic_types(IO::IFileRef const& file, rttr::variant& v
 		result.value = value;
 		variant = result;
 		return true;
-	} else if (t == type::get<WrapperFloat3>()) {
+	}
+	else if (t == type::get<WrapperFloat3>())
+	{
 		float3 value = {};
 		value.x = read<float>(file);
 		value.y = read<float>(file);
@@ -174,7 +194,8 @@ bool serialization::read_atomic_types(IO::IFileRef const& file, rttr::variant& v
 	return false;
 }
 
-bool serialization::read_instance(IO::IFileRef const& file, rttr::instance instance) {
+bool serialization::read_instance(IO::IFileRef const& file, rttr::instance instance)
+{
 
 	// Read type hash of the instance
 	u64 type_hash = read<u64>(file);
@@ -214,29 +235,36 @@ bool serialization::read_instance(IO::IFileRef const& file, rttr::instance insta
 	return true;
 }
 
-bool serialization::read_container(IO::IFileRef const& file, rttr::instance variant) {
-	if (variant.get_type().is_associative_container()) {
+bool serialization::read_container(IO::IFileRef const& file, rttr::instance variant)
+{
+	if (variant.get_type().is_associative_container())
+	{
 		return read_associative_container(file, variant);
-	} else if (variant.get_type().is_sequential_container()) {
+	}
+	else if (variant.get_type().is_sequential_container())
+	{
 		return read_sequential_container(file, variant);
 	}
 	return false;
 }
 
-bool serialization::write_container(IO::IFileRef const& file, rttr::variant const& variant) {
-
+bool serialization::write_container(IO::IFileRef const& file, rttr::variant const& variant)
+{
 	rttr::type t = variant.get_type();
-	if (t.is_associative_container()) {
+	if (t.is_associative_container())
+	{
 		return write_associative_container(file, variant);
-	} 
-	else if (t.is_sequential_container()) {
+	}
+	else if (t.is_sequential_container())
+	{
 		return write_sequential_container(file, variant);
 	}
 
 	return false;
 }
 
-bool serialization::write_sequential_container(IO::IFileRef const& file, rttr::variant const& variant) {
+bool serialization::write_sequential_container(IO::IFileRef const& file, rttr::variant const& variant)
+{
 
 	rttr::type obj = variant.get_type().get_wrapped_type();
 	rttr::type t_obj = obj.get_raw_type();
@@ -249,7 +277,8 @@ bool serialization::write_sequential_container(IO::IFileRef const& file, rttr::v
 	serialization::write<std::size_t>(file, view.get_size());
 
 	// Optimize to write the type only once for the entire container
-	for (size_t i = 0; i < view.get_size(); ++i) {
+	for (size_t i = 0; i < view.get_size(); ++i)
+	{
 		rttr::variant value = view.get_value(i).extract_wrapped_value();
 		rttr::variant t = view.get_type();
 		if (write_atomic_types(file, value)) {
@@ -263,7 +292,8 @@ bool serialization::write_sequential_container(IO::IFileRef const& file, rttr::v
 	return true;
 }
 
-bool serialization::write_associative_container(IO::IFileRef const& file, rttr::variant const& variant) {
+bool serialization::write_associative_container(IO::IFileRef const& file, rttr::variant const& variant)
+{
 	rttr::type obj = variant.get_type().get_wrapped_type();
 	rttr::type t_obj = obj.get_raw_type();
 
@@ -274,7 +304,8 @@ bool serialization::write_associative_container(IO::IFileRef const& file, rttr::
 	serialization::write<std::size_t>(file, view.get_size());
 
 	// Optimize to write the type only once for the entire container
-	for (auto const& item : view) {
+	for (auto const& item : view)
+	{
 		// Write key
 		if (write_atomic_types(file, item.first)) {
 		} else if (write_container(file, item.first)) {
@@ -296,11 +327,11 @@ bool serialization::write_associative_container(IO::IFileRef const& file, rttr::
 	return true;
 }
 
-bool serialization::read_sequential_container(IO::IFileRef const& file, rttr::instance obj) {
-
+bool serialization::read_sequential_container(IO::IFileRef const& file, rttr::instance obj)
+{
 	Identifier64 type_hash = Identifier64{ read<u64>(file) };
 
-	rttr::type t = helpers::get_type_by_id(type_hash.get_hash());
+	rttr::type t = Helpers::get_type_by_id(type_hash.get_hash());
 
 	rttr::variant container = t.create();
 	assert(container.is_sequential_container());
@@ -309,7 +340,8 @@ bool serialization::read_sequential_container(IO::IFileRef const& file, rttr::in
 	size_t size = read<size_t>(file);
 	view.set_size(size);
 
-	for (size_t i = 0; i < size; ++i) {
+	for (size_t i = 0; i < size; ++i)
+	{
 
 		rttr::variant value = view.get_value_type().create();
 		if (read_atomic_types(file, value)) {
@@ -326,16 +358,17 @@ bool serialization::read_sequential_container(IO::IFileRef const& file, rttr::in
 	return false;
 }
 
-bool serialization::read_associative_container(IO::IFileRef const& file, rttr::instance obj) {
-
+bool serialization::read_associative_container(IO::IFileRef const& file, rttr::instance obj)
+{
 	Identifier64 type_hash = Identifier64{ read<u64>(file) };
-	rttr::type t = helpers::get_type_by_id(type_hash.get_hash());
+	rttr::type t = Helpers::get_type_by_id(type_hash.get_hash());
 
 	rttr::variant container = t.create();
 	auto view = container.create_associative_view();
 
 	size_t size = read<size_t>(file);
-	for (size_t i = 0; i < size; ++i) {
+	for (size_t i = 0; i < size; ++i)
+	{
 
 		rttr::variant key = view.get_key_type().create();
 		if (read_atomic_types(file, key)) {

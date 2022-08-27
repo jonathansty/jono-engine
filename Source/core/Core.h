@@ -1,7 +1,7 @@
 #pragma once
 
 #ifdef WIN64
-#ifndef WIN32_LEAN_AND_MEAN	
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
 
@@ -10,48 +10,20 @@
 #endif
 #include <Windows.h>
 #include <commdlg.h>
-
-// WindowsSDK
-#include <DirectXMath.h>
-#include <d2d1.h>
-#include <d2d1helper.h>
-#include <d3d11.h>
-#include <d3d11_1.h>
-#include <d3d11shader.h>
-#include <d3dcompiler.h>
-#include <dwrite.h> // Draw Text
-#include <dxgi.h>
-#include <dxgi1_4.h>
-#include <dxgidebug.h>
-#include <wincodec.h> // WIC: image loading
-
-#include <wrl.h>
-using Microsoft::WRL::ComPtr;
-using namespace D2D1;
-
-// libs used for Direct2D
-#pragma comment(lib, "dxgi.lib")
-#pragma comment(lib, "d2d1.lib") // Direct2D
-#pragma comment(lib, "WindowsCodecs.lib") // Image Loading
-#pragma comment(lib, "dwrite.lib") // Draw Text
-#pragma comment(lib, "d3d11.lib")
 #endif
 
 #include <array>
 #include <mutex>
-#include <vector>
 #include <thread>
+#include <vector>
 
 #include <rttr/registration>
 #include <rttr/registration_friend>
 #include <rttr/type>
 
-#include <optick.h>
-
 // Feature Defines used to control compile time behaviour
 //#define FEATURE_D2D    true    // Flag to control if D2D can be used or not
 //#define FEATURE_XAUDIO true    // Flag to control if XAudio can be used or not
-
 
 #define HLSLPP_FEATURE_TRANSFORM
 #include <hlsl++.h>
@@ -74,19 +46,18 @@ using namespace D2D1;
 
 #include <fmt/core.h>
 #include <fmt/format.h>
-#include <fmt/printf.h>
 #include <fmt/ostream.h>
+#include <fmt/printf.h>
 #include <fmt/xchar.h>
 
 #include <rttr/registration>
 #include <rttr/registration_friend>
 #include <rttr/type>
 
-
 #include "enkiTS/TaskScheduler.h"
 
-#include <filesystem>
 #include <cassert>
+#include <filesystem>
 
 // Unicode defs for svg parsing
 #ifdef _UNICODE
@@ -97,11 +68,12 @@ using namespace D2D1;
 #define tstringstream std::stringstream
 #endif
 
-#include "Types.h"
 #include "Asserts.h"
-#include "identifier.h"
-#include "Math.h"
 #include "Hash.h"
+#include "Math.h"
+#include "Types.h"
+#include "Identifier.h"
+#include "Thread.h"
 #include <chrono>
 
 namespace Tasks
@@ -110,49 +82,6 @@ namespace Tasks
 enki::TaskScheduler* get_scheduler();
 
 }
-
-namespace Threading
-{
-
-// Wrapper to manage threads with a run loop
-class Thread
-{
-public:
-	Thread() 
-	{
-		_running = true;
-		_thread = std::thread([this]() { 
-			this->run();
-		});
-	}
-
-	Thread(Thread const&) = delete;
-	Thread operator=(Thread const&) = delete;
-
-	virtual ~Thread(){}
-
-
-	void terminate() {
-		_running = false;
-	}
-
-	void join() {
-		assert(_thread.joinable());
-		_thread.join();
-	}
-
-	virtual void run() = 0;
-
-	bool is_running() const { return _running; }
-
-private: 
-	std::thread _thread;
-
-	std::atomic<bool> _running;
-};
-
-}
-
 
 // Optick integration
 #define JONO_FRAME(_arg0) OPTICK_FRAME(_arg0)
@@ -167,4 +96,4 @@ private:
 #define JONO_GPU_CONTEXT(ctx) OPTICK_GPU_CONTEXT(ctx)
 #define JONO_GPU_EVENT(name) OPTICK_GPU_EVENT(name)
 #define JONO_GPU_FLIP(swapchain) OPTICK_GPU_FLIP(swapchain)
-#define JONO_INIT_GPU(device, cmd_queue, n_cmd_queues) OPTICK_GPU_INIT_D3D12(device,cmd_queue, n_cmd_queues)
+#define JONO_INIT_GPU(device, cmd_queue, n_cmd_queues) OPTICK_GPU_INIT_D3D12(device, cmd_queue, n_cmd_queues)

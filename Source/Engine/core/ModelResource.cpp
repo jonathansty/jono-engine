@@ -347,10 +347,10 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 	char name[512];
 	sprintf_s(name, "%s - Index Buffer", path.c_str());
-	helpers::SetDebugObjectName(_index_buffer.Get(), name);
+	Helpers::SetDebugObjectName(_index_buffer.Get(), name);
 
 	sprintf_s(name, "%s - Vertex Buffer", path.c_str());
-	helpers::SetDebugObjectName(_vertex_buffer.Get(), name);
+	Helpers::SetDebugObjectName(_vertex_buffer.Get(), name);
 
 	timer.Stop();
 	LOG_VERBOSE(IO, "Loading model \"{}\" took {} ", path.c_str(), timer.GetTime());

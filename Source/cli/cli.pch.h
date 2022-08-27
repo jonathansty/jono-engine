@@ -7,3 +7,5 @@
 #endif
 #include <Windows.h>
 #endif
+
+#include <algorithm>

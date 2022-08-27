@@ -2,7 +2,6 @@
 
 #include "Core/Math.h"
 #include "Overlays.h"
-#include "ImGuizmo.h"
 
 namespace framework
 {
@@ -242,6 +241,7 @@ void EntityDebugOverlay::render_overlay()
 
 void EntityDebugOverlay::render_viewport()
 {
+#if 0
 	static ImGuizmo::OPERATION op = ImGuizmo::OPERATION::TRANSLATE;
 	if (GameEngine::instance()->is_key_pressed('W'))
 		op = ImGuizmo::OPERATION::TRANSLATE;
@@ -271,6 +271,7 @@ void EntityDebugOverlay::render_viewport()
 		hlslpp::load(t, translation);
 		_selected->set_local_position(t);
 	}
+#endif
 }
 
 } // namespace framework
