@@ -149,7 +149,7 @@ void log(const char* file, int line, LogCategory category, LogSeverity severity,
 {
 	std::thread::id current_id = std::this_thread::get_id();
 
-	std::string msg = fmt::vformat(format, fmt::make_args_checked<Args...>(format, args...));
+	std::string msg = fmt::vformat(format, fmt::make_format_args(args...));
 	LogEntry entry = LogEntry();
 	entry._severity = severity;
 	entry._thread_id = current_id;

@@ -1,13 +1,23 @@
 # Jono Engine
-## Overview
-Homebrew graphics/game engine used for prototyping quickly and experimenting with new game engine techniques. 
+![Screenshot of the engine running as application](https://github.com/jonathansty/jono-engine/blob/main/Documentation/Images/readme_engine.png)
 
-## Windows: Building
-### Requirements
-* [Conan package manager](https://conan.io/) installed and on `PATH`
-* [VS2019](https://visualstudio.microsoft.com/downloads/)
+Hobby engine mainly used for experimentation and learning purposes. This code is not intended to be used as production ready code but mostly as a playground and test area for learning about graphics, game engines and video game programming in general.
 
-### Compiling
+# Overview
+The engine depends on the following libraries:
+* [hlslpp](https://github.com/redorav/hlslpp): Flexible math library that mimicks hlsl behaviours for various types.
+* assimp: model loading middleware to support different formats 
+* imgui: immediate mode debugging and UI
+* Optick: Performance Profiling
+* rttr: Runtime type reflection
+# Building
+## Requirements
+* Windows 10
+* [Python](https://www.python.org/) (for conan)
+* [Conan package manager](https://conan.io/) installed and available on `PATH` environment variable
+* [VS2022](https://visualstudio.microsoft.com/downloads/)
+
+## Compiling
 After cloning the repo the following steps must be executed in order:
 1. Run `bootstrap.cmd`
 2. Run Cmake initial setup on rttr (choose vs2022) 

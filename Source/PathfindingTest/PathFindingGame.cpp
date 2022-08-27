@@ -183,7 +183,6 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 	}
 
 
-	static u32 s_counter = 0;
 	constexpr u32 s_frame_height = 61;
 	constexpr f32 s_frame_width = 50.667;
 	D2D1_RECT_F re;
