@@ -11,11 +11,11 @@ class Shader
 {
 public:
 	Shader() {}
-	Shader(ShaderType type, const u8* byte_code, uint32_t size);
+	Shader(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name = nullptr);
 
 	~Shader();
 
-	static std::unique_ptr<Shader> create(ShaderType type, const u8* byte_code, uint32_t size);
+	static std::unique_ptr<Shader> create(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name = nullptr);
 
 	bool is_valid() const {
 		return _shader != nullptr;

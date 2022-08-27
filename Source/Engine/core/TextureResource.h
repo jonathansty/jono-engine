@@ -46,7 +46,8 @@ public:
 		return s_invalid;
 	}
 
-	static void initialise_default();
+	static void init_default();
+	static void deinit();
 
 	// Basic texture resources for when we fail to load specific textures
 	static std::shared_ptr<TextureResource> black();
@@ -60,5 +61,18 @@ public:
 
 
 private:
+
+	struct DefaultTexture
+	{
+		enum Enum : u32
+		{
+			Black,
+			White,
+			Normal,
+			Roughness,
+			Count
+		};
+	};
+	static std::array<std::shared_ptr<TextureResource>, DefaultTexture::Count> s_default_textures;
 
 };

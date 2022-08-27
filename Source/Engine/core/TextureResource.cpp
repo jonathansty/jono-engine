@@ -6,15 +6,15 @@
 
 #include <algorithm>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+
+std::array<std::shared_ptr<TextureResource>, TextureResource::DefaultTexture::Count> TextureResource::s_default_textures;
 
 TextureResource::TextureResource(FromFileResourceParameters params)
 		: TCachedResource(params)
 {
 }
 
-void TextureResource::initialise_default()
+void TextureResource::init_default()
 {
 	TextureResource::black();
 	TextureResource::white();
@@ -22,9 +22,17 @@ void TextureResource::initialise_default()
 	TextureResource::default_roughness();
 }
 
+void TextureResource::deinit()
+{
+	for (u32 i = 0; i < DefaultTexture::Count; ++i)
+	{
+		s_default_textures[i].reset();
+	}
+}
+
 std::shared_ptr<TextureResource> TextureResource::black()
 {
-	static std::shared_ptr<TextureResource> s_tex;
+	auto& s_tex = s_default_textures[DefaultTexture::Black];
 	if (!s_tex)
 	{
 		s_tex = std::make_shared<TextureResource>();
@@ -38,7 +46,7 @@ std::shared_ptr<TextureResource> TextureResource::black()
 
 std::shared_ptr<TextureResource> TextureResource::white()
 {
-	static std::shared_ptr<TextureResource> s_white;
+	auto& s_white = s_default_textures[DefaultTexture::White];
 	if (!s_white)
 	{
 		s_white = std::make_shared<TextureResource>();
@@ -51,7 +59,7 @@ std::shared_ptr<TextureResource> TextureResource::white()
 
 std::shared_ptr<TextureResource> TextureResource::default_normal()
 {
-	static std::shared_ptr<TextureResource> s_default_normal;
+	auto& s_default_normal = s_default_textures[DefaultTexture::Normal];
 	if (!s_default_normal)
 	{
 		s_default_normal = std::make_shared<TextureResource>();
@@ -64,15 +72,15 @@ std::shared_ptr<TextureResource> TextureResource::default_normal()
 
 std::shared_ptr<TextureResource> TextureResource::default_roughness()
 {
-	static std::shared_ptr<TextureResource> s_default_normal;
-	if (!s_default_normal)
+	auto& s_tex = s_default_textures[DefaultTexture::Roughness];
+	if (!s_tex)
 	{
-		s_default_normal = std::make_shared<TextureResource>();
+		s_tex = std::make_shared<TextureResource>();
 		std::array<u32, 16> data{};
 		std::fill(data.begin(), data.end(), 0xFF007DFF);
-		s_default_normal->create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
+		s_tex->create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
 	}
-	return s_default_normal;
+	return s_tex;
 }
 
 void TextureResource::load(enki::ITaskSet* parent)
@@ -88,6 +96,7 @@ void TextureResource::create_from_memory(uint32_t width, uint32_t height, DXGI_F
 	_resource->create_from_memory(width, height, format, type, data);
 }
 
+
 void Texture::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data)
 {
 	auto device = Graphics::get_device();
@@ -101,16 +110,18 @@ void Texture::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT fo
 	tex_data.pSysMem = data;
 	tex_data.SysMemPitch = sizeof(u32) * width;
 	SUCCEEDED(device->CreateTexture2D(&desc, &tex_data, texture.GetAddressOf()));
+	Helpers::SetDebugObjectName(texture.Get(), "Texture::CreateFromMemory");
 
 	auto view_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(texture.Get(), D3D11_SRV_DIMENSION_TEXTURE2D, format);
 	SUCCEEDED(texture.As(&_resource));
 	ENSURE_HR(device->CreateShaderResourceView(_resource.Get(), &view_desc, _srv.GetAddressOf()));
+	Helpers::SetDebugObjectName(_srv.Get(), "Texture::CreateFromMemory");
 }
 
 void Texture::load(std::string const& path)
 {
-	auto device = Graphics::get_device();
-	auto ctx = Graphics::get_ctx();
+	ComPtr<ID3D11Device> device = Graphics::get_device();
+	ComPtr<ID3D11DeviceContext> ctx = Graphics::get_ctx();
 
 	int x, y, comp;
 	stbi_uc* data = stbi_load(path.c_str(), &x, &y, &comp, 4);

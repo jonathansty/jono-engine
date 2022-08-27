@@ -226,7 +226,7 @@ private:
 	bool open_window(int iCmdShow);
 
 	LRESULT handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK wndproc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
 
 	void set_sleep(bool bSleep);
 

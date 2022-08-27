@@ -26,6 +26,7 @@
 #include "CommonStates.h"
 #include "Effects.h"
 #include "Graphics/Perf.h"
+#include "Graphics/ShaderCache.h"
 
 int g_DebugMode = 0;
 
@@ -38,7 +39,7 @@ enki::TaskScheduler* GameEngine::s_TaskScheduler;
 std::thread::id GameEngine::s_main_thread;
 
 // Window procedure to forward events to the game engine
-LRESULT CALLBACK GameEngine::WndProc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK GameEngine::wndproc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
 {
 	// Route all Windows messages to the game engine
 	return GameEngine::instance()->handle_event(hWindow, msg, wParam, lParam);
@@ -61,11 +62,9 @@ GameEngine::GameEngine()
 		, _can_paint(false)
 		, _vsync_enabled(true)
 		, _initialized(false)
-		, _game_timer()
 		, _default_font(nullptr)
 		, _input_manager(nullptr)
 		, _xaudio_system(nullptr)
-		, _game_settings()
 		, _physics_step_enabled(true)
 		, _is_viewport_focused(true) // TODO: When implementing some kind of editor system this should be updating
 		, _recreate_game_texture(false)
@@ -272,7 +271,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// Initialize the Graphics Engine
 	d3d_init();
 
-	TextureResource::initialise_default();
+	TextureResource::init_default();
 
 	LOG_INFO(System, "Initialising worlds...");
 	{
@@ -319,6 +318,27 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 	// User defined functions for start of the game
 	_game->start();
+
+	// Ensure world has default setup
+	if (!get_render_world()->get_view_camera())
+	{
+		RenderWorldCameraRef camera = get_render_world()->create_camera();
+		ImVec2 size = GameEngine::instance()->get_viewport_size();
+		const float aspect = (float)size.x / (float)size.y;
+		const float near_plane = 5.0f;
+		const float far_plane = 1000.0f;
+
+		// Create Cam 1
+		RenderWorldCamera::CameraSettings settings{};
+		settings.aspect = aspect;
+		settings.far_clip = far_plane;
+		settings.near_clip = near_plane;
+		settings.fov = hlslpp::radians(float1(60.0f));
+		settings.projection_type = RenderWorldCamera::Projection::Perspective;
+		camera->set_settings(settings);
+		camera->set_position({ 0.0f, 1.5f, -25.0 });
+	}
+
 
 
 	// Initialize our performance tracking
@@ -512,7 +532,6 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	{
 		_default_font.reset();
 
-		// Deinit our global graphics API before killing the game engine API
 		Graphics::deinit();
 		_renderer->deinit();
 		_renderer = nullptr;
@@ -590,7 +609,7 @@ bool GameEngine::register_wnd_class()
 	// Create the window class for the main window
 	wndclass.cbSize = sizeof(wndclass);
 	wndclass.style = CS_HREDRAW | CS_VREDRAW;
-	wndclass.lpfnWndProc = WndProc;
+	wndclass.lpfnWndProc = wndproc;
 	wndclass.cbClsExtra = 0;
 	wndclass.cbWndExtra = 0;
 	wndclass.hInstance = _hinstance;
@@ -1532,7 +1551,6 @@ void GameEngine::build_menubar()
 
 int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<AbstractGame>&& game)
 {
-	GameEngine::create();
 
 #if defined(DEBUG) | defined(_DEBUG)
 	//notify user if heap is corrupt
@@ -1540,11 +1558,11 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 
 	// Enable run-time memory leak check for debug builds.
 	typedef HRESULT(__stdcall * fPtr)(const IID&, void**);
-	HMODULE const h_dll = GetModuleHandleW(L"dxgidebug.dll");
+	HMODULE dxgidebug = LoadLibraryEx(L"dxgidebug.dll", nullptr, LOAD_LIBRARY_SEARCH_SYSTEM32);
 	IDXGIDebug* pDXGIDebug = nullptr;
-	if (h_dll)
+	if (dxgidebug)
 	{
-		fPtr const dxgi_get_debug_interface = reinterpret_cast<fPtr>(GetProcAddress(h_dll, "DXGIGetDebugInterface"));
+		fPtr const dxgi_get_debug_interface = reinterpret_cast<fPtr>(GetProcAddress(dxgidebug, "DXGIGetDebugInterface"));
 		assert(dxgi_get_debug_interface);
 
 		dxgi_get_debug_interface(__uuidof(IDXGIDebug), reinterpret_cast<void**>(&pDXGIDebug));
@@ -1552,6 +1570,7 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 #endif
 
 	int result = 0;
+	GameEngine::create();
 
 	GameEngine::instance()->set_command_line(cmdLine);
 	GameEngine::instance()->set_game(std::move(game));
@@ -1564,7 +1583,7 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 #if defined(DEBUG) | defined(_DEBUG)
 	if (pDXGIDebug)
 	{
-		pDXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_ALL);
+		pDXGIDebug->ReportLiveObjects(DXGI_DEBUG_ALL, DXGI_DEBUG_RLO_DETAIL);
 	}
 	Helpers::SafeRelease(pDXGIDebug);
 #endif

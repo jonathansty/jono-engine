@@ -20,7 +20,7 @@ std::shared_ptr<Shader> ShaderCache::find_or_create(ShaderCreateParams const& cr
 	std::vector<u8> bytecode;
 	if (ShaderCompiler::compile(creation_params.path.c_str(), creation_params.params, bytecode))
 	{
-		result = Shader::create(creation_params.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
+		result = Shader::create(creation_params.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()), creation_params.path.c_str());
 	}
 	else
 	{

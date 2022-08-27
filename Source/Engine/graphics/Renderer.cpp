@@ -72,6 +72,7 @@ void Renderer::init_for_hwnd(HWND wnd)
 
 void Renderer::deinit()
 {
+
 	GameEngine::instance()->get_overlay_manager()->unregister_overlay(_debug_tool.get());
 
 	using Helpers::SafeRelease;
@@ -88,10 +89,16 @@ void Renderer::deinit()
 	SafeRelease(_output_srv);
 	SafeRelease(_output_depth);
 	SafeRelease(_output_depth_srv);
-	SafeRelease(_output_depth_srv_copy);
-	SafeRelease(_output_depth_copy);
 	SafeRelease(_output_dsv);
+
+	SafeRelease(_output_depth_copy);
+	SafeRelease(_output_depth_srv_copy);
+
 	SafeRelease(_user_defined_annotation);
+
+
+	_device_ctx->ClearState();
+	_device_ctx->Flush();
 
 	SafeRelease(_device_ctx);
 	SafeRelease(_device);
@@ -99,6 +106,7 @@ void Renderer::deinit()
 	SafeRelease(_wic_factory);
 	SafeRelease(_d2d_factory);
 	SafeRelease(_factory);
+
 }
 
 void Renderer::create_factories(EngineSettings const& settings, cli::CommandLine const& cmdline)
@@ -279,6 +287,10 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 		ENSURE_HR(_device->CreateRenderTargetView(_output_tex, nullptr, &_output_rtv));
 		ENSURE_HR(_device->CreateShaderResourceView(_output_tex, nullptr, &_output_srv));
 
+		Helpers::SetDebugObjectName(_output_tex, "Renderer::Output (MSAA)");
+		Helpers::SetDebugObjectName(_output_rtv, "Renderer::Output (MSAA)");
+		Helpers::SetDebugObjectName(_output_srv, "Renderer::Output (MSAA)");
+
 		// This texture is used to output to a image in imgui
 		output_desc.SampleDesc.Count = 1;
 		output_desc.SampleDesc.Quality = 0;
@@ -287,12 +299,24 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 		ENSURE_HR(_device->CreateShaderResourceView(_non_msaa_output_tex, nullptr, &_non_msaa_output_srv));
 		ENSURE_HR(_device->CreateShaderResourceView(_non_msaa_output_tex_copy, nullptr, &_non_msaa_output_srv_copy));
 		ENSURE_HR(_device->CreateRenderTargetView(_non_msaa_output_tex, nullptr, &_non_msaa_output_rtv));
+
+		Helpers::SetDebugObjectName(_non_msaa_output_tex, "Renderer::Output (MSAA)");
+		Helpers::SetDebugObjectName(_non_msaa_output_srv, "Renderer::Output (MSAA)");
+		Helpers::SetDebugObjectName(_non_msaa_output_rtv, "Renderer::Output (MSAA)");
+
+		Helpers::SetDebugObjectName(_non_msaa_output_tex_copy, "Renderer::Output (MSAA) (COPY)");
+		Helpers::SetDebugObjectName(_non_msaa_output_srv_copy, "Renderer::Output (MSAA) (COPY)");
+
 	}
 
 	// Create the 3D depth target
 	auto depth_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R16_TYPELESS, w, h, 1, 1, D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
 	ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth));
 	ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth_copy));
+
+	Helpers::SetDebugObjectName(_output_depth, "Renderer::Output Depth");
+	Helpers::SetDebugObjectName(_output_depth_copy, "Renderer::Output Depth (COPY)");
+
 
 	auto view_dim = D3D11_DSV_DIMENSION_TEXTURE2D;
 	auto srv_view_dim = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -303,12 +327,15 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	}
 	auto dsv_desc = CD3D11_DEPTH_STENCIL_VIEW_DESC(_output_depth, view_dim, DXGI_FORMAT_D16_UNORM);
 	ENSURE_HR(_device->CreateDepthStencilView(_output_depth, &dsv_desc, &_output_dsv));
+	Helpers::SetDebugObjectName(_output_dsv, "Renderer::Output Depth");
+
 	auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(_output_depth, srv_view_dim, DXGI_FORMAT_R16_UNORM);
 	ENSURE_HR(_device->CreateShaderResourceView(_output_depth, &srv_desc, &_output_depth_srv));
-	ENSURE_HR(_device->CreateShaderResourceView(_output_depth_copy, &srv_desc, &_output_depth_srv_copy));
+	Helpers::SetDebugObjectName(_output_depth_srv, "Renderer::Output Depth");
 
-	set_debug_name(_output_tex, "Color Output");
-	set_debug_name(_output_depth, "Depth Output");
+	ENSURE_HR(_device->CreateShaderResourceView(_output_depth_copy, &srv_desc, &_output_depth_srv_copy));
+	Helpers::SetDebugObjectName(_output_depth_srv_copy, "Renderer::Output Depth (COPY)");
+
 
 	// Either create the swapchain or retrieve the existing description
 	DXGI_SWAP_CHAIN_DESC desc{};
@@ -721,6 +748,7 @@ void Renderer::VSSetShader(ShaderRef const& vertex_shader)
 {
 	ASSERT(vertex_shader->get_type() == ShaderType::Vertex);
 	_device_ctx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
+
 }
 
 void Renderer::PSSetShader(ShaderRef const& pixel_shader)
@@ -779,6 +807,11 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 	if(it != world->get_lights().end())
 	{
 		light = *it;
+	}
+
+	if(!light)
+	{
+		return;
 	}
 
 	float4x4 light_space = light->get_view();
@@ -891,26 +924,24 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 	data->m_ViewportHeight = f32(GameEngine::instance()->get_height());
 	_cb_post->unmap(_device_ctx);
 
-	static std::unique_ptr<DirectX::CommonStates> s_states = nullptr;
-	static std::unique_ptr<DirectX::BasicEffect> s_effect = nullptr;
-	static ComPtr<ID3D11InputLayout> s_layout = nullptr;
-	if (!s_states)
+	if (!_states)
 	{
-		s_states = std::make_unique<DirectX::CommonStates>(_device);
-		s_effect = std::make_unique<DirectX::BasicEffect>(_device);
-		s_effect->SetVertexColorEnabled(true);
+		_states = std::make_unique<DirectX::CommonStates>(_device);
+		_common_effect = std::make_unique<DirectX::BasicEffect>(_device);
+		_common_effect->SetVertexColorEnabled(true);
 
 		void const* shader_byte_code;
 		size_t byte_code_length;
-		s_effect->GetVertexShaderBytecode(&shader_byte_code, &byte_code_length);
-		ENSURE_HR(_device->CreateInputLayout(DirectX::VertexPositionColor::InputElements, DirectX::VertexPositionColor::InputElementCount, shader_byte_code, byte_code_length, s_layout.ReleaseAndGetAddressOf()));
+		_common_effect->GetVertexShaderBytecode(&shader_byte_code, &byte_code_length);
+		ENSURE_HR(_device->CreateInputLayout(DirectX::VertexPositionColor::InputElements, DirectX::VertexPositionColor::InputElementCount, shader_byte_code, byte_code_length, _layout.ReleaseAndGetAddressOf()));
+
 	}
 
-	_device_ctx->OMSetBlendState(s_states->Opaque(), nullptr, 0xFFFFFFFF);
-	_device_ctx->OMSetDepthStencilState(s_states->DepthRead(), 0);
-	_device_ctx->RSSetState(s_states->CullNone());
+	_device_ctx->OMSetBlendState(_states->Opaque(), nullptr, 0xFFFFFFFF);
+	_device_ctx->OMSetDepthStencilState(_states->DepthRead(), 0);
+	_device_ctx->RSSetState(_states->CullNone());
 
-	_device_ctx->IASetInputLayout(s_layout.Get());
+	_device_ctx->IASetInputLayout(_layout.Get());
 
 	float4x4 view = float4x4::identity();
 	float4x4 proj = float4x4::identity();
@@ -923,9 +954,9 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 	using namespace DirectX;
 	XMMATRIX xm_view = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&view);
 	XMMATRIX xm_proj = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&proj);
-	s_effect->SetView(xm_view);
-	s_effect->SetProjection(xm_proj);
-	s_effect->Apply(_device_ctx);
+	_common_effect->SetView(xm_view);
+	_common_effect->SetProjection(xm_proj);
+	_common_effect->Apply(_device_ctx);
 
 	{
 		GPU_SCOPED_EVENT(_user_defined_annotation, L"Post:RenderOverlays");

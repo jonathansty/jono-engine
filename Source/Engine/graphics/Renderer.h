@@ -310,6 +310,10 @@ private:
 	u32 _viewport_width;
 	u32 _viewport_height;
 	float2 _viewport_pos;
+
+	std::unique_ptr<DirectX::CommonStates> _states = nullptr;
+	std::unique_ptr<DirectX::BasicEffect> _common_effect = nullptr;
+	ComPtr<ID3D11InputLayout> _layout = nullptr;
 };
 
 }

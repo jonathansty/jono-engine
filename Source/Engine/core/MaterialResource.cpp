@@ -14,7 +14,6 @@ void MaterialResource::load(enki::ITaskSet* parent)
 {
 	using namespace Graphics;
 
-	auto device = Graphics::get_device();
 
 	ShaderCompiler::CompileParameters params{};
 	params.entry_point = "main";

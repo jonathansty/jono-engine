@@ -2,6 +2,7 @@
 
 #include "Graphics.h"
 #include "Core/ModelResource.h"
+#include "Core/TextureResource.h"
 #include "Shader.h"
 #include "ShaderCache.h"
 #include "Renderer.h"
@@ -120,6 +121,10 @@ void init(DeviceContext const& ctx)
 
 void deinit()
 {
+	s_error_pixel_shader.reset();
+	s_error_vertex_shader.reset();
+
+	TextureResource::deinit();
 	ShaderCache::shutdown();
 
 	auto clear_fn = []<typename T>(T& ptr)

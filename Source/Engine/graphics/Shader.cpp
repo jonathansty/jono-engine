@@ -8,7 +8,7 @@ namespace Graphics
 {
 
 	
-Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size)
+Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name)
 		: _type(type)
 {
 	ComPtr<ID3D11Device> device = Graphics::get_device();
@@ -26,6 +26,8 @@ Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size)
 		default:
 			throw new std::exception("ShaderType not supported!");
 	}
+
+	Helpers::SetDebugObjectName(_shader.Get(), debug_name ? debug_name : (__FILE__));
 
 	D3DReflect(byte_code, size, IID_ID3D11ShaderReflection, &_reflection);
 
@@ -88,9 +90,9 @@ Shader::~Shader()
 {
 }
 
-std::unique_ptr<Shader> Shader::create(ShaderType type, const u8* byte_code, uint32_t size)
+std::unique_ptr<Shader> Shader::create(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name)
 {
-	return std::make_unique<Shader>(type, byte_code, size);
+	return std::make_unique<Shader>(type, byte_code, size, debug_name);
 }
 
 }

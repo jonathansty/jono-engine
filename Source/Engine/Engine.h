@@ -58,3 +58,4 @@ using namespace D2D1;
 #include <backends/imgui_impl_win32.h>
 
 #include <tinyxml2/tinyxml2.h>
+#include <stb_image.h>
