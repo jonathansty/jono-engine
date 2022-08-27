@@ -1,5 +1,5 @@
 # Jono Engine
-![Screenshot of the engine running as application](https://github.com/jonathansty/jono-engine/blob/main/Documentation/Images/readme_engine.png)
+![Screenshot of the engine running as application](https://github.com/jonathansty/jono-engine/blob/main/Documentation/Images/readme_engine.png?raw=true)
 
 Hobby engine mainly used for experimentation and learning purposes. This code is not intended to be used as production ready code but mostly as a playground and test area for learning about graphics, game engines and video game programming in general.
 
