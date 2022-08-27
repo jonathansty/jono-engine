@@ -101,7 +101,7 @@ void PathFindingGame::start(void)
 
 	_view_translation = float3(0.0, 0.0,0.0);
 
-	_bitmap = Bitmap::load("Resources/Bitmaps/Adventurer/adventurer_tilesheet.png");
+	_bitmap = Bitmap::load("Resources/Tests/Bitmaps/character.png");
 }
 
 void PathFindingGame::end(void)
@@ -183,12 +183,12 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 	}
 
 
-
-	constexpr u32 s_frame_height = 110;
-	constexpr f32 s_frame_width = 80;
+	static u32 s_counter = 0;
+	constexpr u32 s_frame_height = 61;
+	constexpr f32 s_frame_width = 50.667;
 	D2D1_RECT_F re;
-	re.top = s_frame_height;
-	re.bottom = 2.0f * s_frame_height;
+	re.top = 0;
+	re.bottom = s_frame_height;
 
 	re.left = (s_counter) * s_frame_width;
 	re.right = (s_counter+1) * s_frame_width;
