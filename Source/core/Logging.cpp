@@ -50,7 +50,6 @@ void Logger::log(LogEntry const& entry)
 		OutputDebugStringA(txt.c_str());
 
 		_cv.notify_one();
-
 	}
 }
 
@@ -77,12 +76,13 @@ void Logger::thread_flush()
 		std::vector<std::string> data = std::move(_to_flush);
 		lk.unlock();
 
-		for(std::string const& line : data)
+		if(file)
 		{
-			file->write((void*)line.c_str(), u32(line.size()) * sizeof(char));
+			for (std::string const& line : data)
+			{
+				file->write((void*)line.c_str(), u32(line.size()) * sizeof(char));
+			}
 		}
-
-
 	}
 
 	if (file)
