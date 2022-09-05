@@ -40,6 +40,8 @@ public:
 	TextureResource() = default;
 	TextureResource(FromFileResourceParameters params);
 
+	virtual ~TextureResource() {}
+
 	static std::shared_ptr<TextureResource> invalid()
 	{
 		static std::shared_ptr<TextureResource> s_invalid = std::make_shared<TextureResource>();

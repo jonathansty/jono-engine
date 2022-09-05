@@ -43,15 +43,9 @@ public:
 
 	using VertexType = ModelUberVertex;
 
-	Model()
-		: _index_count(0)
-		, _materials()
-		, _meshes()
-		, _vertex_buffer()
-		, _index_buffer()
-	{
-	
-	}
+	Model();
+
+	~Model();
 
 	void load(enki::ITaskSet* parent, std::string const& path);
 
@@ -89,7 +83,7 @@ public:
 
 	ModelResource(FromFileResourceParameters params);
 
-	~ModelResource() {}
+	~ModelResource();
 
 	void build_load_graph(enki::ITaskSet* parent) override;
 

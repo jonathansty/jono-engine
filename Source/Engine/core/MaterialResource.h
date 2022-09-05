@@ -58,6 +58,7 @@ class MaterialResource final : public TCachedResource<Material, MaterialInitPara
 {
 public:
 	MaterialResource(MaterialInitParameters params) : TCachedResource(params) {}
+	~MaterialResource() {}
 
 	void load(enki::ITaskSet* parent) override;
 };

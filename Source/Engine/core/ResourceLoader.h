@@ -4,6 +4,7 @@
 
 #include <fmt/core.h>
 #include "Logging.h"
+#include "Memory.h"
 
 struct FromFileResourceParameters
 {
@@ -69,6 +70,8 @@ public:
 	{
 	}
 
+	virtual ~TCachedResource() {}
+
 	resource_type* operator->()
 	{
 		return _resource.get();
@@ -127,6 +130,7 @@ struct LoadResourceTask : public enki::ITaskSet
 
 	void ExecuteRange(enki::TaskSetPartition range_, uint32_t threadnum_) override
 	{
+		MEMORY_TAG(MemoryCategory::ResourceLoading);
 		_resource->_status = ResourceStatus::Loading;
 		_resource->load(this);
 		_resource->_status = ResourceStatus::Loaded;
@@ -146,56 +150,14 @@ class ResourceLoader final : public TSingleton<ResourceLoader>
 public:
 	using ResourceCache = std::map<std::size_t, std::shared_ptr<Resource>>;
 
+	ResourceLoader() {}
 	~ResourceLoader() {}
 
-	void unload_all()
-	{
-		_cache.clear();
-	}
+	void unload_all();
 
-	void wait_for(shared_ptr<Resource> resource)
-	{
-		if(resource->get_status() == ResourceStatus::Loading)
-		{
-			std::unique_lock lk{ resource->_loaded_mutex };
-			resource->_loaded_cv.wait(lk);
-		}
-	}
+	void wait_for(shared_ptr<Resource> resource);
 
-	void update()
-	{
-		JONO_EVENT();
-		std::lock_guard<std::mutex> l{ _tasks_lock };
-		std::vector<std::list<enki::ITaskSet*>::iterator> to_remove;
-		for (auto it = _tasks.begin(); it != _tasks.end(); ++it)
-		{
-			if ((*it)->GetIsComplete())
-			{
-				delete *it;
-				to_remove.push_back(it);
-			}
-		}
-
-		for (auto e : to_remove)
-		{
-			_tasks.erase(e);
-		}
-
-		std::vector<ResourceCache::iterator> models_to_remove;
-		for (auto it = _cache.begin(); it != _cache.end(); ++it)
-		{
-			if (it->second.use_count() == 1)
-			{
-				models_to_remove.push_back(it);
-			}
-		}
-
-		for (auto it : models_to_remove)
-		{
-			LOG_VERBOSE(IO, "Unloading \"{}\"", it->second->get_name());
-			_cache.erase(it);
-		}
-	}
+	void update();
 
 	template <typename T>
 	std::shared_ptr<T> load(typename T::init_parameters parameters,bool dependencyLoad, bool blocking = false);
@@ -227,7 +189,7 @@ private:
 	ResourceCache _cache;
 
 	std::mutex _tasks_lock;
-	std::list<enki::ITaskSet*> _tasks;
+	std::list<std::unique_ptr<enki::ITaskSet>> _tasks;
 };
 
 namespace std
@@ -245,6 +207,8 @@ namespace std
 template<typename T>
 std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool dependencyLoad, bool blocking )
 {
+	MEMORY_TAG(MemoryCategory::ResourceLoading);
+
 	LOG_INFO(IO, "Load request {}", params.to_string());
 	std::size_t h = std::hash<typename T::init_parameters>{}(params);
 
@@ -278,19 +242,22 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 
 	if (blocking)
 	{
-		auto task = LoadResourceTask<T>(res);
-		Tasks::get_scheduler()->AddTaskSetToPipe(&task);
-		Tasks::get_scheduler()->WaitforTask(&task);
+		res->_status = ResourceStatus::Loading;
+		res->load(nullptr);
+		res->_status = ResourceStatus::Loaded;
+		res->_loaded = true;
+		res->_loaded_cv.notify_all();
 	}
 	else
 	{
-		enki::ITaskSet* set = new LoadResourceTask<T>(res);
+		std::unique_ptr<enki::ITaskSet> set = std::make_unique<LoadResourceTask<T>>(res);
+		Tasks::get_scheduler()->AddTaskSetToPipe(set.get());
+
 		{
 			std::lock_guard<std::mutex> l{ _tasks_lock };
-			_tasks.push_back(set);
+			_tasks.push_back(std::move(set));
 		}
 
-		Tasks::get_scheduler()->AddTaskSetToPipe(set);
 	}
 
 	return res;

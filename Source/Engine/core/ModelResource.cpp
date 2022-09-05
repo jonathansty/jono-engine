@@ -31,6 +31,23 @@ ModelResource::ModelResource(FromFileResourceParameters params)
 {
 }
 
+ ModelResource::~ModelResource()
+{
+}
+
+ Model::Model()
+		: _index_count(0)
+		, _materials()
+		, _meshes()
+		, _vertex_buffer()
+		, _index_buffer()
+{
+}
+
+ Model::~Model()
+{
+}
+
 void Model::load(enki::ITaskSet* parent, std::string const& path)
 {
 	Timer timer{}; 
@@ -42,8 +59,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 	auto ctx = Graphics::get_ctx();
 
 	using namespace Assimp;
-	Importer importer{};
-	aiScene const* scene = importer.ReadFile(path.c_str(),  aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast);
+	Importer importer = Importer();
+	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast);
 	if (!scene)
 	{
 		LOG_ERROR(IO, importer.GetErrorString());
@@ -236,113 +253,63 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 
 
-		// Texture load task
-		enki::TaskSet textureLoadTask = enki::TaskSet(u32(mappings.size()),[&](enki::TaskSetPartition range, uint32_t threadnum) {
+		// Load all textures inline
 
-			std::vector<enki::ITaskSet*> tasks{};
+		for(u32 i =0; i< mappings.size(); ++i)
+		{
+			TextureMappings const& mapping = mappings[i];
 
-			for (u32 i = range.start; i < range.end; ++i)
-			{
-				TextureMappings const& mapping = mappings[i];
-
-				FromFileResourceParameters params{ mapping.path };
-				LoadResourceTask<TextureResource>* texture_resource = ResourceLoader::create_load_task<TextureResource>(std::make_shared<TextureResource>(params));
-				texture_resource->_complete = [&](shared_ptr<TextureResource> resource) 
-				{
-					_textures[mapping.tex_idx] = resource;
-				};
-
-				tasks.push_back(texture_resource);
-			}
-
-			// Kick off tasks
-			for (auto const& t : tasks)
-			{
-				Tasks::get_scheduler()->AddTaskSetToPipe(t);
-			}
-
-			// Wait for tasks
-			for (auto const& t : tasks)
-			{
-				Tasks::get_scheduler()->WaitforTaskSet(t);
-				delete t;
-			}
-		});
-
-		Tasks::get_scheduler()->AddTaskSetToPipe(&textureLoadTask);
-		Tasks::get_scheduler()->WaitforTask(&textureLoadTask);
+			FromFileResourceParameters params{ mapping.path };
+			_textures[i] = ResourceLoader::instance()->load<TextureResource>(params, true, true);
+		}
 
 		// Material load tas
 		_materials.resize(scene->mNumMaterials);
-		enki::TaskSet* materialLoadTask = new enki::TaskSet(scene->mNumMaterials, [&](enki::TaskSetPartition range, uint32_t threadNum) 
+		for(u32 j = 0; j < _materials.size(); ++j)
 		{
-				std::vector<enki::ITaskSet*> tasks;
-				for (u32 i = range.start; i < range.end; ++i)
-				{
-					aiMaterial* material = scene->mMaterials[i];
-					aiString name = material->GetName();
+			aiMaterial* material = scene->mMaterials[j];
+			aiString name = material->GetName();
 
-					MaterialInitParameters parameters{};
-					parameters.load_type = MaterialInitParameters::LoadType_FromMemory;
-					parameters.name = "[Built-in] Material";
-					// Get the name of the material
-					aiString materialName;
-					material->Get(AI_MATKEY_NAME, materialName);
-					parameters.name = name.C_Str();
+			MaterialInitParameters parameters{};
+			parameters.load_type = MaterialInitParameters::LoadType_FromMemory;
+			parameters.name = "[Built-in] Material";
+			// Get the name of the material
+			aiString materialName;
+			material->Get(AI_MATKEY_NAME, materialName);
+			parameters.name = name.C_Str();
 
-					// Load the required textures from the assimp imported file
-					aiString baseColorTexture;
-					aiString roughnessTexture;
-					aiString normalTexture;
-					aiString metalnessTexture;
 
-					if (material->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &baseColorTexture) == aiReturn_SUCCESS)
-					{
-						parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
-					}
-					if (material->GetTexture(AI_MATKEY_ROUGHNESS_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
-					{
-						parameters.m_texture_paths[MaterialInitParameters::TextureType_Roughness] = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
-					}
-					if (material->GetTexture(AI_MATKEY_METALLIC_TEXTURE, &metalnessTexture) == aiReturn_SUCCESS)
-					{
-						parameters.m_texture_paths[MaterialInitParameters::TextureType_Metalness] = dir_path.string() + "\\" + std::string(metalnessTexture.C_Str());
-					}
-					if (material->GetTexture(aiTextureType_NORMALS, 0, &normalTexture) == aiReturn_SUCCESS)
-					{
-						parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path.string() + "\\" + std::string(normalTexture.C_Str());
-					}
+			// Load the required textures from the assimp imported file
+			aiString baseColorTexture;
+			aiString roughnessTexture;
+			aiString normalTexture;
+			aiString metalnessTexture;
 
-					bool double_sided;
-					if (material->Get(AI_MATKEY_TWOSIDED, double_sided) == aiReturn_SUCCESS)
-					{
-						parameters.double_sided = double_sided;
-					}
+			if (material->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &baseColorTexture) == aiReturn_SUCCESS)
+			{
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
+			}
+			if (material->GetTexture(AI_MATKEY_ROUGHNESS_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
+			{
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Roughness] = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
+			}
+			if (material->GetTexture(AI_MATKEY_METALLIC_TEXTURE, &metalnessTexture) == aiReturn_SUCCESS)
+			{
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Metalness] = dir_path.string() + "\\" + std::string(metalnessTexture.C_Str());
+			}
+			if (material->GetTexture(aiTextureType_NORMALS, 0, &normalTexture) == aiReturn_SUCCESS)
+			{
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path.string() + "\\" + std::string(normalTexture.C_Str());
+			}
 
-					auto res = std::make_shared<MaterialResource>(parameters);
+			bool double_sided;
+			if (material->Get(AI_MATKEY_TWOSIDED, double_sided) == aiReturn_SUCCESS)
+			{
+				parameters.double_sided = double_sided;
+			}
 
-					// Kick off material load
-					LoadResourceTask<MaterialResource>* nextLoadTask = ResourceLoader::create_load_task<MaterialResource>(res);
-					nextLoadTask->_complete = [i, this](MaterialRef resource) {
-						_materials[i] = resource;
-					};
-					tasks.push_back(nextLoadTask);
-				}
-				for(auto const& t : tasks)
-				{
-					Tasks::get_scheduler()->AddTaskSetToPipe(t);
-				}
-
-				for(auto const& t : tasks)
-				{
-					Tasks::get_scheduler()->WaitforTask(t);
-					delete t;
-				}
-				
-
-		});
-		Tasks::get_scheduler()->AddTaskSetToPipe(materialLoadTask);
-		Tasks::get_scheduler()->WaitforTask(materialLoadTask);
+			_materials[j] = ResourceLoader::instance()->load<MaterialResource>(parameters, true, true);
+		}
 	}
 
 	char name[512];
