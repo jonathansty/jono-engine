@@ -18,14 +18,19 @@
 #include "ShaderCache.h"
 #include "ShaderType.h"
 
+#include "Memory.h"
+
 namespace Graphics
 {
 using Helpers::SafeRelease;
 
 static f32 s_box_size = 15.0f;
 
+
 void Renderer::init(EngineSettings const& settings, GameSettings const& game_settings, cli::CommandLine const& cmdline)
 {
+	MEMORY_TAG(MemoryCategory::Graphics);
+
 	_msaa = settings.d3d_msaa_mode;
 	_engine_settings = settings;
 	_game_settings = game_settings;
@@ -43,6 +48,8 @@ void Renderer::init(EngineSettings const& settings, GameSettings const& game_set
 
 void Renderer::init_for_hwnd(HWND wnd)
 {
+	MEMORY_TAG(MemoryCategory::Graphics);
+
 	assert(!_wnd);
 	_wnd = wnd;
 
@@ -73,6 +80,7 @@ void Renderer::init_for_hwnd(HWND wnd)
 
 void Renderer::deinit()
 {
+	MEMORY_TAG(MemoryCategory::Graphics);
 
 	GameEngine::instance()->get_overlay_manager()->unregister_overlay(_debug_tool.get());
 
@@ -86,6 +94,8 @@ void Renderer::deinit()
 
 void Renderer::create_factories(EngineSettings const& settings, cli::CommandLine const& cmdline)
 {
+	MEMORY_TAG(MemoryCategory::Graphics);
+
 	// Create Direct3D 11 factory
 	{
 		ENSURE_HR(CreateDXGIFactory(IID_PPV_ARGS(&_factory)));
@@ -501,16 +511,19 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 			// CascadeInfo const& cascade_info = l->get_cascade(0);
 			info->light_space = float4x4::identity();
 
-			info->num_cascades = MAX_CASCADES;
-			for (int j = 0; j < MAX_CASCADES; ++j)
+			if constexpr (c_EnableShadowRendering)
 			{
-				f32 n = world->get_camera(0)->get_near();
-				f32 f = world->get_camera(0)->get_far();
+				info->num_cascades = MAX_CASCADES;
+				for (int j = 0; j < MAX_CASCADES; ++j)
+				{
+					f32 n = world->get_camera(0)->get_near();
+					f32 f = world->get_camera(0)->get_far();
 
-				f32 z0 = n * pow(f / n, f32(j) / f32(MAX_CASCADES));
-				f32 z1 = n * pow(f / n, f32(j + 1) / f32(MAX_CASCADES));
-				info->cascade_distances[j] = z1;
-				info->cascades[j] = l->get_cascade(j).vp;
+					f32 z0 = n * pow(f / n, f32(j) / f32(MAX_CASCADES));
+					f32 z1 = n * pow(f / n, f32(j + 1) / f32(MAX_CASCADES));
+					info->cascade_distances[j] = z1;
+					info->cascades[j] = l->get_cascade(j).vp;
+				}
 			}
 		}
 	}
@@ -711,22 +724,30 @@ void Renderer::setup_renderstate(ViewParams const& params, Material* const mater
 			debug_shader = Graphics::get_error_shader_px();
 		}
 
-		ctx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
+		// Bind vertex shader
+		VSSetShader(vertex_shader);
 		ctx->IASetInputLayout(vertex_shader->get_input_layout().Get());
 
+		// In opaque pass, bind the pixel shader and relevant shader resources from the material
 		if (params.pass == RenderPass::Opaque)
 		{
-			ctx->PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);
+			// Bind pixel shader
+
 			extern int g_DebugMode;
 			if (g_DebugMode)
 			{
-				ctx->PSSetShader(debug_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);
+				PSSetShader(debug_shader);
+			}
+			else
+			{
+				PSSetShader(pixel_shader);
 			}
 
 			// Bind material parameters
 			std::vector<ID3D11ShaderResourceView const*> views{};
 			material->get_texture_views(views);
 			ctx->PSSetShaderResources(0, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
+
 		}
 		else
 		{
@@ -738,7 +759,7 @@ void Renderer::setup_renderstate(ViewParams const& params, Material* const mater
 	if (params.pass == RenderPass::Opaque)
 	{
 		ID3D11ShaderResourceView* views[] = {
-			_shadow_map_srv.Get(),
+			c_EnableShadowRendering ? _shadow_map_srv.Get() : nullptr,
 			_output_depth_srv_copy
 		};
 		_device_ctx->PSSetShaderResources(3, UINT(std::size(views)), views);

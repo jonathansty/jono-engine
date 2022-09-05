@@ -27,6 +27,7 @@
 #include "Effects.h"
 #include "Graphics/Perf.h"
 #include "Graphics/ShaderCache.h"
+#include "Memory.h"
 
 int g_DebugMode = 0;
 
@@ -119,6 +120,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	ASSERTMSG(_game, "No game has been setup! Make sure to first create a game instance before launching the engine!");
 	if (_game)
 	{
+		MEMORY_TAG(MemoryCategory::Game);
 		_game->configure_engine(this->_engine_settings);
 	}
 
@@ -256,6 +258,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// Game Initialization
 	if (_game)
 	{
+		MEMORY_TAG(MemoryCategory::Game);
 		_game->initialize(_game_settings);
 	}
 	apply_settings(_game_settings);
@@ -290,6 +293,15 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	LOG_INFO(System, "Finished initialising worlds.");
 
 
+	ImGui::SetAllocatorFunctions(
+			[](size_t size, void*)
+			{
+				return std::malloc(size);
+			},
+			[](void* mem, void*)
+			{
+				return std::free(mem);
+			});
 	ImGui::CreateContext();
 	ImPlot::CreateContext();
 
@@ -325,6 +337,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// User defined functions for start of the game
 	if (_game)
 	{
+		MEMORY_TAG(MemoryCategory::Game);
 		_game->start();
 	}
 
@@ -419,6 +432,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 					// Call the Game Tick method
 					if (_game)
 					{
+						MEMORY_TAG(MemoryCategory::Game);
 						_game->tick(_physics_timestep);
 					}
 
@@ -463,6 +477,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 				if (_game)
 				{
+					MEMORY_TAG(MemoryCategory::Debug);
 					_game->debug_ui();
 				}
 				_overlay_manager->render_overlay();
@@ -533,6 +548,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// User defined code for exiting the game
 	if (_game)
 	{
+		MEMORY_TAG(MemoryCategory::Game);
 		_game->end();
 	}
 	_game.reset();
@@ -591,6 +607,7 @@ void GameEngine::d2d_render()
 		GPU_SCOPED_EVENT(_renderer->get_raw_annotation(), "D2D:Paint");
 		if (_game)
 		{
+			MEMORY_TAG(MemoryCategory::Game);
 			_game->paint(context);
 		}
 	}
@@ -1225,6 +1242,8 @@ void GameEngine::render_view(Graphics::RenderPass::Value pass)
 
 void GameEngine::build_ui()
 {
+	MEMORY_TAG(MemoryCategory::Debug);
+
 	{
 		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 		{
@@ -1280,6 +1299,7 @@ void GameEngine::render()
 
 		GPU_SCOPED_EVENT(d3d_annotation, L"Render");
 		// Render the shadows
+		if constexpr(Graphics::c_EnableShadowRendering)
 		{
 			_renderer->render_shadow_pass(_render_world);
 		}
@@ -1610,7 +1630,6 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 	}
 	Helpers::SafeRelease(pDXGIDebug);
 #endif
-
 	return result;
 }
 

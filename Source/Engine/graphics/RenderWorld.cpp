@@ -18,7 +18,7 @@ std::shared_ptr<RenderWorldInstance> RenderWorld::create_instance(float4x4 trans
 
 	ModelResource::init_parameters params{};
 	params.path = mesh;
-	inst->_model = ResourceLoader::instance()->load<ModelResource>(params, false);
+	inst->_model = ResourceLoader::instance()->load<ModelResource>(params, false, true);
 
 	_instances.push_back(inst);
 

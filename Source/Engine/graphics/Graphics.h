@@ -74,6 +74,9 @@ namespace Graphics
 namespace Graphics
 {
 
+constexpr bool c_EnableShadowRendering = false;
+
+
 struct DeviceContext;
 
 // Entry point for the graphics. Initializes default D3D11 objects for usage later

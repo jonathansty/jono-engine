@@ -1,6 +1,9 @@
 #include "engine.pch.h"
 #include "GameEngine.h"
 #include "MetricsOverlay.h"
+#include "Memory.h"
+
+#include <inttypes.h>
 
 MetricsOverlay::MetricsOverlay(bool isOpen)
 	: DebugOverlay(isOpen, "MetricsOverlay")
@@ -49,13 +52,37 @@ void MetricsOverlay::render_overlay()
 		f64 fps = 1.0 / (m_Times[Timer::FrameTime] * 0.001);
 		ImGui::Text("FPS: %d", int(fps));
 
+		if(ImGui::CollapsingHeader("Memory", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			MemoryTracker* tracker = get_memory_tracker();
+			ImGui::Text("Usage: %.4f (MB)", (double)tracker->_total_memory_usage / 1'000'000.0);
+			ImGui::Text("Allocations: %" PRIi64, (s64)tracker->_current_allocs);
+			ImGui::Text("Total Allocated: %" PRIu64, (u64)tracker->_total_allocated);
+			ImGui::Text("Total Freed: %" PRIu64, (u64)tracker->_total_freed);
+			ImGui::Text("Usage (calculated): %" PRIu64, u64(tracker->_total_allocated - get_memory_tracker()->_total_freed));
 
-		ImGui::Text("FrameTime:  %.4f ms", m_Times[Timer::FrameTime].last());
-		ImGui::Text("GameUpdate: %.4f ms", m_Times[Timer::GameUpdateCPU].last());
-		ImGui::Text("EventProcessing:  %.4f ms", m_Times[Timer::EventHandlingCPU].last());
-		ImGui::Text("RenderCPU:  %.4f ms", m_Times[Timer::RenderCPU].last());
-		ImGui::Text("RenderGPU:  %.4f ms", m_Times[Timer::RenderGPU].last());
-		ImGui::Text("PresentCPU:  %.4f ms", m_Times[Timer::PresentCPU].last());
+			std::vector<std::pair<MemoryCategory, size_t>> data{};
+			for(u32 i = 0; i < *MemoryCategory::Count; ++i)
+			{
+				data.push_back({ (MemoryCategory)i, tracker->_total_per_category[i] });
+			}
+			std::sort(data.begin(), data.end(),[](auto const& lhs, auto const& rhs) { return lhs.second > rhs.second; });
+			for(auto const& d : data)
+			{
+				ImGui::Text("\t%s (KB): %.4f", MemoryCategoryToString(d.first), (double)d.second / 1'000);
+			}
+		}
+
+
+		if (ImGui::CollapsingHeader("Timers", ImGuiTreeNodeFlags_DefaultOpen))
+		{
+			ImGui::Text("FrameTime:  %.4f ms", m_Times[Timer::FrameTime].last());
+			ImGui::Text("GameUpdate: %.4f ms", m_Times[Timer::GameUpdateCPU].last());
+			ImGui::Text("EventProcessing:  %.4f ms", m_Times[Timer::EventHandlingCPU].last());
+			ImGui::Text("RenderCPU:  %.4f ms", m_Times[Timer::RenderCPU].last());
+			ImGui::Text("RenderGPU:  %.4f ms", m_Times[Timer::RenderGPU].last());
+			ImGui::Text("PresentCPU:  %.4f ms", m_Times[Timer::PresentCPU].last());
+		}
 
 		ImGui::End();
 	}

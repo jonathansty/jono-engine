@@ -3,6 +3,7 @@
 // Different Games
 #include "GameTest2D.h"
 #include "SceneViewer.h"
+#include "Memory.h"
 
 #include "Graphics/ShaderCompiler.h"
 
@@ -36,5 +37,10 @@ int main(const int argcs, const char** argvs)
 		game_ptr = make_unique<SceneViewer>(scene);
 	}
 
-	return GameEngine::run_game(NULL, cmd, 1, std::move(game_ptr));
+	GameEngine::run_game(NULL, cmd, 1, std::move(game_ptr));
+
+	get_memory_tracker()->DumpLeakInfo();
+
+	return 0;
+
 }

@@ -26,7 +26,8 @@ using hlslpp::float4;
 
 struct DebugVisualizeMode
 {
-	enum Enum {
+	enum Enum
+	{
 		Default = 0,
 		Albedo = 1,
 		Roughness = 2,
@@ -40,7 +41,8 @@ struct DebugVisualizeMode
 
 extern int g_DebugMode;
 
-void SceneViewer::configure_engine(EngineSettings &engineSettings) {
+void SceneViewer::configure_engine(EngineSettings& engineSettings)
+{
 	engineSettings.d2d_use = false;
 
 	engineSettings.d3d_use = true;
@@ -227,6 +229,8 @@ void SceneViewer::paint(Graphics::D2DRenderContext& ctx)
 }
 #endif
 
+int* s_data = nullptr;
+
 void SceneViewer::tick(double deltaTime)
 {
 
@@ -248,6 +252,19 @@ void SceneViewer::tick(double deltaTime)
 	if(input_manager->is_key_pressed(KeyCode::R) && input_manager->is_key_down(KeyCode::Control))
 	{
 		rebuild_shaders();
+	}
+
+	if(input_manager->is_key_pressed(KeyCode::P))
+	{
+		if (s_data)
+		{
+			delete[] s_data;
+			s_data = nullptr;
+		}
+		else
+		{
+			s_data = new int[1000000];
+		}
 	}
 
 
