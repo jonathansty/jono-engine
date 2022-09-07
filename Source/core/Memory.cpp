@@ -2,19 +2,33 @@
 #include "Memory.h"
 #include <source_location>
 
-static MemoryTracker* g_Tracker = new MemoryTracker();
+std::atomic<bool> s_initialised = false;
+char g_reserved_memory[sizeof(MemoryTracker)] = {};
+thread_local bool s_should_track = true;
+thread_local static MemoryTracker* g_tracker = nullptr;
 
-thread_local  std::atomic<bool> s_InsideMemoryTracker = false;
+bool is_tracker_initialised()
+{
+	return s_initialised;
+}
+
+MemoryTracker* get_memory_tracker()
+{
+	if(g_tracker == nullptr)
+	{
+		g_tracker = (MemoryTracker*)g_reserved_memory;
+	}
+
+	return  g_tracker;
+}
 
 void* operator new(size_t size)
 {
 	void* result = std::malloc(size);
 
-	if (g_Tracker && !s_InsideMemoryTracker)
+	if(s_initialised)
 	{
-		s_InsideMemoryTracker = true;
-		g_Tracker->TrackAllocation(result, size);
-		s_InsideMemoryTracker = false;
+		get_memory_tracker()->TrackAllocation(result, size);
 	}
 	return result;
 }
@@ -23,11 +37,9 @@ void* operator new[](size_t size)
 {
 	void* result = std::malloc(size);
 
-	if (g_Tracker && !s_InsideMemoryTracker)
+	if (s_initialised)
 	{
-		s_InsideMemoryTracker = true;
-		g_Tracker->TrackAllocation(result, size);
-		s_InsideMemoryTracker = false;
+		get_memory_tracker()->TrackAllocation(result, size);
 	}
 	return result;
 }
@@ -35,26 +47,19 @@ void* operator new[](size_t size)
 
 void operator delete(void* mem) 
 {
-
-	if (g_Tracker && !s_InsideMemoryTracker)
+	if (s_initialised)
 	{
-		s_InsideMemoryTracker = true;
-		g_Tracker->TrackDeallocation(mem);
-		s_InsideMemoryTracker = false;
+		get_memory_tracker()->TrackDeallocation(mem);
 	}
-
 	std::free(mem);
 }
 
 void operator delete[](void* mem) 
 {
-	if (g_Tracker && !s_InsideMemoryTracker)
+	if (s_initialised)
 	{
-		s_InsideMemoryTracker = true;
-		g_Tracker->TrackDeallocation(mem);
-		s_InsideMemoryTracker = false;
+		get_memory_tracker()->TrackDeallocation(mem);
 	}
-
 	std::free(mem);
 }
 
@@ -72,50 +77,79 @@ void operator delete[](void* mem)
 	return s_values[*category];
 }
 
-MemoryTracker* get_memory_tracker()
+
+void MemoryTracker::init()
 {
-	return g_Tracker;
+	if (!s_initialised)
+	{
+		new (g_reserved_memory) MemoryTracker();
+		s_initialised = true;
+	}
 }
 
+bool MemoryTracker::should_track() const
+{
+	return s_initialised&& s_should_track;
+}
+
+struct ScopedMemTrackDisable
+{
+	ScopedMemTrackDisable()
+	{
+		s_should_track = false;
+	}
+	~ScopedMemTrackDisable()
+	{
+	
+		s_should_track = true;
+	}
+
+};
 void MemoryTracker::TrackAllocation(void* mem, size_t size)
 {
-	std::lock_guard lock{ g_Tracker->_tracking_lock };
-	_allocation_to_category[mem] = _current_category;
+	if (!should_track())
+		return;
 
-	_current_allocs += 1;
-	_total_memory_usage += size;
-	_total_allocated += size;
-	_total_per_category[*_current_category] += size;
+	std::lock_guard lock{ _tracking_lock };
+	ScopedMemTrackDisable mem_track_disable;
 
-	MemoryAllocationInfo info{};
-	info.size = size;
-	_allocation_map[*_current_category][mem] = std::move(info);
+	// If this is not in a category then we didn't track this allocation
+	{
+		_allocation_to_category[mem] = _current_category;
+
+		_current_allocs += 1;
+		_total_memory_usage += size;
+		_total_allocated += size;
+		_total_per_category[*_current_category] += size;
+
+		MemoryAllocationInfo info{};
+		info.size = size;
+		_allocation_map[*_current_category][mem] = std::move(info);
+	}
+
 }
 
 void MemoryTracker::TrackDeallocation(void* mem)
 {
-	std::lock_guard lock{ g_Tracker->_tracking_lock };
+	if (!should_track())
+		return;
 
-	MemoryCategory const& category = _allocation_to_category[mem];
-	MemoryAllocationInfo const& info = _allocation_map[*category][mem];
+	std::lock_guard lock{ _tracking_lock };
+	ScopedMemTrackDisable mem_track_disable;
 
-	_total_memory_usage -= info.size;
-	_total_freed += info.size;
-	_total_per_category[*category] -= info.size;
-	_current_allocs -= 1;
+	if (auto it = _allocation_to_category.find(mem); it != _allocation_to_category.end())
+	{
+		MemoryCategory const& category = _allocation_to_category[mem];
+		MemoryAllocationInfo const& info = _allocation_map[*category][mem];
 
-	_allocation_map[*category].erase(mem);
-	_allocation_to_category.erase(mem);
-}
+		_total_memory_usage -= info.size;
+		_total_freed += info.size;
+		_total_per_category[*category] -= info.size;
+		_current_allocs -= 1;
 
-void* MemoryTracker::operator new(size_t size)
-{
-	return std::malloc(size);
-}
-
-void MemoryTracker::operator delete(void* mem)
-{
-	std::free(mem);
+		_allocation_map[*category].erase(mem);
+		_allocation_to_category.erase(mem);
+	}
 }
 
 void MemoryTracker::DumpLeakInfo()

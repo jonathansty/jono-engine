@@ -24,6 +24,8 @@ const char* MemoryCategoryToString(MemoryCategory category);
 class MemoryTracker final
 {
 public:
+	static void init();
+	bool should_track() const;
 
 	std::atomic<s64> _current_allocs = 0;
 	std::atomic<u64> _total_memory_usage = 0;
@@ -41,9 +43,6 @@ public:
 	void TrackAllocation(void* mem, size_t size);
 	void TrackDeallocation(void* mem);
 
-
-	void* operator new(size_t size);
-	void operator delete(void* mem);
 
 	void DumpLeakInfo();
 

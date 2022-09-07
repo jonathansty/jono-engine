@@ -9,6 +9,8 @@
 
 int main(const int argcs, const char** argvs)
 {
+	MemoryTracker::init();
+
 	// Parses the command line for use with the game engine
 	cli::CommandLine cmd = cli::parse(argvs, argcs);
 
