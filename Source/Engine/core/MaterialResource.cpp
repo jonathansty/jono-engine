@@ -74,13 +74,9 @@ void MaterialResource::load(enki::ITaskSet* parent)
 				case MaterialInitParameters::TextureType_Albedo:
 					_resource->_textures.push_back(TextureResource::white());
 					break;
-				case MaterialInitParameters::TextureType_Metalness:
-					_resource->_textures.push_back(TextureResource::black());
-					break;
-				case MaterialInitParameters::TextureType_Roughness:
+				case MaterialInitParameters::TextureType_MetalnessRoughness:
 					_resource->_textures.push_back(TextureResource::default_roughness());
 					break;
-
 				case MaterialInitParameters::TextureType_Normal:
 					_resource->_textures.push_back(TextureResource::default_normal());
 					break;

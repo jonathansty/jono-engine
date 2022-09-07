@@ -22,9 +22,10 @@ struct MaterialInitParameters
 	enum TextureType
 	{
 		TextureType_Albedo,
-		TextureType_Roughness,
-		TextureType_Metalness,
+		TextureType_MetalnessRoughness,
 		TextureType_Normal,
+		TextureType_AO,
+		TextureType_Emissive,
 		TextureType_Count,
 	};
 

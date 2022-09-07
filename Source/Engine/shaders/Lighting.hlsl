@@ -80,19 +80,18 @@ float3 LightingModel_BRDF(in Material material, float3 v, float3 l, float3 n)
 	float NoL = clamp(dot(n, l), 0.0, 1.0);
 	float NoH = clamp(dot(n, h), 0.0, 1.0);
 	float LoH = clamp(dot(l, h), 0.0, 1.0);
-	
 
 	float VoH = clamp(dot(v,h), 0.0, 1.0);
 
 	float k_s = 1.0f;
 	float k_d = 1.0f;
+	float k_ambient = 0.1f;
 
 	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, material);
 	float3 Fd = Fd_Lambert(material.albedo);
 
-
 	float3 result = k_s * Fr + k_d * Fd;
-	return NoL * Fd + Fr * k_s;
+	return lerp(result, k_ambient * Fd, 1.0f - NoL) * material.ao;
 }
 
 float3 LightingModel_Phong(Material material, float3 view, float3 light,float3 light_colour, float3 normal)

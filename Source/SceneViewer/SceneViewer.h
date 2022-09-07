@@ -11,7 +11,7 @@ public:
 			: _scene_path(path)
 			, _timer(0.0f)
 			, _light_tick(0.0f)
-			, _zoom(50.0f)
+			, _zoom(2.0f)
 		, _up_timer(0.0f)
 		,_center()
 	{}
@@ -30,6 +30,7 @@ public:
 
 private:
 
+	void open_file();
 	void rebuild_shaders();
 
 	bool load_world(const char* path);

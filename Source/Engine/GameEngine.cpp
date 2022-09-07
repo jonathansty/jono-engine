@@ -1299,7 +1299,7 @@ void GameEngine::render()
 
 		GPU_SCOPED_EVENT(d3d_annotation, L"Render");
 		// Render the shadows
-		if constexpr(Graphics::c_EnableShadowRendering)
+		if(Graphics::s_EnableShadowRendering)
 		{
 			_renderer->render_shadow_pass(_render_world);
 		}

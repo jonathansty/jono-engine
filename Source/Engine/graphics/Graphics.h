@@ -64,17 +64,11 @@ ENUM_UNDERLYING_TYPE(SamplerState);
 const char* SamplerStateToString(SamplerState state);
 
 
-
 namespace Graphics
 {
 	struct ShaderCreateParams;
-}
 
-
-namespace Graphics
-{
-
-constexpr bool c_EnableShadowRendering = false;
+extern bool s_EnableShadowRendering;
 
 
 struct DeviceContext;

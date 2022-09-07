@@ -57,9 +57,6 @@ void MetricsOverlay::render_overlay()
 			MemoryTracker* tracker = get_memory_tracker();
 			ImGui::Text("Usage: %.4f (MB)", (double)tracker->_total_memory_usage / 1'000'000.0);
 			ImGui::Text("Allocations: %" PRIi64, (s64)tracker->_current_allocs);
-			ImGui::Text("Total Allocated: %" PRIu64, (u64)tracker->_total_allocated);
-			ImGui::Text("Total Freed: %" PRIu64, (u64)tracker->_total_freed);
-			ImGui::Text("Usage (calculated): %" PRIu64, u64(tracker->_total_allocated - get_memory_tracker()->_total_freed));
 
 			std::vector<std::pair<MemoryCategory, size_t>> data{};
 			for(u32 i = 0; i < *MemoryCategory::Count; ++i)

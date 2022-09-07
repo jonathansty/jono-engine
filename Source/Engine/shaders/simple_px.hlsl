@@ -4,13 +4,14 @@
 
 // PBR Inputs
 // TODO: Should this be packed into a texture array (assuming the textures are the same size)
-Texture2D<float4> g_albedo    : register(t0);
-Texture2D<float4> g_roughness      : register(t1);
-Texture2D<float4> g_metalness      : register(t2); 
-Texture2D<float4> g_normal    : register(t2);
+Texture2D<float4> g_albedo    				: register(t0);
+Texture2D<float4> g_metallic_roughness      : register(t1);
+Texture2D<float4> g_normal      			: register(t2); 
+Texture2D<float4> g_ao      				: register(t3); 
+Texture2D<float4> g_Emissive      		    : register(t4); 
 
-Texture2DArray<float> g_shadow_map : register(t3);
-Texture2D<float>      g_depth : register(t4);
+Texture2DArray<float> g_shadow_map : register(t5);
+Texture2D<float>      g_depth : register(t6);
 
 // Default Samplers
 SamplerState g_all_linear_sampler : register(s0);
@@ -154,17 +155,18 @@ float4 main(VS_OUT vout) : SV_Target
 	float2 uv = vout.uv;
 
 	// Sample our 3 input textures
-	float4 data = float4(1.0f, g_roughness.Sample(g_all_linear_sampler, uv).r, g_metalness.Sample(g_all_linear_sampler, uv).r,0.0);
+	float4 metallic_roughness = g_metallic_roughness.Sample(g_all_linear_sampler, uv);
 	float3 albedo = g_albedo.Sample(g_all_linear_sampler, uv).rgb;
 	float3 normals = g_normal.Sample(g_all_linear_sampler, uv).rgb * 2.0 - 1.0;
+	float ao = g_ao.Sample(g_all_linear_sampler, uv).r;
 
 	// Construct our material from sampled data
 	Material material = CreateMaterial();
 	material.albedo = albedo;
 	material.tangentNormal = normals;
-	material.ao = data.r;
-	material.roughness = data.g;
-	material.metalness = data.b;
+	material.ao = ao;
+	material.roughness = metallic_roughness.g;
+	material.metalness = metallic_roughness.b;
 
 	// Transform our tangent normal into world space
 	float4 normal = normalize(vout.worldNormal);
@@ -177,7 +179,6 @@ float4 main(VS_OUT vout) : SV_Target
 			normal.xyz);
 
 	float3 final_normal = normalize(mul(material.tangentNormal, tbn));
-	final_normal = normal;
 
 	// View vector is different dependent on the pixel that is being processed!
 	float3 view = normalize(g_ViewPosition - vout.worldPosition);

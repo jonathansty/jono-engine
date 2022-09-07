@@ -58,7 +58,6 @@ void SceneViewer::initialize(GameSettings& gameSettings)
 	gameSettings.m_WindowHeight = 800;
 }
 
-
 std::string show_file_dialog(HWND owner)
 {
 	OPENFILENAMEA ofn;
@@ -92,11 +91,7 @@ void SceneViewer::start()
 			if (ImGui::BeginMenu("File")){
 
 				if (ImGui::MenuItem("Open")) {
-					LOG_VERBOSE(UI, "Opening file...");
-					std::string file = show_file_dialog(ge->get_window());
-					if (!file.empty()) {
-						this->swap_model(file.c_str());
-					}
+					open_file();
 				}
 
 				if (ImGui::MenuItem("Rebuild Shaders")) {
@@ -121,14 +116,11 @@ void SceneViewer::start()
 	_world = GameEngine::instance()->get_world();
 	
 	auto render_world = GameEngine::instance()->get_render_world();
-	render_world->create_instance(float4x4::identity(), "Resources/Models/plane_big.glb");
-	_model = render_world->create_instance(float4x4::translation({ 0.0, 1.0, 0.0 }), "Resources/Models/cube.glb");
-	//_model = render_world->create_instance(float4x4::scale({ 1.0, 1.0, 1.0 }), "Resources/Scenes/Main/NewSponza_Main_Blender_glTF.gltf");
 
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
 	const float aspect = (float)size.x / (float)size.y;
-	const float near_plane = 5.0f;
-	const float far_plane = 1000.0f;
+	const float near_plane = 0.1f;
+	const float far_plane = 500.0f;
 
 	// Create Cam 1
 	auto rw_cam = render_world->create_camera();
@@ -139,13 +131,7 @@ void SceneViewer::start()
 	settings.fov = hlslpp::radians(float1(60.0f));
 	settings.projection_type = RenderWorldCamera::Projection::Perspective;
 	rw_cam->set_settings(settings);
-	rw_cam->set_position({ 0.0f, 1.5f, -25.0 });
-
-	// Create Cam 2 
-	auto cam2 = render_world->create_camera();
-	settings.near_clip = 0.5f;
-	settings.far_clip = 2000.0f;
-	cam2->set_settings(settings);
+	rw_cam->set_position({ 0.0f, 1.0f, -1.0f });
 
 	auto l = render_world->create_light(RenderWorldLight::LightType::Directional);
 	settings.aspect = 1.0f;
@@ -254,6 +240,12 @@ void SceneViewer::tick(double deltaTime)
 		rebuild_shaders();
 	}
 
+	if (input_manager->is_key_pressed(KeyCode::O) && input_manager->is_key_down(KeyCode::Control))
+	{
+		open_file();
+	}
+
+
 	if(input_manager->is_key_pressed(KeyCode::P))
 	{
 		if (s_data)
@@ -274,23 +266,27 @@ void SceneViewer::tick(double deltaTime)
 	RenderWorldRef world = GameEngine::instance()->get_render_world();
 	auto camera = world->get_view_camera();
 	bool has_viewport_focus = GameEngine::instance()->is_viewport_focused();
-	if (has_viewport_focus) {
+	if (has_viewport_focus)
+	{
 		f32 scroll_delta = input_manager->get_scroll_delta();
 		f32 zoom_factor = _zoom * 0.05f;
-		if (scroll_delta != 0) {
+		if (scroll_delta != 0)
+		{
 			_zoom -= scroll_delta * (zoom_factor)*100.0f * f32_dt;
 		}
 
 		// Rotate camera
 		float2 mouse_delta = float2(input_manager->get_mouse_delta());
-		if (input_manager->is_mouse_button_down(0)) {
+		if (input_manager->is_mouse_button_down(0))
+		{
 			_timer -= mouse_delta.x * f32_dt * 0.5f;
 			_up_timer += mouse_delta.y * f32_dt * 0.5f;
 		}
 		_up_timer = std::clamp<f32>(_up_timer, -static_cast<f32>(M_PI) + std::numeric_limits<f32>::epsilon(), -std::numeric_limits<f32>::epsilon());
 
 		// rotate light
-		if (input_manager->is_mouse_button_down(2)) {
+		if (input_manager->is_mouse_button_down(2))
+		{
 			_light_tick -= mouse_delta.x * f32_dt * 0.5f;
 		}
 
@@ -298,7 +294,8 @@ void SceneViewer::tick(double deltaTime)
 		float3 pos = camera->get_position();
 
 		float3 localPan = float3(0.0f, 0.0f, 0.0f);
-		if (input_manager->is_mouse_button_down(1)) {
+		if (input_manager->is_mouse_button_down(1))
+		{
 			float4x4 view = camera->get_view();
 
 			float4 right = hlslpp::mul(view, float4(1.0, 0.0, 0.0, 0.0)) * -(f32)mouse_delta.x * deltaTime;
@@ -308,7 +305,8 @@ void SceneViewer::tick(double deltaTime)
 		}
 		_center += localPan;
 
-		if (input_manager->is_key_pressed(KeyCode::Z)) {
+		if (input_manager->is_key_pressed(KeyCode::Z))
+		{
 			LOG_INFO(Input, "Resetting view.");
 			_timer = 0.0f;
 			_up_timer = 0.0f;
@@ -384,6 +382,16 @@ void SceneViewer::debug_ui()
 
 static const char* s_world_path = "Scenes/test_world.scene";
 
+void SceneViewer::open_file()
+{
+	LOG_VERBOSE(UI, "Opening file...");
+	std::string file = show_file_dialog(GameEngine::instance()->get_window());
+	if (!file.empty())
+	{
+		this->swap_model(file.c_str());
+	}
+}
+
 void SceneViewer::rebuild_shaders()
 {
 	using namespace Graphics;
@@ -453,7 +461,8 @@ bool SceneViewer::load_world(const char* path) {
 }
 
 
-void SceneViewer::save_world(const char* path) {
+void SceneViewer::save_world(const char* path)
+{
 	using namespace serialization;
 
 	auto io = GameEngine::instance()->io();
@@ -466,9 +475,10 @@ void SceneViewer::save_world(const char* path) {
 	serialization::write<u32>(file, number_of_entities);
 
 	// Skip the root entity
-	for (u32 i = 1; i < all_entities.size(); ++i) {
-
-		if (!all_entities[i]) {
+	for (u32 i = 1; i < all_entities.size(); ++i)
+	{
+		if (!all_entities[i])
+		{
 			continue;
 		}
 
@@ -480,27 +490,28 @@ void SceneViewer::save_world(const char* path) {
 
 		// Serialize parent id
 		Identifier64 parent_id;
-		if(ent->get_parent() && ent->get_parent() != _world->get_root()) {
+		if (ent->get_parent() && ent->get_parent() != _world->get_root())
+		{
 			parent_id = ent->get_parent()->get_id();
 		}
 		serialization::write<Identifier64>(file, parent_id);
 
 		serialization::serialize_instance<IO::Mode::Write>(file, obj);
 
-
 		// Write components manually
 		u32 n_components = static_cast<u32>(all_entities[i]->get_components().size());
 		write<u32>(file, n_components);
-		for (Component* comp : all_entities[i]->get_components()) {
+		for (Component* comp : all_entities[i]->get_components())
+		{
 			rttr::instance inst = comp;
 			serialization::serialize_instance<IO::Mode::Write>(file, inst);
 		}
 	}
 }
 
-void SceneViewer::swap_model(const char* path) {
+void SceneViewer::swap_model(const char* path)
+{
 	GameEngine::instance()->get_render_world()->remove_instance(_model);
 
 	_model = GameEngine::instance()->get_render_world()->create_instance(float4x4::identity(), path);
-
 }

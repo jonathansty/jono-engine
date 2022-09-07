@@ -511,7 +511,7 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 			// CascadeInfo const& cascade_info = l->get_cascade(0);
 			info->light_space = float4x4::identity();
 
-			if constexpr (c_EnableShadowRendering)
+			if(s_EnableShadowRendering)
 			{
 				info->num_cascades = MAX_CASCADES;
 				for (int j = 0; j < MAX_CASCADES; ++j)
@@ -523,6 +523,15 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 					f32 z1 = n * pow(f / n, f32(j + 1) / f32(MAX_CASCADES));
 					info->cascade_distances[j] = z1;
 					info->cascades[j] = l->get_cascade(j).vp;
+				}
+			}
+			else
+			{
+				info->num_cascades = 0;
+				for (int j = 0; j < MAX_CASCADES; ++j)
+				{
+					info->cascade_distances[j] = {};
+					info->cascades[j] = {};
 				}
 			}
 		}
@@ -759,10 +768,10 @@ void Renderer::setup_renderstate(ViewParams const& params, Material* const mater
 	if (params.pass == RenderPass::Opaque)
 	{
 		ID3D11ShaderResourceView* views[] = {
-			c_EnableShadowRendering ? _shadow_map_srv.Get() : nullptr,
+			s_EnableShadowRendering ? _shadow_map_srv.Get() : nullptr,
 			_output_depth_srv_copy
 		};
-		_device_ctx->PSSetShaderResources(3, UINT(std::size(views)), views);
+		_device_ctx->PSSetShaderResources(5, UINT(std::size(views)), views);
 	}
 }
 

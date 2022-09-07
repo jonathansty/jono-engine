@@ -138,7 +138,7 @@ void RendererDebugTool::render_debug_tool()
 {
 	if (ImGui::Begin("RendererDebug"), _isOpen)
 	{
-		ImGui::Checkbox("Show Shadow Debug", &_show_shadow_debug);
+		ImGui::Checkbox("Enable Shadow Rendering", &Graphics::s_EnableShadowRendering);
 
 		if (ImGui::Button("Toggle Debug Cam"))
 		{
@@ -155,15 +155,15 @@ void RendererDebugTool::render_debug_tool()
 		}
 		ImGui::Text("Active Camera: %d", _renderer->_active_cam);
 
-		ImVec2 current_size = ImGui::GetContentRegionAvail();
-		for (u32 i = 0; i < MAX_CASCADES; ++i)
-		{
-			ImGui::Image(_renderer->_debug_shadow_map_srv[i].Get(), { 150, 150 });
-			if (i != MAX_CASCADES - 1)
-				ImGui::SameLine();
-		}
+		//ImVec2 current_size = ImGui::GetContentRegionAvail();
+		//for (u32 i = 0; i < MAX_CASCADES; ++i)
+		//{
+		//	ImGui::Image(_renderer->_debug_shadow_map_srv[i].Get(), { 150, 150 });
+		//	if (i != MAX_CASCADES - 1)
+		//		ImGui::SameLine();
+		//}
 
-		ImGui::Image(_renderer->_output_depth_srv, { 150, 150 });
+		//ImGui::Image(_renderer->_output_depth_srv, { 150, 150 });
 	}
 	ImGui::End();
 }

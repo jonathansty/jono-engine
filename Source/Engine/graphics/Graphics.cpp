@@ -29,6 +29,8 @@ void CreateSS(ComPtr<ID3D11Device> const& device, CD3D11_SAMPLER_DESC const& ss_
 void CreateBS(ComPtr<ID3D11Device> const& device, CD3D11_BLEND_DESC const& bs_desc, BlendState state);
 
 
+bool s_EnableShadowRendering = false;
+
 void init(DeviceContext const& ctx)
 {
 	assert(ctx._device.Get() && ctx._ctx.Get());
@@ -112,6 +114,8 @@ void init(DeviceContext const& ctx)
 	{
 		CD3D11_SAMPLER_DESC sampler{ CD3D11_DEFAULT() };
 		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		sampler.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+		sampler.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 		SUCCEEDED(device->CreateSamplerState(&sampler, s_sampler_states[*SamplerState::MinMagMip_Linear].GetAddressOf()));
 
 		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;

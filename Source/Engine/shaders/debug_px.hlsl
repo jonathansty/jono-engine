@@ -11,9 +11,11 @@
 #define VisualizeMode_VertexColour 7
 
 // PBR inputs
-Texture2D<float4> g_albedo    : register(t0);
-Texture2D<float4> g_Data : register(t1); // .x: metalness, .y : roughness 
-Texture2D<float4> g_Normal    : register(t2);
+Texture2D<float4> g_albedo    				: register(t0);
+Texture2D<float4> g_metallic_roughness      : register(t1);
+Texture2D<float4> g_normal      			: register(t2); 
+Texture2D<float4> g_ao      				: register(t3); 
+Texture2D<float4> g_Emissive      		    : register(t4); 
 
 SamplerState g_AllLinearSampler : register(s0);
 SamplerState g_AllPointSampler : register(s1);
@@ -24,10 +26,10 @@ float4 main(VS_OUT vout) : SV_Target
 
 	Material material = CreateMaterial();
 	material.albedo = g_albedo.Sample(g_AllLinearSampler, uv).rgb;
-	material.tangentNormal = (g_Normal.Sample(g_AllLinearSampler, uv).rgb * 2.0 - 1.0);
+	material.tangentNormal = (g_normal.Sample(g_AllLinearSampler, uv).rgb * 2.0 - 1.0);
 
-	float4 data = g_Data.Sample(g_AllLinearSampler, uv);
-	material.ao = data.r;
+	float4 data = g_metallic_roughness.Sample(g_AllLinearSampler, uv);
+	material.ao = g_ao.Sample(g_AllLinearSampler, uv).r;
 	material.roughness = data.g;
 	material.metalness = data.b;
 

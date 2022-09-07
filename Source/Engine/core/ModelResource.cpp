@@ -225,43 +225,9 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 			std::string path;
 		};
 		std::vector<TextureMappings> mappings;
-		for(u32 i = 0; i < scene->mNumMaterials; ++i)
-		{
-			aiMaterial* material = scene->mMaterials[i];
-			aiString texturePath;
-			if (material->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &texturePath) == aiReturn_SUCCESS)
-			{
-				mappings.push_back(TextureMappings{ u32(_textures.size()), i, dir_path.string() + "\\" + std::string(texturePath.C_Str()) });
-				_textures.push_back({});
-			}
-			if (material->GetTexture(AI_MATKEY_ROUGHNESS_TEXTURE, &texturePath) == aiReturn_SUCCESS)
-			{
-				mappings.push_back(TextureMappings{ u32(_textures.size()), i, dir_path.string() + "\\" + std::string(texturePath.C_Str()) });
-				_textures.push_back({});
-			}
-			if (material->GetTexture(AI_MATKEY_METALLIC_TEXTURE, &texturePath) == aiReturn_SUCCESS)
-			{
-				mappings.push_back(TextureMappings{ u32(_textures.size()), i, dir_path.string() + "\\" + std::string(texturePath.C_Str()) });
-				_textures.push_back({});
-			}
-			if (material->GetTexture(aiTextureType_NORMALS, 0, &texturePath) == aiReturn_SUCCESS)
-			{
-				mappings.push_back(TextureMappings{ u32(_textures.size()), i, dir_path.string() + "\\" + std::string(texturePath.C_Str()) });
-				_textures.push_back({});
-			}
-		}
-
-
 
 		// Load all textures inline
 
-		for(u32 i =0; i< mappings.size(); ++i)
-		{
-			TextureMappings const& mapping = mappings[i];
-
-			FromFileResourceParameters params{ mapping.path };
-			_textures[i] = ResourceLoader::instance()->load<TextureResource>(params, true, true);
-		}
 
 		// Material load tas
 		_materials.resize(scene->mNumMaterials);
@@ -284,23 +250,55 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 			aiString roughnessTexture;
 			aiString normalTexture;
 			aiString metalnessTexture;
+			aiString aoTexture;
+			aiString emissiveTexture;
 
 			if (material->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &baseColorTexture) == aiReturn_SUCCESS)
 			{
 				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
+				mappings.push_back(TextureMappings{ u32(_textures.size()), j, dir_path.string() + "\\" + std::string(baseColorTexture.C_Str()) });
+				_textures.push_back({});
+
 			}
-			if (material->GetTexture(AI_MATKEY_ROUGHNESS_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
+			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Roughness] = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
+				mappings.push_back(TextureMappings{ u32(_textures.size()), j, dir_path.string() + "\\" + std::string(roughnessTexture.C_Str()) });
+				_textures.push_back({});
+
 			}
-			if (material->GetTexture(AI_MATKEY_METALLIC_TEXTURE, &metalnessTexture) == aiReturn_SUCCESS)
-			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Metalness] = dir_path.string() + "\\" + std::string(metalnessTexture.C_Str());
-			}
+
 			if (material->GetTexture(aiTextureType_NORMALS, 0, &normalTexture) == aiReturn_SUCCESS)
 			{
 				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path.string() + "\\" + std::string(normalTexture.C_Str());
+				mappings.push_back(TextureMappings{ u32(_textures.size()), j, dir_path.string() + "\\" + std::string(normalTexture.C_Str()) });
+				_textures.push_back({});
 			}
+
+			if (material->GetTexture(aiTextureType_LIGHTMAP, 0, &aoTexture) == aiReturn_SUCCESS)
+			{
+				mappings.push_back(TextureMappings{ u32(_textures.size()), j, dir_path.string() + "\\" + std::string(aoTexture.C_Str()) });
+				_textures.push_back({});
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_AO] = dir_path.string() + "\\" + std::string(aoTexture.C_Str());
+			}
+
+			if (material->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTexture) == aiReturn_SUCCESS)
+			{
+				parameters.m_texture_paths[MaterialInitParameters::TextureType_Emissive] = dir_path.string() + "\\" + std::string(emissiveTexture.C_Str());
+				mappings.push_back(TextureMappings{ u32(_textures.size()), j, dir_path.string() + "\\" + std::string(emissiveTexture.C_Str()) });
+				_textures.push_back({});
+			}
+
+			for (u32 i = 0; i < mappings.size(); ++i)
+			{
+				TextureMappings const& mapping = mappings[i];
+
+				FromFileResourceParameters params{ mapping.path };
+				_textures[i] = ResourceLoader::instance()->load<TextureResource>(params, true, true);
+			}
+
+
+
 
 			bool double_sided;
 			if (material->Get(AI_MATKEY_TWOSIDED, double_sided) == aiReturn_SUCCESS)
