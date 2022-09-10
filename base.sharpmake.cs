@@ -15,7 +15,7 @@ public class Utils
                   Platform.win64,
                   DevEnv.vs2022,
                   Optimization.Debug | Optimization.Release,
-                  OutputType.Lib),
+                  OutputType.Dll),
             };
         }
     }
@@ -24,6 +24,8 @@ public class Utils
 
     public static void ConfigureProjectName(Project.Configuration conf, Target target)
     {
+        conf.Name = @"[target.Optimization] [target.OutputType]";
+
         conf.ProjectFileName = "[project.Name]_[target.DevEnv]_[target.Platform]";
         conf.ProjectPath = @"[project.SharpmakeCsPath]\build\projects";
         conf.IntermediatePath = @"[project.SharpmakeCsPath]\build\intermediate\[target.Optimization]\[project.Name]_[target.DevEnv]_[target.Platform]";
@@ -32,7 +34,6 @@ public class Utils
     }
 }
 
-[Generate]
 public abstract class JonaBaseProject : Project
 {
     public JonaBaseProject() : base()
@@ -54,6 +55,8 @@ public abstract class JonaBaseProject : Project
         conf.Options.Add(Options.Vc.General.WindowsTargetPlatformVersion.Latest);
         conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
         conf.Options.Add(Options.Vc.Compiler.MinimalRebuild.Enable);
+
+        conf.Output = target.OutputType == OutputType.Lib ? Configuration.OutputType.Lib : Configuration.OutputType.Dll;
 
         conf.PrecompHeader = "[project.Name].pch.h";
         conf.PrecompSource = "[project.Name].pch.cpp";

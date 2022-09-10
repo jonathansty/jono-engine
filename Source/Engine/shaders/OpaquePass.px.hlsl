@@ -1,21 +1,8 @@
 #include "Common.h"
 #include "Lighting.hlsl"
 
-
-// PBR Inputs
-// TODO: Should this be packed into a texture array (assuming the textures are the same size)
-Texture2D<float4> g_albedo    				: register(t0);
-Texture2D<float4> g_metallic_roughness      : register(t1);
-Texture2D<float4> g_normal      			: register(t2); 
-Texture2D<float4> g_ao      				: register(t3); 
-Texture2D<float4> g_Emissive      		    : register(t4); 
-
 Texture2DArray<float> g_shadow_map : register(t5);
 Texture2D<float>      g_depth : register(t6);
-
-// Default Samplers
-SamplerState g_all_linear_sampler : register(s0);
-SamplerState g_point_sampler : register(s1);
 
 uint compute_shadow_cascade(float depth, in LightInfo info)
 {
@@ -150,23 +137,13 @@ float4 compute_shadow(float4 world_pos, float4 view_pos, float4 proj_pos, in Lig
 	return shadow;
 }
 
+
+
+
 float4 main(VS_OUT vout) : SV_Target 
 {
-	float2 uv = vout.uv;
-
-	// Sample our 3 input textures
-	float4 metallic_roughness = g_metallic_roughness.Sample(g_all_linear_sampler, uv);
-	float3 albedo = g_albedo.Sample(g_all_linear_sampler, uv).rgb;
-	float3 normals = g_normal.Sample(g_all_linear_sampler, uv).rgb * 2.0 - 1.0;
-	float ao = g_ao.Sample(g_all_linear_sampler, uv).r;
-
 	// Construct our material from sampled data
-	Material material = CreateMaterial();
-	material.albedo = albedo;
-	material.tangentNormal = normals;
-	material.ao = ao;
-	material.roughness = metallic_roughness.g;
-	material.metalness = metallic_roughness.b;
+	Material material = EvaluateMaterial(vout);
 
 	// Transform our tangent normal into world space
 	float4 normal = normalize(vout.worldNormal);

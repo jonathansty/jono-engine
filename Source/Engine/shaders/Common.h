@@ -100,6 +100,10 @@ cbuffer ModelConstants : register(b2)
 	float4x4 WorldView;
 	float4x4 WorldViewProjection;
 };
+
+// Default Samplers
+SamplerState g_all_linear_sampler : register(s0);
+SamplerState g_point_sampler : register(s1);
 #endif
 
 #endif

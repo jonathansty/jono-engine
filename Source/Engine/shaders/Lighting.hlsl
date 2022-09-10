@@ -39,35 +39,33 @@ float D_GGX(float NoH, float a) {
 }
 
 float3 F_Schlick(float HoV, float3 f0) {
-	return (f0 + (float3(1.0, 1.0, 1.0) - f0) * pow(1.0 - HoV, 5.0));
+	float3 f90 = float3(1.0f,1.0f,1.0f);
+	return (f0 + (f90 - f0) * pow(1.0 - HoV, 5.0));
 }
-
-// float V_SmithGGXCorrelated(float NoV, float NoL, float a) {
-// 	float a2 = a * a;
-// 	float GGXL = NoV * sqrt((-NoL * a2 + NoL) * NoL + a2);
-// 	float GGXV = NoL * sqrt((-NoV * a2 + NoV) * NoV + a2);
-// 	return 0.5 / (GGXV + GGXL);
-// }
 
 float G_SchlickGGX(float NoV, float k)
 {
 	float nom = NoV;
-	float denom = NoV * (1.0 - k) + k;
+	float denom = NoV * (1.0 - k*k) + k*k;
 	return nom / denom;
 }
 
-float3 Fd_Lambert(float3 colour) {
-	return colour / PI;
+float3 Fd_Lambert() {
+	return 1.0f / PI;
 }
 
 float3 F_CookTorrence(float NoH, float NoV, float NoL, float LoH, float VoH, in Material material)
 {
 	// perceptually linear roughness to roughness (see parameterization)
-	float r2 = material.roughness * material.roughness;
+	float r2 = material.roughness;
 
 	float  D = D_GGX(NoH, r2);
 	float  G = G_SchlickGGX(NoV, r2);
-	float3 F = F_Schlick(VoH, material.F0);
+	
+	float3 reflectance = material.F0;
+	// float3 f0 = lerp(material.F0, material.metalness, material.metalness);
+	float3 f0 = 0.16 * reflectance * reflectance * (1.0 - material.metalness) + material.albedo * material.metalness;
+	float3 F = F_Schlick(VoH, f0);
 	return (D*F*G) * rcp(max(4.0*NoV*NoL, 1.0));
 }
 // FILAMENT end
@@ -87,8 +85,9 @@ float3 LightingModel_BRDF(in Material material, float3 v, float3 l, float3 n)
 	float k_d = 1.0f;
 	float k_ambient = 0.1f;
 
+	float3 diffuseColor = (1.0 - material.metalness) * material.albedo;
+	float3 Fd = diffuseColor * Fd_Lambert();
 	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, material);
-	float3 Fd = Fd_Lambert(material.albedo);
 
 	float3 result = k_s * Fr + k_d * Fd;
 	return lerp(result, k_ambient * Fd, 1.0f - NoL) * material.ao;

@@ -28,16 +28,16 @@ void MaterialResource::load(enki::ITaskSet* parent)
 	// Get pixel shader
 	ShaderCreateParams create_params{};
 	create_params.params = params;
-	create_params.path = "Source/Engine/Shaders/simple_px.hlsl";
+	create_params.path = "Source/Engine/Shaders/DefaultGGX_Opaque.px.hlsl";
 	auto pixel_shader = ShaderCache::instance()->find_or_create(create_params);
 
 	// Get debug vertex shader
 	create_params.params = params;
-	create_params.path = "Source/Engine/Shaders/debug_px.hlsl";
+	create_params.path = "Source/Engine/Shaders/DefaultGGX_Debug.px.hlsl";
 	auto debug_shader = ShaderCache::instance()->find_or_create(create_params);
 
 	create_params.params.stage = ShaderType::Vertex;
-	create_params.path = "Source/Engine/Shaders/simple_vx.hlsl";
+	create_params.path = "Source/Engine/Shaders/DefaultVertex.vx.hlsl";
 	auto vertex_shader = ShaderCache::instance()->find_or_create(create_params);
 
 	if (!pixel_shader)
