@@ -58,9 +58,15 @@ namespace std
 class MaterialResource final : public TCachedResource<Material, MaterialInitParameters>
 {
 public:
-	MaterialResource(MaterialInitParameters params) : TCachedResource(params) {}
-	~MaterialResource() {}
+	MaterialResource(MaterialInitParameters params)
+			: TCachedResource(params)
+	{
+		s_resources.push_back(this);
+	}
+	~MaterialResource() { s_resources.remove(this); }
 
 	void load(enki::ITaskSet* parent) override;
+
+	static std::list<MaterialResource*> s_resources;
 };
 

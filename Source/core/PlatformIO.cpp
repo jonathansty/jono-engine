@@ -57,6 +57,9 @@ public:
 
 	virtual u64 tell() const { return ftell(_stream); }
 
+	virtual void* get_raw_handle() const { return _stream; }
+
+
 	std::string _path;
 	Mode _mode;
 	FILE* _stream;
@@ -106,7 +109,7 @@ public:
 		if (path.starts_with("res:"))
 		{
 			char tmp[512];
-			sprintf_s(tmp, "%s/%s", _root.c_str(), path.c_str());
+			sprintf_s(tmp, "%s/%s", _root.c_str(), path.substr(sizeof("res:")).c_str());
 			return tmp;
 		}
 		return path;

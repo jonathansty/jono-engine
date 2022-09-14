@@ -9,28 +9,32 @@ using RenderWorldInstanceRef = std::shared_ptr<class RenderWorldInstance>;
 using RenderWorldCameraRef = std::shared_ptr<class RenderWorldCamera>;
 using RenderWorldLightRef = std::shared_ptr<class RenderWorldLight>;
 
+// Render world 'model' instance
 class RenderWorldInstance
 {
 public:
-	RenderWorldInstance(float4x4 const& transform)
-			: _transform(transform) {}
-	~RenderWorldInstance() {}
+	RenderWorldInstance(float4x4 const& transform);
 
-	bool is_ready() const
-	{
-		return _model->is_loaded();
-	}
+	~RenderWorldInstance();
 
+	bool is_ready() const;
+
+	bool is_finalised() const { return _finalised; }
+	void finalise();
+
+	void set_dynamic_material(u32 idx, std::unique_ptr<MaterialInstance>&& instance);
+
+	MaterialInstance const* get_material_instance(u32 idx) const;
+	MaterialInstance* get_material_instance(u32 idx);
+
+
+	bool _finalised = false;
 	float4x4 _transform;
+
+	// Reference to a model
 	std::shared_ptr<ModelResource> _model;
 
-	struct ConstantBufferData
-	{
-		float4x4 world;
-		float4x4 wv;
-		float4x4 wvp;
-	};
-	ConstantBufferRef _model_cb;
+	std::vector<std::unique_ptr<MaterialInstance>> _material_overrides;
 
 	friend class RenderWorld;
 };

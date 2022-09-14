@@ -20,7 +20,8 @@
 class RenderWorld;
 class RenderWorldCamera;
 class Material;
-using ShaderRef = shared_ptr<class Shader>;
+class MaterialInstance;
+using ShaderConstRef = shared_ptr<class Shader>;
 
 namespace cli
 {
@@ -148,6 +149,14 @@ struct PostCB
 	float padding[2];
 };
 
+struct ModelCB
+{
+	float4x4 world;
+	float4x4 wv;
+	float4x4 wvp;
+};
+
+
 struct DeviceContext
 {
 	ComPtr<ID3D11Device> _device;
@@ -225,6 +234,9 @@ public:
 
 	// Copies the last rendered main frustum depth to be used as input during the main pass
 	void copy_depth();
+ 
+	void VSSetShader(ShaderConstRef const& vertex_shader);
+	void PSSetShader(ShaderConstRef const& pixel_hader);
 
 private:
 	void create_factories(EngineSettings const& settings, cli::CommandLine const& cmdline);
@@ -239,10 +251,8 @@ private:
 
 	FrustumCorners get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const;
 
-	void setup_renderstate(ViewParams const& params, Material* const material);
+	void setup_renderstate(ViewParams const& params, MaterialInstance const* material);
 
-	void VSSetShader(ShaderRef const& vertex_shader);
-	void PSSetShader(ShaderRef const& pixel_hader);
 
 	void render_post_predebug();
 	void render_post_postdebug();
@@ -300,6 +310,7 @@ private:
 	ComPtr<ID3D11ShaderResourceView> _debug_shadow_map_srv[MAX_CASCADES];
 
 	ConstantBufferRef _cb_global;
+	ConstantBufferRef _cb_model;
 	ConstantBufferRef _cb_debug;
 	ConstantBufferRef _cb_post;
 

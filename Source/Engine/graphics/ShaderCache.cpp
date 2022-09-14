@@ -14,7 +14,6 @@ std::shared_ptr<Shader> ShaderCache::find_or_create(ShaderCreateParams const& cr
 	}
 
 	// Shader doesn't exist? Then compile it.
-
 	std::shared_ptr<Shader> result = nullptr;
 
 	std::vector<u8> bytecode;

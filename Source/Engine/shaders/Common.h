@@ -7,10 +7,20 @@
 
 #define MAX_LIGHTS 4
 #define MAX_CASCADES 4
-		
 
+#define Buffer_Global 0
+#define Buffer_Debug 1
+#define Buffer_Model 2
+#define Buffer_Material 3
 
-// When compiling from VS specify the default lighting model as PBR
+#define Texture_MaterialSlotStart 0
+#define Texture_MaterialSlotEnd 5 
+#define Texture_CSM 5
+#define Texture_Depth 6
+
+#define Sampler_Linear 0
+#define Sampler_Point 1
+
 struct AmbientInfo
 {
 	float4 ambient;
@@ -36,7 +46,11 @@ struct Viewport_t
 	float MaxDepth;
 };
 
-#ifndef _cplusplus
+#ifndef __cplusplus
+
+#define CB_SLOT(x)  register(b##x)
+#define SRV_SLOT(x) register(t##x)
+#define SAMPLER_SLOT(x) register(s##x)
 
 #if VS_COMPILE
 #define LIGHTING_MODEL LIGHTING_MODEL_PBR
@@ -72,7 +86,7 @@ struct VS_OUT
 	float4 worldBitangent : TANGENT1;
 };
 
-cbuffer WorldConstants : register(b0)
+cbuffer WorldConstants : CB_SLOT(Buffer_Global)
 {
 	float4x4 View;
 	float4x4 InvView;
@@ -89,12 +103,12 @@ cbuffer WorldConstants : register(b0)
 	unsigned int num_lights;
 };
 
-cbuffer DebugCB : register(b1)
+cbuffer DebugCB : CB_SLOT(Buffer_Debug)
 {
 	int g_VisualizeMode;
 };
 
-cbuffer ModelConstants : register(b2)
+cbuffer ModelConstants : CB_SLOT(Buffer_Model)
 {
 	float4x4 World;
 	float4x4 WorldView;
@@ -102,8 +116,11 @@ cbuffer ModelConstants : register(b2)
 };
 
 // Default Samplers
-SamplerState g_all_linear_sampler : register(s0);
-SamplerState g_point_sampler : register(s1);
+SamplerState g_all_linear_sampler : SAMPLER_SLOT(Sampler_Linear);
+SamplerState g_point_sampler : SAMPLER_SLOT(Sampler_Point);
+
+Texture2DArray<float> g_shadow_map : SRV_SLOT(Texture_CSM); 
+Texture2D<float>      g_depth : SRV_SLOT(Texture_Depth);
 #endif
 
 #endif

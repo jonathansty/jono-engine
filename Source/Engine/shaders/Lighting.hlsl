@@ -1,5 +1,9 @@
+#pragma once
 #ifndef _LIGHTING_H_
 #define _LIGHTING_H_
+
+#include "Common.h"
+#include "Shadows.hlsl"
 
 static const float PI = 3.14159265f;
 
@@ -57,7 +61,7 @@ float3 Fd_Lambert() {
 float3 F_CookTorrence(float NoH, float NoV, float NoL, float LoH, float VoH, in Material material)
 {
 	// perceptually linear roughness to roughness (see parameterization)
-	float r2 = material.roughness;
+	float r2 = material.roughness * material.roughness;
 
 	float  D = D_GGX(NoH, r2);
 	float  G = G_SchlickGGX(NoV, r2);
@@ -83,14 +87,13 @@ float3 LightingModel_BRDF(in Material material, float3 v, float3 l, float3 n)
 
 	float k_s = 1.0f;
 	float k_d = 1.0f;
-	float k_ambient = 0.1f;
 
 	float3 diffuseColor = (1.0 - material.metalness) * material.albedo;
 	float3 Fd = diffuseColor * Fd_Lambert();
 	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, material);
 
 	float3 result = k_s * Fr + k_d * Fd;
-	return lerp(result, k_ambient * Fd, 1.0f - NoL) * material.ao;
+	return lerp(result, 0.01f * Fd, 1.0f - NoL) * material.ao;
 }
 
 float3 LightingModel_Phong(Material material, float3 view, float3 light,float3 light_colour, float3 normal)
@@ -126,4 +129,56 @@ float3 LightingModel_BlinnPhong(Material material, float3 view, float3 light, fl
 }
 
 
+float4 EvaluateLighting(Material material, VS_OUT vout)
+{
+	// Transform our tangent normal into world space
+	float4 normal = normalize(vout.worldNormal);
+	
+	float4 tangent = normalize(vout.worldTangent);
+	float3 bitangent = normalize(vout.worldBitangent.xyz);
+	float3x3 tbn = float3x3(
+			tangent.xyz,
+			bitangent.xyz,
+			normal.xyz);
+
+	float3 final_normal = normalize(mul(material.tangentNormal, tbn));
+
+	// View vector is different dependent on the pixel that is being processed!
+	float3 view = normalize(g_ViewPosition - vout.worldPosition);
+
+	float3 final_colour = float3(0.0,0.0,0.0);
+
+	[loop]
+	for (unsigned int i = 0; i < 1; ++i) 
+	{
+		float3 light = -normalize(g_Lights[i].direction);
+		float3 light_colour = g_Lights[i].colour;
+
+		float4 proj_pos = mul(WorldViewProjection, vout.worldPosition);
+		float4 shadow = compute_shadow(vout.worldPosition, vout.viewPosition, proj_pos, g_Lights[i], final_normal);
+
+		// Need to invert the light vector here because we pass in the direction.
+		
+		const float g_shadow_intensity = 0.9f;
+		final_colour += 1.0 - (shadow * g_shadow_intensity); 
+
+		#if LIGHTING_MODEL == LIGHTING_MODEL_PBR
+			final_colour *= LightingModel_BRDF(material, view, light, final_normal) * light_colour;
+		#endif
+
+		#if  LIGHTING_MODEL == LIGHTING_MODEL_PHONG
+			final_colour *= LightingModel_Phong(material, view, light, light_colour, final_normal);
+		#endif
+
+		#if  LIGHTING_MODEL == LIGHTING_MODEL_BLINN_PHONG
+			final_colour *= LightingModel_BlinnPhong(material, view, light,light_colour, final_normal);
+		#endif
+
+		#ifndef LIGHTING_MODEL
+		#error No lighting model defined
+		#endif
+	}
+
+	return float4((final_colour), 1.0);
+}
 #endif

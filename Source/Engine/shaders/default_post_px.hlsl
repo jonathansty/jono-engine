@@ -18,9 +18,6 @@ float Grayscale(float3 rgb)
 
 float4 main(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target 
 {
-	// Map position to UV scale 
-	// return float4(uv.xy, 0.0, 1.0f);
-
 	float2 scaled_pos = pos.xy / float2(g_ViewportWidth, g_ViewportHeight);
 
 
@@ -28,5 +25,9 @@ float4 main(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target
 	float3 gray_scale_colour = Grayscale(world_colour.rgb).rrr;
 
 	float3 final = lerp(world_colour, gray_scale_colour, 0.0f);
+	
+	// Do gamma correction, is this correct?
+	final = final / (final + (1.0));
+	final = pow(final, 1.0f/2.2f);
 	return float4(final, 1.0f);
 }

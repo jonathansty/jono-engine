@@ -2,6 +2,7 @@
 
 #include "GameEngine.h"
 #include "RenderWorld.h"
+#include "Core/Material.h"
 
 void RenderWorld::init()
 {
@@ -14,11 +15,10 @@ std::shared_ptr<RenderWorldInstance> RenderWorld::create_instance(float4x4 trans
 {
 	std::lock_guard l{ _instance_cs };
 	std::shared_ptr<RenderWorldInstance> inst = std::make_shared<RenderWorldInstance>(transform);
-	inst->_model_cb = ConstantBuffer::create(Graphics::get_device().Get(), sizeof(RenderWorldInstance::ConstantBufferData), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 
 	ModelResource::init_parameters params{};
 	params.path = mesh;
-	inst->_model = ResourceLoader::instance()->load<ModelResource>(params, false, false);
+	inst->_model = ResourceLoader::instance()->load<ModelResource>(params, false, true);
 
 	_instances.push_back(inst);
 
@@ -113,4 +113,69 @@ RenderWorldLight::RenderWorldLight(LightType type)
 		, _colour(1.0f, 1.0f, 1.0f)
 		, _shadow_settings()
 {
+}
+
+RenderWorldInstance::RenderWorldInstance(float4x4 const& transform)
+		: _transform(transform)
+{
+}
+
+RenderWorldInstance::~RenderWorldInstance()
+{
+}
+
+bool RenderWorldInstance::is_ready() const
+{
+	return _finalised;
+}
+
+void RenderWorldInstance::finalise() 
+{
+	ASSERT(_model->is_loaded());
+	if (!_finalised)
+	{
+		Model const* res = _model->get();
+		_material_overrides.resize(res->get_material_count());
+
+		for (u32 i = 0; i < res->get_material_count(); ++i)
+		{
+			if (_material_overrides[i])
+			{
+				_material_overrides[i]->Bind(res->get_material(i));
+			}
+		}
+
+		for (u32 i = 0; i < res->get_material_count(); ++i)
+		{
+			get_material_instance(i)->update();
+		}
+
+		_finalised = true;
+	}
+}
+
+void RenderWorldInstance::set_dynamic_material(u32 idx, std::unique_ptr<MaterialInstance>&& instance)
+{
+	_material_overrides.resize(idx + 1);
+	_material_overrides[idx] = std::move(instance);
+}
+
+MaterialInstance const* RenderWorldInstance::get_material_instance(u32 idx) const
+{
+	if (_material_overrides[idx])
+	{
+		return _material_overrides[idx].get();
+	}
+
+	return _model->get()->get_material(idx);
+}
+
+MaterialInstance* RenderWorldInstance::get_material_instance(u32 idx)
+{
+	if (_material_overrides[idx])
+	{
+		return _material_overrides[idx].get();
+	}
+
+	return _model->get()->get_material(idx);
 }

@@ -38,6 +38,8 @@ struct IFile
 	virtual void seek(s64 offset, SeekMode mode) = 0;
 
 	virtual u64 tell() const = 0;
+
+	virtual void* get_raw_handle() const = 0;
 };
 using IFileRef = std::shared_ptr<IFile>;
 

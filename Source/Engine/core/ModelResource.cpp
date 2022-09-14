@@ -3,6 +3,7 @@
 
 #include "MaterialResource.h"
 #include "TextureResource.h"
+#include "Material.h"
 
 #include "GameEngine.h"
 
@@ -12,7 +13,10 @@ const D3D11_INPUT_ELEMENT_DESC ModelUberVertex::InputElements[InputElementCount]
 	{ "TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "TANGENT", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD", 2, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+	{ "TEXCOORD", 3, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 };
 
 void ModelResource::build_load_graph(enki::ITaskSet* parent)
@@ -55,12 +59,14 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 	std::filesystem::path dir_path = std::filesystem::path(path);
 	dir_path = dir_path.parent_path();
+
+	std::string final_path = IO::get()->resolve_path(path);
 	auto device = Graphics::get_device();
 	auto ctx = Graphics::get_ctx();
 
 	using namespace Assimp;
 	Importer importer = Importer();
-	aiScene const* scene = importer.ReadFile(path.c_str(), aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast);
+	aiScene const* scene = importer.ReadFile(final_path.c_str(), aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast);
 	if (!scene)
 	{
 		LOG_ERROR(IO, importer.GetErrorString());
@@ -141,11 +147,29 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 					v.color.w = colors[0][j].a;
 				}
 
-				if (mesh->GetNumUVChannels() > 0)
 				{
-					aiVector3D p = uv[0][j];
-					v.uv.x = p.x;
-					v.uv.y = p.y;
+					u32 n_uv = mesh->GetNumUVChannels();
+					if(n_uv > 0)
+					{
+						v.uv0.x = uv[0][j].x;
+						v.uv0.y = uv[0][j].y;
+					}
+
+					if (n_uv > 1)
+					{
+						v.uv0.x = uv[1][j].x;
+						v.uv0.y = uv[1][j].y;
+					}
+					if (n_uv > 2)
+					{
+						v.uv0.x = uv[2][j].x;
+						v.uv0.y = uv[2][j].y;
+					}
+					if (n_uv > 3)
+					{
+						v.uv0.x = uv[3][j].x;
+						v.uv0.y = uv[3][j].y;
+					}
 				}
 
 				if (mesh->HasNormals())
@@ -214,36 +238,27 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 	if (scene->HasMaterials())
 	{
+		MaterialInitParameters parameters{};
+		parameters.load_type = MaterialInitParameters::LoadType_FromFile;
+		parameters.name = "Resources/Materials/default.material";
+
+		auto base_material = ResourceLoader::instance()->load<MaterialResource>(parameters, false, true);
+
 		// Resize our materials and textures 
-		_materials.resize(scene->mNumMaterials);
-
-		struct TextureMappings
-		{
-			u32 tex_idx;
-			u32 mat_idx;
-
-			std::string path;
-		};
-		std::vector<TextureMappings> mappings;
-
-		// Load all textures inline
-
-
-		// Material load tas
 		_materials.resize(scene->mNumMaterials);
 		for(u32 j = 0; j < _materials.size(); ++j)
 		{
 			aiMaterial* material = scene->mMaterials[j];
 			aiString name = material->GetName();
 
-			MaterialInitParameters parameters{};
-			parameters.load_type = MaterialInitParameters::LoadType_FromMemory;
-			parameters.name = "[Built-in] Material";
-			// Get the name of the material
-			aiString materialName;
-			material->Get(AI_MATKEY_NAME, materialName);
-			parameters.name = name.C_Str();
 
+			bool double_sided;
+			if (material->Get(AI_MATKEY_TWOSIDED, double_sided) == aiReturn_SUCCESS)
+			{
+				parameters.double_sided = double_sided;
+			}
+
+			_materials[j] = std::make_unique<MaterialInstance>(base_material);
 
 			// Load the required textures from the assimp imported file
 			aiString baseColorTexture;
@@ -255,58 +270,56 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 			if (material->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &baseColorTexture) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Albedo] = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
-				mappings.push_back(TextureMappings{ u32(_textures.size()), j, dir_path.string() + "\\" + std::string(baseColorTexture.C_Str()) });
-				_textures.push_back({});
+				std::string const& tex_path = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
+
+				FromFileResourceParameters params{ tex_path };
+				auto texture = ResourceLoader::instance()->load<TextureResource>(params, true, true);
+				u32 slot = _materials[j]->get_slot("Albedo");
+				_materials[j]->set_texture(slot, texture);
 
 			}
 			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_MetalnessRoughness] = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
-				mappings.push_back(TextureMappings{ u32(_textures.size()), j, dir_path.string() + "\\" + std::string(roughnessTexture.C_Str()) });
-				_textures.push_back({});
+				std::string const& tex_path = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
 
+				FromFileResourceParameters params{ tex_path };
+				auto texture = ResourceLoader::instance()->load<TextureResource>(params, true, true);
+				u32 slot = _materials[j]->get_slot("MetalnessRoughness");
+				_materials[j]->set_texture(slot, texture);
 			}
 
 			if (material->GetTexture(aiTextureType_NORMALS, 0, &normalTexture) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Normal] = dir_path.string() + "\\" + std::string(normalTexture.C_Str());
-				mappings.push_back(TextureMappings{ u32(_textures.size()), j, dir_path.string() + "\\" + std::string(normalTexture.C_Str()) });
-				_textures.push_back({});
+				std::string const& tex_path = dir_path.string() + "\\" + std::string(normalTexture.C_Str());
+
+				FromFileResourceParameters params{ tex_path };
+				auto texture = ResourceLoader::instance()->load<TextureResource>(params, true, true);
+				u32 slot = _materials[j]->get_slot("Normals");
+				_materials[j]->set_texture(slot, texture);
+
 			}
 
 			if (material->GetTexture(aiTextureType_LIGHTMAP, 0, &aoTexture) == aiReturn_SUCCESS)
 			{
-				mappings.push_back(TextureMappings{ u32(_textures.size()), j, dir_path.string() + "\\" + std::string(aoTexture.C_Str()) });
-				_textures.push_back({});
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_AO] = dir_path.string() + "\\" + std::string(aoTexture.C_Str());
+				std::string const& tex_path = dir_path.string() + "\\" + std::string(aoTexture.C_Str());
+
+				FromFileResourceParameters params{ tex_path };
+				auto texture = ResourceLoader::instance()->load<TextureResource>(params, true, true);
+				u32 slot = _materials[j]->get_slot("AO");
+				_materials[j]->set_texture(slot, texture);
 			}
 
 			if (material->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTexture) == aiReturn_SUCCESS)
 			{
-				parameters.m_texture_paths[MaterialInitParameters::TextureType_Emissive] = dir_path.string() + "\\" + std::string(emissiveTexture.C_Str());
-				mappings.push_back(TextureMappings{ u32(_textures.size()), j, dir_path.string() + "\\" + std::string(emissiveTexture.C_Str()) });
-				_textures.push_back({});
-			}
+				std::string const& tex_path = dir_path.string() + "\\" + std::string(emissiveTexture.C_Str());
 
-			for (u32 i = 0; i < mappings.size(); ++i)
-			{
-				TextureMappings const& mapping = mappings[i];
-
-				FromFileResourceParameters params{ mapping.path };
-				_textures[i] = ResourceLoader::instance()->load<TextureResource>(params, true, true);
+				FromFileResourceParameters params{ tex_path };
+				auto texture = ResourceLoader::instance()->load<TextureResource>(params, true, true);
+				u32 slot = _materials[j]->get_slot("Emissive");
+				_materials[j]->set_texture(slot, texture);
 			}
 
 
-
-
-			bool double_sided;
-			if (material->Get(AI_MATKEY_TWOSIDED, double_sided) == aiReturn_SUCCESS)
-			{
-				parameters.double_sided = double_sided;
-			}
-
-			_materials[j] = ResourceLoader::instance()->load<MaterialResource>(parameters, true, true);
 		}
 	}
 

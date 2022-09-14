@@ -6,6 +6,7 @@
 class TextureResource;
 
 using MaterialRef = std::shared_ptr<class MaterialResource>;
+class MaterialInstance;
 
 struct ModelUberVertex
 {
@@ -14,9 +15,14 @@ struct ModelUberVertex
 	Shaders::float4 tangent;
 	Shaders::float4 bitangent;
 	Shaders::float4 color;
-	Shaders::float2 uv;
 
-	static const std::size_t InputElementCount = 6;
+	// Uvs
+	Shaders::float2 uv0;
+	Shaders::float2 uv1;
+	Shaders::float2 uv2;
+	Shaders::float2 uv3;
+
+	static const std::size_t InputElementCount = 9;
 	static const D3D11_INPUT_ELEMENT_DESC InputElements[InputElementCount];
 };
 
@@ -35,8 +41,6 @@ struct Mesh
 	u32 material_index;
 };
 
-
-
 class Model
 {
 public:
@@ -54,11 +58,13 @@ public:
 
 	std::vector<Mesh> const& get_meshes() const { return _meshes; }
 
-	MaterialRef const& get_material(u32 idx) const 
+	MaterialInstance* get_material(u32 idx) const 
 	{ 
 		ASSERTMSG(idx < static_cast<u32>(_materials.size()), "Index out of range.");
-		return _materials[idx]; 
+		return _materials[idx].get(); 
 	}
+
+	u32 get_material_count() const { return (u32)_materials.size(); }
 
 private:
 	u64 _index_count;
@@ -67,7 +73,7 @@ private:
 	std::vector<shared_ptr<TextureResource>> _textures;
 
 	std::mutex _material_cs;
-	std::vector<MaterialRef> _materials;
+	std::vector<std::unique_ptr<MaterialInstance>> _materials;
 
 	std::mutex _meshes_cs;
 	std::vector<Mesh> _meshes;

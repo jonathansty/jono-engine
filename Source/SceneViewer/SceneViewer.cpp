@@ -86,15 +86,19 @@ void SceneViewer::start()
 
 	auto ge = GameEngine::instance();
 
-	ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order) {
-		if (order == GameEngine::BuildMenuOrder::First) {
-			if (ImGui::BeginMenu("File")){
-
-				if (ImGui::MenuItem("Open")) {
+	ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order)
+	{
+		if (order == GameEngine::BuildMenuOrder::First)
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Open"))
+				{
 					open_file();
 				}
 
-				if (ImGui::MenuItem("Rebuild Shaders")) {
+				if (ImGui::MenuItem("Rebuild Shaders"))
+				{
 					LOG_INFO(Graphics, "Rebuilding all shaders.");
 
 					this->rebuild_shaders();
@@ -102,7 +106,6 @@ void SceneViewer::start()
 				ImGui::EndMenu();
 			}
 		}
-
 	});
 
 	auto device = Graphics::get_device();
@@ -151,58 +154,26 @@ void SceneViewer::start()
 	//framework::EntityDebugOverlay* overlay = new framework::EntityDebugOverlay(_world.get());
 	//GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
-	// Create the world camera
-	#if 0 
+
+	for(size_t y = 0; y < 10; ++y)
 	{
-		World::EntityId camera = _world->create_entity();
-		camera->set_name("MainCamera");
-		auto comp = camera->create_component<CameraComponent>();
-		camera->set_local_position(float3(0.0f, 0.0f, -50.0f));
-		_world->attach_to_root(camera);
+		for(size_t x = 0; x < 10; ++x)
+		{
+			float3 pos = float3(2.0f + x * 2.0f, 0.0f, y * 2.0f);
+			RenderWorldInstanceRef inst = GameEngine::instance()->get_render_world()->create_instance(float4x4::translation(pos), "res:/sphere.glb");
+			Model const* model = inst->_model->get();
+
+			f32 x_dt = (float)x / 10.0f;
+			f32 y_dt = (float)y / 10.0f;
+
+			auto mat_inst = std::make_unique<MaterialInstance>();
+			mat_inst->set_param_float("Roughness", hlslpp::lerp(float1(0.01f), 1.0f, x_dt));
+			mat_inst->set_param_float("Metalness", hlslpp::lerp(float1(0.01f), 1.0f, y_dt));
+			inst->set_dynamic_material(0,std::move(mat_inst));
+		}
 	}
-	#endif
 
 
-	#if 0
-	{
-		namespace fs = std::filesystem;
-		auto add_model = [&](float3 pos, float3 scale, fs::path const& model_path) {
-			World::EntityId model = _world->create_entity();
-
-			model->set_name(model_path.string());
-			model->set_local_position(pos);
-			model->set_local_scale(scale);
-			auto comp = model->create_component<SimpleMeshComponent>();
-			comp->set_model_path((fs::path{ "Resources/Models/" } / model_path).string());
-
-			_world->attach_to_root(model);
-
-
-			return model;
-		};
-
-		//add_model(float3(0.0), float3(1.0), "plane/planes.gltf");
-
-		//for (int i = 0; i < 1; ++i) {
-		//	for (int j = 0; j < 1; ++j) {
-		//		World::EntityId ent = add_model(float3(2.0f * (float)i, 3.0f, 2.0f * (float)j), float3(1.0), "m-96_mattock/scene.gltf");
-		//		auto c = ent->create_component<SimpleMovement3D>();
-		//		c->set_speed(10.0f);
-		//	}
-		//}
-
-		World::EntityId ent = _world->create_entity();
-		ent->set_name("Sun");
-		ent->set_rotation(hlslpp::euler(float3(-0.33f, -0.33f, 0.0f)));
-		ent->set_local_position(float3(0.0, 10.0, 0.0));
-		auto comp = ent->create_component<LightComponent>();
-		auto mesh_comp = ent->create_component<SimpleMeshComponent>();
-		mesh_comp->set_model_path((fs::path{ "Resources/Models/axes/axes.gltf" }).string());
-		_world->attach_to_root(ent);
-
-		add_model(float3(0.0f, 0.0f, 0.0f), float3(1.0), "Tower/scene.gltf");
-	}
-	#endif
 }
 
 void SceneViewer::end()
@@ -343,37 +314,46 @@ void SceneViewer::debug_ui()
 
 	const char* items[] = {
 		"Default",
-		"Base Color",
-		"Roughness",
-		"Metalness",
-		"Normals",
-		"AO",
-		"Normals (World)",
-		"Vertex Colours"
+		"(Input) Base Color",
+		"(Input) Roughness",
+		"(Input) Metalness",
+		"(Input) Normals",
+		"(Input) AO",
+		"(Input) Normals (World)",
+		"(Input) Vertex Colours",
+		"(Input) UV",
+		"Lighting",
 	};
 
 	ImGui::Combo("Debug Mode", &g_DebugMode, items, static_cast<int>(std::size(items)));
 
-	ImGui::PushID("#SceneName");
-	static char buff[512] = "test.scene";
-	ImGui::InputText("", buff, 512);
-	ImGui::PopID();
-	ImGui::SameLine();
+	//std::shared_ptr<ModelResource> res = _model->_model;
+	//Model const* model = res->get();
+	//for(u32 i = 0; i < model->get_material_count(); ++i)
+	//{
+	//	model->get_material(i);
+	//}
 
-	if (ImGui::Button("Save")) {
-		std::string p = "Scenes/";
-		p += buff;
-		save_world(p.c_str());	
-	}
+	//ImGui::PushID("#SceneName");
+	//static char buff[512] = "test.scene";
+	//ImGui::InputText("", buff, 512);
+	//ImGui::PopID();
+	//ImGui::SameLine();
 
-	ImGui::SameLine();
-	if (ImGui::Button("Load")) {
-		std::string p = "Scenes/";
-		p += buff;
+	//if (ImGui::Button("Save")) {
+	//	std::string p = "Scenes/";
+	//	p += buff;
+	//	save_world(p.c_str());	
+	//}
 
-		_world->clear();
-		load_world(p.c_str());
-	}
+	//ImGui::SameLine();
+	//if (ImGui::Button("Load")) {
+	//	std::string p = "Scenes/";
+	//	p += buff;
+
+	//	_world->clear();
+	//	load_world(p.c_str());
+	//}
 
 
 	ImGui::End();
@@ -396,9 +376,14 @@ void SceneViewer::rebuild_shaders()
 {
 	using namespace Graphics;
 	auto world = GameEngine::instance()->get_render_world();
-	for (std::shared_ptr<RenderWorldInstance> const& inst : world->get_instances())
+
+	ShaderCache::instance()->reload_all();
+
+	for(MaterialResource* res : MaterialResource::s_resources)
 	{
-		ShaderCache::instance()->reload_all();
+		res->_status = ResourceStatus::Loading;
+		res->load(nullptr);
+		res->_status = ResourceStatus::Loaded;
 	}
 }
 

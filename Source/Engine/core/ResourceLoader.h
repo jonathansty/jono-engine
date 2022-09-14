@@ -77,7 +77,10 @@ public:
 		return _resource.get();
 	}
 
-	resource_type* get() const { return _resource.get(); }
+	resource_type const* get() const
+	{
+		return _resource.get();
+	}
 
 public:
 	init_type const& get_init_parameters() const { return _init; }

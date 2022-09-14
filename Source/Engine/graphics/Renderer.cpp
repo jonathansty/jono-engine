@@ -20,6 +20,8 @@
 
 #include "Memory.h"
 
+#include "Engine/Shaders/Common.h"
+
 namespace Graphics
 {
 using Helpers::SafeRelease;
@@ -41,6 +43,7 @@ void Renderer::init(EngineSettings const& settings, GameSettings const& game_set
 	GameEngine::instance()->get_overlay_manager()->register_overlay(_debug_tool.get());
 
 	_cb_global = ConstantBuffer::create(_device, sizeof(GlobalCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
+	_cb_model = ConstantBuffer::create(_device, sizeof(ModelCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 	_cb_debug = ConstantBuffer::create(_device, sizeof(DebugCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 	_cb_post = ConstantBuffer::create(_device, sizeof(PostCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 
@@ -253,7 +256,7 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	assert(_wnd);
 
 	LOG_VERBOSE(Graphics, "Resizing swapchain to {}x{}", w, h);
-	DXGI_FORMAT swapchain_format = DXGI_FORMAT_B8G8R8A8_UNORM;
+	DXGI_FORMAT swapchain_format = DXGI_FORMAT_R10G10B10A2_UNORM;
 	_swapchain_format = swapchain_format;
 
 	// Create MSAA render target that resolves to non-msaa swapchain
@@ -496,6 +499,7 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	global->vp.vp_half_width = params.viewport.Width / 2.0f;
 	global->vp.vp_half_height = params.viewport.Height / 2.0f;
 
+	// Process all the lights
 	RenderWorld::LightCollection const& lights = world->get_lights();
 	global->num_lights = std::min<u32>(u32(lights.size()), MAX_LIGHTS);
 	for (u32 i = 0; i < global->num_lights; ++i)
@@ -541,32 +545,82 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 
 	float4x4 vp = hlslpp::mul(params.view, params.proj);
 
+	// information that is needed to represent 1 draw call
+	struct DrawCall
+	{
+		float4x4 _transform;
+
+		// Mesh index buffer
+		ID3D11Buffer* _index_buffer;
+
+		// Vertex buffers
+		ID3D11Buffer* _vertex_buffer;
+
+			// First vertex offset this mesh starts at in the vertex buffer
+		u64 _first_vertex;
+
+		// First index location offset this mesh starts at in the index buffer
+		u64 _first_index;
+
+		// The amount of indices associated with this mesh
+		u64 _index_count;
+
+		// Material (e.g. shaders, textures, constant buffer, input layouts)
+		MaterialInstance const* _material;
+	
+	};
+	static std::vector<DrawCall> m_DrawCalls;
+
+
 	RenderWorld::InstanceCollection const& instances = world->get_instances();
+	m_DrawCalls.reserve(instances.size());
+	m_DrawCalls.clear();
+
 	for (std::shared_ptr<RenderWorldInstance> const& inst : instances)
 	{
-		// A render world instance is ready when the whole model (and it's dependencies) has been loaded
-		if (!inst->is_ready())
+		if (inst->_model->is_loaded() && !inst->is_finalised())
 		{
-			continue;
+			inst->finalise();
 		}
 
+		if(inst->is_ready())
+		{
+			Model const* model = inst->_model->get();
+			for (Mesh const& mesh : model->get_meshes())
+			{
+				DrawCall dc{};
+				dc._transform = inst->_transform;
+				dc._index_buffer = model->get_index_buffer().Get();
+				dc._vertex_buffer = model->get_vertex_buffer().Get();
+				dc._material = inst->get_material_instance(mesh.material_index);
+				dc._first_index = mesh.firstIndex;
+				dc._first_vertex = mesh.firstVertex;
+				dc._index_count = mesh.indexCount;
+				m_DrawCalls.push_back(dc);
+			}
+		}
+	}
+
+
+
+	for (DrawCall const& dc : m_DrawCalls) 
+	{
+		// A render world instance is ready when the whole model (and it's dependencies) has been loaded
 		auto ctx = _device_ctx;
 
-		Model const* model = inst->_model->get();
-		ConstantBufferRef const& model_cb = inst->_model_cb;
-
-		RenderWorldInstance::ConstantBufferData* data = (RenderWorldInstance::ConstantBufferData*)model_cb->map(_device_ctx);
-		data->world = inst->_transform;
+		ConstantBufferRef const& model_cb = _cb_model;
+		ModelCB* data = (ModelCB*)model_cb->map(_device_ctx);
+		data->world = dc._transform;
 		data->wv = hlslpp::mul(data->world, params.view);
 		data->wvp = hlslpp::mul(data->world, vp);
 		model_cb->unmap(ctx);
 
 		ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ctx->IASetIndexBuffer(model->get_index_buffer().Get(), DXGI_FORMAT_R32_UINT, 0);
+		ctx->IASetIndexBuffer(dc._index_buffer, DXGI_FORMAT_R32_UINT, 0);
 
 		UINT strides = { sizeof(Model::VertexType) };
 		UINT offsets = { 0 };
-		ctx->IASetVertexBuffers(0, 1, model->get_vertex_buffer().GetAddressOf(), &strides, &offsets);
+		ctx->IASetVertexBuffers(0, 1, &dc._vertex_buffer, &strides, &offsets);
 
 		// #TODO: Remove debug handling into a debug lighting system
 		extern int g_DebugMode;
@@ -593,16 +647,10 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 			ctx->PSSetConstantBuffers(2, 1, buffers);
 		}
 
-		for (Mesh const& mesh : model->get_meshes())
 		{
-			MaterialRef const& material_res = model->get_material(mesh.material_index);
+			setup_renderstate(params, dc._material);
 
-			ASSERTMSG(material_res->is_loaded(), "Material resource for the model hasn't been loaded yet! Make sure the model load check is correct.");
-			Material* material = material_res->get();
-
-			setup_renderstate(params, material);
-
-			ctx->DrawIndexed((UINT)mesh.indexCount, (UINT)mesh.firstIndex, (INT)mesh.firstVertex);
+			ctx->DrawIndexed((UINT)dc._index_count, (UINT)dc._first_index, (INT)dc._first_vertex);
 
 			ID3D11ShaderResourceView* views[] = {
 				nullptr,
@@ -674,7 +722,6 @@ void Renderer::end_frame()
 {
 }
 
-
 FrustumCorners Renderer::get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const
 {
 	shared_ptr<RenderWorldCamera> camera = world->get_camera(cam);
@@ -700,68 +747,13 @@ Graphics::FrustumCorners Renderer::get_cascade_frustum(shared_ptr<RenderWorldCam
 	return world_corners;
 }
 
-void Renderer::setup_renderstate(ViewParams const& params, Material* const material)
+void Renderer::setup_renderstate(ViewParams const& params, MaterialInstance const* mat_instance)
 {
 	auto ctx = _device_ctx;
 
 	// Bind anything coming from the material
 	{
-		if (material->is_double_sided())
-		{
-			ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullNone).Get());
-		}
-		else
-		{
-			ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullBack).Get());
-		}
-
-		auto vertex_shader = material->get_vertex_shader();
-		auto pixel_shader = material->get_pixel_shader();
-		auto debug_shader = material->get_debug_pixel_shader();
-		if (!vertex_shader->is_valid())
-		{
-			vertex_shader = Graphics::get_error_shader_vx();
-		}
-
-		if (!pixel_shader->is_valid())
-		{
-			pixel_shader = Graphics::get_error_shader_px();
-		}
-
-		if (!debug_shader->is_valid())
-		{
-			debug_shader = Graphics::get_error_shader_px();
-		}
-
-		// Bind vertex shader
-		VSSetShader(vertex_shader);
-		ctx->IASetInputLayout(vertex_shader->get_input_layout().Get());
-
-		// In opaque pass, bind the pixel shader and relevant shader resources from the material
-		if (params.pass == RenderPass::Opaque)
-		{
-			// Bind pixel shader
-
-			extern int g_DebugMode;
-			if (g_DebugMode)
-			{
-				PSSetShader(debug_shader);
-			}
-			else
-			{
-				PSSetShader(pixel_shader);
-			}
-
-			// Bind material parameters
-			std::vector<ID3D11ShaderResourceView const*> views{};
-			material->get_texture_views(views);
-			ctx->PSSetShaderResources(0, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
-
-		}
-		else
-		{
-			ctx->PSSetShader(nullptr, nullptr, 0);
-		}
+		mat_instance->apply(this, params);
 	}
 
 	// Bind the global textures coming from rendering systems
@@ -775,14 +767,14 @@ void Renderer::setup_renderstate(ViewParams const& params, Material* const mater
 	}
 }
 
-void Renderer::VSSetShader(ShaderRef const& vertex_shader)
+void Renderer::VSSetShader(ShaderConstRef const& vertex_shader)
 {
 	ASSERT(vertex_shader->get_type() == ShaderType::Vertex);
 	_device_ctx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
 
 }
 
-void Renderer::PSSetShader(ShaderRef const& pixel_shader)
+void Renderer::PSSetShader(ShaderConstRef const& pixel_shader)
 {
 	ASSERT(pixel_shader->get_type() == ShaderType::Pixel);
 	_device_ctx->PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);

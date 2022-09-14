@@ -9,15 +9,17 @@
 #define VisualizeMode_AO 5
 #define VisualizeMode_WorldNormal 6
 #define VisualizeMode_VertexColour 7
+#define VisualizeMode_UV 8
+#define VisualizeMode_Lighting 9
 
 float4 main(VS_OUT vout) : SV_Target
 {
 	float2 uv = vout.uv;
 
 	Material material = EvaluateMaterial(vout);
-
-	float3 output = float3(1.0, 0.0, 0.0);
-	if (g_VisualizeMode == VisualizeMode_VertexColour) {
+	float3 output = (float3)0.0;
+	if (g_VisualizeMode == VisualizeMode_VertexColour) 
+	{
 		output = vout.colour.rgb;
 	}
 	else if (g_VisualizeMode == VisualizeMode_Albedo)
@@ -56,6 +58,17 @@ float4 main(VS_OUT vout) : SV_Target
 	{
 		output = material.ao;
 	}
+	else if(g_VisualizeMode == VisualizeMode_UV)
+	{
+		output = float3(uv.xy, 0.0f);
+	}
+	else if(g_VisualizeMode == VisualizeMode_Lighting)
+	{
+		material.albedo = float3(1.0f,1.0f,1.0f);
+		material.metalness = 0.0;
+		output = EvaluateLighting(material, vout);
+	}
+	
 
 	return float4(output, 1.0);
 }

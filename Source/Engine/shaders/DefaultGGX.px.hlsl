@@ -9,9 +9,9 @@ Texture2D<float4> g_Emissive      		    : register(t4);
 
 struct MaterialData
 {
-	float3 albedo;
-	float3 roughness;
-	float3 metalness;
+	float4 albedo;
+	float roughness;
+	float metalness;
 };
 
 // b1 used for storing per material data
@@ -32,9 +32,9 @@ Material EvaluateMaterial(VS_OUT vout)
 	float ao = g_ao.Sample(g_all_linear_sampler, uv).r;
 	material.tangentNormal = normals;
 	material.ao = ao;
-	material.roughness = metallic_roughness.g;
-	material.metalness = metallic_roughness.b;
-	material.albedo = albedo;
+	material.roughness = metallic_roughness.g * g_MaterialData.roughness;
+	material.metalness = metallic_roughness.b * g_MaterialData.metalness;
+	material.albedo = albedo * g_MaterialData.albedo.rgb;
 	material.F0 = float3(0.04, 0.04, 0.04);
 
 	return material;

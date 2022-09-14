@@ -6,11 +6,13 @@ std::shared_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 	std::shared_ptr<ConstantBuffer> result = std::make_shared<ConstantBuffer>();
 
 	D3D11_BUFFER_DESC buff{};
-	buff.ByteWidth = size;
+	buff.ByteWidth = (1 + (size - 1) / 16) * 16;
 	buff.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 	if (cpu_write)
+	{
 		buff.CPUAccessFlags |= D3D11_CPU_ACCESS_WRITE;
+	}
 
 	buff.Usage = D3D11_USAGE_DEFAULT;
 	switch (usage)
@@ -37,7 +39,7 @@ std::shared_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 	else
 		SUCCEEDED(device->CreateBuffer(&buff, nullptr, &b));
 	result->_buffer = b;
-	result->_size = size;
+	result->_size = buff.ByteWidth;
 	result->_cpu_writeable = cpu_write;
 	result->_usage = usage;
 

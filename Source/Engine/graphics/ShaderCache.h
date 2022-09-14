@@ -64,12 +64,15 @@ inline bool operator==(ShaderCreateParams const& lhs, ShaderCreateParams const& 
 class ShaderCache : public TSingleton<ShaderCache>
 {
 public:
-	ShaderCache(){};
+	ShaderCache()
+	{
+	};
+
 	~ShaderCache()
 	{
 		_shaders.clear();
-	
 	}
+
 	std::shared_ptr<Shader> find_or_create(ShaderCreateParams const& params);
 
 	bool reload_all();
