@@ -193,26 +193,26 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 				{
 					if (texture_path == "*White")
 					{
-						result->_textures[slot] = TextureResource::white();
+						result->_textures[slot] = TextureHandle::white();
 					}
 					else if (texture_path == "*Black")
 					{
-						result->_textures[slot] = TextureResource::black();
+						result->_textures[slot] = TextureHandle::black();
 					}
 					else if (texture_path == "*Normal")
 					{
-						result->_textures[slot] = (TextureResource::default_normal());
+						result->_textures[slot] = (TextureHandle::default_normal());
 					}
 					else if (texture_path == "*MetalnessRoughness")
 					{
-						result->_textures[slot] = TextureResource::default_roughness();
+						result->_textures[slot] = TextureHandle::default_roughness();
 					}
 				}
 				else
 				{
-					TextureResource::init_parameters load_params{};
+					TextureHandle::init_parameters load_params{};
 					load_params.path = texture_path;
-					auto handle = ResourceLoader::instance()->load<TextureResource>(load_params, true, true);
+					auto handle = *ResourceLoader::instance()->load<TextureHandle>(load_params, true, true);
 					result->_textures[slot] = handle;
 				}
 
@@ -241,7 +241,7 @@ void Material::get_texture_views(std::vector<ID3D11ShaderResourceView const*>& v
 	{
 		if (_textures[i])
 		{
-			Texture const* texture = _textures[i]->get();
+			Texture const* texture = *_textures[i];
 			views.push_back(texture->get_srv());
 		}
 	}
@@ -331,7 +331,7 @@ void Material::apply(Graphics::Renderer* renderer, Graphics::ViewParams const& p
 	}
 }
 
-MaterialInstance::MaterialInstance(std::shared_ptr<MaterialResource const> const& baseMaterial)
+MaterialInstance::MaterialInstance(std::shared_ptr<MaterialHandle const> const& baseMaterial)
 		: _resource(baseMaterial)
 		, _has_overrides(false)
 		, _needs_flush(false)
@@ -347,6 +347,12 @@ MaterialInstance::MaterialInstance(std::shared_ptr<MaterialResource const> const
 
 MaterialInstance::~MaterialInstance()
 {
+}
+
+void MaterialInstance::Bind(IMaterialObject const* obj)
+{
+	_obj = obj;
+	_param_data = obj->get_param_data();
 }
 
 void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams const& params) const
@@ -419,13 +425,13 @@ u32 MaterialInstance::get_slot(Identifier64 const& slot_id) const
 	return get_material_obj()->get_slot(slot_id);
 }
 
-void MaterialInstance::set_texture(Identifier64 const& slot_id, std::shared_ptr<class TextureResource> const& tex)
+void MaterialInstance::set_texture(Identifier64 const& slot_id, std::shared_ptr<class TextureHandle> const& tex)
 {
 	_needs_flush = true;
 	_textures[get_slot(slot_id)] = tex;
 }
 
-void MaterialInstance::set_texture(u32 slot, std::shared_ptr<class TextureResource> const& resource)
+void MaterialInstance::set_texture(u32 slot, std::shared_ptr<class TextureHandle> const& resource)
 {
 	_textures[slot] = resource;
 	_needs_flush = true;
@@ -433,30 +439,48 @@ void MaterialInstance::set_texture(u32 slot, std::shared_ptr<class TextureResour
 
 void MaterialInstance::set_param_float(Identifier64 const& parameter_id, float value)
 {
-	//auto obj = get_material_obj();
-	//if (auto it = obj->find_parameter(parameter_id))
-	{
-		FloatParameter param = FloatParameter{
-			parameter_id,
-			value
-		};
-		_float_params.push_back(param);
-	}
+	FloatParameter param = FloatParameter{
+		parameter_id,
+		value
+	};
+	_float_params.push_back(param);
+	_needs_flush = true;
+}
+
+void MaterialInstance::set_param_float3(Identifier64 const& parameter_id, float3 value)
+{
+	Float3Parameter param = Float3Parameter{
+		parameter_id,
+		value
+	};
+	_float3_params.push_back(param);
+	_needs_flush = true;
 }
 
 void MaterialInstance::update()
 {
 	if (_needs_flush)
 	{
-		_param_data = get_material_obj()->get_param_data();
+		IMaterialObject const* obj = get_material_obj();
 
 		// Apply all the float parameters
 		float* data = reinterpret_cast<float*>(_param_data.data());
 		for (FloatParameter const& param : _float_params)
 		{
-			ParameterInfo const* info = get_material_obj()->find_parameter(param.hash);
+			ParameterInfo const* info = obj->find_parameter(param.hash);
 			data[info->offset] = param.value;
 		}
+		_float_params.clear();
+
+		for(Float3Parameter const& param : _float3_params)
+		{
+			ParameterInfo const* info = obj->find_parameter(param.hash);
+			data[info->offset + 0] = param.value.x;
+			data[info->offset + 1] = param.value.y;
+			data[info->offset + 2] = param.value.z;
+		
+		}
+		_float3_params.clear();
 
 		if (_has_overrides)
 		{
@@ -496,7 +520,7 @@ ConstantBufferRef const& MaterialInstance::get_cb() const
 
 Material const* MaterialInstance::get_material() const
 {
-	MaterialResource const* res = _resource.get();
+	MaterialHandle const* res = _resource.get();
 	return res->get();
 }
 

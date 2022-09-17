@@ -17,6 +17,7 @@
 #define Texture_MaterialSlotEnd 5 
 #define Texture_CSM 5
 #define Texture_Depth 6
+#define Texture_Cube 7
 
 #define Sampler_Linear 0
 #define Sampler_Point 1
@@ -58,7 +59,7 @@ struct Viewport_t
 
 // For now force it
 // #define LIGHTING_MODEL LIGHTING_MODEL_BLINN_PHONG 
-#define LIGHTING_MODEL LIGHTING_MODEL_PBR
+// #define LIGHTING_MODEL LIGHTING_MODEL_PBR
 
 struct VS_IN
 {
@@ -121,6 +122,7 @@ SamplerState g_point_sampler : SAMPLER_SLOT(Sampler_Point);
 
 Texture2DArray<float> g_shadow_map : SRV_SLOT(Texture_CSM); 
 Texture2D<float>      g_depth : SRV_SLOT(Texture_Depth);
+TextureCube<float4>   g_cube : SRV_SLOT(Texture_Cube);
 #endif
 
 #endif

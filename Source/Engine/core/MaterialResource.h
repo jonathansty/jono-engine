@@ -2,7 +2,7 @@
 #include "ResourceLoader.h"
 
 class Material;
-using MaterialRef = std::shared_ptr<class MaterialResource>;
+using MaterialRef = std::shared_ptr<class MaterialHandle>;
 
 // Materialinitialization parameters
 struct MaterialInitParameters
@@ -55,18 +55,16 @@ namespace std
 	};
 }
 
-class MaterialResource final : public TCachedResource<Material, MaterialInitParameters>
+class MaterialHandle final : public TCachedResource<Material, MaterialInitParameters>
 {
 public:
-	MaterialResource(MaterialInitParameters params)
+	MaterialHandle(MaterialInitParameters params)
 			: TCachedResource(params)
 	{
-		s_resources.push_back(this);
 	}
-	~MaterialResource() { s_resources.remove(this); }
+	~MaterialHandle() { }
 
 	void load(enki::ITaskSet* parent) override;
 
-	static std::list<MaterialResource*> s_resources;
 };
 

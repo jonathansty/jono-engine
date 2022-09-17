@@ -4,7 +4,7 @@
 
 #include "graphics/2DRenderContext.h"
 
-class ModelResource;
+class ModelHandle;
 
 using hlslpp::float3;
 using hlslpp::float4;

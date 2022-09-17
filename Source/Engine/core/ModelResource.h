@@ -3,9 +3,9 @@
 
 #include "Graphics/ShaderTypes.h"
 
-class TextureResource;
+class TextureHandle;
 
-using MaterialRef = std::shared_ptr<class MaterialResource>;
+using MaterialRef = std::shared_ptr<class MaterialHandle>;
 class MaterialInstance;
 
 struct ModelUberVertex
@@ -69,13 +69,7 @@ public:
 private:
 	u64 _index_count;
 
-	std::mutex _textures_cs;
-	std::vector<shared_ptr<TextureResource>> _textures;
-
-	std::mutex _material_cs;
 	std::vector<std::unique_ptr<MaterialInstance>> _materials;
-
-	std::mutex _meshes_cs;
 	std::vector<Mesh> _meshes;
 
 	ComPtr<ID3D11Buffer> _vertex_buffer;
@@ -83,13 +77,13 @@ private:
 };
 
 // Render Model resource
-class ModelResource final : public TCachedResource<Model, FromFileResourceParameters>
+class ModelHandle final : public TCachedResource<Model, FromFileResourceParameters>
 {
 public:
 
-	ModelResource(FromFileResourceParameters params);
+	ModelHandle(FromFileResourceParameters params);
 
-	~ModelResource();
+	~ModelHandle();
 
 	void build_load_graph(enki::ITaskSet* parent) override;
 

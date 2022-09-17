@@ -2,7 +2,7 @@
 
 #if FEATURE_D2D
 struct ID2D1Bitmap;
-class TextureResource;
+class TextureHandle;
 
 class Bitmap
 {
@@ -52,7 +52,7 @@ private:
 	//-------------------------------------------------
 	// Datamembers								
 	//-------------------------------------------------
-	std::shared_ptr<TextureResource> _resource;
+	std::shared_ptr<TextureHandle> _resource;
 
 	//ComPtr<ID2D1Bitmap>			m_BitmapPtr;
 	//ComPtr<IWICFormatConverter>	m_ConvertorPtr;

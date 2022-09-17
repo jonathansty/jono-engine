@@ -65,14 +65,30 @@ class TCachedResource : public Resource
 public:
 	using init_parameters = init_type;
 
+	static std::list<TCachedResource<resource_type, init_type>*> s_resources;
+
 	TCachedResource(init_type init_options = init_type())
 			: _init(init_options)
 	{
+		s_resources.push_back(this);
+
 	}
 
-	virtual ~TCachedResource() {}
+	virtual ~TCachedResource() 
+	{
+		auto it = std::find(s_resources.begin(), s_resources.end(), this);
+		if(it != s_resources.end())
+		{
+			s_resources.erase(it);
+		}
+	}
 
 	resource_type* operator->()
+	{
+		return _resource.get();
+	}
+
+	resource_type const* operator*() const
 	{
 		return _resource.get();
 	}
@@ -80,6 +96,25 @@ public:
 	resource_type const* get() const
 	{
 		return _resource.get();
+	}
+
+	TCachedResource& operator=(TCachedResource const& rhs)
+	{
+		this->_resource = rhs._resource;
+		this->_init = rhs._init;
+		return *this;
+	}
+
+	operator bool() const
+	{
+		return _resource != nullptr;
+	}
+
+	TCachedResource(TCachedResource const& rhs)
+		: _resource(rhs._resource)
+		, _init(rhs._init)
+	{
+	
 	}
 
 public:
@@ -94,6 +129,8 @@ private:
 	init_type _init;
 };
 
+template <typename resource_type, typename init_type /*= NoInit*/>
+std::list<TCachedResource<resource_type, init_type>*> TCachedResource<resource_type, init_type>::s_resources;
 
 struct CompletionActionMarkLoaded : enki::ICompletable
 {

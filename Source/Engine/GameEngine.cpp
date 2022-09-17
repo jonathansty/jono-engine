@@ -280,7 +280,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	// Initialize the Graphics Engine
 	d3d_init();
 
-	TextureResource::init_default();
+	TextureHandle::init_default();
 
 	LOG_INFO(System, "Initialising worlds...");
 	{

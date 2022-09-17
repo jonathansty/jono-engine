@@ -21,6 +21,7 @@ public:
 
 	bool is_finalised() const { return _finalised; }
 	void finalise();
+	void update();
 
 	void set_dynamic_material(u32 idx, std::unique_ptr<MaterialInstance>&& instance);
 
@@ -32,7 +33,7 @@ public:
 	float4x4 _transform;
 
 	// Reference to a model
-	std::shared_ptr<ModelResource> _model;
+	std::shared_ptr<ModelHandle> _model;
 
 	std::vector<std::unique_ptr<MaterialInstance>> _material_overrides;
 

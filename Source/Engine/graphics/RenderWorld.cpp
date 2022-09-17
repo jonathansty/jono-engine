@@ -16,9 +16,9 @@ std::shared_ptr<RenderWorldInstance> RenderWorld::create_instance(float4x4 trans
 	std::lock_guard l{ _instance_cs };
 	std::shared_ptr<RenderWorldInstance> inst = std::make_shared<RenderWorldInstance>(transform);
 
-	ModelResource::init_parameters params{};
+	ModelHandle::init_parameters params{};
 	params.path = mesh;
-	inst->_model = ResourceLoader::instance()->load<ModelResource>(params, false, true);
+	inst->_model = ResourceLoader::instance()->load<ModelHandle>(params, false, true);
 
 	_instances.push_back(inst);
 
@@ -145,12 +145,18 @@ void RenderWorldInstance::finalise()
 			}
 		}
 
-		for (u32 i = 0; i < res->get_material_count(); ++i)
-		{
-			get_material_instance(i)->update();
-		}
 
 		_finalised = true;
+	}
+
+}
+
+void RenderWorldInstance::update()
+{
+	Model const* res = _model->get();
+	for (u32 i = 0; i < res->get_material_count(); ++i)
+	{
+		get_material_instance(i)->update();
 	}
 }
 
@@ -172,7 +178,7 @@ MaterialInstance const* RenderWorldInstance::get_material_instance(u32 idx) cons
 
 MaterialInstance* RenderWorldInstance::get_material_instance(u32 idx)
 {
-	if (_material_overrides[idx])
+	if (idx < _material_overrides.size() && _material_overrides[idx])
 	{
 		return _material_overrides[idx].get();
 	}

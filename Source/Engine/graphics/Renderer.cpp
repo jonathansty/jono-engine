@@ -47,6 +47,66 @@ void Renderer::init(EngineSettings const& settings, GameSettings const& game_set
 	_cb_debug = ConstantBuffer::create(_device, sizeof(DebugCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 	_cb_post = ConstantBuffer::create(_device, sizeof(PostCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 
+
+	// Create our cubemap 
+	std::array<std::string_view, 6> faces = {
+		"Resources/skybox/right.jpg",
+		"Resources/skybox/left.jpg",
+		"Resources/skybox/top.jpg",
+		"Resources/skybox/bottom.jpg",
+		"Resources/skybox/back.jpg",
+		"Resources/skybox/front.jpg"
+	};
+
+	std::array<ComPtr<ID3D11Texture2D>, 6> intermediate{};
+
+	int width = 0, height = 0;
+	int mip_levels = 1;
+	for (size_t i = 0; i < faces.size(); ++i)
+	{
+		int nrChannels;
+		stbi_uc* data = stbi_load(faces[i].data(), &width, &height, &nrChannels, 4);
+
+		CD3D11_TEXTURE2D_DESC desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 1,0);
+		desc.ArraySize = 1;
+		desc.MipLevels = 1;
+		D3D11_SUBRESOURCE_DATA subresource{};
+		subresource.pSysMem = data; 
+		subresource.SysMemPitch = width * sizeof(stbi_uc) * 4;
+		ComPtr<ID3D11Texture2D> tex{};
+		ENSURE_HR(_device->CreateTexture2D(&desc, &subresource, tex.GetAddressOf()));
+
+
+		intermediate[i] = tex;
+
+		stbi_image_free(data);
+	}
+	int tmp = width;
+	while (tmp > 4)
+	{
+		tmp = tmp >> 1;
+		++mip_levels;
+	}
+
+	ComPtr<ID3D11Texture2D> cubemap{};
+	CD3D11_TEXTURE2D_DESC cubemap_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R8G8B8A8_UNORM, width, height, 6, mip_levels);
+	cubemap_desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	cubemap_desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE | D3D11_RESOURCE_MISC_GENERATE_MIPS;
+	ENSURE_HR(_device->CreateTexture2D(&cubemap_desc, nullptr, &cubemap));
+
+	for (size_t i = 0; i < faces.size(); ++i)
+	{
+		_device_ctx->CopySubresourceRegion(cubemap.Get(), D3D11CalcSubresource(0, (UINT)i, mip_levels), 0, 0, 0, intermediate[i].Get(), D3D11CalcSubresource(0, 0, mip_levels), nullptr);
+	}
+	_cubemap = cubemap;
+	D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc{};
+	srv_desc.TextureCube.MipLevels = mip_levels;
+	srv_desc.TextureCube.MostDetailedMip = 0;
+	srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+	ENSURE_HR(_device->CreateShaderResourceView(_cubemap.Get(), &srv_desc, _cubemap_srv.GetAddressOf()));
+	_device_ctx->GenerateMips(_cubemap_srv.Get());
+
 }
 
 void Renderer::init_for_hwnd(HWND wnd)
@@ -583,6 +643,9 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 			inst->finalise();
 		}
 
+		// Update all material instances and other dynamic data
+		inst->update();
+
 		if(inst->is_ready())
 		{
 			Model const* model = inst->_model->get();
@@ -648,7 +711,7 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 		}
 
 		{
-			setup_renderstate(params, dc._material);
+			setup_renderstate(dc._material, params);
 
 			ctx->DrawIndexed((UINT)dc._index_count, (UINT)dc._first_index, (INT)dc._first_vertex);
 
@@ -707,6 +770,8 @@ void Renderer::prepare_shadow_pass()
 
 void Renderer::begin_frame()
 {
+	_device_ctx->ClearState();
+
 	GameEngine* engine = GameEngine::instance();
 	D3D11_VIEWPORT vp{};
 	vp.Width = static_cast<float>(engine->get_viewport_size().x);
@@ -747,7 +812,7 @@ Graphics::FrustumCorners Renderer::get_cascade_frustum(shared_ptr<RenderWorldCam
 	return world_corners;
 }
 
-void Renderer::setup_renderstate(ViewParams const& params, MaterialInstance const* mat_instance)
+void Renderer::setup_renderstate(MaterialInstance const* mat_instance, ViewParams const& params)
 {
 	auto ctx = _device_ctx;
 
@@ -761,9 +826,11 @@ void Renderer::setup_renderstate(ViewParams const& params, MaterialInstance cons
 	{
 		ID3D11ShaderResourceView* views[] = {
 			s_EnableShadowRendering ? _shadow_map_srv.Get() : nullptr,
-			_output_depth_srv_copy
+			_output_depth_srv_copy,
+			_cubemap_srv.Get()
 		};
-		_device_ctx->PSSetShaderResources(5, UINT(std::size(views)), views);
+		_device_ctx->PSSetShaderResources(Texture_CSM, UINT(std::size(views)), views);
+
 	}
 }
 

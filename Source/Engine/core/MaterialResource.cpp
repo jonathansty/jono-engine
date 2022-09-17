@@ -10,7 +10,7 @@
 
 #include "Graphics/ShaderCompiler.h"
 
-void MaterialResource::load(enki::ITaskSet* parent)
+void MaterialHandle::load(enki::ITaskSet* parent)
 {
 	using namespace Graphics;
 
@@ -81,29 +81,27 @@ void MaterialResource::load(enki::ITaskSet* parent)
 				switch (textureType)
 				{
 					case MaterialInitParameters::TextureType_Albedo:
-						_resource->_textures.push_back(TextureResource::white());
+						_resource->_textures.push_back(TextureHandle::white());
 						break;
 					case MaterialInitParameters::TextureType_MetalnessRoughness:
-						_resource->_textures.push_back(TextureResource::default_roughness());
+						_resource->_textures.push_back(TextureHandle::default_roughness());
 						break;
 					case MaterialInitParameters::TextureType_Normal:
-						_resource->_textures.push_back(TextureResource::default_normal());
+						_resource->_textures.push_back(TextureHandle::default_normal());
 						break;
 					case MaterialInitParameters::TextureType_Count:
-						_resource->_textures.push_back(TextureResource::invalid());
+						_resource->_textures.push_back(TextureHandle::invalid());
 						break;
 				}
 			}
 			else
 			{
-				shared_ptr<TextureResource> res = ResourceLoader::instance()->load<TextureResource>({ paths[textureType] }, true);
+				TextureHandle res = *ResourceLoader::instance()->load<TextureHandle>({ paths[textureType] }, true);
 				_resource->_textures.push_back(res);
 			}
 		}
 	}
 }
-
-std::list<MaterialResource*> MaterialResource::s_resources;
 
 std::string MaterialInitParameters::to_string() const
 {

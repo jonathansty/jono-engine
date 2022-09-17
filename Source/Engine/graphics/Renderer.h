@@ -251,9 +251,10 @@ private:
 
 	FrustumCorners get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const;
 
-	void setup_renderstate(ViewParams const& params, MaterialInstance const* material);
+	// Helper to setup the render state based on material
+	void setup_renderstate( MaterialInstance const* material, ViewParams const& params);
 
-
+	// Rendering
 	void render_post_predebug();
 	void render_post_postdebug();
 
@@ -304,15 +305,21 @@ private:
 	DXGI_SAMPLE_DESC _aa_desc;
 	D2D1_ANTIALIAS_MODE _d2d_aa_mode;
 
+	// Shadow mapping
 	ComPtr<ID3D11Texture2D> _shadow_map;
 	ComPtr<ID3D11DepthStencilView> _shadow_map_dsv[MAX_CASCADES];
 	ComPtr<ID3D11ShaderResourceView> _shadow_map_srv;
 	ComPtr<ID3D11ShaderResourceView> _debug_shadow_map_srv[MAX_CASCADES];
 
+	// Constant buffers
 	ConstantBufferRef _cb_global;
 	ConstantBufferRef _cb_model;
 	ConstantBufferRef _cb_debug;
 	ConstantBufferRef _cb_post;
+
+	// Cubemap
+	ComPtr<ID3D11Texture2D> _cubemap;
+	ComPtr<ID3D11ShaderResourceView> _cubemap_srv;
 
 	std::unique_ptr<class RendererDebugTool> _debug_tool;
 	friend class RendererDebugTool;	

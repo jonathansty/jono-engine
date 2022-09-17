@@ -18,6 +18,7 @@ float4 main(VS_OUT vout) : SV_Target
 
 	Material material = EvaluateMaterial(vout);
 	float3 output = (float3)0.0;
+
 	if (g_VisualizeMode == VisualizeMode_VertexColour) 
 	{
 		output = vout.colour.rgb;

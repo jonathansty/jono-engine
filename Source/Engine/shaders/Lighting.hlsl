@@ -43,32 +43,42 @@ float D_GGX(float NoH, float a) {
 }
 
 float3 F_Schlick(float HoV, float3 f0) {
+
 	float3 f90 = float3(1.0f,1.0f,1.0f);
-	return (f0 + (f90 - f0) * pow(1.0 - HoV, 5.0));
+	return f0 + ((f90 - f0) * pow(1.0 - HoV, 5.0));
 }
 
 float G_SchlickGGX(float NoV, float k)
 {
 	float nom = NoV;
-	float denom = NoV * (1.0 - k*k) + k*k;
+	float denom = NoV * (1.0 - k) + k;
 	return nom / denom;
+}
+
+float G_Smith(float NoV, float NoL, float k)
+{
+	float ggx1 = G_SchlickGGX(NoV, k);
+	float ggx2 = G_SchlickGGX(NoL, k);
+	return ggx1 * ggx2;
 }
 
 float3 Fd_Lambert() {
 	return 1.0f / PI;
 }
 
-float3 F_CookTorrence(float NoH, float NoV, float NoL, float LoH, float VoH, in Material material)
+float3 F_CookTorrence(float NoH, float NoV, float NoL, float LoH, float VoH, float3 ReflectedView, in Material material)
 {
 	// perceptually linear roughness to roughness (see parameterization)
 	float r2 = material.roughness * material.roughness;
 
 	float  D = D_GGX(NoH, r2);
-	float  G = G_SchlickGGX(NoV, r2);
 	
-	float3 reflectance = material.F0;
-	// float3 f0 = lerp(material.F0, material.metalness, material.metalness);
-	float3 f0 = 0.16 * reflectance * reflectance * (1.0 - material.metalness) + material.albedo * material.metalness;
+	float  k = pow(r2 + 1, 2) / 8.0;
+	float  G = G_Smith(NoV, NoL, k);
+	
+	float3 reflectance2 = material.F0 * material.F0;
+	float3 f0 = 0.16 * reflectance2 * (1.0 - material.metalness) + material.albedo * material.metalness;
+
 	float3 F = F_Schlick(VoH, f0);
 	return (D*F*G) * rcp(max(4.0*NoV*NoL, 1.0));
 }
@@ -76,24 +86,26 @@ float3 F_CookTorrence(float NoH, float NoV, float NoL, float LoH, float VoH, in 
 
 float3 LightingModel_BRDF(in Material material, float3 v, float3 l, float3 n)
 {
-	float3 h = normalize(v+ l);
+	float3 h = normalize(v + l);
 
 	float NoV = clamp(dot(n, v), 0.0, 1.0);
 	float NoL = clamp(dot(n, l), 0.0, 1.0);
 	float NoH = clamp(dot(n, h), 0.0, 1.0);
 	float LoH = clamp(dot(l, h), 0.0, 1.0);
+	float VoH = clamp(dot(v, h), 0.0, 1.0);
 
-	float VoH = clamp(dot(v,h), 0.0, 1.0);
+	float3 ReflectedView = reflect(-v, n);
 
-	float k_s = 1.0f;
-	float k_d = 1.0f;
-
+	// Diffuse BRDF
 	float3 diffuseColor = (1.0 - material.metalness) * material.albedo;
 	float3 Fd = diffuseColor * Fd_Lambert();
-	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, material);
+	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, ReflectedView, material);
+	float3 color =  Fr + Fd;
+	color *= NoL * material.ao;
 
-	float3 result = k_s * Fr + k_d * Fd;
-	return lerp(result, 0.01f * Fd, 1.0f - NoL) * material.ao;
+
+
+	return color;
 }
 
 float3 LightingModel_Phong(Material material, float3 view, float3 light,float3 light_colour, float3 normal)
@@ -173,6 +185,13 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		#if  LIGHTING_MODEL == LIGHTING_MODEL_BLINN_PHONG
 			final_colour *= LightingModel_BlinnPhong(material, view, light,light_colour, final_normal);
 		#endif
+
+		// Cubemap reflections, not entirely correct but meh...
+		float3 ReflectedView = reflect(-view, final_normal);
+		float level = lerp(4, 8, material.roughness * material.roughness);
+		float3 irradiance = (lerp(0.1, 1.0 * material.albedo, material.metalness))* g_cube.SampleLevel(g_all_linear_sampler, ReflectedView, level).rgb;
+		float3 indirect = irradiance;
+		final_colour += indirect;
 
 		#ifndef LIGHTING_MODEL
 		#error No lighting model defined

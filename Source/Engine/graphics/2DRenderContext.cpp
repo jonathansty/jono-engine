@@ -199,7 +199,7 @@ bool D2DRenderContext::end_paint()
 			for (DrawCmd const& cmd : _draw_cmds)
 			{
 				ID3D11ShaderResourceView* srvs[] = {
-					cmd._texture ? cmd._texture : TextureResource::white()->get()->get_srv()
+					cmd._texture ? cmd._texture : TextureHandle::white()->get_srv()
 				};
 				ctx->PSSetShaderResources(0, 1, srvs);
 				float4x4 wv = cmd._wv;

@@ -145,7 +145,7 @@ void SceneViewer::start()
 	settings.projection_type = RenderWorldCamera::Projection::Ortographic;
 	l->set_settings(settings);
 
-	constexpr f32 c_scale = 2.0f;
+	constexpr f32 c_scale = 1.0f;
 	l->set_colour({ 1.0f * c_scale, 1.0f * c_scale, 1.0f * c_scale });
 	l->set_casts_shadow(true);
 	l->set_position({ 10.0, 10.0f, 0.0f });
@@ -159,8 +159,8 @@ void SceneViewer::start()
 	{
 		for(size_t x = 0; x < 10; ++x)
 		{
-			float3 pos = float3(2.0f + x * 2.0f, 0.0f, y * 2.0f);
-			RenderWorldInstanceRef inst = GameEngine::instance()->get_render_world()->create_instance(float4x4::translation(pos), "res:/sphere.glb");
+			float3 pos = float3(10.0f + x * 2.5f, 0.0f, y * 2.5f);
+			RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(pos), "res:/sphere.glb");
 			Model const* model = inst->_model->get();
 
 			f32 x_dt = (float)x / 10.0f;
@@ -174,6 +174,19 @@ void SceneViewer::start()
 	}
 
 
+	RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(0.0f,0.0f,0.0f), "res:/sphere.glb");
+	_model = inst;
+
+	Model const* model = inst->_model->get();
+	auto mat_inst = std::make_unique<MaterialInstance>();
+	mat_inst->set_param_float("Roughness", 0.25f);
+	mat_inst->set_param_float("Metalness", 0.0f);
+	mat_inst->set_param_float3("Albedo", float3{ 0.8f, 0.8f, 0.8f });
+	inst->set_dynamic_material(0, std::move(mat_inst));
+
+
+	//world->create_instance(float4x4::scale(2.0f) * float4x4::translation(float3(-5.0f,0.5f,0.0f)), "Resources/Models/gltf-models/2.0/FlightHelmet/glTF/FlightHelmet.gltf");
+	render_world->create_instance(float4x4::translation(float3(0.0f, 0.0f, 0.0f)), "Resources/Models/plane_big.glb");
 }
 
 void SceneViewer::end()
@@ -327,6 +340,38 @@ void SceneViewer::debug_ui()
 
 	ImGui::Combo("Debug Mode", &g_DebugMode, items, static_cast<int>(std::size(items)));
 
+
+	if(ImGui::CollapsingHeader("Model Info"))
+	{
+		if(_model)
+		{
+			MaterialInstance* inst = _model->get_material_instance(0);
+			if (inst)
+			{
+				static float col[3] = { 1.0f, 1.0f, 1.0f };
+				if (ImGui::ColorPicker3("Color", col))
+				{
+					inst->set_param_float3("Albedo", { col[0], col[1], col[2] });
+				}
+
+				static f32 s_roughness = 0.25f;
+				if(ImGui::SliderFloat("Roughness", &s_roughness, 0.001f, 1.0f))
+				{
+					inst->set_param_float("Roughness", s_roughness);
+				}
+
+				static f32 s_metalness = 0.25f;
+				if (ImGui::SliderFloat("Metalness", &s_metalness, 0.001f, 1.0f))
+				{
+					inst->set_param_float("Metalness", s_metalness);
+				}
+
+
+			}
+		}
+	}
+
+
 	//std::shared_ptr<ModelResource> res = _model->_model;
 	//Model const* model = res->get();
 	//for(u32 i = 0; i < model->get_material_count(); ++i)
@@ -379,7 +424,7 @@ void SceneViewer::rebuild_shaders()
 
 	ShaderCache::instance()->reload_all();
 
-	for(MaterialResource* res : MaterialResource::s_resources)
+	for(auto const& res : MaterialHandle::s_resources)
 	{
 		res->_status = ResourceStatus::Loading;
 		res->load(nullptr);
@@ -499,4 +544,5 @@ void SceneViewer::swap_model(const char* path)
 	GameEngine::instance()->get_render_world()->remove_instance(_model);
 
 	_model = GameEngine::instance()->get_render_world()->create_instance(float4x4::identity(), path);
+	_model->set_dynamic_material(0, std::make_unique<MaterialInstance>());
 }

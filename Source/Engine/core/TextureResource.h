@@ -34,28 +34,33 @@ private:
 	u32 _height;
 };
 
-class TextureResource : public TCachedResource<Texture, FromFileResourceParameters>
+class TextureHandle : public TCachedResource<Texture, FromFileResourceParameters>
 {
 public:
-	TextureResource() = default;
-	TextureResource(FromFileResourceParameters params);
+	TextureHandle() = default;
+	TextureHandle(FromFileResourceParameters params);
 
-	virtual ~TextureResource() {}
+	virtual ~TextureHandle() {}
 
-	static std::shared_ptr<TextureResource> invalid()
+	static TextureHandle const& invalid()
 	{
-		static std::shared_ptr<TextureResource> s_invalid = std::make_shared<TextureResource>();
+		static TextureHandle s_invalid = {};
 		return s_invalid;
+	}
+
+	bool operator==(TextureHandle const& rhs)
+	{
+		return _resource == rhs._resource;
 	}
 
 	static void init_default();
 	static void deinit();
 
 	// Basic texture resources for when we fail to load specific textures
-	static std::shared_ptr<TextureResource> black();
-	static std::shared_ptr<TextureResource> white();
-	static std::shared_ptr<TextureResource> default_normal();
-	static std::shared_ptr<TextureResource> default_roughness();
+	static TextureHandle black();
+	static TextureHandle white();
+	static TextureHandle default_normal();
+	static TextureHandle default_roughness();
 
 	virtual void load(enki::ITaskSet* parent) override;
 
@@ -63,7 +68,6 @@ public:
 
 
 private:
-
 	struct DefaultTexture
 	{
 		enum Enum : u32
@@ -75,6 +79,6 @@ private:
 			Count
 		};
 	};
-	static std::array<std::shared_ptr<TextureResource>, DefaultTexture::Count> s_default_textures;
+	static std::array<TextureHandle, DefaultTexture::Count> s_default_textures;
 
 };

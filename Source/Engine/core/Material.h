@@ -79,7 +79,7 @@ public:
 
 	u32 get_slot(Identifier64 const& slot_id) const { return _texture_slot_mapping.at(slot_id); }
 
-	void set_texture(u32 slot, std::shared_ptr<class TextureResource> const& resource) { _textures[slot] = resource; }
+	void set_texture(u32 slot, TextureHandle const& resource) {  _textures[slot] = resource; }
 
 	u32 get_texture_count() const override;
 
@@ -101,39 +101,34 @@ private:
 
 	std::vector<u8> _param_data;
 
-	std::vector<std::shared_ptr<class TextureResource>> _textures;
+	std::vector<TextureHandle> _textures;
 	std::unordered_map<Identifier64, u32> _texture_slot_mapping;
 	std::unordered_map<Identifier64, ParameterInfo> _parameters;
 
-	friend class MaterialResource;
+	friend class MaterialHandle;
 	friend class MaterialInstance;
 };
 
 class MaterialInstance final : public IMaterialObject
 {
 	public:
-		MaterialInstance(std::shared_ptr<MaterialResource const>const& baseMaterial);
+		MaterialInstance(std::shared_ptr<MaterialHandle const>const& baseMaterial);
 		MaterialInstance();
 
 		~MaterialInstance();
 
-		void Bind(IMaterialObject const* obj)
-		{
-			_obj = obj;
-
-			_param_data.resize(obj->get_param_data().size());
-
-		}
+		void Bind(IMaterialObject const* obj);
 
 		virtual void apply(Graphics::Renderer* renderer, Graphics::ViewParams const& params) const;
 
 
 		u32 get_slot(Identifier64 const& slot_id) const;
 
-		void set_texture(u32 slot, std::shared_ptr<class TextureResource> const& resource);
-		void set_texture(Identifier64 const& slot_id, std::shared_ptr<class TextureResource> const& tex);
+		void set_texture(u32 slot, std::shared_ptr<class TextureHandle> const& resource);
+		void set_texture(Identifier64 const& slot_id, std::shared_ptr<class TextureHandle> const& tex);
 
 		void set_param_float(Identifier64 const& parameter_id, float value);
+		void set_param_float3(Identifier64 const& parameter_id, float3 value);
 
 		void update();
 
@@ -153,26 +148,33 @@ class MaterialInstance final : public IMaterialObject
 		std::vector<u8> const& get_param_data() const override;
 		ParameterInfo const* find_parameter(Identifier64 const& id) const override;
 
-		struct FloatParameter
+		template<typename T>
+		struct TParameter
 		{
 			Identifier64 hash;
-			float value;
+			T value;
 		};
-
+		using FloatParameter = TParameter<float>;
+		using Float2Parameter = TParameter<float2>;
+		using Float3Parameter = TParameter<float3>;
+		using Float4Parameter = TParameter<float4>;
 
 	private:
 		IMaterialObject const* get_material_obj()  const;
 
 
 		IMaterialObject const* _obj;
-		std::shared_ptr<MaterialResource const> _resource;
+		std::shared_ptr<MaterialHandle const> _resource;
 
-		std::vector<FloatParameter> _float_params;
+		template<typename ParamType> 
+		using ParameterCollection = std::vector<TParameter<ParamType>>;
+		ParameterCollection<float> _float_params;
+		ParameterCollection<float3> _float3_params;
 
 		bool _has_overrides;
 		bool _needs_flush;
 		std::vector<u8> _param_data;
 
-		std::vector<std::shared_ptr<class TextureResource>> _textures;
+		std::vector<std::shared_ptr<class TextureHandle>> _textures;
 		ConstantBufferRef _instance_cb;
 };

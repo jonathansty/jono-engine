@@ -7,90 +7,90 @@
 #include <algorithm>
 
 
-std::array<std::shared_ptr<TextureResource>, TextureResource::DefaultTexture::Count> TextureResource::s_default_textures;
+std::array<TextureHandle, TextureHandle::DefaultTexture::Count> TextureHandle::s_default_textures;
 
-TextureResource::TextureResource(FromFileResourceParameters params)
+TextureHandle::TextureHandle(FromFileResourceParameters params)
 		: TCachedResource(params)
 {
 }
 
-void TextureResource::init_default()
+void TextureHandle::init_default()
 {
-	TextureResource::black();
-	TextureResource::white();
-	TextureResource::default_normal();
-	TextureResource::default_roughness();
+	TextureHandle::black();
+	TextureHandle::white();
+	TextureHandle::default_normal();
+	TextureHandle::default_roughness();
 }
 
-void TextureResource::deinit()
+void TextureHandle::deinit()
 {
 	for (u32 i = 0; i < DefaultTexture::Count; ++i)
 	{
-		s_default_textures[i].reset();
+		s_default_textures[i] = TextureHandle::invalid();
 	}
 }
 
-std::shared_ptr<TextureResource> TextureResource::black()
+TextureHandle TextureHandle::black()
 {
 	auto& s_tex = s_default_textures[DefaultTexture::Black];
-	if (!s_tex)
+	if (s_tex == TextureHandle::invalid())
 	{
-		s_tex = std::make_shared<TextureResource>();
+		s_tex = TextureHandle();
 		std::array<u32, 4 * 4> data{};
 		std::fill(data.begin(), data.end(), 0);
-		s_tex->create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
+		s_tex.create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
 	}
 
 	return s_tex;
 }
 
-std::shared_ptr<TextureResource> TextureResource::white()
+TextureHandle TextureHandle::white()
 {
 	auto& s_white = s_default_textures[DefaultTexture::White];
-	if (!s_white)
+	if (s_white == TextureHandle::invalid())
 	{
-		s_white = std::make_shared<TextureResource>();
+		s_white = TextureHandle();
 		std::array<u32, 4 * 4> data{};
 		std::fill(data.begin(), data.end(), 0xFFFFFFFF);
-		s_white->create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
+		s_white.create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
 	}
 	return s_white;
 }
 
-std::shared_ptr<TextureResource> TextureResource::default_normal()
+TextureHandle TextureHandle::default_normal()
 {
 	auto& s_default_normal = s_default_textures[DefaultTexture::Normal];
-	if (!s_default_normal)
+	if (s_default_normal == TextureHandle::invalid())
 	{
-		s_default_normal = std::make_shared<TextureResource>();
+		s_default_normal = TextureHandle();
 		std::array<u32, 16> data{};
 		std::fill(data.begin(), data.end(), 0xFFFF7D7D);
-		s_default_normal->create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
+		s_default_normal.create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
 	}
 	return s_default_normal;
 }
 
-std::shared_ptr<TextureResource> TextureResource::default_roughness()
+TextureHandle TextureHandle::default_roughness()
 {
 	auto& s_tex = s_default_textures[DefaultTexture::Roughness];
-	if (!s_tex)
+	if (s_tex != TextureHandle::invalid())
 	{
-		s_tex = std::make_shared<TextureResource>();
+		s_tex = TextureHandle();
 		std::array<u32, 16> data{};
 		std::fill(data.begin(), data.end(), 0xFF007DFF);
-		s_tex->create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
+		s_tex.create_from_memory(4, 4, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, data.data());
 	}
 	return s_tex;
 }
 
-void TextureResource::load(enki::ITaskSet* parent)
+void TextureHandle::load(enki::ITaskSet* parent)
 {
 	std::string const& path = get_init_parameters().path;
 	_resource = std::make_shared<Texture>();
 	_resource->load(path);
 }
 
-void TextureResource::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data)
+void TextureHandle::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data)
 {
 	_resource = std::make_shared<Texture>();
 	_resource->create_from_memory(width, height, format, type, data);
