@@ -6,9 +6,9 @@
 
 void RenderWorld::init()
 {
-	_instances.reserve(100);
-	_cameras.reserve(10);
-	_lights.reserve(10);
+	_instances.reserve(c_instance_reserve);
+	_cameras.reserve(c_camera_reserve);
+	_lights.reserve(c_light_reserve);
 }
 
 std::shared_ptr<RenderWorldInstance> RenderWorld::create_instance(float4x4 transform, std::string const& mesh)
@@ -43,11 +43,31 @@ std::shared_ptr<RenderWorldLight> RenderWorld::create_light(RenderWorldLight::Li
 
 void RenderWorld::remove_instance(std::shared_ptr<RenderWorldInstance> const& instance)
 {
+	std::lock_guard l{ _instance_cs };
 	auto it = std::find(_instances.begin(), _instances.end(), instance);
 	if (it != _instances.end())
 	{
 		_instances.erase(it);
 	}
+}
+
+void RenderWorld::remove_light(std::shared_ptr<RenderWorldLight> const& light)
+{
+	std::lock_guard l{ _lights_cs };
+	auto it = std::find(_lights.begin(), _lights.end(), light);
+	if (it != _lights.end())
+	{
+		_lights.erase(it);
+	}
+}
+
+std::shared_ptr<RenderWorldCamera> RenderWorld::get_view_camera() const
+{
+	if (_active_camera >= 0 && _active_camera < _cameras.size())
+	{
+		return _cameras[_active_camera];
+	}
+	return nullptr;
 }
 
 RenderWorldCamera::RenderWorldCamera()

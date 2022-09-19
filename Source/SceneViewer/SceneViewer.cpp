@@ -122,8 +122,8 @@ void SceneViewer::start()
 
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
 	const float aspect = (float)size.x / (float)size.y;
-	const float near_plane = 0.1f;
-	const float far_plane = 500.0f;
+	const float near_plane = 0.5f;
+	const float far_plane = 400.0f;
 
 	// Create Cam 1
 	auto rw_cam = render_world->create_camera();
@@ -159,7 +159,7 @@ void SceneViewer::start()
 	{
 		for(size_t x = 0; x < 10; ++x)
 		{
-			float3 pos = float3(10.0f + x * 2.5f, 0.0f, y * 2.5f);
+			float3 pos = float3(10.0f + x * 10.0f, 0.0f, y * 10.0f);
 			RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(pos), "res:/sphere.glb");
 			Model const* model = inst->_model->get();
 
@@ -170,6 +170,24 @@ void SceneViewer::start()
 			mat_inst->set_param_float("Roughness", hlslpp::lerp(float1(0.01f), 1.0f, x_dt));
 			mat_inst->set_param_float("Metalness", hlslpp::lerp(float1(0.01f), 1.0f, y_dt));
 			inst->set_dynamic_material(0,std::move(mat_inst));
+
+			RenderWorldLightRef light = render_world->create_light(RenderWorldLight::LightType::Spot);
+			light->set_position(float3(pos) + float3(0.0f, 3.0f, 0.125f));
+			RenderWorldCamera::CameraSettings light_proj_settings{};
+			light_proj_settings.aspect = 1;
+			light_proj_settings.far_clip = 50.0f; // Range
+			light_proj_settings.near_clip = 0.01f;
+			light_proj_settings.fov = hlslpp::radians(float1(60.0f)); // Cone angle?
+			light_proj_settings.projection_type = RenderWorldCamera::Projection::Perspective;
+			light->set_settings(settings);
+			light->look_at(pos);
+			light->set_range(8.0f);
+			light->set_cone_angle(hlslpp::radians(float1(33.5f)));
+			light->set_outer_cone_angle(hlslpp::radians(float1(60.5f)));
+
+			constexpr f32 c_intensity = 1.0f;
+			float3 colour = float3(x_dt, y_dt, 1.0f) * c_intensity;
+			light->set_colour(colour);
 		}
 	}
 

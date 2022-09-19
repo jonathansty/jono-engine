@@ -177,8 +177,7 @@ public:
 	{
 		Directional,
 		Spot,
-		// #TODO
-		// Point
+		Point
 	};
 
 	RenderWorldLight(LightType type);
@@ -186,12 +185,19 @@ public:
 
 	bool is_directional() const { return _type == LightType::Directional; }
 	bool is_spot() const { return _type == LightType::Spot; }
+	LightType get_type() const { return _type; }
 
+	f32 get_range() const { return _range; }
 	float3 get_colour() const { return _colour; }
 	bool get_casts_shadow() const { return _shadow_settings.casts_shadow; }
+	f32 get_cone_angle() const { return _cone_angle; }
+	f32 get_outer_cone_angle() const { return _outer_cone_angle; }
 
 	void set_colour(float3 colour) { _colour = colour; }
 	void set_casts_shadow(bool cast) { _shadow_settings.casts_shadow = true; }
+	void set_range(f32 range) { _range = range; }
+	void set_cone_angle(f32 cone_angle) { _cone_angle = cone_angle; }
+	void set_outer_cone_angle(f32 outer_cone_angle) { _outer_cone_angle = outer_cone_angle; }
 
 	CascadeInfo const& get_cascade(u32 idx) const
 	{
@@ -210,18 +216,22 @@ public:
 private:
 	struct ShadowSettings
 	{
-		ShadowSettings()
-				: casts_shadow(false) {}
+		ShadowSettings() : casts_shadow(false) {}
 		~ShadowSettings() {}
 
 		bool casts_shadow;
 	};
 
 	ShadowSettings _shadow_settings;
-	LightType _type;
 
-	float3 _colour;
+	// Only used for directional lights
 	std::vector<CascadeInfo> _cascade;
+
+	LightType _type;
+	float3 _colour;
+	f32 _range = 0.0f;
+	f32 _cone_angle = 0.0f;
+	f32 _outer_cone_angle = 0.0f;
 };
 
 class RenderWorld final
@@ -234,33 +244,34 @@ public:
 	RenderWorld() = default;
 	~RenderWorld() = default;
 
+	static constexpr u32 c_instance_reserve = 512;
+	static constexpr u32 c_light_reserve = 10;
+	static constexpr u32 c_camera_reserve = 1;
+
+	// Initializes the render world to reserve space for N amount of data (See constants above)
 	void init();
 
 	// Getters to retrieve all collections
 	InstanceCollection const& get_instances() const { return _instances; }
-	LightCollection const& get_lights() const { return _lights; }
-	CameraCollection const& get_cameras() const { return _cameras; }
+	LightCollection    const& get_lights()    const { return _lights; }
+	CameraCollection   const& get_cameras()   const { return _cameras; }
 
 	// Retrieve individual objects for access
-	std::shared_ptr<RenderWorldCamera> const& get_camera(u32 idx) const { return _cameras[0]; }
-	std::shared_ptr<RenderWorldLight> const& get_light(u32 idx) const { return _lights[0]; }
+	std::shared_ptr<RenderWorldCamera> const& get_camera(u32 idx) const { return _cameras[idx]; }
+	std::shared_ptr<RenderWorldLight>  const& get_light(u32 idx) const { return _lights[idx]; }
 
 	// Create render world objects
 	std::shared_ptr<RenderWorldInstance> create_instance(float4x4 transform, std::string const& mesh);
-	std::shared_ptr<RenderWorldCamera> create_camera();
-	std::shared_ptr<RenderWorldLight> create_light(RenderWorldLight::LightType type);
+	std::shared_ptr<RenderWorldCamera>   create_camera();
+	std::shared_ptr<RenderWorldLight>    create_light(RenderWorldLight::LightType type);
 
 	void remove_instance(std::shared_ptr<RenderWorldInstance> const& instance);
+	void remove_light(std::shared_ptr<RenderWorldLight> const& light);
 
-	std::shared_ptr<RenderWorldCamera> get_view_camera() const
-	{
-		if (_active_camera >= 0 && _active_camera < _cameras.size())
-		{
-			return _cameras[_active_camera];
-		}
-		return nullptr;
-	}
+	// Returns the current active view camera
+	std::shared_ptr<RenderWorldCamera> get_view_camera() const;
 
+	// Updates the current active view camera based on the index in the list
 	void set_active_camera(u32 idx) { _active_camera = idx; }
 
 private:

@@ -24,6 +24,9 @@
 #define Sampler_Linear 0
 #define Sampler_Point 1
 
+#define LIGHT_TYPE_POINT 0x1
+#define LIGHT_TYPE_SPOT 0x2
+
 struct AmbientInfo
 {
 	float4 ambient;
@@ -105,8 +108,10 @@ cbuffer WorldConstants : CB_SLOT(Buffer_Global)
 
 	Viewport_t Viewport;
 	AmbientInfo g_Ambient;
-	DirectionalLightInfo g_Lights[MAX_DIRECTIONAL_LIGHTS];
-	unsigned int num_lights;
+	// Directional lights are packed into the world constant buffer
+	DirectionalLightInfo g_Lights[MAX_DIRECTIONAL_LIGHTS]; 
+	unsigned int num_directional_lights; // Describes the number of directional lights
+	unsigned int num_lights; // Describes the number of local lights in the structured buffer
 };
 
 cbuffer DebugCB : CB_SLOT(Buffer_Debug)
@@ -131,9 +136,15 @@ TextureCube<float4>   g_cube : SRV_SLOT(Texture_Cube);
 
 struct ProcessedLight
 {
+	float3 position;
+	unsigned int flags;
+
 	float3 color;
-	float  intensity;
-	uint   flags; 
+	float range;
+
+	float3 direction;
+	float cone;
+	float outer_cone;
 };
 StructuredBuffer<ProcessedLight> g_lights : SRV_SLOT(Texture_Lights);
 #endif
@@ -142,9 +153,15 @@ StructuredBuffer<ProcessedLight> g_lights : SRV_SLOT(Texture_Lights);
 #ifdef __cplusplus
 struct ProcessedLight
 {
-	Shaders::float3 color;
-	float intensity;
+	Shaders::float3 position;
 	unsigned int flags;
+
+	Shaders::float3 color;
+	f32 range;
+
+	Shaders::float3 direction;
+	f32 cone;
+	f32 outer_cone;
 };
 #endif
 

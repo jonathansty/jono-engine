@@ -131,8 +131,9 @@ struct GlobalCB
 	AmbientInfo ambient;
 	DirectionalLightInfo lights[MAX_LIGHTS];
 
-	u32 num_lights;
-	float padding[3];
+	u32 num_directional_lights;
+	u32 num_lights; // local lights
+	float padding[2];
 };
 
 __declspec(align(16)) 
@@ -320,6 +321,9 @@ private:
 	ConstantBufferRef _cb_model;
 	ConstantBufferRef _cb_debug;
 	ConstantBufferRef _cb_post;
+
+	u32 _num_lights;
+	u32 _num_directional_lights;
 
 	// Cubemap
 	ComPtr<ID3D11Texture2D> _cubemap;

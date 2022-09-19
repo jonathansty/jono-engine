@@ -447,7 +447,7 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 			desc.Windowed = false;
 		}
 		desc.BufferCount = 2;
-		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
 		ComPtr<IDXGISwapChain> swapchain;
 		SUCCEEDED(_factory->CreateSwapChain(_device, &desc, &swapchain));
@@ -484,17 +484,78 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, L"PreRender");
-	extern int g_DebugMode;
-	DebugCB* debug_data = (DebugCB*)_cb_debug->map(_device_ctx);
-	debug_data->m_VisualizeMode = g_DebugMode;
-	_cb_debug->unmap(_device_ctx);
 
+	// Update the debug buffers
+	{
+		extern int g_DebugMode;
+		DebugCB* debug_data = (DebugCB*)_cb_debug->map(_device_ctx);
+		debug_data->m_VisualizeMode = g_DebugMode;
+		_cb_debug->unmap(_device_ctx);
+	}
+
+	// Update the cameras
 	for (auto& cam : world->get_cameras())
 	{
 		// Update our view camera to properly match the viewport aspect
 		cam->set_aspect((f32)_viewport_width / (f32)_viewport_height);
 		cam->update();
 	}
+
+	// Update all the render world instances
+	for (std::shared_ptr<RenderWorldInstance> const& inst : world->get_instances())
+	{
+		// Finalise a render instance after it's done loading
+		if (inst->_model->is_loaded() && !inst->is_finalised())
+		{
+			inst->finalise();
+		}
+
+		// Update all material instances and other dynamic data
+		inst->update();
+	}
+
+	// Collect all local lights and update our light buffer
+
+	{
+		ScopedBufferAccess access{ _device_ctx, _light_buffer.get() };
+		ProcessedLight* light_data = static_cast<ProcessedLight*>(access.get_ptr());
+		u32 n_lights = 0;
+		u32 n_directional_lights = 0;
+		for (std::shared_ptr<RenderWorldLight> const& light : world->get_lights())
+		{
+			if (!light->is_directional())
+			{
+				ProcessedLight& data = *light_data;
+				data.position = light->get_position();
+				data.direction = Shaders::float3(hlslpp::normalize(light->get_view_direction().xyz));
+				data.range = light->get_range();
+				data.color = light->get_colour();
+				data.cone = hlslpp::cos(float1(light->get_cone_angle()));
+				data.outer_cone = hlslpp::cos(float1(light->get_outer_cone_angle()));
+
+				using LightType = RenderWorldLight::LightType;
+				switch (light->get_type())
+				{
+					case LightType::Point:
+						data.flags |= LIGHT_TYPE_POINT;
+						break;
+					case LightType::Spot:
+						data.flags |= LIGHT_TYPE_SPOT;
+						break;
+				}
+
+				++n_lights;
+				++light_data;
+			}
+			else
+			{
+				++n_directional_lights;
+			}
+		}
+		_num_lights = n_lights;
+		_num_directional_lights = n_directional_lights;
+	}
+
 }
 
 void Renderer::render_view(shared_ptr<RenderWorld> const& world, RenderPass::Value pass)
@@ -569,10 +630,12 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	global->vp.vp_half_width = params.viewport.Width / 2.0f;
 	global->vp.vp_half_height = params.viewport.Height / 2.0f;
 
+	global->num_directional_lights = std::min<u32>(u32(_num_directional_lights), MAX_LIGHTS);
+	global->num_lights = _num_lights;
+
 	// Process all the lights
 	RenderWorld::LightCollection const& lights = world->get_lights();
-	global->num_lights = std::min<u32>(u32(lights.size()), MAX_LIGHTS);
-	for (u32 i = 0; i < global->num_lights; ++i)
+	for (u32 i = 0; i < lights.size(); ++i)
 	{
 		DirectionalLightInfo* info = global->lights + i;
 		shared_ptr<RenderWorldLight> l = lights[i];
@@ -610,7 +673,6 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 			}
 		}
 	}
-
 	_cb_global->unmap(_device_ctx);
 
 	float4x4 vp = hlslpp::mul(params.view, params.proj);
@@ -646,20 +708,11 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	m_DrawCalls.reserve(instances.size());
 	m_DrawCalls.clear();
 
-	// #TODO: Pull all draw call population logic out of render_world. This should happen as a pre rendering step to avoid unnecessarily processing instances in multiple passes 
+	// #TODO: Pull this information from visibile lists
 	for (std::shared_ptr<RenderWorldInstance> const& inst : instances)
 	{
-		// Finalise a render instance after it's done loading
-		if (inst->_model->is_loaded() && !inst->is_finalised())
-		{
-			inst->finalise();
-		}
-
-		// Update all material instances and other dynamic data
-		inst->update();
-
 		// If the instance is ready we can consider adding it to the draw list
-		if(inst->is_ready())
+		if (inst->is_ready())
 		{
 			Model const* model = inst->_model->get();
 			for (Mesh const& mesh : model->get_meshes())

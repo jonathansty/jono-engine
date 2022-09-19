@@ -43,8 +43,6 @@ std::unique_ptr<StructuredBuffer> StructuredBuffer::create(ID3D11Device* device,
 		srv_desc.ViewDimension = D3D11_SRV_DIMENSION_BUFFER;
 		srv_desc.Buffer.FirstElement = 0;
 		srv_desc.Buffer.NumElements = UINT(element_count);
-		srv_desc.Buffer.ElementWidth = UINT(struct_size_bytes);
-		srv_desc.Buffer.ElementOffset = 0;
 		ENSURE_HR(device->CreateShaderResourceView(result->_buffer.Get(), &srv_desc, result->_srv.GetAddressOf()));
 	}
 
@@ -61,4 +59,16 @@ std::unique_ptr<StructuredBuffer> StructuredBuffer::create(ID3D11Device* device,
 	}
 
 	return result;
+}
+
+void* StructuredBuffer::map(ID3D11DeviceContext* ctx)
+{
+	ctx->Map(_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &_mapped);
+	return _mapped.pData;
+}
+
+void StructuredBuffer::unmap(ID3D11DeviceContext* ctx)
+{
+	ctx->Unmap(_buffer.Get(), 0);
+	_mapped = {};
 }

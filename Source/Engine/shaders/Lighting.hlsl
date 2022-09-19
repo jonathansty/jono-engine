@@ -169,7 +169,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 	float3 final_colour = float3(0.0,0.0,0.0);
 
 	[loop]
-	for (unsigned int i = 0; i < 1; ++i) 
+	for (unsigned int i = 0; i < num_directional_lights; ++i) 
 	{
 		float3 light = -normalize(g_Lights[i].direction);
 		float3 light_colour = g_Lights[i].colour;
@@ -205,6 +205,53 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		#error No lighting model defined
 		#endif
 	}
+
+	// #TODO: More optimized lighting? E.g. look up lights in tiled buffer or deferred lighting rendering models to capture range?
+	// final_colour = 0.0f;
+	[loop]
+	for(unsigned int i = 0; i < num_lights; ++i)
+	{
+		ProcessedLight light = g_lights[i];
+
+		float3 pos = light.position;
+
+		// Calculate the light vector from world pos on pixel to light world pos
+		float3 l = pos - vout.worldPosition.xyz;
+		float d = length(l);
+		l = normalize(l);
+
+		// Early out when the light is out of range
+		if(d > light.range)
+		{
+			continue;
+		}
+
+		float3 n = final_normal;
+		if(light.flags == LIGHT_TYPE_SPOT)
+		{
+			float theta = dot(-l, light.direction);
+			float cone = light.cone;
+			float outer_cone = light.outer_cone;
+			float epsilon = cone - outer_cone;
+			float intensity = saturate((theta - outer_cone) / epsilon);
+			if(theta > outer_cone)
+			{
+				final_colour += (LightingModel_BRDF(material, view, l, final_normal) * intensity * light.color);
+			}
+		}
+		else if(light.flags == LIGHT_TYPE_POINT)
+		{
+			float kc = 1.0f;
+			float kl = 0.35f;
+			float kq = 0.44f;
+			float d = length(l);
+			float NoL = saturate(dot(n,l));
+			float attenuation = rcp(kc+ kl*d + kq*d*d);
+
+			final_colour += (attenuation * LightingModel_BRDF(material, view, l, final_normal) * light.color);
+		}
+	}
+
 
 	return float4((final_colour), 1.0);
 }
