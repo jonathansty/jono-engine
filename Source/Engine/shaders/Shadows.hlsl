@@ -1,6 +1,6 @@
 #pragma once
 
-uint compute_shadow_cascade(float depth, in LightInfo info)
+uint compute_shadow_cascade(float depth, in DirectionalLightInfo info)
 {
 	// Calculate the layer based on the view position depth
 	uint layer = info.num_cascades.x;
@@ -57,7 +57,7 @@ float3 map_projected_to_uv(float3 projected_coords)
 	return result;
 }
 
-float4 compute_shadow(float4 world_pos, float4 view_pos, float4 proj_pos, in LightInfo info, float3 normal) 
+float4 compute_shadow(float4 world_pos, float4 view_pos, float4 proj_pos, in DirectionalLightInfo info, float3 normal) 
 {
 	float3 ndc = proj_pos.xyz / proj_pos.w;
 

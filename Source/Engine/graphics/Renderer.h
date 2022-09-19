@@ -2,6 +2,7 @@
 
 #include "Graphics.h"
 #include "ConstantBuffer.h"
+#include "StructuredBuffer.h"
 #include "EngineSettings.h"
 #include "GameSettings.h"
 
@@ -82,7 +83,7 @@ static constexpr u32 MAX_LIGHTS = 4;
 static constexpr u32 MAX_CASCADES = 4;
 
 __declspec(align(16)) 
-struct LightInfo
+struct DirectionalLightInfo
 {
 	float4 colour;
 	float4 direction;
@@ -128,7 +129,7 @@ struct GlobalCB
 
 	Viewport vp;
 	AmbientInfo ambient;
-	LightInfo lights[MAX_LIGHTS];
+	DirectionalLightInfo lights[MAX_LIGHTS];
 
 	u32 num_lights;
 	float padding[3];
@@ -311,6 +312,9 @@ private:
 	ComPtr<ID3D11ShaderResourceView> _shadow_map_srv;
 	ComPtr<ID3D11ShaderResourceView> _debug_shadow_map_srv[MAX_CASCADES];
 
+	static constexpr u32 c_max_lights = 2048;
+	std::unique_ptr<StructuredBuffer> _light_buffer;
+
 	// Constant buffers
 	ConstantBufferRef _cb_global;
 	ConstantBufferRef _cb_model;
@@ -332,6 +336,8 @@ private:
 	std::unique_ptr<DirectX::CommonStates> _states = nullptr;
 	std::unique_ptr<DirectX::BasicEffect> _common_effect = nullptr;
 	ComPtr<ID3D11InputLayout> _layout = nullptr;
+
+
 };
 
 }

@@ -5,7 +5,7 @@
 #define LIGHTING_MODEL_PHONG 2
 #define LIGHTING_MODEL_PBR 3
 
-#define MAX_LIGHTS 4
+#define MAX_DIRECTIONAL_LIGHTS 4
 #define MAX_CASCADES 4
 
 #define Buffer_Global 0
@@ -15,9 +15,11 @@
 
 #define Texture_MaterialSlotStart 0
 #define Texture_MaterialSlotEnd 5 
-#define Texture_CSM 5
+#define Texture_CSM Texture_MaterialSlotEnd 
 #define Texture_Depth 6
 #define Texture_Cube 7
+#define Texture_Lights 8
+
 
 #define Sampler_Linear 0
 #define Sampler_Point 1
@@ -26,7 +28,7 @@ struct AmbientInfo
 {
 	float4 ambient;
 };
-struct LightInfo
+struct DirectionalLightInfo
 {
 	float4 colour;
 	float4 direction;
@@ -47,6 +49,9 @@ struct Viewport_t
 	float MaxDepth;
 };
 
+
+
+// HLSL only code
 #ifndef __cplusplus
 
 #define CB_SLOT(x)  register(b##x)
@@ -100,7 +105,7 @@ cbuffer WorldConstants : CB_SLOT(Buffer_Global)
 
 	Viewport_t Viewport;
 	AmbientInfo g_Ambient;
-	LightInfo g_Lights[MAX_LIGHTS];
+	DirectionalLightInfo g_Lights[MAX_DIRECTIONAL_LIGHTS];
 	unsigned int num_lights;
 };
 
@@ -123,6 +128,24 @@ SamplerState g_point_sampler : SAMPLER_SLOT(Sampler_Point);
 Texture2DArray<float> g_shadow_map : SRV_SLOT(Texture_CSM); 
 Texture2D<float>      g_depth : SRV_SLOT(Texture_Depth);
 TextureCube<float4>   g_cube : SRV_SLOT(Texture_Cube);
+
+struct ProcessedLight
+{
+	float3 color;
+	float  intensity;
+	uint   flags; 
+};
+StructuredBuffer<ProcessedLight> g_lights : SRV_SLOT(Texture_Lights);
+#endif
+
+// CPP only code
+#ifdef __cplusplus
+struct ProcessedLight
+{
+	Shaders::float3 color;
+	float intensity;
+	unsigned int flags;
+};
 #endif
 
 #endif

@@ -98,10 +98,18 @@ float3 LightingModel_BRDF(in Material material, float3 v, float3 l, float3 n)
 
 	// Diffuse BRDF
 	float3 diffuseColor = (1.0 - material.metalness) * material.albedo;
+
+	float level = lerp(6,10, material.roughness);
+	float3 irradiance = g_cube.SampleLevel(g_all_linear_sampler, ReflectedView, level).rgb;
+
 	float3 Fd = diffuseColor * Fd_Lambert();
-	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, ReflectedView, material);
+	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, ReflectedView, material) * irradiance;
 	float3 color =  Fr + Fd;
+
 	color *= NoL * material.ao;
+	
+	float3 ambient  = float3(0.002f,0.002f,0.002f);
+	color = color *NoL + (1.0f - NoL) * ambient;
 
 
 
@@ -187,11 +195,11 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		#endif
 
 		// Cubemap reflections, not entirely correct but meh...
-		float3 ReflectedView = reflect(-view, final_normal);
-		float level = lerp(4, 8, material.roughness * material.roughness);
-		float3 irradiance = (lerp(0.1, 1.0 * material.albedo, material.metalness))* g_cube.SampleLevel(g_all_linear_sampler, ReflectedView, level).rgb;
-		float3 indirect = irradiance;
-		final_colour += indirect;
+		// float3 ReflectedView = reflect(-view, final_normal);
+		// float level = lerp(5, 10, material.roughness);
+		// float3 irradiance = (lerp(0.1, 1.0 * material.albedo, material.metalness))* g_cube.SampleLevel(g_all_linear_sampler, ReflectedView, level).rgb;
+		// float3 indirect = irradiance;
+		// final_colour += indirect * material.albedo;
 
 		#ifndef LIGHTING_MODEL
 		#error No lighting model defined

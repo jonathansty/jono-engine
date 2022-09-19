@@ -21,6 +21,7 @@
 #include "Memory.h"
 
 #include "Engine/Shaders/Common.h"
+#include "Graphics/StructuredBuffer.h"
 
 namespace Graphics
 {
@@ -46,6 +47,15 @@ void Renderer::init(EngineSettings const& settings, GameSettings const& game_set
 	_cb_model = ConstantBuffer::create(_device, sizeof(ModelCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 	_cb_debug = ConstantBuffer::create(_device, sizeof(DebugCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
 	_cb_post = ConstantBuffer::create(_device, sizeof(PostCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
+
+
+	// Setup Light buffer
+	{
+		_light_buffer = StructuredBuffer::create(_device, sizeof(ProcessedLight), c_max_lights,true, StructuredBuffer::BufferUsage::Dynamic);
+	}
+
+
+	//_light_buffer
 
 
 	// Create our cubemap 
@@ -564,7 +574,7 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	global->num_lights = std::min<u32>(u32(lights.size()), MAX_LIGHTS);
 	for (u32 i = 0; i < global->num_lights; ++i)
 	{
-		LightInfo* info = global->lights + i;
+		DirectionalLightInfo* info = global->lights + i;
 		shared_ptr<RenderWorldLight> l = lights[i];
 		if (l->is_directional())
 		{
@@ -636,8 +646,10 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	m_DrawCalls.reserve(instances.size());
 	m_DrawCalls.clear();
 
+	// #TODO: Pull all draw call population logic out of render_world. This should happen as a pre rendering step to avoid unnecessarily processing instances in multiple passes 
 	for (std::shared_ptr<RenderWorldInstance> const& inst : instances)
 	{
+		// Finalise a render instance after it's done loading
 		if (inst->_model->is_loaded() && !inst->is_finalised())
 		{
 			inst->finalise();
@@ -646,6 +658,7 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 		// Update all material instances and other dynamic data
 		inst->update();
 
+		// If the instance is ready we can consider adding it to the draw list
 		if(inst->is_ready())
 		{
 			Model const* model = inst->_model->get();
@@ -663,8 +676,6 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 			}
 		}
 	}
-
-
 
 	for (DrawCall const& dc : m_DrawCalls) 
 	{
@@ -827,7 +838,8 @@ void Renderer::setup_renderstate(MaterialInstance const* mat_instance, ViewParam
 		ID3D11ShaderResourceView* views[] = {
 			s_EnableShadowRendering ? _shadow_map_srv.Get() : nullptr,
 			_output_depth_srv_copy,
-			_cubemap_srv.Get()
+			_cubemap_srv.Get(),
+			_light_buffer->get_srv().Get(),
 		};
 		_device_ctx->PSSetShaderResources(Texture_CSM, UINT(std::size(views)), views);
 

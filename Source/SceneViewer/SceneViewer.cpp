@@ -54,8 +54,8 @@ void SceneViewer::configure_engine(EngineSettings& engineSettings)
 void SceneViewer::initialize(GameSettings& gameSettings)
 {
 	gameSettings.m_FullscreenMode = GameSettings::FullScreenMode::Windowed;
-	gameSettings.m_WindowWidth = 800;
-	gameSettings.m_WindowHeight = 800;
+	gameSettings.m_WindowWidth = 1920;
+	gameSettings.m_WindowHeight = 1080;
 }
 
 std::string show_file_dialog(HWND owner)
