@@ -207,7 +207,6 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 	}
 
 	// #TODO: More optimized lighting? E.g. look up lights in tiled buffer or deferred lighting rendering models to capture range?
-	// final_colour = 0.0f;
 	[loop]
 	for(unsigned int i = 0; i < num_lights; ++i)
 	{
@@ -241,13 +240,13 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		}
 		else if(light.flags == LIGHT_TYPE_POINT)
 		{
-			float kc = 1.0f;
-			float kl = 0.35f;
-			float kq = 0.44f;
-			float d = length(l);
 			float NoL = saturate(dot(n,l));
-			float attenuation = rcp(kc+ kl*d + kq*d*d);
-
+			
+			float r2 = 1.0f;
+			float d2 = d*d;
+			float sphereFalloff = r2 / d2;
+			// float diskFalloff = r2 / (r2 + d2);
+			float attenuation = sphereFalloff;
 			final_colour += (attenuation * LightingModel_BRDF(material, view, l, final_normal) * light.color);
 		}
 	}

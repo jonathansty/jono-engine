@@ -103,6 +103,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 		Flattener fn{};
 		fn(aiMatrix4x4(), root, transforms);
 
+		_aabb.min = (float3)(std::numeric_limits<float>::max());
+		_aabb.max = (float3)(- std::numeric_limits<float>::max());
 		for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
 		{
 			aiMesh const* mesh = scene->mMeshes[i];
@@ -138,6 +140,10 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 				v.position.x = pos.x;
 				v.position.y = pos.y;
 				v.position.z = pos.z;
+
+				// Update local AABB
+				_aabb.min = hlslpp::min(v.position, _aabb.min);
+				_aabb.max = hlslpp::max(v.position, _aabb.max);
 
 				if (mesh->HasVertexColors(0))
 				{

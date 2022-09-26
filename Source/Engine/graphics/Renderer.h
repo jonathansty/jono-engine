@@ -11,6 +11,7 @@
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
 
+#include "Visibility.h"
 #include "RendererDebug.h"
 
 #if FEATURE_D2D
@@ -166,10 +167,9 @@ struct DeviceContext
 };
 
 
-class Renderer
+class Renderer final
 {
 public:
-
 	void init(EngineSettings const& settings, GameSettings const& game_settings, cli::CommandLine const& cmdline);
 
 	void init_for_hwnd(HWND wnd);
@@ -249,9 +249,9 @@ private:
 	void release_frame_resources();
 	void release_device_resources();
 
-	FrustumCorners get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const;
+	Math::Frustum get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const;
 
-	FrustumCorners get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const;
+	Math::Frustum get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const;
 
 	// Helper to setup the render state based on material
 	void setup_renderstate( MaterialInstance const* material, ViewParams const& params);
@@ -341,7 +341,7 @@ private:
 	std::unique_ptr<DirectX::BasicEffect> _common_effect = nullptr;
 	ComPtr<ID3D11InputLayout> _layout = nullptr;
 
-
+	std::unique_ptr<class VisibilityManager> _visibility;
 };
 
 }

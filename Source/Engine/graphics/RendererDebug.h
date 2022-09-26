@@ -11,7 +11,10 @@ class Renderer;
 class RendererDebugTool : public DebugOverlay
 {
 public:
+	static bool s_force_all_visible;
+
 	RendererDebugTool(Renderer* owner);
+	virtual ~RendererDebugTool() {}
 
 	void render_overlay() override;
 

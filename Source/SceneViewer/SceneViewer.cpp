@@ -123,7 +123,7 @@ void SceneViewer::start()
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
 	const float aspect = (float)size.x / (float)size.y;
 	const float near_plane = 0.5f;
-	const float far_plane = 400.0f;
+	const float far_plane = 20.0f;
 
 	// Create Cam 1
 	auto rw_cam = render_world->create_camera();
@@ -131,10 +131,17 @@ void SceneViewer::start()
 	settings.aspect = aspect;
 	settings.far_clip = far_plane;
 	settings.near_clip = near_plane;
-	settings.fov = hlslpp::radians(float1(60.0f));
+	settings.fov = hlslpp::radians(float1(45.0f)); // 45 deg fov
 	settings.projection_type = RenderWorldCamera::Projection::Perspective;
 	rw_cam->set_settings(settings);
-	rw_cam->set_position({ 0.0f, 1.0f, -1.0f });
+	rw_cam->set_position({ 0.0f, 0.0f, -2.0f });
+
+	// Copy our cam into debug cam
+	auto new_cam = render_world->create_camera();
+	*(new_cam.get()) = *(rw_cam.get());
+	settings.far_clip = 500.0f;
+	new_cam->set_settings(settings);
+	render_world->set_active_camera(1);
 
 	auto l = render_world->create_light(RenderWorldLight::LightType::Directional);
 	settings.aspect = 1.0f;
@@ -145,7 +152,7 @@ void SceneViewer::start()
 	settings.projection_type = RenderWorldCamera::Projection::Ortographic;
 	l->set_settings(settings);
 
-	constexpr f32 c_scale = 1.0f;
+	constexpr f32 c_scale = 0.1f;
 	l->set_colour({ 1.0f * c_scale, 1.0f * c_scale, 1.0f * c_scale });
 	l->set_casts_shadow(true);
 	l->set_position({ 10.0, 10.0f, 0.0f });
@@ -155,6 +162,7 @@ void SceneViewer::start()
 	//GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
 
+	#if true 
 	for(size_t y = 0; y < 10; ++y)
 	{
 		for(size_t x = 0; x < 10; ++x)
@@ -190,9 +198,10 @@ void SceneViewer::start()
 			light->set_colour(colour);
 		}
 	}
+	#endif
 
 
-	RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(0.0f,0.0f,0.0f), "res:/sphere.glb");
+	RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(0.0f,0.0f,2.0f), "res:/sphere.glb");
 	_model = inst;
 
 	Model const* model = inst->_model->get();

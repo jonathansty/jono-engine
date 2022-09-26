@@ -2,6 +2,7 @@
 #include "ResourceLoader.h"
 
 #include "Graphics/ShaderTypes.h"
+#include "Math.h"
 
 class TextureHandle;
 
@@ -66,11 +67,14 @@ public:
 
 	u32 get_material_count() const { return (u32)_materials.size(); }
 
+	Math::AABB get_bounding_box() const { return _aabb; }
+
 private:
 	u64 _index_count;
 
 	std::vector<std::unique_ptr<MaterialInstance>> _materials;
 	std::vector<Mesh> _meshes;
+	Math::AABB _aabb;
 
 	ComPtr<ID3D11Buffer> _vertex_buffer;
 	ComPtr<ID3D11Buffer> _index_buffer;

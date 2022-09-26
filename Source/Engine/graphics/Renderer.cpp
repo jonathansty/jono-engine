@@ -33,6 +33,7 @@ static f32 s_box_size = 15.0f;
 void Renderer::init(EngineSettings const& settings, GameSettings const& game_settings, cli::CommandLine const& cmdline)
 {
 	MEMORY_TAG(MemoryCategory::Graphics);
+	_visibility = std::make_unique<class VisibilityManager>();
 
 	_msaa = settings.d3d_msaa_mode;
 	_engine_settings = settings;
@@ -514,6 +515,23 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 		inst->update();
 	}
 
+	// Register our visible instances and calculate visibilities for main view?
+	{
+		_visibility->reset();
+
+		for (std::shared_ptr<RenderWorldInstance> const& inst : world->get_instances())
+		{
+			if (inst->is_ready())
+			{
+				_visibility->add_instance(inst.get());
+			}
+		}
+
+		VisibilityParams params{};
+		params.frustum = get_frustum_world(world, 0);
+		_visibility->run(params);
+	}
+
 	// Collect all local lights and update our light buffer
 
 	{
@@ -704,12 +722,12 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	static std::vector<DrawCall> m_DrawCalls;
 
 
-	RenderWorld::InstanceCollection const& instances = world->get_instances();
+	std::vector<RenderWorldInstance*> const& instances = _visibility->get_visible_instances();
 	m_DrawCalls.reserve(instances.size());
 	m_DrawCalls.clear();
 
 	// #TODO: Pull this information from visibile lists
-	for (std::shared_ptr<RenderWorldInstance> const& inst : instances)
+	for (RenderWorldInstance const* inst : instances)
 	{
 		// If the instance is ready we can consider adding it to the draw list
 		if (inst->is_ready())
@@ -851,29 +869,25 @@ void Renderer::end_frame()
 {
 }
 
-FrustumCorners Renderer::get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const
+Math::Frustum Renderer::get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const
 {
 	shared_ptr<RenderWorldCamera> camera = world->get_camera(cam);
-
-	// Calculates the frustum straight from camera view proj
-	FrustumCorners world_corners = {};
-	Math::calculate_frustum(world_corners, hlslpp::inverse(camera->get_vp()));
-	return world_corners;
+	return get_cascade_frustum(camera, 0, 1);
 }
 
-Graphics::FrustumCorners Renderer::get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const
+Math::Frustum Renderer::get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const
 {
 	f32 n = camera->get_near();
 	f32 f = camera->get_far();
 
 	f32 z0 = n * pow(f / n, f32(cascade) / f32(num_cascades));
 	f32 z1 = n * pow(f / n, f32(cascade + 1) / f32(num_cascades));
-	FrustumCorners world_corners = {};
-	Math::calculate_frustum(world_corners, z0, z1, camera->get_fov(), camera->get_vertical_fov());
+
+	Math::Frustum frustum = Math::Frustum::from_fov(z0, z1, camera->get_fov(), camera->get_vertical_fov());
 
 	float4x4 view = camera->get_view();
-	Math::transform_frustum(world_corners, hlslpp::inverse(view));
-	return world_corners;
+	frustum.transform(hlslpp::inverse(view));
+	return frustum;
 }
 
 void Renderer::setup_renderstate(MaterialInstance const* mat_instance, ViewParams const& params)
@@ -979,18 +993,18 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 		std::vector<CascadeInfo> matrices;
 		for (u32 i = 0; i < MAX_CASCADES; ++i)
 		{
-			FrustumCorners box_light = get_cascade_frustum(world->get_camera(0), i, MAX_CASCADES);
+			Math::Frustum box_light = get_cascade_frustum(world->get_camera(0), i, MAX_CASCADES);
 
 			// Transform to light view space
-			Math::transform_frustum(box_light, light_space);
+			box_light.transform(light_space);
 
 			// Calculate the extents(in light  space)
-			float4 min_extents = box_light[0];
-			float4 max_extents = box_light[0];
+			float4 min_extents = box_light._corners[0];
+			float4 max_extents = box_light._corners[0];
 
-			for (u32 j = 1; j < box_light.size(); ++j)
+			for (u32 j = 1; j < box_light._corners.size(); ++j)
 			{
-				float4 pos_light = box_light[j];
+				float4 pos_light = box_light._corners[j];
 				min_extents = hlslpp::min(pos_light, min_extents);
 				max_extents = hlslpp::max(pos_light, max_extents);
 			}

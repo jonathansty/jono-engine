@@ -8,8 +8,11 @@
 
 namespace Graphics
 {
+
+bool RendererDebugTool::s_force_all_visible = true;
+
 RendererDebugTool::RendererDebugTool(Renderer* owner)
-		: DebugOverlay(false, "RendererDebug")
+		: DebugOverlay(true, "RendererDebug")
 		, _renderer(owner)
 		, _show_shadow_debug(false)
 {
@@ -32,10 +35,44 @@ void RendererDebugTool::render_3d(ID3D11DeviceContext* ctx)
 
 	Debug::DrawGrid(_batch.get(), float4(100.0, 0.0, 0.0, 0.0), float4(0.0, 0.0, 100.0, 0.0), float4(0.0, 0.0, 0.0, 0.0), 10, 10, float4(1.0f, 1.0f, 1.0f, 0.5f));
 
+	// Draw axis
+	Debug::DrawRay(_batch.get(), float4(0.0f), float4(1.0f, 0.0f, 0.0f, 0.0f), true, float4(1.0f, 0.0f, 0.0f, 1.0f));
+	Debug::DrawRay(_batch.get(), float4(0.0f), float4(0.0f, 1.0f, 0.0f, 0.0f), true, float4(0.0f, 1.0f, 0.0f, 1.0f));
+	Debug::DrawRay(_batch.get(), float4(0.0f), float4(0.0f, 0.0f, 1.0f, 0.0f), true, float4(0.0f, 0.0f, 1.0f, 1.0f));
+
+	RenderWorldRef world = GameEngine::instance()->get_render_world();
+
+	// Visualize camera frustums
+	{
+		std::vector<float4> colors = {
+			float4(1.0f, 0.0f, 0.0f, 1.0f),
+			float4(0.0f, 1.0f, 0.0f, 1.0f),
+			float4(0.0f, 0.0f, 1.0f, 1.0f),
+			float4(1.0f, 0.0f, 1.0f, 1.0f),
+			float4(1.0f, 1.0f, 0.0f, 1.0f),
+			float4(0.0f, 1.0f, 1.0f, 1.0f)
+		};
+		for (u32 i = 0; i < world->get_cameras().size(); ++i)
+		{
+			if(world->get_view_camera() != world->get_camera(i))
+			{
+				Math::Frustum frustum = _renderer->get_frustum_world(world, i);
+				float4 color = colors[i % colors.size()];
+				Debug::DrawFrustum(_batch.get(), frustum._corners, color);
+
+				// Draw normals
+				for(u32 plane = 0; plane < frustum._planes.size(); ++plane)
+				{
+					Debug::DrawRay(_batch.get(), frustum._planes[plane].center, float4(frustum._planes[plane].normal,1.0f), true, color);
+				
+				}
+			}
+		}
+	}
+
 	if (_show_shadow_debug)
 	{
 		float4 frustum_color = float4(0.7f, 0.0f, 0.0f, 1.0f);
-		auto world = GameEngine::instance()->get_render_world();
 		if (world->get_camera(0) != world->get_view_camera())
 		{
 			std::vector<float4> colors = {
@@ -49,16 +86,16 @@ void RendererDebugTool::render_3d(ID3D11DeviceContext* ctx)
 			u32 num_cascades = MAX_CASCADES;
 			for (u32 i = 0; i < num_cascades; ++i)
 			{
-				FrustumCorners frustum = _renderer->get_cascade_frustum(world->get_camera(0), i, num_cascades);
-				Debug::DrawFrustum(_batch.get(), frustum, colors[i % colors.size()]);
+				Math::Frustum frustum = _renderer->get_cascade_frustum(world->get_camera(0), i, num_cascades);
+				Debug::DrawFrustum(_batch.get(), frustum._corners, colors[i % colors.size()]);
 
 				// Find the world space min/ max for each cascade
-				float4 min = frustum[0];
-				float4 max = frustum[0];
-				for (u32 j = 1; j < frustum.size(); ++j)
+				float4 min = frustum._corners[0];
+				float4 max = frustum._corners[0];
+				for (u32 j = 1; j < frustum._corners.size(); ++j)
 				{
-					min = hlslpp::min(frustum[j], min);
-					max = hlslpp::max(frustum[j], max);
+					min = hlslpp::min(frustum._corners[j], min);
+					max = hlslpp::max(frustum._corners[j], max);
 				}
 
 				Shaders::float4 xm_color;
@@ -83,11 +120,11 @@ void RendererDebugTool::render_3d(ID3D11DeviceContext* ctx)
 			static const float4 c_transformed = float4(0.0f, 1.0f, 0.0f, 1.0f);
 
 			static u32 s_visualize_cascade = 0;
+			if(s_EnableShadowRendering)
 			{
 				CascadeInfo const& info = light->get_cascade(s_visualize_cascade);
-				FrustumCorners corners;
-				Math::calculate_frustum(corners, info.vp);
-				Debug::DrawFrustum(_batch.get(), corners, c_basic_cascade);
+				Math::Frustum f = Math::Frustum::from_vp(info.vp);
+				Debug::DrawFrustum(_batch.get(), f._corners, c_basic_cascade);
 
 				float3 center = hlslpp::mul(float4(0.0, 0.0, 0.0, 1.0f), hlslpp::inverse(info.vp)).xyz;
 				Debug::DrawRay(_batch.get(), float4(center.xyz, 1.0f), light->get_view_direction(), true, c_basic_cascade);
@@ -139,6 +176,8 @@ void RendererDebugTool::render_debug_tool()
 	if (ImGui::Begin("RendererDebug"), _isOpen)
 	{
 		ImGui::Checkbox("Enable Shadow Rendering", &Graphics::s_EnableShadowRendering);
+		ImGui::Checkbox("Enable Shadow Debug", &_show_shadow_debug);
+		ImGui::Checkbox("Force All Visible", &s_force_all_visible);
 
 		if (ImGui::Button("Toggle Debug Cam"))
 		{
@@ -150,7 +189,17 @@ void RendererDebugTool::render_debug_tool()
 			{
 				_renderer->_active_cam = 0;
 			}
+
 			auto world = GameEngine::instance()->get_render_world();
+			if(_renderer->_active_cam >= world->get_cameras().size())
+			{
+				std::shared_ptr<RenderWorldCamera> cam = world->create_camera();
+
+				// Copy the view camera
+				RenderWorldCamera const& ref = *world->get_view_camera().get();
+				RenderWorldCamera& out = *cam;
+				out = ref;
+			}
 			world->set_active_camera(_renderer->_active_cam);
 		}
 		ImGui::Text("Active Camera: %d", _renderer->_active_cam);
@@ -167,5 +216,6 @@ void RendererDebugTool::render_debug_tool()
 	}
 	ImGui::End();
 }
+
 
 }

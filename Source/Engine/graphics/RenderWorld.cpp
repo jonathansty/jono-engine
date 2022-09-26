@@ -113,7 +113,7 @@ void RenderWorldCamera::update() const
 
 		if (_settings.projection_type == Projection::Perspective)
 		{
-			hlslpp::projection proj(hlslpp::frustum::field_of_view_x(_settings.fov, _settings.aspect, near_clip, far_clip), reverse_z ? hlslpp::zclip::minus_one : hlslpp::zclip::zero);
+			hlslpp::projection proj(hlslpp::frustum::field_of_view_y(_settings.fov, _settings.aspect, near_clip, far_clip), reverse_z ? hlslpp::zclip::minus_one : hlslpp::zclip::zero);
 			_proj = float4x4::perspective(proj);
 		}
 		else if (_settings.projection_type == Projection::Ortographic)

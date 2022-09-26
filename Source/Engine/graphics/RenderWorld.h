@@ -62,6 +62,20 @@ public:
 	};
 
 	RenderWorldCamera();
+	RenderWorldCamera(RenderWorldCamera const&) = delete;
+
+	RenderWorldCamera& operator=(RenderWorldCamera const& rhs)
+	{
+		this->_dirty = true;
+		this->_position = rhs._position;
+		this->_rotation = rhs._rotation;
+		this->_proj = rhs._proj;
+		this->_view = rhs._view;
+		this->_settings = rhs._settings;
+		this->_use_target = rhs._use_target;
+
+		return *this;
+	}
 	~RenderWorldCamera();
 
 	// Retrieve the projection
