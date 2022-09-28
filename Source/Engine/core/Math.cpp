@@ -52,7 +52,7 @@ bool test_frustum_sphere(Frustum const& frustum, float3 pos, f32 radius)
 
 		// Distance to plane
 		float d = hlslpp::dot(to_plane_center, normal);
-		if(d > 0.0f)
+		if(d > radius)
 		{
 			inside = false;
 			break;

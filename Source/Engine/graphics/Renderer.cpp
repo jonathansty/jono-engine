@@ -883,7 +883,7 @@ Math::Frustum Renderer::get_cascade_frustum(shared_ptr<RenderWorldCamera> const&
 	f32 z0 = n * pow(f / n, f32(cascade) / f32(num_cascades));
 	f32 z1 = n * pow(f / n, f32(cascade + 1) / f32(num_cascades));
 
-	Math::Frustum frustum = Math::Frustum::from_fov(z0, z1, camera->get_fov(), camera->get_vertical_fov());
+	Math::Frustum frustum = Math::Frustum::from_fov(z0, z1, camera->get_horizontal_fov(), camera->get_vertical_fov());
 
 	float4x4 view = camera->get_view();
 	frustum.transform(hlslpp::inverse(view));

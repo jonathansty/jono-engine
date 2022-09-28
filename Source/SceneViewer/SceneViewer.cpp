@@ -123,7 +123,7 @@ void SceneViewer::start()
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
 	const float aspect = (float)size.x / (float)size.y;
 	const float near_plane = 0.5f;
-	const float far_plane = 20.0f;
+	const float far_plane = 250.0f;
 
 	// Create Cam 1
 	auto rw_cam = render_world->create_camera();
@@ -138,7 +138,6 @@ void SceneViewer::start()
 
 	// Copy our cam into debug cam
 	auto new_cam = render_world->create_camera();
-	*(new_cam.get()) = *(rw_cam.get());
 	settings.far_clip = 500.0f;
 	new_cam->set_settings(settings);
 	render_world->set_active_camera(1);

@@ -149,12 +149,17 @@ public:
 	f32 get_near() const { return _settings.near_clip; }
 	f32 get_far() const { return _settings.far_clip; }
 	f32 get_aspect() const { return _settings.aspect; }
-	f32 get_fov() const { return _settings.fov; }
-	f32 get_vertical_fov() const {
 
-		f32 aspect = 1.0f / _settings.aspect;
+	f32 get_horizontal_fov() const 
+	{ 
+		f32 aspect = _settings.aspect;
 		f32 fov = float1(_settings.fov);
 		return float1(2.0f * atan(tan(fov / 2.0f) * aspect));
+	}
+
+	f32 get_vertical_fov() const 
+	{
+		return _settings.fov;
 	}
 
 protected:

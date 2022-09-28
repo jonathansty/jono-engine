@@ -25,22 +25,18 @@ void VisibilityManager::run(VisibilityParams const& params)
 		// Do visibility check
 		Math::AABB box = inst->_model->get()->get_bounding_box();
 
-		f32 radius = box.width() / 2.0f;
+		// #TODO: Technically this is *correct* but for some reason instances still get culled to early on the left of the frustum
+		float3 radius = box.size() / 2.0f;
 
 		// For now just do position checking of the instance
 		float3 inst_position = inst->_transform._41_42_43;
+		float3 bounding_box_center = inst->_model->get()->get_bounding_box().center();
+		inst_position += bounding_box_center;
 
-		//float3 bounding_box_center = inst->_model->get()->get_bounding_box().center();
-		//float3 bounding_box_pos = inst_position + bounding_box_center;
-		//float4x4 w = inst->_transform; 
-		//w.vec3 = {};
-		//w.f32_128_3[3] = 1.0f;
+		radius = hlslpp::mul(inst->_transform, float4(radius, 0.0f)).xyz;
 
-		//radius = hlslpp::mul(w, float4(radius)).x;
-
-		// Do a frustum test 
-
-		is_visible = Math::test_frustum_sphere(params.frustum, inst_position, 0.0f);
+		// Do visibility test against the frustum using a sphere.
+		is_visible = Math::test_frustum_sphere(params.frustum, inst_position, radius.x);
 
 		if(Graphics::RendererDebugTool::s_force_all_visible)
 		{
