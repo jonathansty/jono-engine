@@ -142,33 +142,36 @@ void RendererDebugTool::render_3d(ID3D11DeviceContext* ctx)
 
 void RendererDebugTool::render_shader_tool()
 {
-	static bool s_open = true;
-	if (ImGui::Begin("Shaders", &s_open))
+	static bool s_open = false;
+	if (s_open)
 	{
-		ImGui::BeginTable("##ShaderTable", 2);
-		ImGui::TableSetupScrollFreeze(0, 1); // Make row always visible
-		ImGui::TableSetupColumn("Path");
-		ImGui::TableSetupColumn("Button");
-		ImGui::TableHeadersRow();
-
-		auto shaders = ShaderCache::instance()->_shaders;
-		for (auto it : shaders)
+		if (ImGui::Begin("Shaders", &s_open))
 		{
-			ImGui::TableNextRow();
-			ImGui::TableNextColumn();
-			ImGui::Text("%s", it.first.path.c_str());
+			ImGui::BeginTable("##ShaderTable", 2);
+			ImGui::TableSetupScrollFreeze(0, 1); // Make row always visible
+			ImGui::TableSetupColumn("Path");
+			ImGui::TableSetupColumn("Button");
+			ImGui::TableHeadersRow();
 
-			ImGui::TableNextColumn();
-			ImGui::PushID(it.first.path.c_str());
-			if (ImGui::Button("Build"))
+			auto shaders = ShaderCache::instance()->_shaders;
+			for (auto it : shaders)
 			{
-				ShaderCache::instance()->reload(it.first);
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				ImGui::Text("%s", it.first.path.c_str());
+
+				ImGui::TableNextColumn();
+				ImGui::PushID(it.first.path.c_str());
+				if (ImGui::Button("Build"))
+				{
+					ShaderCache::instance()->reload(it.first);
+				}
+				ImGui::PopID();
 			}
-			ImGui::PopID();
+			ImGui::EndTable();
 		}
-		ImGui::EndTable();
+		ImGui::End();
 	}
-	ImGui::End();
 }
 
 void RendererDebugTool::render_debug_tool()
@@ -202,7 +205,10 @@ void RendererDebugTool::render_debug_tool()
 			}
 			world->set_active_camera(_renderer->_active_cam);
 		}
+
 		ImGui::Text("Active Camera: %d", _renderer->_active_cam);
+		ImGui::Text("Draws: %d", _renderer->get_stats().n_draws);
+		ImGui::Text("Primitives: %d", _renderer->get_stats().n_primitives);
 
 		//ImVec2 current_size = ImGui::GetContentRegionAvail();
 		//for (u32 i = 0; i < MAX_CASCADES; ++i)

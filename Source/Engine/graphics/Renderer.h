@@ -260,7 +260,16 @@ private:
 	void render_post_predebug();
 	void render_post_postdebug();
 
+	struct PerfStats
+	{
+		u32 n_draws;
+		u32 n_primitives;
+	};
+	PerfStats const& get_stats() const { return _stats; }
+
 private:
+	PerfStats _stats;
+
 	// 0: Game camera | 1: Debug camera
 	u32 _active_cam = 0;
 	EngineSettings _engine_settings;

@@ -35,6 +35,8 @@ void Renderer::init(EngineSettings const& settings, GameSettings const& game_set
 	MEMORY_TAG(MemoryCategory::Graphics);
 	_visibility = std::make_unique<class VisibilityManager>();
 
+	_stats = {};
+
 	_msaa = settings.d3d_msaa_mode;
 	_engine_settings = settings;
 	_game_settings = game_settings;
@@ -795,6 +797,8 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 		{
 			setup_renderstate(dc._material, params);
 
+			++_stats.n_draws;
+			_stats.n_primitives += u32(dc._index_count / 3);
 			ctx->DrawIndexed((UINT)dc._index_count, (UINT)dc._first_index, (INT)dc._first_vertex);
 
 			ID3D11ShaderResourceView* views[] = {
@@ -852,6 +856,8 @@ void Renderer::prepare_shadow_pass()
 
 void Renderer::begin_frame()
 {
+	_stats = {};
+
 	_device_ctx->ClearState();
 
 	GameEngine* engine = GameEngine::instance();

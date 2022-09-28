@@ -166,7 +166,7 @@ void SceneViewer::start()
 	{
 		for(size_t x = 0; x < 10; ++x)
 		{
-			float3 pos = float3(10.0f + x * 10.0f, 0.0f, y * 10.0f);
+			float3 pos = float3(10.0f + x * 10.0f, 1.0f, y * 10.0f);
 			RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(pos), "res:/sphere.glb");
 			Model const* model = inst->_model->get();
 
