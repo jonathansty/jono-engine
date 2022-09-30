@@ -519,6 +519,7 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 
 	// Register our visible instances and calculate visibilities for main view?
 	{
+		JONO_EVENT("Visibility");
 		_visibility->reset();
 
 		for (std::shared_ptr<RenderWorldInstance> const& inst : world->get_instances())
@@ -869,6 +870,11 @@ void Renderer::begin_frame()
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	_device_ctx->RSSetViewports(1, &vp);
+
+	// Clear the output targets
+	FLOAT color[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
+	_device_ctx->ClearRenderTargetView(_output_rtv, color);
+	_device_ctx->ClearDepthStencilView(_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 void Renderer::end_frame()
@@ -901,9 +907,7 @@ void Renderer::setup_renderstate(MaterialInstance const* mat_instance, ViewParam
 	auto ctx = _device_ctx;
 
 	// Bind anything coming from the material
-	{
-		mat_instance->apply(this, params);
-	}
+	mat_instance->apply(this, params);
 
 	// Bind the global textures coming from rendering systems
 	if (params.pass == RenderPass::Opaque)
@@ -1067,10 +1071,6 @@ void Renderer::render_zprepass(shared_ptr<RenderWorld> const& world)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, L"zprepass");
 
-	// Clear the output targets
-	FLOAT color[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-	_device_ctx->ClearRenderTargetView(_output_rtv, color);
-	_device_ctx->ClearDepthStencilView(_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	_device_ctx->OMSetRenderTargets(0, NULL, _output_dsv);
 
@@ -1082,9 +1082,7 @@ void Renderer::render_opaque_pass(shared_ptr<RenderWorld> const& world)
 	GPU_SCOPED_EVENT(_user_defined_annotation, L"opaque");
 
 	// Do a copy to our dsv tex for sampling during the opaque pass
-	{
-		copy_depth();
-	}
+	copy_depth();
 
 	_device_ctx->OMSetRenderTargets(1, &_output_rtv, _output_dsv);
 	render_view(world, Graphics::RenderPass::Opaque);

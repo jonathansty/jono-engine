@@ -117,7 +117,7 @@ class MaterialInstance final : public IMaterialObject
 
 		~MaterialInstance();
 
-		void Bind(IMaterialObject const* obj);
+		void bind(IMaterialObject const* obj);
 
 		virtual void apply(Graphics::Renderer* renderer, Graphics::ViewParams const& params) const;
 

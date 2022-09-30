@@ -358,7 +358,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		settings.fov = hlslpp::radians(float1(60.0f));
 		settings.projection_type = RenderWorldCamera::Projection::Perspective;
 		camera->set_settings(settings);
-		camera->set_position({ 0.0f, 1.5f, -25.0 });
+		camera->set_view(float4x4::translation({ 0.0f, 1.5f, -25.0f }));
 	}
 
 

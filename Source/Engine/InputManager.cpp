@@ -232,3 +232,9 @@ bool InputManager::is_mouse_button_released(int button) const
 	KeyState const& button_state = _mouse_buttons[button];
 	return !button_state[s_curr_frame] && button_state[s_prev_frame];
 }
+
+void InputManager::set_cursor_visible(bool visible)
+{
+	_capture_mouse = !visible;
+	ShowCursor(visible);
+}

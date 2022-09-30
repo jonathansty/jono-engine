@@ -109,7 +109,7 @@ public:
 	bool is_mouse_button_released(int button) const;
 
 	// #TODO: Remove this from the input manager
-	void set_cursor_visible(bool visible) { ShowCursor(visible); }
+	void set_cursor_visible(bool visible);
 
 private:
 	using KeyState = bool[2];
@@ -142,6 +142,8 @@ private:
 	std::unordered_map<u32, KeyState> _keys;
 	std::unordered_map<KeyCode, u32> _vk_to_scan;
 	int2 _mouse_delta;
+
+	bool _capture_mouse;
 
 	friend class GameEngine;
 };

@@ -3,6 +3,11 @@
 
 namespace Math
 {
+
+	static const float3 c_right = { 1.0f, 0.0f, 0.0f };
+	static const float3 c_up = { 0.0f, 1.0f, 0.0f };
+	static const float3 c_fwd = { 0.0f, 0.0f, 1.0f };
+
 using namespace hlslpp;
 
 struct AABB

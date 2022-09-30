@@ -72,12 +72,11 @@ std::shared_ptr<RenderWorldCamera> RenderWorld::get_view_camera() const
 
 RenderWorldCamera::RenderWorldCamera()
 		: _dirty(true)
-		, _position()
-		, _rotation(hlslpp::quaternion::identity())
 		, _proj()
 		, _view()
+		, _world()
 		, _settings()
-		, _use_target(false)
+	 
 {
 }
 
@@ -95,17 +94,6 @@ void RenderWorldCamera::update() const
 {
 	if (_dirty)
 	{
-		auto t = float4x4::translation(_position);
-		auto r = float4x4(_rotation);
-
-		_world = hlslpp::mul(r, t);
-		_view = hlslpp::inverse(_world);
-
-		if (_use_target)
-		{
-			_view = float4x4::look_at(_position, _target, float3(0.0f, 1.0f, 0.0));
-			_world = hlslpp::inverse(_view);
-		}
 
 		bool reverse_z = _settings.reverse_z;
 		f32 near_clip = _settings.near_clip;
@@ -161,7 +149,7 @@ void RenderWorldInstance::finalise()
 		{
 			if (_material_overrides[i])
 			{
-				_material_overrides[i]->Bind(res->get_material(i));
+				_material_overrides[i]->bind(res->get_material(i));
 			}
 		}
 
@@ -180,10 +168,10 @@ void RenderWorldInstance::update()
 	}
 }
 
-void RenderWorldInstance::set_dynamic_material(u32 idx, std::unique_ptr<MaterialInstance>&& instance)
+void RenderWorldInstance::set_dynamic_material(u32 idx, shared_ptr<MaterialInstance> instance)
 {
 	_material_overrides.resize(idx + 1);
-	_material_overrides[idx] = std::move(instance);
+	_material_overrides[idx] = instance;
 }
 
 MaterialInstance const* RenderWorldInstance::get_material_instance(u32 idx) const

@@ -16,6 +16,7 @@ void VisibilityManager::add_instance(RenderWorldInstance* inst)
 
 void VisibilityManager::run(VisibilityParams const& params)
 {
+	JONO_EVENT();
 	_visible_instances.reserve(_all_instances.size());
 
 	for(RenderWorldInstance* inst : _all_instances)

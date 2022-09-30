@@ -9,7 +9,7 @@
 namespace Graphics
 {
 
-bool RendererDebugTool::s_force_all_visible = true;
+bool RendererDebugTool::s_force_all_visible = false;
 
 RendererDebugTool::RendererDebugTool(Renderer* owner)
 		: DebugOverlay(true, "RendererDebug")

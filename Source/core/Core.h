@@ -97,3 +97,5 @@ enki::TaskScheduler* get_scheduler();
 #define JONO_GPU_EVENT(name) OPTICK_GPU_EVENT(name)
 #define JONO_GPU_FLIP(swapchain) OPTICK_GPU_FLIP(swapchain)
 #define JONO_INIT_GPU(device, cmd_queue, n_cmd_queues) OPTICK_GPU_INIT_D3D12(device, cmd_queue, n_cmd_queues)
+
+#define JONO_NEW(TypeName, ...) new TypeName(__VA_ARGS__)

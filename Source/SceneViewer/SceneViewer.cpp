@@ -16,6 +16,9 @@
 #include "InputManager.h"
 #include "Graphics/Graphics.h"
 
+#include "OrbitCamera.h"
+#include "FreeCam.h"
+
 #include "Serialization.h"
 
 using framework::Entity;
@@ -40,6 +43,16 @@ struct DebugVisualizeMode
 
 
 extern int g_DebugMode;
+
+ SceneViewer::SceneViewer(std::string const& path)
+		: _scene_path(path)
+		, _light_tick(0.0f)
+{
+}
+
+ SceneViewer::~SceneViewer()
+{
+}
 
 void SceneViewer::configure_engine(EngineSettings& engineSettings)
 {
@@ -83,11 +96,10 @@ std::string show_file_dialog(HWND owner)
 
 void SceneViewer::start()
 {
-
 	auto ge = GameEngine::instance();
 
 	ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order)
-	{
+			{
 		if (order == GameEngine::BuildMenuOrder::First)
 		{
 			if (ImGui::BeginMenu("File"))
@@ -105,8 +117,7 @@ void SceneViewer::start()
 				}
 				ImGui::EndMenu();
 			}
-		}
-	});
+		} });
 
 	auto device = Graphics::get_device();
 	auto ctx = Graphics::get_ctx();
@@ -117,7 +128,7 @@ void SceneViewer::start()
 	// Setup the game world
 	using namespace framework;
 	_world = GameEngine::instance()->get_world();
-	
+
 	auto render_world = GameEngine::instance()->get_render_world();
 
 	ImVec2 size = GameEngine::instance()->get_viewport_size();
@@ -134,13 +145,17 @@ void SceneViewer::start()
 	settings.fov = hlslpp::radians(float1(45.0f)); // 45 deg fov
 	settings.projection_type = RenderWorldCamera::Projection::Perspective;
 	rw_cam->set_settings(settings);
-	rw_cam->set_position({ 0.0f, 0.0f, -2.0f });
+	rw_cam->set_view(float4x4::translation(0.0f, 0.0f, -2.0f));
 
 	// Copy our cam into debug cam
 	auto new_cam = render_world->create_camera();
 	settings.far_clip = 500.0f;
 	new_cam->set_settings(settings);
 	render_world->set_active_camera(1);
+
+	_camera_type = 0;
+	_camera  = JONO_NEW(OrbitCamera, render_world);
+	_freecam = JONO_NEW(FreeCam, render_world);
 
 	auto l = render_world->create_light(RenderWorldLight::LightType::Directional);
 	settings.aspect = 1.0f;
@@ -154,32 +169,33 @@ void SceneViewer::start()
 	constexpr f32 c_scale = 0.1f;
 	l->set_colour({ 1.0f * c_scale, 1.0f * c_scale, 1.0f * c_scale });
 	l->set_casts_shadow(true);
-	l->set_position({ 10.0, 10.0f, 0.0f });
-	l->look_at(float3{0.0f, 0.0f, 0.0f });
+	l->set_view(float4x4::look_at({ 10.0, 10.0f, 0.0f }, float3(0.0f,0.0f,0.0f), float3(0.0f,1.0f,0.0f)));
 	_light = l;
+
+	// Disabled for now as this app is not using the entity system
 	//framework::EntityDebugOverlay* overlay = new framework::EntityDebugOverlay(_world.get());
 	//GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
-
 	#if true 
-	for(size_t y = 0; y < 10; ++y)
+	constexpr u32 c_grid_size = 25;
+	constexpr f32 c_grid_spacing = 3.0f;
+	for(size_t y = 0; y < c_grid_size; ++y)
 	{
-		for(size_t x = 0; x < 10; ++x)
+		for(size_t x = 0; x < c_grid_size; ++x)
 		{
-			float3 pos = float3(10.0f + x * 10.0f, 1.0f, y * 10.0f);
+			float3 pos = float3(10.0f + x * c_grid_spacing, 1.0f, y * c_grid_spacing);
 			RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(pos), "res:/sphere.glb");
 			Model const* model = inst->_model->get();
 
-			f32 x_dt = (float)x / 10.0f;
-			f32 y_dt = (float)y / 10.0f;
+			f32 x_dt = (float)x / c_grid_size;
+			f32 y_dt = (float)y / c_grid_size;
 
 			auto mat_inst = std::make_unique<MaterialInstance>();
-			mat_inst->set_param_float("Roughness", hlslpp::lerp(float1(0.01f), 1.0f, x_dt));
+			mat_inst->set_param_float("Roughness", hlslpp::lerp(float1(0.01f), 1.0f, 1.0f - x_dt));
 			mat_inst->set_param_float("Metalness", hlslpp::lerp(float1(0.01f), 1.0f, y_dt));
 			inst->set_dynamic_material(0,std::move(mat_inst));
 
 			RenderWorldLightRef light = render_world->create_light(RenderWorldLight::LightType::Spot);
-			light->set_position(float3(pos) + float3(0.0f, 3.0f, 0.125f));
 			RenderWorldCamera::CameraSettings light_proj_settings{};
 			light_proj_settings.aspect = 1;
 			light_proj_settings.far_clip = 50.0f; // Range
@@ -187,10 +203,10 @@ void SceneViewer::start()
 			light_proj_settings.fov = hlslpp::radians(float1(60.0f)); // Cone angle?
 			light_proj_settings.projection_type = RenderWorldCamera::Projection::Perspective;
 			light->set_settings(settings);
-			light->look_at(pos);
 			light->set_range(8.0f);
 			light->set_cone_angle(hlslpp::radians(float1(33.5f)));
 			light->set_outer_cone_angle(hlslpp::radians(float1(60.5f)));
+			light->set_view(float4x4::look_at(float3(pos) + float3(0.0f, 3.0f, 0.125f), pos, Math::c_up));
 
 			constexpr f32 c_intensity = 1.0f;
 			float3 colour = float3(x_dt, y_dt, 1.0f) * c_intensity;
@@ -213,10 +229,13 @@ void SceneViewer::start()
 
 	//world->create_instance(float4x4::scale(2.0f) * float4x4::translation(float3(-5.0f,0.5f,0.0f)), "Resources/Models/gltf-models/2.0/FlightHelmet/glTF/FlightHelmet.gltf");
 	render_world->create_instance(float4x4::translation(float3(0.0f, 0.0f, 0.0f)), "Resources/Models/plane_big.glb");
+
 }
 
 void SceneViewer::end()
 {
+	delete _camera;
+	_camera = nullptr;
 }
 
 #if FEATURE_D2D
@@ -232,20 +251,18 @@ void SceneViewer::tick(double deltaTime)
 
 	f32 f32_dt = (f32)deltaTime;
 	auto& input_manager = GameEngine::instance()->get_input();
-	if (input_manager->is_key_pressed(KeyCode::Right)) {
-		_timer -= 0.5f;
-	}
-	if (input_manager->is_key_pressed(KeyCode::Left)) {
-		_timer += 0.5f;
-	}
+	float2 mouse_delta = float2(input_manager->get_mouse_delta());
 
-	if (input_manager->is_key_pressed(KeyCode::Up)) {
+	if (input_manager->is_key_pressed(KeyCode::Up))
+	{
 		_light_tick += 0.5f;
 	}
-	if (input_manager->is_key_pressed(KeyCode::Down)) {
+	if (input_manager->is_key_pressed(KeyCode::Down))
+	{
 		_light_tick -= 0.5f;
 	}
-	if(input_manager->is_key_pressed(KeyCode::R) && input_manager->is_key_down(KeyCode::Control))
+
+	if (input_manager->is_key_pressed(KeyCode::R) && input_manager->is_key_down(KeyCode::Control))
 	{
 		rebuild_shaders();
 	}
@@ -255,88 +272,40 @@ void SceneViewer::tick(double deltaTime)
 		open_file();
 	}
 
-
-	if(input_manager->is_key_pressed(KeyCode::P))
+	auto imgui = ImGui::GetIO();
+	if(_camera_type == 0)
 	{
-		if (s_data)
-		{
-			delete[] s_data;
-			s_data = nullptr;
-		}
-		else
-		{
-			s_data = new int[1000000];
-		}
+		_camera->tick(deltaTime);
+	}
+	else
+	{
+		_freecam->tick(deltaTime);
 	}
 
-
-
-	auto imgui = ImGui::GetIO();
-
-	RenderWorldRef world = GameEngine::instance()->get_render_world();
-	auto camera = world->get_view_camera();
 	bool has_viewport_focus = GameEngine::instance()->is_viewport_focused();
 	if (has_viewport_focus)
 	{
-		f32 scroll_delta = input_manager->get_scroll_delta();
-		f32 zoom_factor = _zoom * 0.05f;
-		if (scroll_delta != 0)
-		{
-			_zoom -= scroll_delta * (zoom_factor)*100.0f * f32_dt;
-		}
-
-		// Rotate camera
-		float2 mouse_delta = float2(input_manager->get_mouse_delta());
-		if (input_manager->is_mouse_button_down(0))
-		{
-			_timer -= mouse_delta.x * f32_dt * 0.5f;
-			_up_timer += mouse_delta.y * f32_dt * 0.5f;
-		}
-		_up_timer = std::clamp<f32>(_up_timer, -static_cast<f32>(M_PI) + std::numeric_limits<f32>::epsilon(), -std::numeric_limits<f32>::epsilon());
-
 		// rotate light
 		if (input_manager->is_mouse_button_down(2))
 		{
 			_light_tick -= mouse_delta.x * f32_dt * 0.5f;
 		}
-
-		// pan
-		float3 pos = camera->get_position();
-
-		float3 localPan = float3(0.0f, 0.0f, 0.0f);
-		if (input_manager->is_mouse_button_down(1))
-		{
-			float4x4 view = camera->get_view();
-
-			float4 right = hlslpp::mul(view, float4(1.0, 0.0, 0.0, 0.0)) * -(f32)mouse_delta.x * deltaTime;
-			float4 up = hlslpp::mul(view, float4(0.0, 1.0, 0.0, 0.0)) * (f32)mouse_delta.y * deltaTime;
-
-			localPan = (right + up).xyz * zoom_factor;
-		}
-		_center += localPan;
-
-		if (input_manager->is_key_pressed(KeyCode::Z))
-		{
-			LOG_INFO(Input, "Resetting view.");
-			_timer = 0.0f;
-			_up_timer = 0.0f;
-			_center = float3(0.0, 0.0, 0.0);
-		}
 	}
 
 
-	float radius = 10.0f;
-	float3 newUnitPos = float3{ cos(_timer) * sin(_up_timer), cos(_up_timer), sin(_timer) * sin(_up_timer) };
-	camera->set_position(_center + _zoom*newUnitPos);
-	camera->look_at(_center);
 
-	if(_light)
+	RenderWorldRef world = GameEngine::instance()->get_render_world();
+	auto camera = world->get_view_camera();
+
+	if (_light)
 	{
-		_light->set_position(float3{ radius * sin(_light_tick), 5.0f, radius * cos(_light_tick) });
-		_light->look_at(float3{ 0.0f, 0.0f, 0.0f });
+		constexpr float radius = 10.0f;
+
+		float4x4 m = float4x4::look_at(float3{ radius * sin(_light_tick), 5.0f, radius * cos(_light_tick) }, {0.0f,0.0f,0.0f}, Math::c_up);
+		_light->set_view(m);
 	}
 
-	if(_world)
+	if (_world)
 	{
 		_world->update((float)deltaTime);
 	}
@@ -346,10 +315,15 @@ void SceneViewer::tick(double deltaTime)
 void SceneViewer::debug_ui()
 {
 	static bool s_open = true;
-	ImGui::Begin("Game", &s_open);
+	ImGui::Begin("Viewer", &s_open);
+
+	const char* cameras[] = {
+		"Orbit",
+		"Free"
+	};
+	ImGui::Combo("Camera", &_camera_type, cameras, int(std::size(cameras)));
 
 	ImGui::Text("Light: %.2f", _light_tick);
-	ImGui::Text("Camera: %.2f", _timer);
 
 	const char* items[] = {
 		"Default",

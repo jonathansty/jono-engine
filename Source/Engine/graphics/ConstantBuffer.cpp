@@ -30,14 +30,18 @@ std::shared_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 	buff.StructureByteStride = 0;
 	buff.MiscFlags = 0;
 
-	D3D11_SUBRESOURCE_DATA data{};
-	data.pSysMem = initialData;
 
 	ComPtr<ID3D11Buffer> b;
 	if (initialData)
-		SUCCEEDED(device->CreateBuffer(&buff, &data, &b));
+	{
+		D3D11_SUBRESOURCE_DATA data{};
+		data.pSysMem = initialData;
+		ENSURE_HR(device->CreateBuffer(&buff, &data, &b));
+	}
 	else
-		SUCCEEDED(device->CreateBuffer(&buff, nullptr, &b));
+	{
+		ENSURE_HR(device->CreateBuffer(&buff, nullptr, &b));
+	}
 	result->_buffer = b;
 	result->_size = buff.ByteWidth;
 	result->_cpu_writeable = cpu_write;

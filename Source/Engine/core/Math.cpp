@@ -35,20 +35,11 @@ void transform_frustum(FrustumCorners& corners, float4x4 matrix)
 
 bool test_frustum_sphere(Frustum const& frustum, float3 pos, f32 radius)
 {
-	//std::array<FrustumPlane, 6> planes = {
-	//	FrustumPlane( { frustum[3], frustum[1], frustum[0], frustum[2] } ), // Front
-	//	FrustumPlane( { frustum[7], frustum[5], frustum[4], frustum[6] } ), // Back
-	//	FrustumPlane( { frustum[7], frustum[5], frustum[1], frustum[3] } ), // Left
-	//	FrustumPlane( { frustum[2], frustum[0], frustum[4], frustum[6] } ), // Right
-	//	FrustumPlane( { frustum[1], frustum[5], frustum[4], frustum[0] } ), // Top
-	//	FrustumPlane( { frustum[7], frustum[3], frustum[2], frustum[6] } ), // Bottom
-	//};
-
 	bool inside = true;
 	for(int i = 0; i < frustum._planes.size(); ++i)
 	{
 		float3 normal = frustum._planes[i].normal;
-		float3 to_plane_center = pos - frustum._corners[0].xyz;
+		float3 to_plane_center = pos - frustum._planes[i].p[0].xyz;
 
 		// Distance to plane
 		float d = hlslpp::dot(to_plane_center, normal);
@@ -136,7 +127,7 @@ void Frustum::transform(float4x4 const& mat)
 void Frustum::calculate_planes()
 {
 	_planes[FrustumPlane_Front] = FrustumPlane(_corners[1], _corners[0], _corners[2], _corners[3]);
-	_planes[FrustumPlane_Back] = FrustumPlane(_corners[5], _corners[4], _corners[6], _corners[7]);
+	_planes[FrustumPlane_Back] = FrustumPlane(_corners[4], _corners[5], _corners[7], _corners[6]);
 
 	_planes[FrustumPlane_Left] = FrustumPlane(_corners[5], _corners[1], _corners[3], _corners[7]);
 	_planes[FrustumPlane_Right] = FrustumPlane(_corners[0], _corners[4], _corners[6], _corners[2]);

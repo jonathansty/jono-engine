@@ -23,7 +23,7 @@ public:
 	void finalise();
 	void update();
 
-	void set_dynamic_material(u32 idx, std::unique_ptr<MaterialInstance>&& instance);
+	void set_dynamic_material(u32 idx, shared_ptr<MaterialInstance> instance);
 
 	MaterialInstance const* get_material_instance(u32 idx) const;
 	MaterialInstance* get_material_instance(u32 idx);
@@ -35,7 +35,7 @@ public:
 	// Reference to a model
 	std::shared_ptr<ModelHandle> _model;
 
-	std::vector<std::unique_ptr<MaterialInstance>> _material_overrides;
+	std::vector<std::shared_ptr<MaterialInstance>> _material_overrides;
 
 	friend class RenderWorld;
 };
@@ -67,12 +67,10 @@ public:
 	RenderWorldCamera& operator=(RenderWorldCamera const& rhs)
 	{
 		this->_dirty = true;
-		this->_position = rhs._position;
-		this->_rotation = rhs._rotation;
 		this->_proj = rhs._proj;
+		this->_world = rhs._world;
 		this->_view = rhs._view;
 		this->_settings = rhs._settings;
-		this->_use_target = rhs._use_target;
 
 		return *this;
 	}
@@ -112,7 +110,7 @@ public:
 
 	float3 get_position() const
 	{
-		return _position;
+		return float3(_world.f32_128_3[0], _world.f32_128_3[1], _world.f32_128_3[2]);
 	}
 
 	void set_settings(CameraSettings const& settings)
@@ -122,27 +120,17 @@ public:
 	}
 	void set_aspect(f32 aspect);
 
-	void set_position(float3 pos)
+	void set_view(float4x4 view)
 	{
-		_position = pos;
-		_dirty = true;
+		_view = view;
+		_world = hlslpp::inverse(view);
+	}
+	void set_world(float4x4 world)
+	{
+		_world = world;
+		_view = hlslpp::inverse(world);
 	}
 
-	// Conditionally sets up a target for look at.
-	// This overrides any rotation the camera specifies
-	void look_at(float3 target)
-	{
-		_target = target;
-		_use_target = true;
-		_dirty = true;
-	}
-
-	// Clears the lookat and falls back on the _rotation value set
-	void clear_lookat()
-	{
-		_use_target = false;
-		_dirty = true;
-	}
 
 	void update() const;
 
@@ -163,20 +151,15 @@ public:
 	}
 
 protected:
+	float4x4 _view;
+	float4x4 _world;
+
 	mutable bool _dirty;
-	float3 _position;
-
-	mutable bool _use_target;
-	float3 _target;
-
-	hlslpp::quaternion _rotation;
 	mutable CameraSettings _settings;
 
 	// Cache
 	mutable float4x4 _proj;
-	mutable float4x4 _view;
 	mutable float4x4 _vp;
-	mutable float4x4 _world;
 
 	friend class RenderWorld;
 };

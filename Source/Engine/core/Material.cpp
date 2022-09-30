@@ -349,7 +349,7 @@ MaterialInstance::~MaterialInstance()
 {
 }
 
-void MaterialInstance::Bind(IMaterialObject const* obj)
+void MaterialInstance::bind(IMaterialObject const* obj)
 {
 	_obj = obj;
 	_param_data = obj->get_param_data();

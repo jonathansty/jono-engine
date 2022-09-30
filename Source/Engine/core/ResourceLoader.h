@@ -93,10 +93,22 @@ public:
 		return _resource.get();
 	}
 
+	resource_type* operator*()
+	{
+		return _resource.get();
+	}
+
+
 	resource_type const* get() const
 	{
 		return _resource.get();
 	}
+
+	resource_type* get()
+	{
+		return _resource.get();
+	}
+
 
 	TCachedResource& operator=(TCachedResource const& rhs)
 	{
