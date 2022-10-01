@@ -141,7 +141,7 @@ private:
 
 #define COMBINE1(X, Y) X##Y // helper macro
 #define COMBINE(X, Y) COMBINE1(X, Y)
-#define GPU_SCOPED_EVENT(ctx, name) Perf::scoped_gpu_event COMBINE(perfEvent, __LINE__) = Perf::scoped_gpu_event(ctx, name)
+#define GPU_SCOPED_EVENT(ctx, name) OPTICK_EVENT_DYNAMIC(name); Perf::scoped_gpu_event COMBINE(perfEvent, __LINE__) = Perf::scoped_gpu_event(ctx, name)
 #define GPU_MARKER(ctx, name) ctx->SetMarker(name);
 #else
 #define GPU_SCOPED_EVENT(ctx, name)

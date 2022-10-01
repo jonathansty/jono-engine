@@ -15,7 +15,9 @@ class Identifier
 public:
 	Identifier(T v)
 			: _hash(v)
+		#ifdef _DEBUG
 			, _debug("")
+		#endif
 	{
 	}
 
@@ -23,13 +25,17 @@ public:
 
 	explicit Identifier(std::string const& id)
 			: _hash(static_cast<T>(std::hash<std::string>{}(id)))
+		#ifdef _DEBUG
 			, _debug(id)
+		#endif
 	{
 	}
 
 	Identifier(const char* id)
 			: _hash(static_cast<T>(std::hash<std::string>{}(id)))
+		#ifdef _DEBUG
 			, _debug(id)
+		#endif
 	{
 	}
 
@@ -41,7 +47,13 @@ public:
 
 	T get_hash() const { return _hash; }
 
-	std::string const& get_debug_name() const { return _debug; }
+	std::string const& get_debug_name() const { 
+	#ifdef _DEBUG
+		return _debug; 
+	#else
+		return "";
+	#endif
+	}
 
 	template <typename T>
 	Identifier(Identifier<T> const& rhs)

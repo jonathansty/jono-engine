@@ -240,6 +240,11 @@ public:
 	void VSSetShader(ShaderConstRef const& vertex_shader);
 	void PSSetShader(ShaderConstRef const& pixel_hader);
 
+	void IASetInputLayout(ID3D11InputLayout* layout);
+
+	void RSSetState(ID3D11RasterizerState* state);
+
+
 private:
 	void create_factories(EngineSettings const& settings, cli::CommandLine const& cmdline);
 	void create_d2d_factory(EngineSettings const& settings);
@@ -351,6 +356,13 @@ private:
 	ComPtr<ID3D11InputLayout> _layout = nullptr;
 
 	std::unique_ptr<class VisibilityManager> _visibility;
+
+	// State tracking
+	shared_ptr<Shader const> _last_vs;
+	shared_ptr<Shader const> _last_ps;
+	ID3D11InputLayout* _last_input_layout;
+	ID3D11RasterizerState* _last_rs;
+
 };
 
 }

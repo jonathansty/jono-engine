@@ -45,9 +45,13 @@ struct DebugVisualizeMode
 extern int g_DebugMode;
 
  SceneViewer::SceneViewer(std::string const& path)
-		: _scene_path(path)
-		, _light_tick(0.0f)
+	:_scene_path(path)
+	,_light_tick(0.0f)
+	,_camera(nullptr)
+	,_freecam(nullptr)
+	,_overlay(nullptr)
 {
+
 }
 
  SceneViewer::~SceneViewer()
@@ -99,7 +103,7 @@ void SceneViewer::start()
 	auto ge = GameEngine::instance();
 
 	ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order)
-			{
+	{
 		if (order == GameEngine::BuildMenuOrder::First)
 		{
 			if (ImGui::BeginMenu("File"))
@@ -117,7 +121,8 @@ void SceneViewer::start()
 				}
 				ImGui::EndMenu();
 			}
-		} });
+		} 
+	});
 
 	auto device = Graphics::get_device();
 	auto ctx = Graphics::get_ctx();
@@ -151,7 +156,6 @@ void SceneViewer::start()
 	auto new_cam = render_world->create_camera();
 	settings.far_clip = 500.0f;
 	new_cam->set_settings(settings);
-	render_world->set_active_camera(1);
 
 	_camera_type = 0;
 	_camera  = JONO_NEW(OrbitCamera, render_world);
@@ -166,7 +170,7 @@ void SceneViewer::start()
 	settings.projection_type = RenderWorldCamera::Projection::Ortographic;
 	l->set_settings(settings);
 
-	constexpr f32 c_scale = 0.1f;
+	constexpr f32 c_scale = 0.5f;
 	l->set_colour({ 1.0f * c_scale, 1.0f * c_scale, 1.0f * c_scale });
 	l->set_casts_shadow(true);
 	l->set_view(float4x4::look_at({ 10.0, 10.0f, 0.0f }, float3(0.0f,0.0f,0.0f), float3(0.0f,1.0f,0.0f)));
@@ -194,6 +198,23 @@ void SceneViewer::start()
 			mat_inst->set_param_float("Roughness", hlslpp::lerp(float1(0.01f), 1.0f, 1.0f - x_dt));
 			mat_inst->set_param_float("Metalness", hlslpp::lerp(float1(0.01f), 1.0f, y_dt));
 			inst->set_dynamic_material(0,std::move(mat_inst));
+
+	
+		}
+	}
+
+	f32 world_size = c_grid_size * c_grid_spacing;
+	u32 n_lights_x = 5;
+	u32 n_lights_y = 5;
+	for(u32 y = 0; y < n_lights_y; ++y)
+	{
+		for(u32 x = 0; x < n_lights_x; ++x)
+		{
+			f32 spacing_x = world_size / n_lights_x;
+			f32 spacing_y = world_size / n_lights_y;
+			float3 pos = float3(10.0f + x * spacing_x, 1.0f, y * spacing_y);
+			f32 x_dt = (float)x / n_lights_x;
+			f32 y_dt = (float)y / n_lights_y;
 
 			RenderWorldLightRef light = render_world->create_light(RenderWorldLight::LightType::Spot);
 			RenderWorldCamera::CameraSettings light_proj_settings{};
@@ -236,6 +257,9 @@ void SceneViewer::end()
 {
 	delete _camera;
 	_camera = nullptr;
+
+	delete _freecam;
+	_freecam = nullptr;
 }
 
 #if FEATURE_D2D

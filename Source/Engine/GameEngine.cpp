@@ -146,7 +146,7 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 	// Initialize enkiTS
 	s_TaskScheduler = Tasks::get_scheduler();
-	Tasks::get_scheduler()->Initialize(max_task_threads);
+	Tasks::get_scheduler()->Initialize();
 
 	struct InitTask : enki::IPinnedTask
 	{
@@ -155,72 +155,24 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 		void Execute() override
 		{
-			LOG_INFO(System, "Initializing Task thread {}.", threadNum);
+			LOG_INFO(System, "Initializing Task thread {}.", threadNum - 1);
 
-			std::wstring name = fmt::format(L"TaskThread {}", threadNum);
+			std::wstring name = fmt::format(L"TaskThread {}", threadNum - 1);
 			::SetThreadDescription(GetCurrentThread(), name.c_str());
 			SUCCEEDED(::CoInitialize(NULL));
 		}
 	};
 
+	::SetThreadDescription(GetCurrentThread(), L"MainThread");
+
 	std::vector<std::unique_ptr<InitTask>> tasks;
-	for (uint32_t i = 0; i < s_TaskScheduler->GetNumTaskThreads(); ++i)
+	for (uint32_t i = 1; i < s_TaskScheduler->GetNumTaskThreads(); ++i)
 	{
 		tasks.push_back(std::make_unique<InitTask>(i));
-		s_TaskScheduler->AddPinnedTask(tasks[i].get());
+		s_TaskScheduler->AddPinnedTask(tasks.back().get());
 	}
 	s_TaskScheduler->RunPinnedTasks();
 	s_TaskScheduler->WaitforAll();
-
-
-
-	// Task Set dependency testing. 
-	{
-		struct TaskA : enki::ITaskSet
-		{
-			void ExecuteRange(enki::TaskSetPartition range, u32 threadNum) override
-			{
-				LOG_INFO(System, "TaskA::Started");
-				//enki::TaskSet taskSet = enki::TaskSet(100,[](enki::TaskSetPartition range, u32 threadNum)
-				//		{ 
-				//		PWSTR data;
-				//		::GetThreadDescription(GetCurrentThread(), &data);
-				//		std::wstring wbuff = data;
-				//		std::string threadName = std::string(wbuff.begin(), wbuff.end());
-				//		LOG_INFO(System, "{}: TaskA Logging from lambda taskset!", threadName);
-				//	});
-				//s_TaskScheduler->AddTaskSetToPipe(&taskSet);
-				//s_TaskScheduler->WaitforTask(&taskSet);
-				LOG_INFO(System, "TaskA::Ended");
-			}
-		};
-
-		struct TaskB : enki::ITaskSet
-		{
-			enki::Dependency m_Dependency;
-			void ExecuteRange(enki::TaskSetPartition range, u32 threadNum) override
-			{
-				LOG_INFO(System, "TaskB::Started");
-				enki::TaskSet taskSet = enki::TaskSet(
-					[](enki::TaskSetPartition range, u32 threadNum){ 
-						LOG_INFO(System, "TaskB Logging from lambda taskset!"); 
-					}
-				);
-				s_TaskScheduler->AddTaskSetToPipe(&taskSet);
-				s_TaskScheduler->WaitforTask(&taskSet);
-				LOG_INFO(System, "TaskB::Ended");
-			}
-		};
-
-		TaskA taskA;
-		TaskB taskB;
-		taskB.SetDependency(taskB.m_Dependency, &taskA);
-
-		s_TaskScheduler->AddTaskSetToPipe(&taskA);
-		s_TaskScheduler->WaitforTask(&taskB);
-	}
-
-
 
 
 	//Initialize the high precision timers
@@ -1282,7 +1234,7 @@ void GameEngine::render()
 {
 	JONO_EVENT();
 	auto d3d_annotation = _renderer->get_raw_annotation();
-	GPU_SCOPED_EVENT(d3d_annotation, L"Frame");
+	GPU_SCOPED_EVENT(d3d_annotation, "Frame");
 
 	size_t idx = Perf::get_current_frame_resource_index();
 
@@ -1297,7 +1249,7 @@ void GameEngine::render()
 	{
 		_renderer->pre_render(_render_world);
 
-		GPU_SCOPED_EVENT(d3d_annotation, L"Render");
+		GPU_SCOPED_EVENT(d3d_annotation, "Render");
 		// Render the shadows
 		if(Graphics::s_EnableShadowRendering)
 		{
@@ -1305,7 +1257,7 @@ void GameEngine::render()
 		}
 
 		{
-			GPU_SCOPED_EVENT(d3d_annotation, L"Main");
+			GPU_SCOPED_EVENT(d3d_annotation, "Main");
 			_renderer->render_zprepass(_render_world);
 			_renderer->render_opaque_pass(_render_world);
 		}

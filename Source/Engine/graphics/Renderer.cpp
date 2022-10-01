@@ -329,7 +329,7 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	assert(_wnd);
 
 	LOG_VERBOSE(Graphics, "Resizing swapchain to {}x{}", w, h);
-	DXGI_FORMAT swapchain_format = DXGI_FORMAT_R10G10B10A2_UNORM;
+	DXGI_FORMAT swapchain_format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	_swapchain_format = swapchain_format;
 
 	// Create MSAA render target that resolves to non-msaa swapchain
@@ -362,7 +362,7 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	// Create the 3D output target
 	{
 		auto output_desc = CD3D11_TEXTURE2D_DESC(
-				swapchain_format,
+				DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
 				w,
 				h,
 				1,
@@ -486,7 +486,8 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 
 void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, L"PreRender");
+	JONO_EVENT();
+	GPU_SCOPED_EVENT(_user_defined_annotation, "PreRender");
 
 	// Update the debug buffers
 	{
@@ -517,6 +518,73 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 		inst->update();
 	}
 
+	// Update directional light frustums, NEEDS to happen before visibility
+	shared_ptr<RenderWorldLight> directional_light = nullptr;
+	{
+
+		// Retrieve the first directional light in the render world
+		auto it = std::find_if(world->get_lights().begin(), world->get_lights().end(), [](auto const& light)
+				{ return light->is_directional() && light->get_casts_shadow(); });
+		if (it != world->get_lights().end())
+		{
+			directional_light = *it;
+		}
+
+		if (!directional_light)
+		{
+			return;
+		}
+
+		float4x4 light_space = directional_light->get_view();
+		if (directional_light->get_casts_shadow())
+		{
+			float4x4 view = world->get_light(0)->get_view();
+			float3 direction = world->get_light(0)->get_view_direction().xyz;
+			float3 position = world->get_light(0)->get_position().xyz;
+
+			std::vector<CascadeInfo> matrices;
+			for (u32 i = 0; i < MAX_CASCADES; ++i)
+			{
+				Math::Frustum box_light = get_cascade_frustum(world->get_camera(0), i, MAX_CASCADES);
+
+				// Transform to light view space
+				box_light.transform(light_space);
+
+				// Calculate the extents(in light  space)
+				float4 min_extents = box_light._corners[0];
+				float4 max_extents = box_light._corners[0];
+
+				for (u32 j = 1; j < box_light._corners.size(); ++j)
+				{
+					float4 pos_light = box_light._corners[j];
+					min_extents = hlslpp::min(pos_light, min_extents);
+					max_extents = hlslpp::max(pos_light, max_extents);
+				}
+
+				float3 center = ((min_extents + max_extents) / 2.0f).xyz;
+				float3 extents = ((max_extents - min_extents) / 2.0f).xyz;
+
+				using namespace DirectX;
+				XMFLOAT3 xm_center;
+				XMFLOAT3 xm_extents;
+				hlslpp::store(center, (float*)&xm_center);
+				hlslpp::store(extents, (float*)&xm_extents);
+				auto box = DirectX::BoundingBox(xm_center, xm_extents);
+
+				f32 z_range = max_extents.z - min_extents.z;
+
+				center = hlslpp::mul(float4(center, 1.0), hlslpp::inverse(light_space)).xyz;
+				float3 new_center = center - direction * z_range;
+				float4x4 new_projection = float4x4::orthographic(hlslpp::projection(hlslpp::frustum(-box.Extents.x, box.Extents.x, -box.Extents.y, box.Extents.y, 0.0f, z_range * 1.5f), hlslpp::zclip::zero));
+				float4x4 new_view = float4x4::look_at(new_center, center, float3{ 0.0f, 1.0f, 0.0f });
+
+				matrices.push_back({ center, new_view, new_projection, hlslpp::mul(new_view, new_projection) });
+			}
+
+			directional_light->update_cascades(matrices);
+		}
+	}
+
 	// Register our visible instances and calculate visibilities for main view?
 	{
 		JONO_EVENT("Visibility");
@@ -531,12 +599,15 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 		}
 
 		VisibilityParams params{};
-		params.frustum = get_frustum_world(world, 0);
+		params.frustum[VisiblityFrustum_Main] = get_frustum_world(world, 0);
+		params.frustum[VisiblityFrustum_CSM0] = Math::Frustum::from_vp(directional_light->get_cascade(0).vp);
+		params.frustum[VisiblityFrustum_CSM1] = Math::Frustum::from_vp(directional_light->get_cascade(1).vp);
+		params.frustum[VisiblityFrustum_CSM2] = Math::Frustum::from_vp(directional_light->get_cascade(2).vp);
+		params.frustum[VisiblityFrustum_CSM3] = Math::Frustum::from_vp(directional_light->get_cascade(3).vp);
 		_visibility->run(params);
 	}
 
 	// Collect all local lights and update our light buffer
-
 	{
 		ScopedBufferAccess access{ _device_ctx, _light_buffer.get() };
 		ProcessedLight* light_data = static_cast<ProcessedLight*>(access.get_ptr());
@@ -581,7 +652,7 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 
 void Renderer::render_view(shared_ptr<RenderWorld> const& world, RenderPass::Value pass)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, L"Renderer::render_view");
+	GPU_SCOPED_EVENT(_user_defined_annotation, "Renderer::render_view");
 
 	// Setup global constant buffer
 	std::shared_ptr<RenderWorldCamera> camera = world->get_view_camera();
@@ -612,7 +683,7 @@ void Renderer::render_view(shared_ptr<RenderWorld> const& world, RenderPass::Val
 void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams const& params)
 {
 	std::string passName = RenderPass::ToString(params.pass);
-	GPU_SCOPED_EVENT(_user_defined_annotation, passName);
+	GPU_SCOPED_EVENT(_user_defined_annotation, passName.c_str());
 
 	// Setup some defaults. At the moment these are applied for each pass. However
 	// ideally we would be able to have more detailed logic here to decided based on pass and mesh/material
@@ -725,37 +796,66 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	static std::vector<DrawCall> m_DrawCalls;
 
 
-	std::vector<RenderWorldInstance*> const& instances = _visibility->get_visible_instances();
-	m_DrawCalls.reserve(instances.size());
-	m_DrawCalls.clear();
-
-	// #TODO: Pull this information from visibile lists
-	for (RenderWorldInstance const* inst : instances)
 	{
-		// If the instance is ready we can consider adding it to the draw list
-		if (inst->is_ready())
+		JONO_EVENT("GenerateDrawCalls");
+
+		std::vector<RenderWorldInstance*> const& instances = _visibility->get_visible_instances();
+		m_DrawCalls.reserve(instances.size());
+		m_DrawCalls.clear();
+
+		// #TODO: Pull this information from visibile lists
+		for (RenderWorldInstance const* inst : instances)
 		{
-			Model const* model = inst->_model->get();
-			for (Mesh const& mesh : model->get_meshes())
+			// If the instance is ready we can consider adding it to the draw list
+			if (inst->is_ready())
 			{
-				DrawCall dc{};
-				dc._transform = inst->_transform;
-				dc._index_buffer = model->get_index_buffer().Get();
-				dc._vertex_buffer = model->get_vertex_buffer().Get();
-				dc._material = inst->get_material_instance(mesh.material_index);
-				dc._first_index = mesh.firstIndex;
-				dc._first_vertex = mesh.firstVertex;
-				dc._index_count = mesh.indexCount;
-				m_DrawCalls.push_back(dc);
+				Model const* model = inst->_model->get();
+				for (Mesh const& mesh : model->get_meshes())
+				{
+					DrawCall dc{};
+					dc._transform = inst->_transform;
+					dc._index_buffer = model->get_index_buffer().Get();
+					dc._vertex_buffer = model->get_vertex_buffer().Get();
+					dc._material = inst->get_material_instance(mesh.material_index);
+					dc._first_index = mesh.firstIndex;
+					dc._first_vertex = mesh.firstVertex;
+					dc._index_count = mesh.indexCount;
+					m_DrawCalls.push_back(dc);
+				}
 			}
 		}
 	}
 
+	JONO_EVENT("Submit");
+
+	ID3D11DeviceContext* ctx = _device_ctx;
+	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		// #TODO: Remove debug handling into a debug lighting system
+	extern int g_DebugMode;
+	if (g_DebugMode != 0)
+	{
+		ID3D11Buffer* buffers[3] = {
+			_cb_global->Get(),
+			_cb_debug->Get()
+		};
+		ctx->VSSetConstantBuffers(0, 2, buffers);
+		ctx->PSSetConstantBuffers(0, 2, buffers);
+	}
+	else
+	{
+		ID3D11Buffer* buffers[1] = {
+			_cb_global->Get(),
+		};
+		ctx->VSSetConstantBuffers(0, 1, buffers);
+		ctx->PSSetConstantBuffers(0, 1, buffers);
+	}
+
+	ID3D11Buffer* prev_index = nullptr;
+	ID3D11Buffer* prev_vertex = nullptr;
+
 	for (DrawCall const& dc : m_DrawCalls) 
 	{
-		// A render world instance is ready when the whole model (and it's dependencies) has been loaded
-		auto ctx = _device_ctx;
-
 		ConstantBufferRef const& model_cb = _cb_model;
 		ModelCB* data = (ModelCB*)model_cb->map(_device_ctx);
 		data->world = dc._transform;
@@ -763,38 +863,29 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 		data->wvp = hlslpp::mul(data->world, vp);
 		model_cb->unmap(ctx);
 
-		ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		ctx->IASetIndexBuffer(dc._index_buffer, DXGI_FORMAT_R32_UINT, 0);
-
-		UINT strides = { sizeof(Model::VertexType) };
-		UINT offsets = { 0 };
-		ctx->IASetVertexBuffers(0, 1, &dc._vertex_buffer, &strides, &offsets);
-
-		// #TODO: Remove debug handling into a debug lighting system
-		extern int g_DebugMode;
-		if (g_DebugMode != 0)
+		if(prev_index != dc._index_buffer)
 		{
-			ID3D11Buffer* buffers[3] = {
-				_cb_global->Get(),
-				_cb_debug->Get(),
-				model_cb->Get(),
-			};
-			ctx->VSSetConstantBuffers(0, 3, buffers);
-			ctx->PSSetConstantBuffers(0, 3, buffers);
-		}
-		else
-		{
-			ID3D11Buffer* buffers[1] = {
-				_cb_global->Get(),
-			};
-			ctx->VSSetConstantBuffers(0, 1, buffers);
-			ctx->PSSetConstantBuffers(0, 1, buffers);
-
-			buffers[0] = model_cb->Get();
-			ctx->VSSetConstantBuffers(2, 1, buffers);
-			ctx->PSSetConstantBuffers(2, 1, buffers);
+			ctx->IASetIndexBuffer(dc._index_buffer, DXGI_FORMAT_R32_UINT, 0);
+			prev_index = dc._index_buffer;
 		}
 
+		if (prev_vertex != dc._vertex_buffer)
+		{
+			UINT strides = { sizeof(Model::VertexType) };
+			UINT offsets = { 0 };
+			ctx->IASetVertexBuffers(0, 1, &dc._vertex_buffer, &strides, &offsets);
+
+			prev_vertex = dc._vertex_buffer;
+		}
+
+		ID3D11Buffer* buffers[1] = 
+		{
+			model_cb->Get()
+		};
+		ctx->VSSetConstantBuffers(2, 1, buffers);
+		ctx->PSSetConstantBuffers(2, 1, buffers);
+
+		// Setup the material render state
 		{
 			setup_renderstate(dc._material, params);
 
@@ -802,21 +893,10 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 			_stats.n_primitives += u32(dc._index_count / 3);
 			ctx->DrawIndexed((UINT)dc._index_count, (UINT)dc._first_index, (INT)dc._first_vertex);
 
-			ID3D11ShaderResourceView* views[] = {
-				nullptr,
-				nullptr
-			};
-
-			_device_ctx->PSSetShaderResources(3, UINT(std::size(views)), views);
-		}
-
-		if (params.pass == RenderPass::Opaque)
-		{
-			// unbind shader resource
-			ID3D11ShaderResourceView* views[] = { nullptr };
-			_device_ctx->PSSetShaderResources(3, 1, views);
 		}
 	}
+
+	_device_ctx->PSSetShaderResources(0, 0, nullptr);
 }
 
 void Renderer::prepare_shadow_pass()
@@ -857,9 +937,17 @@ void Renderer::prepare_shadow_pass()
 
 void Renderer::begin_frame()
 {
+	JONO_EVENT();
+
 	_stats = {};
 
+	// Reset all the state tracking
 	_device_ctx->ClearState();
+	_last_vs = nullptr;
+	_last_ps = nullptr;
+	_last_input_layout = nullptr;
+	_last_rs = nullptr;
+
 
 	GameEngine* engine = GameEngine::instance();
 	D3D11_VIEWPORT vp{};
@@ -884,7 +972,7 @@ void Renderer::end_frame()
 Math::Frustum Renderer::get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const
 {
 	shared_ptr<RenderWorldCamera> camera = world->get_camera(cam);
-	return get_cascade_frustum(camera, 0, 1);
+	return Math::Frustum::from_vp(camera->get_vp());
 }
 
 Math::Frustum Renderer::get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const
@@ -919,26 +1007,66 @@ void Renderer::setup_renderstate(MaterialInstance const* mat_instance, ViewParam
 			_light_buffer->get_srv().Get(),
 		};
 		_device_ctx->PSSetShaderResources(Texture_CSM, UINT(std::size(views)), views);
-
 	}
 }
 
 void Renderer::VSSetShader(ShaderConstRef const& vertex_shader)
 {
-	ASSERT(vertex_shader->get_type() == ShaderType::Vertex);
-	_device_ctx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
+	if(_last_vs != vertex_shader)
+	{
+		if (vertex_shader == nullptr)
+		{
+			_device_ctx->VSSetShader(nullptr, nullptr, 0);
+		}
+		else
+		{
+			ASSERT(vertex_shader->get_type() == ShaderType::Vertex);
+			_device_ctx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
+		}
+		_last_vs = vertex_shader;
+	}
 
 }
 
 void Renderer::PSSetShader(ShaderConstRef const& pixel_shader)
 {
-	ASSERT(pixel_shader->get_type() == ShaderType::Pixel);
-	_device_ctx->PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);
+	if(_last_ps != pixel_shader)
+	{
+		if(pixel_shader == nullptr)
+		{
+			_device_ctx->PSSetShader(nullptr, nullptr, 0);
+		}
+		else
+		{
+			ASSERT(pixel_shader->get_type() == ShaderType::Pixel);
+			_device_ctx->PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);
+		}
+
+		_last_ps = pixel_shader;
+	}
+}
+
+void Renderer::IASetInputLayout(ID3D11InputLayout* layout)
+{
+	if(_last_input_layout != layout)
+	{
+		_device_ctx->IASetInputLayout(layout);
+		_last_input_layout = layout;	
+	}
+}
+
+void Renderer::RSSetState(ID3D11RasterizerState* state)
+{
+	if(_last_rs != state)
+	{
+		_device_ctx->RSSetState(state);
+		_last_rs = state;
+	}
 }
 
 void Renderer::render_post_predebug()
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, L"Post:PreDebug");
+	GPU_SCOPED_EVENT(_user_defined_annotation, "Post:PreDebug");
 
 	ShaderCreateParams params = ShaderCreateParams::pixel_shader("Source/Engine/Shaders/default_post_px.hlsl");
 	ShaderRef post_shader = ShaderCache::instance()->find_or_create(params);
@@ -968,14 +1096,14 @@ void Renderer::render_post_predebug()
 
 void Renderer::render_post_postdebug()
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, L"Post:PostDebug");
+	GPU_SCOPED_EVENT(_user_defined_annotation, "Post:PostDebug");
 
 
 }
 
 void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, L"Shadows");
+	GPU_SCOPED_EVENT(_user_defined_annotation, "Shadows");
 
 	prepare_shadow_pass();
 
@@ -1000,51 +1128,10 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 		float3 direction = world->get_light(0)->get_view_direction().xyz;
 		float3 position = world->get_light(0)->get_position().xyz;
 
-		std::vector<CascadeInfo> matrices;
-		for (u32 i = 0; i < MAX_CASCADES; ++i)
-		{
-			Math::Frustum box_light = get_cascade_frustum(world->get_camera(0), i, MAX_CASCADES);
-
-			// Transform to light view space
-			box_light.transform(light_space);
-
-			// Calculate the extents(in light  space)
-			float4 min_extents = box_light._corners[0];
-			float4 max_extents = box_light._corners[0];
-
-			for (u32 j = 1; j < box_light._corners.size(); ++j)
-			{
-				float4 pos_light = box_light._corners[j];
-				min_extents = hlslpp::min(pos_light, min_extents);
-				max_extents = hlslpp::max(pos_light, max_extents);
-			}
-
-			float3 center = ((min_extents + max_extents) / 2.0f).xyz;
-			float3 extents = ((max_extents - min_extents) / 2.0f).xyz;
-
-			using namespace DirectX;
-			XMFLOAT3 xm_center;
-			XMFLOAT3 xm_extents;
-			hlslpp::store(center, (float*)&xm_center);
-			hlslpp::store(extents, (float*)&xm_extents);
-			auto box = DirectX::BoundingBox(xm_center, xm_extents);
-
-			f32 z_range = max_extents.z - min_extents.z;
-
-			center = hlslpp::mul(float4(center, 1.0), hlslpp::inverse(light_space)).xyz;
-			float3 new_center = center - direction * z_range;
-			float4x4 new_projection = float4x4::orthographic(hlslpp::projection(hlslpp::frustum(-box.Extents.x, box.Extents.x, -box.Extents.y, box.Extents.y, 0.0f, z_range * 1.5f), hlslpp::zclip::zero));
-			float4x4 new_view = float4x4::look_at(new_center, center, float3{ 0.0f, 1.0f, 0.0f });
-
-			matrices.push_back({ center, new_view, new_projection, hlslpp::mul(new_view, new_projection) });
-		}
-
-		light->update_cascades(matrices);
-
 		// Render out the cascades shadow map for the directional light
 		for (u32 i = 0; i < MAX_CASCADES; ++i)
 		{
-			GPU_SCOPED_EVENT(_user_defined_annotation, fmt::format("Cascade {}", i));
+			GPU_SCOPED_EVENT(_user_defined_annotation, fmt::format("Cascade {}", i).c_str());
 			CascadeInfo const& info = light->get_cascade(i);
 
 			_device_ctx->OMSetRenderTargets(0, nullptr, _shadow_map_dsv[i].Get());
@@ -1069,7 +1156,7 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 
 void Renderer::render_zprepass(shared_ptr<RenderWorld> const& world)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, L"zprepass");
+	GPU_SCOPED_EVENT(_user_defined_annotation, "zprepass");
 
 
 	_device_ctx->OMSetRenderTargets(0, NULL, _output_dsv);
@@ -1079,7 +1166,7 @@ void Renderer::render_zprepass(shared_ptr<RenderWorld> const& world)
 
 void Renderer::render_opaque_pass(shared_ptr<RenderWorld> const& world)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, L"opaque");
+	GPU_SCOPED_EVENT(_user_defined_annotation, "opaque");
 
 	// Do a copy to our dsv tex for sampling during the opaque pass
 	copy_depth();
@@ -1090,7 +1177,7 @@ void Renderer::render_opaque_pass(shared_ptr<RenderWorld> const& world)
 
 void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<OverlayManager> const& overlays)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, L"Post");
+	GPU_SCOPED_EVENT(_user_defined_annotation, "Post");
 
 	PostCB* data = (PostCB*)_cb_post->map(_device_ctx);
 	data->m_ViewportWidth = f32(GameEngine::instance()->get_width());
@@ -1132,7 +1219,7 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 	_common_effect->Apply(_device_ctx);
 
 	{
-		GPU_SCOPED_EVENT(_user_defined_annotation, L"Post:RenderOverlays");
+		GPU_SCOPED_EVENT(_user_defined_annotation, "Post:RenderOverlays");
 		overlays->render_3d(_device_ctx);
 	}
 
@@ -1148,7 +1235,7 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 
 	// Render main viewport ImGui
 	{
-		GPU_SCOPED_EVENT(_user_defined_annotation, L"ImGui");
+		GPU_SCOPED_EVENT(_user_defined_annotation, "ImGui");
 		_device_ctx->OMSetRenderTargets(1, &_swapchain_rtv, nullptr);
 		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 	}

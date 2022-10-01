@@ -360,11 +360,11 @@ void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams 
 	auto ctx = renderer->get_ctx()._ctx;
 	if (is_double_sided())
 	{
-		ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullNone).Get());
+		renderer->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullNone).Get());
 	}
 	else
 	{
-		ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullBack).Get());
+		renderer->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullBack).Get());
 	}
 
 	Graphics::ShaderConstRef vertex_shader = get_vertex_shader();
@@ -387,7 +387,7 @@ void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams 
 
 	// Bind vertex shader
 	renderer->VSSetShader(vertex_shader);
-	ctx->IASetInputLayout(vertex_shader->get_input_layout().Get());
+	renderer->IASetInputLayout(vertex_shader->get_input_layout().Get());
 
 	// In opaque pass, bind the pixel shader and relevant shader resources from the material
 	if (params.pass == Graphics::RenderPass::Opaque)
@@ -416,7 +416,7 @@ void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams 
 	}
 	else
 	{
-		ctx->PSSetShader(nullptr, nullptr, 0);
+		renderer->PSSetShader(nullptr);
 	}
 }
 

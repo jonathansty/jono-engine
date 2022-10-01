@@ -138,7 +138,6 @@ class MaterialInstance final : public IMaterialObject
 		Graphics::ShaderRef const& get_pixel_shader() const { return get_material_obj()->get_pixel_shader(); }
 		Graphics::ShaderRef const& get_debug_pixel_shader() const { return get_material_obj()->get_debug_pixel_shader(); }
 
-
 		ConstantBufferRef const& get_cb() const;
 
 		Material const* get_material() const;
