@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "CommonScene.hlsl"
 #include "Lighting.hlsl"
 
 Texture2D<float4> g_albedo    				: register(t0);

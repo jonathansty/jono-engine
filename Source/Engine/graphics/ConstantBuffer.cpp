@@ -1,9 +1,9 @@
 #include "engine.pch.h"
 #include "ConstantBuffer.h"
 
-std::shared_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32 size, bool cpu_write /*= false*/, BufferUsage usage /*= BufferUsage::Default*/, void* initialData /*= nullptr*/)
+std::unique_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32 size, bool cpu_write /*= false*/, BufferUsage usage /*= BufferUsage::Default*/, void* initialData /*= nullptr*/)
 {
-	std::shared_ptr<ConstantBuffer> result = std::make_shared<ConstantBuffer>();
+	std::unique_ptr<ConstantBuffer> result = std::make_unique<ConstantBuffer>();
 
 	D3D11_BUFFER_DESC buff{};
 	buff.ByteWidth = (1 + (size - 1) / 16) * 16;
@@ -48,4 +48,27 @@ std::shared_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 	result->_usage = usage;
 
 	return result;
+}
+
+ ConstantBuffer::ConstantBuffer()
+	: _buffer()
+	, _size(0)
+	, _cpu_writeable(false)
+{
+}
+
+ ConstantBuffer::~ConstantBuffer()
+{
+}
+
+void* ConstantBuffer::map(ID3D11DeviceContext* ctx)
+{
+	D3D11_MAPPED_SUBRESOURCE resource{};
+	ctx->Map(_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
+	return resource.pData;
+}
+
+void ConstantBuffer::unmap(ID3D11DeviceContext* ctx)
+{
+	ctx->Unmap(_buffer.Get(), 0);
 }

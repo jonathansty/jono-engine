@@ -204,8 +204,8 @@ void SceneViewer::start()
 	}
 
 	f32 world_size = c_grid_size * c_grid_spacing;
-	u32 n_lights_x = 5;
-	u32 n_lights_y = 5;
+	u32 n_lights_x = 1;
+	u32 n_lights_y = 1;
 	for(u32 y = 0; y < n_lights_y; ++y)
 	{
 		for(u32 x = 0; x < n_lights_x; ++x)

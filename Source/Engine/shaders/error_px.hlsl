@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "CommonScene.hlsl"
 
 float4 main(VS_OUT vout) : SV_Target {
 	float2 uv = vout.uv;

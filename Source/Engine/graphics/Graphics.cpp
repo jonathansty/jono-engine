@@ -56,6 +56,8 @@ void init(DeviceContext const& ctx)
 		parameters.params.stage = ShaderType::Vertex;
 		s_error_vertex_shader = ShaderCache::instance()->find_or_create(parameters);
 		ASSERTMSG(s_error_vertex_shader, "Failed to create error shader (\"{}\")", parameters.path.c_str());
+
+
 	}
 
 	// Depth Stencil

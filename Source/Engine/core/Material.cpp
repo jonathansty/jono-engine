@@ -6,7 +6,7 @@
 #include "TextureResource.h"
 #include "MaterialResource.h"
 
-#include "Shaders/Common.h"
+#include "Shaders/CommonShared.h"
 #include "Graphics/ShaderType.h"
 #include "Graphics/ShaderCache.h"
 #include "Graphics/Renderer.h"
@@ -27,7 +27,7 @@ std::unique_ptr<Material> Material::create(Graphics::ShaderRef const& vertex_sha
 	obj->_pixel_shader = pixel_shader;
 
 	// For now each material has it's own constant buffer
-	obj->_material_cb = ConstantBuffer::create(Graphics::get_device().Get(), initialDataSize, false, ConstantBuffer::BufferUsage::Default, initialData);
+	obj->_material_cb = ConstantBuffer::create(Graphics::get_device().Get(), initialDataSize, false, BufferUsage::Default, initialData);
 
 	return obj;
 }
@@ -178,7 +178,7 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 				result->_parameters[param_hash] = info;
 			}
 
-			result->_material_cb = ConstantBuffer::create(Graphics::get_device().Get(), param_data_byte_size, false, ConstantBuffer::BufferUsage::Default, result->_param_data.data());
+			result->_material_cb = ConstantBuffer::create(Graphics::get_device().Get(), param_data_byte_size, false, BufferUsage::Default, result->_param_data.data());
 
 			for (XMLElement* textureNode = texturesNode->FirstChildElement(); textureNode != nullptr; textureNode = textureNode->NextSiblingElement())
 			{
@@ -485,7 +485,7 @@ void MaterialInstance::update()
 		if (_has_overrides)
 		{
 			// update the paramter data
-			_instance_cb = ConstantBuffer::create(Graphics::get_device().Get(), u32(_param_data.size()) * sizeof(float), false, ConstantBuffer::BufferUsage::Default, _param_data.data());
+			_instance_cb = ConstantBuffer::create(Graphics::get_device().Get(), u32(_param_data.size()) * sizeof(float), false, BufferUsage::Default, _param_data.data());
 		}
 
 		_needs_flush = false;

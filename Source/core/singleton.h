@@ -58,4 +58,4 @@ void TSingleton<T>::create()
 }
 
 template <typename T>
-__declspec(selectany) T* TSingleton<T>::_obj;
+__declspec(selectany) T* TSingleton<T>::_obj = nullptr;

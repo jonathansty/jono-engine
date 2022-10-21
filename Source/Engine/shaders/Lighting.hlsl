@@ -2,7 +2,7 @@
 #ifndef _LIGHTING_H_
 #define _LIGHTING_H_
 
-#include "Common.h"
+#include "CommonScene.hlsl"
 #include "Shadows.hlsl"
 
 static const float PI = 3.14159265f;

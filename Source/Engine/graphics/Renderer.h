@@ -328,7 +328,11 @@ private:
 	ComPtr<ID3D11ShaderResourceView> _debug_shadow_map_srv[MAX_CASCADES];
 
 	static constexpr u32 c_max_lights = 2048;
-	std::unique_ptr<StructuredBuffer> _light_buffer;
+	std::unique_ptr<GPUStructuredBuffer> _light_buffer;
+	std::unique_ptr<GPUByteBuffer> _tile_light_index_buffer;
+	std::unique_ptr<GPUByteBuffer> _per_tile_info_buffer;
+	std::unique_ptr<ConstantBuffer> _fplus_cb;
+	std::shared_ptr<Shader> _fplus_cull_shader;
 
 	// Constant buffers
 	ConstantBufferRef _cb_global;

@@ -20,7 +20,7 @@
 
 #include "Memory.h"
 
-#include "Engine/Shaders/Common.h"
+#include "Engine/Shaders/CommonShared.h"
 #include "Graphics/StructuredBuffer.h"
 
 namespace Graphics
@@ -33,6 +33,7 @@ static f32 s_box_size = 15.0f;
 void Renderer::init(EngineSettings const& settings, GameSettings const& game_settings, cli::CommandLine const& cmdline)
 {
 	MEMORY_TAG(MemoryCategory::Graphics);
+
 	_visibility = std::make_unique<class VisibilityManager>();
 
 	_stats = {};
@@ -46,20 +47,16 @@ void Renderer::init(EngineSettings const& settings, GameSettings const& game_set
 	_debug_tool = std::make_unique<RendererDebugTool>(this);
 	GameEngine::instance()->get_overlay_manager()->register_overlay(_debug_tool.get());
 
-	_cb_global = ConstantBuffer::create(_device, sizeof(GlobalCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
-	_cb_model = ConstantBuffer::create(_device, sizeof(ModelCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
-	_cb_debug = ConstantBuffer::create(_device, sizeof(DebugCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
-	_cb_post = ConstantBuffer::create(_device, sizeof(PostCB), true, ConstantBuffer::BufferUsage::Dynamic, nullptr);
+	_cb_global = ConstantBuffer::create(_device, sizeof(GlobalCB), true, BufferUsage::Dynamic, nullptr);
+	_cb_model = ConstantBuffer::create(_device, sizeof(ModelCB), true, BufferUsage::Dynamic, nullptr);
+	_cb_debug = ConstantBuffer::create(_device, sizeof(DebugCB), true, BufferUsage::Dynamic, nullptr);
+	_cb_post = ConstantBuffer::create(_device, sizeof(PostCB), true, BufferUsage::Dynamic, nullptr);
 
 
 	// Setup Light buffer
 	{
-		_light_buffer = StructuredBuffer::create(_device, sizeof(ProcessedLight), c_max_lights,true, StructuredBuffer::BufferUsage::Dynamic);
+		_light_buffer = GPUStructuredBuffer::create(_device, sizeof(ProcessedLight), c_max_lights,true, BufferUsage::Dynamic);
 	}
-
-
-	//_light_buffer
-
 
 	// Create our cubemap 
 	std::array<std::string_view, 6> faces = {
@@ -607,8 +604,13 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 		_visibility->run(params);
 	}
 
-	// Collect all local lights and update our light buffer
+	// Light culling step is scheduled here.
+	// 1. CPU frustum culling
+	// 2. F+ tiled culling
+
+	// 1. CPU Frustum culling
 	{
+		// Collect all local lights and update our light buffer
 		ScopedBufferAccess access{ _device_ctx, _light_buffer.get() };
 		ProcessedLight* light_data = static_cast<ProcessedLight*>(access.get_ptr());
 		u32 n_lights = 0;
@@ -646,6 +648,91 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 		}
 		_num_lights = n_lights;
 		_num_directional_lights = n_directional_lights;
+	}
+
+	// 2. F+ GPU Tiled culling
+	{
+
+		constexpr u32 tile_res = FPLUS_TILE_RES;
+		float width = GameEngine::instance()->get_window_size().x;
+		float height = GameEngine::instance()->get_window_size().y;
+
+		u32 tiles_x = (u32)ceilf(width / tile_res);
+		u32 tiles_y = (u32)ceilf(height / tile_res);
+
+
+		struct FPlusCB
+		{
+			Shaders::float4x4 proj_inv;
+			Shaders::float4x4 view;
+
+			int num_tiles_x;
+			int num_tiles_y;
+			int number_of_lights;
+		};
+
+		// #TODO: Resize buffers to match screen size
+		if(!_per_tile_info_buffer)
+		{
+			_per_tile_info_buffer = GPUByteBuffer::create(_device, tiles_x * tiles_y * sizeof(u32), false, BufferUsage::Default);
+			_tile_light_index_buffer = GPUByteBuffer::create(_device, tiles_x * tiles_y * FPLUS_MAX_NUM_LIGHTS_PER_TILE * sizeof(u32), false, BufferUsage::Default);
+
+			ShaderCreateParams cs_params = ShaderCreateParams::compute_shader("Source/Engine/shaders/ForwardPlus_Cull.hlsl");
+			cs_params.params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
+			_fplus_cull_shader = ShaderCache::instance()->find_or_create(cs_params);
+
+			_fplus_cb = ConstantBuffer::create(_device, sizeof(FPlusCB), true, BufferUsage::Dynamic);
+		}
+
+
+		ID3D11DeviceContext* ctx = _device_ctx;
+
+		shared_ptr<RenderWorldCamera> camera = world->get_camera(0);
+
+		// Update CB
+		{
+			ScopedBufferAccess fplus_cb_lock = ScopedBufferAccess(ctx, _fplus_cb.get());
+			FPlusCB& cb = *(FPlusCB*)fplus_cb_lock.get_ptr();
+			cb.num_tiles_x = tiles_x;
+			cb.num_tiles_y = tiles_y;
+			cb.number_of_lights = _num_lights;
+
+			cb.view = camera->get_view();
+			cb.proj_inv = hlslpp::inverse(camera->get_proj());
+		}
+
+		ctx->OMSetRenderTargets(0, nullptr, nullptr);
+
+		std::array<ID3D11ShaderResourceView*, 2> srvs = {
+			_light_buffer->get_srv().Get(),
+			_output_depth_srv
+		};
+		ctx->CSSetShaderResources(0, 2, srvs.data());
+
+		std::array<ID3D11UnorderedAccessView*, 2> uavs = {
+			_tile_light_index_buffer->get_uav().Get(),
+			_per_tile_info_buffer->get_uav().Get()
+		};
+
+		ctx->CSSetUnorderedAccessViews(0, 2, uavs.data(), nullptr);
+
+		std::array<ID3D11Buffer*, 1> cbs = {
+			_fplus_cb->Get()
+		};
+		ctx->CSSetConstantBuffers(0, 1, cbs.data());
+		ctx->CSSetShader(_fplus_cull_shader->as<ID3D11ComputeShader>().Get(), nullptr, 0);
+
+		u32 dispatch_x = tiles_x;
+		u32 dispatch_y = tiles_y;
+		ctx->Dispatch(dispatch_x, dispatch_y, 1);
+
+		uavs[0] = nullptr;
+		uavs[1] = nullptr;
+		ctx->CSSetUnorderedAccessViews(0, 2, uavs.data(), nullptr);
+
+		srvs[0] = nullptr;
+		srvs[1] = nullptr;
+		ctx->CSSetShaderResources(0, 2, srvs.data());
 	}
 
 }

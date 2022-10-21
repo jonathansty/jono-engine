@@ -42,8 +42,8 @@ bool ShaderCache::reload_all()
 			success = false;
 
 			// Set invalid shader
-			auto tmp = std::make_shared<Shader>();
-			*it.second = *tmp;
+			//auto tmp = std::make_shared<Shader>();
+			//*it.second = *tmp;
 		}
 		else
 		{

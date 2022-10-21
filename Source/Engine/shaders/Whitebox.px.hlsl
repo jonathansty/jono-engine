@@ -1,4 +1,4 @@
-#include "Common.h"
+#include "CommonScene.h"
 #include "Lighting.hlsl"
 
 struct MaterialData

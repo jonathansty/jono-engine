@@ -15,19 +15,22 @@ Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size, const char* 
 	switch (type)
 	{
 		case ShaderType::Vertex:
-		{
-			SUCCEEDED(device->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)_shader.GetAddressOf()));
-
-		}
-		break;
+			ENSURE_HR(device->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)_shader.GetAddressOf()));
+			break;
 		case ShaderType::Pixel:
-			SUCCEEDED(device->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)_shader.GetAddressOf()));
+			ENSURE_HR(device->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)_shader.GetAddressOf()));
+			break;
+		case ShaderType::Compute:
+			ENSURE_HR(device->CreateComputeShader(byte_code, size, nullptr, (ID3D11ComputeShader**)_shader.GetAddressOf()));
 			break;
 		default:
 			throw new std::exception("ShaderType not supported!");
 	}
 
-	Helpers::SetDebugObjectName(_shader.Get(), debug_name ? debug_name : (__FILE__));
+	if(_shader)
+	{
+		Helpers::SetDebugObjectName(_shader.Get(), debug_name ? debug_name : (__FILE__));
+	}
 
 	D3DReflect(byte_code, size, IID_ID3D11ShaderReflection, &_reflection);
 

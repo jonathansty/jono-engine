@@ -51,10 +51,15 @@ bool compile(const char* shader, CompileParameters const& parameters, std::vecto
 		HRESULT result = D3DPreprocess(data, bytes_read, shader, macros.data(), D3D_COMPILE_STANDARD_FILE_INCLUDE, preprocessedData.ReleaseAndGetAddressOf(), errorData.ReleaseAndGetAddressOf());
 		if(FAILED(result))
 		{
-			free(data);
 
-			std::string messages{ (char*)errorData->GetBufferPointer() };
-			LOG_ERROR(Graphics, "Shader compile failed with the following message: {}", messages);
+			std::string messages{};
+			if(errorData)
+			{
+				messages = { (char*)errorData->GetBufferPointer() };
+			}
+
+			LOG_ERROR(Graphics, "Shader preprocess failed with the following message: {}", messages);
+			free(data);
 			return false;
 		}
 

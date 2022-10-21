@@ -1,38 +1,27 @@
 #pragma once
-class ConstantBuffer
+
+#include "GPUBuffer.h"
+
+class ConstantBuffer final : public IGPUBuffer
 {
 public:
-	enum class BufferUsage
-	{
-		Default,
-		Dynamic,
-		Staging,
-		Immutable
-	};
+	static std::unique_ptr<ConstantBuffer> create(ID3D11Device* device, u32 size, bool cpu_write = false, BufferUsage usage = BufferUsage::Default, void* initialData = nullptr);
 
-	static std::shared_ptr<ConstantBuffer> create(ID3D11Device* device, u32 size, bool cpu_write = false, BufferUsage usage = BufferUsage::Default, void* initialData = nullptr);
+	ConstantBuffer();
 
-	ID3D11Buffer* Get() const { return _buffer.Get(); }
+	~ConstantBuffer();
 
-	void* map(ID3D11DeviceContext* ctx)
-	{
-		D3D11_MAPPED_SUBRESOURCE resource{};
-		ctx->Map(_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-		return resource.pData;
-	}
-	void unmap(ID3D11DeviceContext* ctx)
-	{
-		ctx->Unmap(_buffer.Get(), 0);
-	}
 
-	ConstantBuffer()
-			: _buffer()
-			, _size(0)
-			, _cpu_writeable(false)
-	{
-	}
+	ID3D11Buffer* Get() { return _buffer.Get(); }
 
-	~ConstantBuffer() {}
+	ID3D11Buffer* get_buffer() override { return _buffer.Get(); }
+
+	void* map(ID3D11DeviceContext* ctx) override;
+	void unmap(ID3D11DeviceContext* ctx) override;
+
+
+
+
 
 private:
 	ComPtr<ID3D11Buffer> _buffer;

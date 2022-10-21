@@ -31,7 +31,7 @@ D2DRenderContext::D2DRenderContext(Renderer* renderer ,ID2D1Factory* factory, ID
 		, _current_vertices(0)
 		,_colour(1.0f,1.0f,1.0f,1.0f)
 {
-		_global_cb = ConstantBuffer::create(Graphics::get_device().Get(), sizeof(Shaders::float4x4) + sizeof(Shaders::float4), true, ConstantBuffer::BufferUsage::Dynamic);
+		_global_cb = ConstantBuffer::create(Graphics::get_device().Get(), sizeof(Shaders::float4x4) + sizeof(Shaders::float4), true, BufferUsage::Dynamic);
 }
 
 bool D2DRenderContext::begin_paint(Renderer* renderer, ID2D1Factory* factory, ID2D1RenderTarget* rt, ID2D1SolidColorBrush* brush, Font* font)
