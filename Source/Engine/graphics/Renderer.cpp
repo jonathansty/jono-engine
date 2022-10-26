@@ -660,6 +660,7 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 		u32 tiles_x = (u32)ceilf(width / tile_res);
 		u32 tiles_y = (u32)ceilf(height / tile_res);
 
+		_num_tiles_x = tiles_x;
 
 		struct FPlusCB
 		{
@@ -811,6 +812,7 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 
 	global->num_directional_lights = std::min<u32>(u32(_num_directional_lights), MAX_LIGHTS);
 	global->num_lights = _num_lights;
+	global->num_tiles_x = _num_tiles_x;
 
 	// Process all the lights
 	RenderWorld::LightCollection const& lights = world->get_lights();
@@ -1092,6 +1094,8 @@ void Renderer::setup_renderstate(MaterialInstance const* mat_instance, ViewParam
 			_output_depth_srv_copy,
 			_cubemap_srv.Get(),
 			_light_buffer->get_srv().Get(),
+			_tile_light_index_buffer->get_srv().Get(),
+			_per_tile_info_buffer->get_srv().Get()
 		};
 		_device_ctx->PSSetShaderResources(Texture_CSM, UINT(std::size(views)), views);
 	}

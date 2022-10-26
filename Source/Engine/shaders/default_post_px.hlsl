@@ -1,4 +1,3 @@
-
 Texture2D<float4>      g_world : register(t0);
 
 cbuffer ShaderConsts : register(b0) 

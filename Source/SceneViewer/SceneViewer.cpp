@@ -204,17 +204,17 @@ void SceneViewer::start()
 	}
 
 	f32 world_size = c_grid_size * c_grid_spacing;
-	u32 n_lights_x = 1;
-	u32 n_lights_y = 1;
-	for(u32 y = 0; y < n_lights_y; ++y)
+	u32 nLightsY = 8;
+	u32 nLightsX = 8; 
+	for(u32 y = 0; y < nLightsX; ++y)
 	{
-		for(u32 x = 0; x < n_lights_x; ++x)
+		for(u32 x = 0; x < nLightsY; ++x)
 		{
-			f32 spacing_x = world_size / n_lights_x;
-			f32 spacing_y = world_size / n_lights_y;
+			f32 spacing_x = world_size / nLightsY;
+			f32 spacing_y = world_size / nLightsX;
 			float3 pos = float3(10.0f + x * spacing_x, 1.0f, y * spacing_y);
-			f32 x_dt = (float)x / n_lights_x;
-			f32 y_dt = (float)y / n_lights_y;
+			f32 x_dt = (float)x / nLightsY;
+			f32 y_dt = (float)y / nLightsX;
 
 			RenderWorldLightRef light = render_world->create_light(RenderWorldLight::LightType::Spot);
 			RenderWorldCamera::CameraSettings light_proj_settings{};
@@ -354,12 +354,13 @@ void SceneViewer::debug_ui()
 		"(Input) Base Color",
 		"(Input) Roughness",
 		"(Input) Metalness",
-		"(Input) Normals",
-		"(Input) AO",
-		"(Input) Normals (World)",
-		"(Input) Vertex Colours",
-		"(Input) UV",
-		"Lighting",
+		"(Input) Normals",         // 4
+		"(Input) AO",              // 5
+		"(Input) Normals (World)", // 6
+		"(Input) Vertex Colours",  // 7
+		"(Input) UV",              // 8
+		"Lighting",                // 9
+		"ForwardPlusDebug"         // 10
 	};
 
 	ImGui::Combo("Debug Mode", &g_DebugMode, items, static_cast<int>(std::size(items)));

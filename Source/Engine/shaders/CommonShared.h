@@ -15,6 +15,8 @@
 #define Texture_Depth 6
 #define Texture_Cube 7
 #define Texture_Lights 8
+#define Texture_ForwardPlusPerTileLightIndex 9
+#define Texture_ForwardPlusTileInfo 10 
 
 #define Sampler_Linear 0
 #define Sampler_Point 1
@@ -27,7 +29,7 @@
 #define FPLUS_NUM_THREADS_X FPLUS_TILE_RES 
 #define FPLUS_NUM_THREADS_Y FPLUS_TILE_RES 
 #define FPLUS_NUM_THREADS_PER_TILE FPLUS_NUM_THREADS_X * FPLUS_NUM_THREADS_Y
-#define FPLUS_MAX_NUM_LIGHTS_PER_TILE 26
+#define FPLUS_MAX_NUM_LIGHTS_PER_TILE 200
 
 
 // Define type overrides for both C++ and hlsl

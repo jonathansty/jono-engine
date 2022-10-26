@@ -134,7 +134,8 @@ struct GlobalCB
 
 	u32 num_directional_lights;
 	u32 num_lights; // local lights
-	float padding[2];
+	u32 num_tiles_x;
+	float padding;
 };
 
 __declspec(align(16)) 
@@ -342,6 +343,7 @@ private:
 
 	u32 _num_lights;
 	u32 _num_directional_lights;
+	u32 _num_tiles_x;
 
 	// Cubemap
 	ComPtr<ID3D11Texture2D> _cubemap;

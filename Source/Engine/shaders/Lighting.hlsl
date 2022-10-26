@@ -5,6 +5,8 @@
 #include "CommonScene.hlsl"
 #include "Shadows.hlsl"
 
+
+
 static const float PI = 3.14159265f;
 
 struct Material
@@ -168,8 +170,10 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 
 	float3 final_colour = float3(0.0,0.0,0.0);
 
+	uint numDirectionalLights = g_NumDirectionalLights;
+	numDirectionalLights = 0;
 	[loop]
-	for (unsigned int i = 0; i < num_directional_lights; ++i) 
+	for (unsigned int i = 0; i < numDirectionalLights; ++i) 
 	{
 		float3 light = -normalize(g_Lights[i].direction);
 		float3 light_colour = g_Lights[i].colour;
@@ -206,12 +210,28 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		#endif
 	}
 
+	// Do F+ lighting
+	uint numLights = g_NumLights; 
+
+#define USE_CULLED_RESULT 1
+
+#if USE_CULLED_RESULT==1 
+	uint firstLightIdx;
+	GetLightListInfo(g_PerTileInfo, numLights, firstLightIdx);
+#endif
+
 	// #TODO: More optimized lighting? E.g. look up lights in tiled buffer or deferred lighting rendering models to capture range?
 	[loop]
-	for(unsigned int i = 0; i < num_lights; ++i)
+	for(unsigned int i = 0; i < numLights; ++i)
 	{
-		ProcessedLight light = g_lights[i];
+		// Map our light idx to the global idx
+		#if USE_CULLED_RESULT==1
+		uint light_global_idx = g_PerTileLightIndexBuffer[firstLightIdx + i];
+		#else
+		uint light_global_idx = i;
+		#endif
 
+		ProcessedLight light = g_lights[light_global_idx];
 		float3 pos = light.position;
 
 		// Calculate the light vector from world pos on pixel to light world pos

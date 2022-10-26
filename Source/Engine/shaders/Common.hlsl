@@ -58,4 +58,14 @@ float ConvertProjDepthToView(in float4x4 projInv, float z)
 	return z;
 }
 
+// Useful globals used all across the shaders
+
+// The screen position in pixels
+static float2 g_ScreenPosition;
+
+void SetupGlobals(VS_OUT vsOut)
+{
+	g_ScreenPosition = vsOut.position;
+}
+
 #endif

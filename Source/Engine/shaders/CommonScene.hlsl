@@ -17,8 +17,10 @@ cbuffer WorldConstants : CB_SLOT(Buffer_Global)
 	AmbientInfo g_Ambient;
 	// Directional lights are packed into the world constant buffer
 	DirectionalLightInfo g_Lights[MAX_DIRECTIONAL_LIGHTS]; 
-	unsigned int num_directional_lights; // Describes the number of directional lights
-	unsigned int num_lights; // Describes the number of local lights in the structured buffer
+	unsigned int g_NumDirectionalLights; // Describes the number of directional lights
+	unsigned int g_NumLights; // Describes the number of local lights in the structured buffer
+
+	uint g_NumTilesX; // Describes the number of tiles for F+ culling
 };
 
 cbuffer DebugCB : CB_SLOT(Buffer_Debug)
@@ -42,5 +44,10 @@ Texture2D<float>      g_depth : SRV_SLOT(Texture_Depth);
 TextureCube<float4>   g_cube : SRV_SLOT(Texture_Cube);
 
 StructuredBuffer<ProcessedLight> g_lights : SRV_SLOT(Texture_Lights);
+
+Buffer<uint> g_PerTileLightIndexBuffer : SRV_SLOT(Texture_ForwardPlusPerTileLightIndex);
+Buffer<uint> g_PerTileInfo : SRV_SLOT(Texture_ForwardPlusTileInfo);
+
+#include "ForwardPlus.hlsl"
 
 #endif // _COMMON_SCENE_H_

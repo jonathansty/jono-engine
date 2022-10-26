@@ -4,6 +4,9 @@
 
 float4 main(VS_OUT vout) : SV_Target 
 {
+	// Setup the gblobals for the opaque pass
+	SetupGlobals(vout);
+
 	// Construct our material from sampled data
 	Material material = EvaluateMaterial(vout);
 	return EvaluateLighting(material, vout);

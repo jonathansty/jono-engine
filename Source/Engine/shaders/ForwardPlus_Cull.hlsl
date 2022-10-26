@@ -14,7 +14,6 @@ cbuffer Data : register(b0)
 groupshared uint ldsZMax;
 groupshared uint ldsZMin;
 groupshared uint ldsLightIdxCounterA = 0;
-groupshared uint ldsLightIdxCounterB = FPLUS_MAX_NUM_LIGHTS_PER_TILE;
 groupshared uint ldsLightIdx[FPLUS_MAX_NUM_LIGHTS_PER_TILE];
 
 struct Frustum
@@ -28,14 +27,6 @@ Texture2D<float> g_depth : register(t1);
 
 RWBuffer<uint> g_PerTileLightIndexBuffer : register(u0);
 RWBuffer<uint> g_PerTileInfo : register(u1);
-
-#if 1 
-
-bool IsVisible(Frustum f, ProcessedLight light)
-{
-	return true;
-}
-
 
 float4 CreatePlaneEquation(float4 b, float4 c)
 {
@@ -55,18 +46,14 @@ float GetSignedDistanceFromPlane(float4 p, float4 eqn)
 	return dot(eqn.xyz, p.xyz) + eqn.w;
 }
 
-void CullLights(in uint3 dispatchThreadID, in uint index,  uint3 groupID)
+void CullLights(in uint3 dispatchThreadID, in uint thread_index,  uint3 groupID)
 {
 	// First thread of the group is the one who does all the setup
-	if(index == 0)
+	if(thread_index == 0)
 	{
-		// #TODO: Handle LDS resetting on the first thread
 		ldsZMin = 0x7f7fffff;
 		ldsZMax = 0;
 		ldsLightIdxCounterA = 0;
-		ldsLightIdxCounterB = FPLUS_MAX_NUM_LIGHTS_PER_TILE;
-
-		ldsLightIdx[0] = 0;
 	}
 
 	// Calculate the frustum
@@ -95,8 +82,6 @@ void CullLights(in uint3 dispatchThreadID, in uint index,  uint3 groupID)
 	}
 	GroupMemoryBarrierWithGroupSync();
 
-
-
 	// Calculate the min/max depth for each tile using LDS and memory barriers
 	{
 		float opaqueDepth = g_depth.Load(uint3(dispatchThreadID.x, dispatchThreadID.y, 0)).x;
@@ -112,56 +97,103 @@ void CullLights(in uint3 dispatchThreadID, in uint index,  uint3 groupID)
 	float maxZ = asfloat(ldsZMax);
 	float minZ = asfloat(ldsZMin);
 
- #if 1
-	for(uint i = index; i < g_NumberOfLights; i += FPLUS_NUM_THREADS_PER_TILE)
+ #if 0
+	if(thread_index == 0)
 	{
-		float4 center = float4(g_Lights[index].position, 1.0f);
-		float r = g_Lights[index].range;
-
-		// Convert the center into view space to do culling
-		center.xyz = mul(float4(center.xyz, 1.0f), g_View).xyz;
-
-		if( (GetSignedDistanceFromPlane(center, frustumEqn[0]) < r) &&
-			(GetSignedDistanceFromPlane(center, frustumEqn[1]) < r) &&
-			(GetSignedDistanceFromPlane(center, frustumEqn[2]) < r) &&
-			(GetSignedDistanceFromPlane(center, frustumEqn[3]) < r) )
+		for(uint i = 0; i < g_NumberOfLights; i += 1)
 		{
-			uint dstIdx = 0;
-			InterlockedAdd(ldsLightIdxCounterA, 1, dstIdx);
-			ldsLightIdx[dstIdx] = index;
+			float4 center = float4(g_Lights[i].position, 1.0f);
+			float r = g_Lights[i].range;
+
+			// Convert the center into view space to do culling
+			center.xyz = mul(float4(center.xyz, 1.0f), g_View).xyz;
+
+			//	#TODO: Fix light frustum and calculation
+			// if( (GetSignedDistanceFromPlane(center, frustumEqn[0]) < r) &&
+			// 	(GetSignedDistanceFromPlane(center, frustumEqn[1]) < r) &&
+			// 	(GetSignedDistanceFromPlane(center, frustumEqn[2]) < r) &&
+			// 	(GetSignedDistanceFromPlane(center, frustumEqn[3]) < r) )
+
+			// if(i < FPLUS_MAX_NUM_LIGHTS_PER_TILE)
+			{
+				ldsLightIdx[i] = i;
+			}
+			// {
+			// 	// If light is in depth range
+			// 	// if( center.z + r > minZ
+			// 	//  || center.z - r < maxZ)
+			// 	{
+			// 		uint dstIdx = 0;
+			// 		InterlockedAdd(ldsLightIdxCounterA, 1, dstIdx);
+			// 		ldsLightIdx[dstIdx] = i;
+			// 	}
+			// }
+		}
+		ldsLightIdxCounterA = min((uint)FPLUS_MAX_NUM_LIGHTS_PER_TILE,g_NumberOfLights);
+	}
+#endif
+
+	{
+		uint lightsToCull = g_NumberOfLights / FPLUS_NUM_THREADS_PER_TILE;
+		uint start = lightsToCull * thread_index;
+		for(uint i = start; i < lightsToCull; i += 1)
+		{
+			float4 center = float4(g_Lights[i].position, 1.0f);
+			float r = g_Lights[i].range;
+
+			// Convert the center into view space to do culling
+			center.xyz = mul(float4(center.xyz, 1.0f), g_View).xyz;
+
+			//	#TODO: Fix light frustum and calculation
+			// if( (GetSignedDistanceFromPlane(center, frustumEqn[0]) < r) &&
+			// 	(GetSignedDistanceFromPlane(center, frustumEqn[1]) < r) &&
+			// 	(GetSignedDistanceFromPlane(center, frustumEqn[2]) < r) &&
+			// 	(GetSignedDistanceFromPlane(center, frustumEqn[3]) < r) )
+			{
+				// If light is in depth range
+				// if( center.z + r > minZ
+				//  || center.z - r < maxZ)
+				{
+					uint dstIdx = 0;
+					InterlockedAdd(ldsLightIdxCounterA, 1, dstIdx);
+					ldsLightIdx[dstIdx] = i;
+				}
+			}
+
 		}
 	}
 
 	GroupMemoryBarrierWithGroupSync();
-	#endif
 }
 
 [numthreads(FPLUS_NUM_THREADS_X,FPLUS_NUM_THREADS_Y,1)]
-void main(uint3 dispatchThreadID : SV_DispatchThreadID, uint3 groupThreadID : SV_GroupThreadID, uint3 groupID : SV_GroupID) 
+void main(uint3 dispatchThreadID : SV_DispatchThreadID, uint3 localIdx : SV_GroupThreadID, uint3 groupID : SV_GroupID) 
 {
 	// Flatten to a 1D ID
-	uint thread_index = groupThreadID.x + groupThreadID.y * FPLUS_NUM_THREADS_X;
+	uint localIdxFlattened = localIdx.x + localIdx.y * FPLUS_NUM_THREADS_X;
 
 	// 2: Frustum cull all the lights locally for this tile
-	CullLights(dispatchThreadID, thread_index, groupID);
-
+	CullLights(dispatchThreadID, localIdxFlattened, groupID);
 
 	// Write out all lights
 	{
-		uint tileIdxFlattened = groupID.x + groupID.y * g_NumTilesX;
+		uint tileIdx = groupID.x + groupID.y * g_NumTilesX;
+		uint startIndex = FPLUS_MAX_NUM_LIGHTS_PER_TILE * tileIdx;
 
-		uint startOffset = FPLUS_MAX_NUM_LIGHTS_PER_TILE * tileIdxFlattened; // Add 1 here to allow the first item to be used to store the counter
-
-		for(uint i = thread_index; i < ldsLightIdxCounterA; i+= FPLUS_NUM_THREADS_PER_TILE)
-		{
-			g_PerTileLightIndexBuffer[startOffset+i] = ldsLightIdx[i];
-		}
+		// for(uint i = localIdxFlattened; i < ldsLightIdxCounterA; i+= FPLUS_NUM_THREADS_PER_TILE)
+		// {
+		// 	g_PerTileLightIndexBuffer[startIndex+i] = ldsLightIdx[i];
+		// }
 
 		// First uint contains how many lights were in the tile
-		if(thread_index == 0)
+		if(localIdxFlattened == 0)
 		{
-			g_PerTileInfo[tileIdxFlattened] = ldsLightIdxCounterA;
+			for(uint i = 0; i < ldsLightIdxCounterA; i += 1)
+			{
+				g_PerTileLightIndexBuffer[startIndex+i] = ldsLightIdx[i];
+			}
+
+			g_PerTileInfo[tileIdx] = ldsLightIdxCounterA;
 		}
 	}
 }
-#endif

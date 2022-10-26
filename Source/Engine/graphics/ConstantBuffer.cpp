@@ -36,11 +36,11 @@ std::unique_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 	{
 		D3D11_SUBRESOURCE_DATA data{};
 		data.pSysMem = initialData;
-		ENSURE_HR(device->CreateBuffer(&buff, &data, &b));
+		ENSURE_HR(device->CreateBuffer(&buff, &data, b.GetAddressOf()));
 	}
 	else
 	{
-		ENSURE_HR(device->CreateBuffer(&buff, nullptr, &b));
+		ENSURE_HR(device->CreateBuffer(&buff, nullptr, b.GetAddressOf()));
 	}
 	result->_buffer = b;
 	result->_size = buff.ByteWidth;

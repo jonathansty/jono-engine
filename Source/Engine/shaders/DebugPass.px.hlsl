@@ -11,9 +11,12 @@
 #define VisualizeMode_VertexColour 7
 #define VisualizeMode_UV 8
 #define VisualizeMode_Lighting 9
+#define VisualizeMode_ForwardPlusDebug 10
 
 float4 main(VS_OUT vout) : SV_Target
 {
+	SetupGlobals(vout);
+
 	float2 uv = vout.uv;
 
 	Material material = EvaluateMaterial(vout);
@@ -68,6 +71,17 @@ float4 main(VS_OUT vout) : SV_Target
 		material.albedo = float3(1.0f,1.0f,1.0f);
 		material.metalness = 0.0;
 		output = EvaluateLighting(material, vout);
+	}
+	else if(g_VisualizeMode == VisualizeMode_ForwardPlusDebug)
+	{
+		uint numLights = 0;
+		uint firstLightIdx = 0;
+		
+		// Output the tile pos x and y to verify the grid calculations
+		// output = float3((GetTilePos(g_ScreenPosition).x % 15) / 15.0f ,(GetTilePos(g_ScreenPosition).y % 15.0f) / 15.0f , 0.0f);
+
+		GetLightListInfo(g_PerTileInfo, numLights, firstLightIdx);
+		output = float3(firstLightIdx, firstLightIdx, firstLightIdx) / FPLUS_MAX_NUM_LIGHTS_PER_TILE;
 	}
 	
 
