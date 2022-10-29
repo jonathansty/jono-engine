@@ -8,7 +8,7 @@ public:
 	RTTIDebugOverlay() : DebugOverlay(false, "RTTIOverlay") {}
 	~RTTIDebugOverlay() {}
 
-	virtual void render_overlay() override
+	virtual void RenderOverlay() override
 	{
 		if (_isOpen)
 		{

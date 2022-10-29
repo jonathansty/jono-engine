@@ -16,9 +16,9 @@ public:
 	RendererDebugTool(Renderer* owner);
 	virtual ~RendererDebugTool() {}
 
-	void render_overlay() override;
+	void RenderOverlay() override;
 
-	void render_3d(ID3D11DeviceContext* ctx) override;
+	void Render3D(ID3D11DeviceContext* ctx) override;
 
 private:
 	void render_shader_tool();

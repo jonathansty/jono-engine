@@ -235,7 +235,7 @@ bool D2DRenderContext::draw_background(u32 color)
 	return true;
 }
 
-bool D2DRenderContext::draw_line(float2 p1, float2 p2, double strokeWidth /*= 1.0*/)
+bool D2DRenderContext::draw_line(float2 p1, float2 p2, float strokeWidth /*= 1.0*/)
 {
 	//_rt->DrawLine(D2D1::Point2F((FLOAT)p1.x, (FLOAT)p1.y), D2D1::Point2F((FLOAT)p2.x, (FLOAT)p2.y), _brush, (FLOAT)strokeWidth);
 	//return true;
@@ -424,7 +424,7 @@ bool D2DRenderContext::fill_polygon(const std::vector<POINT>& ptsArr, unsigned i
 	return false;
 }
 
-bool D2DRenderContext::draw_rect(Rect rect, double strokeWidth /*= 1*/)
+bool D2DRenderContext::draw_rect(Rect rect, float strokeWidth /*= 1*/)
 {
 	if ((rect.right < rect.left) || (rect.bottom < rect.top))
 	{
@@ -450,15 +450,15 @@ bool D2DRenderContext::draw_rect(Rect rect, double strokeWidth /*= 1*/)
 		3,0,7
 	};
 	command._vtx_buffer = {
-		Vert{ Shaders::float2({ rect.left, rect.top }), Shaders::float2({ 0.0f, 0.0f }) },
-		Vert{ Shaders::float2({ rect.right, rect.top }), Shaders::float2({ 0.0f, 0.0f }) },
-		Vert{ Shaders::float2({ rect.right, rect.bottom }), Shaders::float2({ 0.0f, 0.0f }) },
-		Vert{ Shaders::float2({ rect.left, rect.bottom }), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2(rect.left, rect.top ), Shaders::float2( 0.0f, 0.0f ) },
+		Vert{ Shaders::float2(rect.right, rect.top ), Shaders::float2( 0.0f, 0.0f ) },
+		Vert{ Shaders::float2(rect.right, rect.bottom), Shaders::float2( 0.0f, 0.0f ) },
+		Vert{ Shaders::float2(rect.left, rect.bottom), Shaders::float2( 0.0f, 0.0f ) },
 
-		Vert{ Shaders::float2({ rect.left + strokeWidth, rect.top + strokeWidth }), Shaders::float2({ 0.0f, 0.0f }) },
-		Vert{ Shaders::float2({ rect.right - strokeWidth, rect.top + strokeWidth }), Shaders::float2({ 0.0f, 0.0f }) },
-		Vert{ Shaders::float2({ rect.right - strokeWidth, rect.bottom - strokeWidth }), Shaders::float2({ 0.0f, 0.0f }) },
-		Vert{ Shaders::float2({ rect.left + strokeWidth, rect.bottom - strokeWidth }), Shaders::float2({ 0.0f, 0.0f }) },
+		Vert{ Shaders::float2(rect.left + strokeWidth, rect.top + strokeWidth), Shaders::float2(0.0f, 0.0f) },
+		Vert{ Shaders::float2(rect.right - strokeWidth, rect.top + strokeWidth), Shaders::float2(0.0f, 0.0f) },
+		Vert{ Shaders::float2(rect.right - strokeWidth, rect.bottom - strokeWidth), Shaders::float2(0.0f, 0.0f) },
+		Vert{ Shaders::float2(rect.left + strokeWidth, rect.bottom - strokeWidth), Shaders::float2(0.0f, 0.0f) },
 
 	};
 
@@ -472,7 +472,7 @@ bool D2DRenderContext::draw_rect(Rect rect, double strokeWidth /*= 1*/)
 	return true;
 }
 
-bool D2DRenderContext::draw_rect(float2 topLeft, float2 rightbottom, double strokeWidth /*= 1.0*/)
+bool D2DRenderContext::draw_rect(float2 topLeft, float2 rightbottom, float strokeWidth /*= 1.0*/)
 {
 	Rect rect2{ float(topLeft.x), float(topLeft.y), rightbottom.x, rightbottom.y };
 	return draw_rect(rect2, strokeWidth);
@@ -538,7 +538,7 @@ bool D2DRenderContext::fill_rect(int left, int top, int right, int bottom)
 	return fill_rect(rect2);
 }
 
-bool D2DRenderContext::draw_rounded_rect(Rect rect, int radiusX, int radiusY, double strokeWidth /*= 1.0*/)
+bool D2DRenderContext::draw_rounded_rect(Rect rect, int radiusX, int radiusY, float strokeWidth /*= 1.0*/)
 {
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
@@ -546,7 +546,7 @@ bool D2DRenderContext::draw_rounded_rect(Rect rect, int radiusX, int radiusY, do
 	return true;
 }
 
-bool D2DRenderContext::draw_rounded_rect(float2 topLeft, float2 rightbottom, int radiusX, int radiusY, double strokeWidth /*= 1.0*/)
+bool D2DRenderContext::draw_rounded_rect(float2 topLeft, float2 rightbottom, int radiusX, int radiusY, float strokeWidth /*= 1.0*/)
 {
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(rightbottom.x), (FLOAT)(rightbottom.y));
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
@@ -602,7 +602,7 @@ bool D2DRenderContext::fill_rounded_rect(int left, int top, int right, int botto
 	return true;
 }
 
-bool D2DRenderContext::draw_ellipse(float2 centerPt, double radiusX, double radiusY, double strokeWidth /*= 1.0*/)
+bool D2DRenderContext::draw_ellipse(float2 centerPt, double radiusX, double radiusY, float strokeWidth /*= 1.0*/)
 {
 	D2D1_ELLIPSE ellipse = D2D1::Ellipse(D2D1::Point2F((FLOAT)centerPt.x, (FLOAT)centerPt.y), (FLOAT)radiusX, (FLOAT)radiusY);
 

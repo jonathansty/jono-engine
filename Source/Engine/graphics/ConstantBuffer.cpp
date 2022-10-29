@@ -1,6 +1,8 @@
 #include "engine.pch.h"
 #include "ConstantBuffer.h"
 
+#include "Core/Logging.h"
+
 std::unique_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32 size, bool cpu_write /*= false*/, BufferUsage usage /*= BufferUsage::Default*/, void* initialData /*= nullptr*/)
 {
 	std::unique_ptr<ConstantBuffer> result = std::make_unique<ConstantBuffer>();
@@ -32,16 +34,24 @@ std::unique_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 
 
 	ComPtr<ID3D11Buffer> b;
+	HRESULT hr = S_OK;
 	if (initialData)
 	{
 		D3D11_SUBRESOURCE_DATA data{};
 		data.pSysMem = initialData;
-		ENSURE_HR(device->CreateBuffer(&buff, &data, b.GetAddressOf()));
+		hr = device->CreateBuffer(&buff, &data, b.GetAddressOf());
 	}
 	else
 	{
-		ENSURE_HR(device->CreateBuffer(&buff, nullptr, b.GetAddressOf()));
+		hr = device->CreateBuffer(&buff, nullptr, b.GetAddressOf());
 	}
+
+	if(FAILED(hr))
+	{
+		LOG_ERROR(Graphics, "Failed to create a buffer with error: {}", hr);
+		return nullptr;
+	}
+
 	result->_buffer = b;
 	result->_size = buff.ByteWidth;
 	result->_cpu_writeable = cpu_write;

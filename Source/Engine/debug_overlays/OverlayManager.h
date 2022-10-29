@@ -6,28 +6,21 @@ struct IOverlay
 	virtual ~IOverlay() = default;
 
 	// Render function called when building ImGui UI
-	virtual void render_overlay() = 0;
+	virtual void RenderOverlay() = 0;
 
 	// Render function called when rendering the ImGui viewport
-	virtual void render_viewport() {}
+	virtual void RenderViewport() {}
 
-	virtual void render_3d(ID3D11DeviceContext* ctx) {}
+	virtual void Render3D(ID3D11DeviceContext* ctx) {}
 };
 
 class DebugOverlay : public IOverlay
 {
 public:
-	DebugOverlay(bool isOpen, std::string name) 
-		: _isOpen(isOpen)
-		, _name(name)
-	{
-	}
+	DebugOverlay(bool isOpen, std::string name);
 	virtual ~DebugOverlay() = default;
 
-	const char* get_name() const
-	{
-		return _name.c_str();
-	}
+	const char* get_name() const;
 
 	bool get_visible() const { return _isOpen; }
 	void set_visible(bool visible);
@@ -43,15 +36,13 @@ private:
 class OverlayManager : public DebugOverlay
 {
 public:
-	OverlayManager(bool isOpen = false) : DebugOverlay(isOpen, "Overlays") {}
+	OverlayManager(bool isOpen = false)
+			: DebugOverlay(isOpen, "Overlays") {}
 	~OverlayManager();
 
-
-	void render_overlay() override;
-
-	void render_viewport() override;
-
-	void render_3d(ID3D11DeviceContext* ctx) override;
+	void RenderOverlay() override;
+	void RenderViewport() override;
+	void Render3D(ID3D11DeviceContext* ctx) override;
 
 	void register_overlay(DebugOverlay* overlay);
 	void unregister_overlay(DebugOverlay* overlay);
@@ -62,5 +53,4 @@ public:
 
 private:
 	std::unordered_map<std::string, DebugOverlay*> _overlays;
-
 };

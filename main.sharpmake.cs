@@ -12,13 +12,13 @@ public class CliProject : JonaBaseProject
 {
     public CliProject() : base()
     {
-        Name = "cli";
+        Name = "CLI";
     }
 
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        conf.SolutionFolder = "engine";
+        conf.SolutionFolder = Utils.g_FilterFolderEngine;
         conf.Output = Configuration.OutputType.Lib;
     }
 }
@@ -28,13 +28,13 @@ public class CoreProject : JonaBaseProject
 {
     public CoreProject() : base()
     {
-        Name = "core";
+        Name = "Core";
     }
 
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        conf.SolutionFolder = "engine";
+        conf.SolutionFolder = Utils.g_FilterFolderEngine;
         conf.Output = Configuration.OutputType.Lib;
 
         conf.AddPublicDependency<OpTick>(target);
@@ -61,7 +61,7 @@ public class EngineProject : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        conf.SolutionFolder = "engine";
+        conf.SolutionFolder = Utils.g_FilterFolderEngine;
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
@@ -150,7 +150,7 @@ public class SceneViewerProject : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        conf.SolutionFolder = "games";
+        conf.SolutionFolder = Utils.g_FilterFolderGame;
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
@@ -174,7 +174,7 @@ public class PathFindingProject : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        conf.SolutionFolder = "games";
+        conf.SolutionFolder = Utils.g_FilterFolderGame;
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 

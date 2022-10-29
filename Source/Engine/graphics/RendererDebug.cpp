@@ -18,13 +18,13 @@ RendererDebugTool::RendererDebugTool(Renderer* owner)
 {
 }
 
-void RendererDebugTool::render_overlay()
+void RendererDebugTool::RenderOverlay()
 {
 	render_debug_tool();
 	render_shader_tool();
 }
 
-void RendererDebugTool::render_3d(ID3D11DeviceContext* ctx)
+void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
 {
 	if (!_batch)
 	{
@@ -145,6 +145,8 @@ void RendererDebugTool::render_shader_tool()
 	static bool s_open = false;
 	if (s_open)
 	{
+		ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
+		ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_FirstUseEver);
 		if (ImGui::Begin("Shaders", &s_open))
 		{
 			ImGui::BeginTable("##ShaderTable", 2);
@@ -176,6 +178,8 @@ void RendererDebugTool::render_shader_tool()
 
 void RendererDebugTool::render_debug_tool()
 {
+	ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
+	ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_FirstUseEver);
 	if (ImGui::Begin("RendererDebug"), _isOpen)
 	{
 		ImGui::Checkbox("Enable Shadow Rendering", &Graphics::s_EnableShadowRendering);

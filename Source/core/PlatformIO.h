@@ -46,8 +46,9 @@ using IFileRef = std::shared_ptr<IFile>;
 // IPlatformIO
 //
 // Interface defining the available operations to interact with the file system.
-struct IPlatformIO
+class IPlatformIO
 {
+public:
 	virtual ~IPlatformIO() = default;
 
 	virtual string resolve_path(string const& path) = 0;

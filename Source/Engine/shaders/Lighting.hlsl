@@ -225,11 +225,11 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 	for(unsigned int i = 0; i < numLights; ++i)
 	{
 		// Map our light idx to the global idx
-		#if USE_CULLED_RESULT==1
+#if USE_CULLED_RESULT==1
 		uint light_global_idx = g_PerTileLightIndexBuffer[firstLightIdx + i];
-		#else
+#else
 		uint light_global_idx = i;
-		#endif
+#endif
 
 		ProcessedLight light = g_lights[light_global_idx];
 		float3 pos = light.position;

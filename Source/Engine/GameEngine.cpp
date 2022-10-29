@@ -39,39 +39,66 @@ static constexpr uint32_t max_task_threads = 8;
 enki::TaskScheduler* GameEngine::s_TaskScheduler;
 
 // Thread ID used to identify if we are on the main thread.
-std::thread::id GameEngine::s_main_thread;
+std::thread::id GameEngine::s_MainThreadID;
 
 // #TODO: Remove this once full 2D graphics has been refactored into it's own context
 #if FEATURE_D2D
 using Graphics::bitmap_interpolation_mode;
 #endif
 
+static constexpr Shaders::float2 s_Gravity = Shaders::float2(0.0f, -9.81f);
+
 GameEngine::GameEngine()
-		: m_hInstance(0)
-		, m_hWindow(NULL)
-		, m_Icon(0)
-		, m_SmallIcon(0) //changed in june 2014, reset to false in dec 2014
-		, m_WindowWidth(0)
-		, m_WindowHeight(0)
-		, m_ShouldSleep(true)
-		, m_Game(nullptr)
-		, m_CanPaint2D(false)
-		, m_VSyncEnabled(true)
-		, m_DefaultFont(nullptr)
-		, m_InputManager(nullptr)
-		, m_AudioSystem(nullptr)
-		, m_PhysicsStepEnabled(true)
-		, m_ViewportIsFocused(true) // TODO: When implementing some kind of editor system this should be updating
-		, m_RecreateGameTextureRequested(false)
-		, m_RecreateSwapchainRequested(false)
-		, m_DebugPhysicsRendering(false)
-		, m_Gravity(float2(0, 9.81))
-		, _show_debuglog(true)
-		, _show_viewport(true)
-		, _show_imgui_demo(false)
-		, _show_implot_demo(false)
-		, _show_entity_editor(false)
-		, m_Renderer(nullptr)
+	: m_Window(nullptr)
+	, m_GpuTimings()
+	, m_CommandLine()
+	, m_Title()
+	, m_Icon()
+	, m_SmallIcon()
+	, m_WindowWidth(0)
+	, m_WindowHeight(0)
+	, m_ViewportWidth(0)
+	, m_ViewportHeight(0)
+	, m_ViewportPos()
+	, m_ViewportImGuiID()
+	, m_DockImGuiID()
+	, m_DefaultFont(nullptr)
+	, m_Box2DWorld(nullptr)
+	, m_Box2DContactFilter(nullptr)
+	, m_Box2DTime(0.0)
+#if FEATURE_D2D
+	, m_Box2DDebugRenderer()
+#endif
+	, m_Box2DBeginContactData()
+	, m_Box2DEndContactData()
+	, m_Box2DImpulseData()
+	, m_Gravity(s_Gravity)
+	, m_FrameTimer(nullptr)
+	, m_InputManager(nullptr)
+	, m_AudioSystem(nullptr)
+	, m_MetricsOverlay(nullptr)
+	, m_OverlayManager(nullptr)
+	, m_GameCfg()
+	, m_EngineCfg()
+	, m_PlatformIO(nullptr)
+	, m_RenderWorld(nullptr)
+	, m_World(nullptr)
+	, m_Game(nullptr)
+	, m_IsRunning(false)
+	, m_CanPaint2D(false)
+	, m_ViewportIsFocused(false)
+	, m_VSyncEnabled(false)
+	, m_DebugPhysicsRendering(false)
+	, m_RecreateGameTextureRequested(false)
+	, m_RecreateSwapchainRequested(false)
+	, m_PhysicsStepEnabled(false)
+	, m_ShowDebugLog(true)
+	, m_ShowViewport(true)
+	, m_ShowImguiDemo(false)
+	, m_ShowImplotDemo(false)
+	, m_ShowEntityEditor(false)
+	, m_Renderer(nullptr)
+	, m_D2DRenderContext(nullptr)
 {
 	ASSERT(!GetGlobalContext()->m_Engine);
 	GetGlobalContext()->m_Engine = this;
@@ -87,6 +114,10 @@ GameEngine::~GameEngine()
 void GameEngine::set_game(unique_ptr<AbstractGame>&& gamePtr)
 {
 	m_Game = std::move(gamePtr);
+
+	ASSERT(!GetGlobalContext()->m_Game);
+	GetGlobalContext()->m_Game = m_Game.get();
+
 }
 
 void GameEngine::set_title(const string& titleRef)
@@ -125,7 +156,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	// Validate engine settings
 	ASSERTMSG(!(m_EngineCfg.d2d_use && (m_EngineCfg.d3d_use && m_EngineCfg.d3d_msaa_mode != MSAAMode::Off)), " Currently the engine does not support rendering D2D with MSAA because DrawText does not respond correctly!");
 
-	s_main_thread = std::this_thread::get_id();
+	s_MainThreadID = std::this_thread::get_id();
 
 	// initialize d2d for WIC
 	SUCCEEDED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED));
@@ -138,9 +169,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	m_OverlayManager->register_overlay(new RTTIDebugOverlay());
 	m_OverlayManager->register_overlay(new ImGuiDemoOverlay());
 	m_OverlayManager->register_overlay(new ImGuiAboutOverlay());
-
-	// set the instance member variable of the game engine
-	this->m_hInstance = hInstance;
 
 	// Initialize enkiTS
 	ASSERT(!GetGlobalContext()->m_TaskScheduler);
@@ -498,18 +526,14 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 				ImGui::NewFrame();
 
-				build_ui();
-				ImVec2 game_width = { get_width() / 2.0f, get_height() / 2.0f };
-				ImGui::SetNextWindowSize(game_width, ImGuiCond_FirstUseEver);
-				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
-				ImGui::PopStyleVar(1);
+				BuildEditorUI();
 
 				if (m_Game)
 				{
 					MEMORY_TAG(MemoryCategory::Debug);
 					m_Game->debug_ui();
 				}
-				m_OverlayManager->render_overlay();
+				m_OverlayManager->RenderOverlay();
 
 				ImGui::EndFrame();
 				ImGui::UpdatePlatformWindows();
@@ -664,7 +688,7 @@ void GameEngine::d2d_render()
 	// if drawing failed, terminate the game
 	if (!result)
 	{
-		PostMessage(GameEngine::get_window(), WM_DESTROY, 0, 0);
+		SDL_Quit();
 	}
 }
 #endif
@@ -677,7 +701,7 @@ bool GameEngine::InitWindow(int iCmdShow)
 	int iXWindowPos = (GetSystemMetrics(SM_CXSCREEN) - iWindowWidth) / 2;
 	int iYWindowPos = (GetSystemMetrics(SM_CYSCREEN) - iWindowHeight) / 2;
 
-	u32 flags = 0;
+	u32 flags = SDL_WINDOW_RESIZABLE;
 	if (m_GameCfg.m_WindowFlags & GameCfg::WindowFlags::StartMaximized)
 	{
 		flags |= SDL_WINDOW_MAXIMIZED;
@@ -693,15 +717,6 @@ bool GameEngine::InitWindow(int iCmdShow)
 
 	SDL_GetWindowSize(m_Window, &m_WindowWidth, &m_WindowHeight);
 	assert(m_WindowWidth > 0 && m_WindowHeight > 0);
-
-	SDL_SysWMinfo info;
-	SDL_VERSION(&info.version);
-	if (SDL_GetWindowWMInfo(m_Window, &info))
-	{
-		m_hWindow = info.info.win.window;
-		m_hInstance = info.info.win.hinstance;
-	}
-
 
 	return true;
 }
@@ -727,16 +742,6 @@ void GameEngine::enable_aa(bool isEnabled)
 void GameEngine::enable_physics_debug_rendering(bool isEnabled)
 {
 	m_DebugPhysicsRendering = isEnabled;
-}
-
-HINSTANCE GameEngine::get_instance() const
-{
-	return m_hInstance;
-}
-
-HWND GameEngine::get_window() const
-{
-	return m_hWindow;
 }
 
 string GameEngine::get_title() const
@@ -766,12 +771,8 @@ ImVec2 GameEngine::get_viewport_size(int) const
 
 ImVec2 GameEngine::get_viewport_pos(int id /*= 0*/) const
 {
-	RECT rect;
-	GetWindowRect(get_window(), &rect);
-
-	return {
-		(float)m_ViewportPos.x - rect.left, (float)m_ViewportPos.y - rect.top
-	};
+	SDL_Rect const* rect = SDL_GetWindowMouseRect(m_Window);
+	return ImVec2((float)m_ViewportPos.x - rect->x, (float)m_ViewportPos.y - rect->y);
 }
 
 int GameEngine::get_width() const
@@ -791,12 +792,8 @@ bool GameEngine::get_sleep() const
 
 float2 GameEngine::get_mouse_pos_in_window() const
 {
-	RECT rect;
-	if (GetWindowRect(get_window(), &rect))
-	{
-		return float2{ (float)m_InputManager->get_mouse_position().x, (float)m_InputManager->get_mouse_position().y } - float2(rect.left, rect.top);
-	}
-	return {};
+	SDL_Rect const* rect = SDL_GetWindowMouseRect(m_Window);
+	return float2{ (float)m_InputManager->get_mouse_position().x, (float)m_InputManager->get_mouse_position().y } - float2(rect->x, rect->y);
 }
 
 float2 GameEngine::get_mouse_pos_in_viewport() const
@@ -932,16 +929,6 @@ bool GameEngine::is_mouse_button_released(int button) const
 
 void GameEngine::ProcessEvent(SDL_Event& e)
 {
-	// Get window rectangle and HDC
-	RECT windowClientRect;
-	GetClientRect(m_hWindow, &windowClientRect);
-
-	RECT usedClientRect;
-	usedClientRect.left = 0;
-	usedClientRect.top = 0;
-	usedClientRect.right = get_width();
-	usedClientRect.bottom = get_height();
-
 	// Route Windows messages to game engine member functions
 	switch (e.type)
 	{
@@ -954,21 +941,14 @@ void GameEngine::ProcessEvent(SDL_Event& e)
 			}
 			else if (e.window.event == SDL_WINDOWEVENT_MAXIMIZED)
 			{
-				SetWindowPos(m_hWindow, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
-				RECT r;
-				::GetClientRect(m_hWindow, &r);
-				m_WindowWidth = r.right - r.left;
-				m_WindowHeight = r.bottom - r.top;
+				SDL_SetWindowPosition(m_Window, 0, 0);
+				SDL_GetWindowSize(m_Window, &m_WindowWidth, &m_WindowHeight);
 
 				this->m_RecreateSwapchainRequested = true;
 			}
 			else if (e.window.event == SDL_WINDOWEVENT_RESIZED)
 			{
-				RECT r;
-				::GetClientRect(m_hWindow, &r);
-				m_WindowWidth = r.right - r.left;
-				m_WindowHeight = r.bottom - r.top;
-
+				SDL_GetWindowSize(m_Window, &m_WindowWidth, &m_WindowHeight);
 				this->m_RecreateSwapchainRequested = true;
 				return;
 			}
@@ -1207,42 +1187,70 @@ void GameEngine::render_view(Graphics::RenderPass::Value pass)
 	m_Renderer->render_view(m_RenderWorld, pass);
 }
 
-void GameEngine::build_ui()
+void GameEngine::BuildEditorUI()
 {
 	MEMORY_TAG(MemoryCategory::Debug);
 
+	static bool s_DockspaceInitialized = false;
+
+	static ImGuiID s_ViewportDockID;
+	static ImGuiID s_PropertyDockID;
+	static ImGuiID s_DebugLogDockID;
+	static constexpr const char* dockSpaceRoot = "Dockspace##Main";
+
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	{
-		ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-		{
-			ImGuiViewport* viewport = ImGui::GetMainViewport();
-			ImGui::SetNextWindowPos(viewport->WorkPos);
-			ImGui::SetNextWindowSize(viewport->WorkSize);
-			ImGui::SetNextWindowViewport(viewport->ID);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-			window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-			window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-		}
-
-		ImGui::Begin("Engine Editor", nullptr, window_flags);
-		ImGui::PopStyleVar(3);
-
-		// DockSpace
-		ImGuiID dockspace_id = ImGui::GetID("Dockspace##Main");
-		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f));
-
-		build_menubar();
-		build_debug_log();
-		build_viewport();
-
-		ImGui::End();
+		ImGui::SetNextWindowPos(viewport->WorkPos);
+		ImGui::SetNextWindowSize(viewport->WorkSize);
+		ImGui::SetNextWindowViewport(viewport->ID);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+		window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 	}
 
-	if (_show_implot_demo)
+	ImGui::Begin("EngineDockspace", nullptr, window_flags);
+	ImGui::PopStyleVar(3);
+
+
+	ImGuiID dockSpaceID = ImGui::GetID((void*)dockSpaceRoot);
+	m_DockImGuiID = dockSpaceID;
+
+	ImGui::DockSpace(dockSpaceID);
+	if (!s_DockspaceInitialized)
 	{
-		ImPlot::ShowDemoWindow(&_show_implot_demo);
+		//s_DockspaceInitialized = true;
+
+		//ImGui::DockBuilderRemoveNode(dockSpaceID);
+		//ImGui::DockBuilderAddNode(dockSpaceID, ImGuiDockNodeFlags_DockSpace);
+		//ImGui::DockBuilderGetNode(dockSpaceID)->LocalFlags &= ~ImGuiDockNodeFlags_CentralNode;
+		//ImGui::DockBuilderSetNodeSize(dockSpaceID, viewport->Size);
+		//ImGui::DockBuilderSetNodePos(dockSpaceID, ImVec2(0.f, 0.f));
+
+		//s_PropertyDockID = ImGui::DockBuilderSplitNode(m_DockImGuiID, ImGuiDir_Right, 0.35f, nullptr, &m_DockImGuiID);
+		//s_DebugLogDockID = ImGui::DockBuilderSplitNode(m_DockImGuiID, ImGuiDir_Down, 0.2f, nullptr, &m_DockImGuiID);
+		//s_ViewportDockID = m_DockImGuiID;
+
+		//m_PropertyDockID = s_PropertyDockID;
+
+		//ImGui::DockBuilderFinish(m_DockImGuiID);
+
+		//ImGui::DockBuilderFinish(m_DockImGuiID);
 	}
+
+	BuildMenuBarUI();
+	BuildViewportUI(nullptr);
+	BuildDebugLogUI(nullptr);
+
+	if (m_ShowImplotDemo)
+	{
+		ImGui::SetNextWindowDockID(s_PropertyDockID, ImGuiCond_FirstUseEver);
+		ImPlot::ShowDemoWindow(&m_ShowImplotDemo);
+	}
+
+	ImGui::End();
 }
 
 void GameEngine::render()
@@ -1309,6 +1317,7 @@ void GameEngine::present()
 	{
 		flags |= DXGI_PRESENT_ALLOW_TEARING;
 	}
+	d3d_ctx->OMSetRenderTargets(0, nullptr, nullptr);
 	d3d_swapchain->Present(m_VSyncEnabled ? 1 : 0, flags);
 
 	auto& timer = m_GpuTimings[idx];
@@ -1319,12 +1328,19 @@ void GameEngine::present()
 	ImGui::RenderPlatformWindowsDefault();
 }
 
-void GameEngine::build_debug_log()
+void GameEngine::BuildDebugLogUI(ImGuiID* dockID)
 {
-	if (!_show_debuglog)
+	if (!m_ShowDebugLog)
+	{
 		return;
+	}
 
-	if (ImGui::Begin("Output Log", &_show_debuglog, 0))
+	if (dockID)
+	{
+		ImGui::SetNextWindowDockID(*dockID, ImGuiCond_Once);
+	}
+
+	if (ImGui::Begin("Output Log", &m_ShowDebugLog, 0))
 	{
 
 		static bool s_scroll_to_bottom = true;
@@ -1391,12 +1407,18 @@ void GameEngine::build_debug_log()
 	ImGui::End();
 }
 
-void GameEngine::build_viewport()
+void GameEngine::BuildViewportUI(ImGuiID* dockID)
 {
-	if (!_show_viewport)
+	if (!m_ShowViewport)
+	{
 		return;
+	}
 
-	if (ImGui::Begin("Viewport##GameViewport", &_show_viewport))
+	if (dockID)
+	{
+		ImGui::SetNextWindowDockID(*dockID, ImGuiCond_Once);
+	}
+	if (ImGui::Begin("Viewport##GameViewport", &m_ShowViewport))
 	{
 		ImGui::SetCursorPos(ImVec2(0, 0));
 
@@ -1454,7 +1476,7 @@ void GameEngine::build_viewport()
 		//ImGuizmo::SetDrawlist();
 		//ImGuizmo::SetRect(_viewport_pos.x, _viewport_pos.y, float1(_viewport_width), float1(_viewport_height));
 
-		get_overlay_manager()->render_viewport();
+		get_overlay_manager()->RenderViewport();
 
 // Draw any gizmos
 #if 0
@@ -1476,7 +1498,7 @@ void GameEngine::build_viewport()
 	ImGui::End();
 }
 
-void GameEngine::build_menubar()
+void GameEngine::BuildMenuBarUI()
 {
 	if (ImGui::BeginMenuBar())
 	{
@@ -1503,23 +1525,23 @@ void GameEngine::build_menubar()
 		{
 			if (ImGui::MenuItem("[DEMO] ImPlot"))
 			{
-				_show_implot_demo = !_show_implot_demo;
+				m_ShowImplotDemo = !m_ShowImplotDemo;
 			}
 
 			if (ImGui::MenuItem("Debug Log"))
 			{
-				_show_debuglog = !_show_debuglog;
+				m_ShowDebugLog = !m_ShowDebugLog;
 			}
 			if (ImGui::MenuItem("Viewport"))
 			{
-				_show_viewport = !_show_viewport;
+				m_ShowViewport = !m_ShowViewport;
 			}
 			if (ImGui::MenuItem("Entity Editor"))
 			{
-				_show_entity_editor = !_show_entity_editor;
+				m_ShowEntityEditor = !m_ShowEntityEditor;
 				if (auto editor = get_overlay_manager()->get_overlay("EntityEditor"))
 				{
-					get_overlay_manager()->get_overlay("EntityDebugOverlay")->set_visible(_show_entity_editor);
+					get_overlay_manager()->get_overlay("EntityDebugOverlay")->set_visible(m_ShowEntityEditor);
 				}
 			}
 

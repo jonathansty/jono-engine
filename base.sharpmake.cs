@@ -6,6 +6,10 @@ using Sharpmake;
 
 public class Utils
 {
+    public static string g_FilterFolderEngine = "Engine";
+    public static string g_FilterFolderGame = "Samples";
+    public static string SourceFolderName = "Source";
+
     public static Target[] Targets
     {
         get
@@ -20,7 +24,6 @@ public class Utils
         }
     }
 
-    public static string SourceFolderName = "Source";
 
     public static void ConfigureProjectName(Project.Configuration conf, Target target)
     {

@@ -993,8 +993,6 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 
 		}
 	}
-
-	_device_ctx->PSSetShaderResources(0, 0, nullptr);
 }
 
 void Renderer::prepare_shadow_pass()
@@ -1175,7 +1173,6 @@ void Renderer::render_post_predebug()
 	ShaderRef post_vs_shader = ShaderCache::instance()->find_or_create(params);
 
 	_device_ctx->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN,0);
-	_device_ctx->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
 	_device_ctx->IASetInputLayout(post_vs_shader->get_input_layout().Get());
 	_device_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -1326,7 +1323,7 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 
 	{
 		GPU_SCOPED_EVENT(_user_defined_annotation, "Post:RenderOverlays");
-		overlays->render_3d(_device_ctx);
+		overlays->Render3D(_device_ctx);
 	}
 
 	D3D11_VIEWPORT vp{};

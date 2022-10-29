@@ -89,7 +89,8 @@ struct GlobalContext
 	class GameEngine* m_Engine;
 	class InputManager* m_InputManager;
 	class enki::TaskScheduler* m_TaskScheduler;
-	struct IO::IPlatformIO* m_PlatformIO;
+	class IO::IPlatformIO* m_PlatformIO;
+	class AbstractGame* m_Game;
 };
 GlobalContext* GetGlobalContext();
 
@@ -156,8 +157,6 @@ public:
 	bool is_mouse_button_released(int button) const;
 
 	// Accessor Methods
-	HINSTANCE get_instance() const;
-	HWND get_window() const;
 	string get_title() const;
 	WORD get_icon() const;
 	WORD get_small_icon() const;
@@ -191,7 +190,7 @@ public:
 
 	// Task scheduler used during resource loading
 	static enki::TaskScheduler* s_TaskScheduler;
-	static std::thread::id s_main_thread;
+	static std::thread::id s_MainThreadID;
 
 	// Enables/disables physics simulation stepping.
 	void set_physics_step(bool bEnabled);
@@ -217,6 +216,10 @@ public:
 	void set_build_menu_callback(std::function<void(BuildMenuOrder)> fn) { _build_menu = fn; }
 
 	IDWriteFactory* GetDWriteFactory() const { return m_Renderer->get_raw_dwrite_factory(); }
+
+	struct SDL_Window* GetWindow() const { return m_Window; }
+
+	ImGuiID GetPropertyDockID() const { return m_PropertyDockID; }
 
 private:
 	// Internal run function called by GameEngine::run
@@ -252,7 +255,6 @@ private:
 	// This for begin and endcontacts
 	void CallListeners();
 
-	void build_ui();
 
 	void render();
 	void present();
@@ -260,17 +262,13 @@ private:
 	// Renders the main view
 	void render_view(Graphics::RenderPass::Value pass);
 
-	void build_debug_log();
-	void build_viewport();
-	void build_menubar();
+	void BuildEditorUI();
+	void BuildDebugLogUI(ImGuiID* dockID = nullptr);
+	void BuildViewportUI(ImGuiID* dockID = nullptr);
+	void BuildMenuBarUI();
 
+	ImGuiID m_PropertyDockID;
 
-	// State for debug tools
-	bool _show_debuglog;
-	bool _show_viewport;
-	bool _show_imgui_demo;
-	bool _show_implot_demo;
-	bool _show_entity_editor;
 
 	// Callback for applications to create custom menu
 	std::function<void(BuildMenuOrder)> _build_menu;
@@ -286,29 +284,21 @@ private:
 		};
 	};
 
-	std::array<Perf::Timer, 50> m_GpuTimings;
-
-	cli::CommandLine m_CommandLine;
-
-	// Member Variables
-	HINSTANCE m_hInstance;
-	HWND      m_hWindow;
-
 	struct SDL_Window* m_Window;
 
-	string    m_Title;
-	WORD      m_Icon, m_SmallIcon;
-	s32 m_WindowWidth;
-	s32 m_WindowHeight;
-	bool      m_ShouldSleep;
+	std::array<Perf::Timer, 50> m_GpuTimings;
+	cli::CommandLine m_CommandLine;
 
-	u32 m_ViewportWidth;
-	u32 m_ViewportHeight;
-	float2 m_ViewportPos;
+	string m_Title;
+	WORD m_Icon, m_SmallIcon;
 
+	s32     m_WindowWidth;
+	s32     m_WindowHeight;
+	u32     m_ViewportWidth;
+	u32     m_ViewportHeight;
+	float2  m_ViewportPos;
 	ImGuiID m_ViewportImGuiID;
-
-	unique_ptr<AbstractGame> m_Game;
+	ImGuiID m_DockImGuiID;
 
 	// Fonts used for text rendering
 	shared_ptr<Font> m_DefaultFont;
@@ -334,7 +324,7 @@ private:
 
 	MetricsOverlay* m_MetricsOverlay;
 	std::shared_ptr<OverlayManager> m_OverlayManager;
-	GameCfg m_GameCfg;
+	GameCfg   m_GameCfg;
 	EngineCfg m_EngineCfg;
 
 	std::shared_ptr<IO::IPlatformIO> m_PlatformIO;
@@ -342,19 +332,24 @@ private:
 	// Game world and render world should be in sync!
 	std::shared_ptr<RenderWorld>      m_RenderWorld;
 	std::shared_ptr<framework::World> m_World;
+	unique_ptr<AbstractGame>          m_Game;
 
-	// Handle to the render thread. Owned by the game engine
-	std::unique_ptr<RenderThread> m_RenderThread;
+	bool m_IsRunning : 1; 
+	bool m_ShouldSleep : 1;
+	bool m_CanPaint2D : 1;
+	bool m_ViewportIsFocused : 1;
+	bool m_VSyncEnabled : 1;
+	bool m_DebugPhysicsRendering : 1;
+	bool m_RecreateGameTextureRequested : 1;
+	bool m_RecreateSwapchainRequested : 1; 
+	bool m_PhysicsStepEnabled : 1; 
 
-	// State
-	bool m_CanPaint2D;
-	bool m_VSyncEnabled;
-	bool m_DebugPhysicsRendering;
-	bool m_ViewportIsFocused;
-	bool m_RecreateGameTextureRequested;
-	bool m_RecreateSwapchainRequested;
-	bool m_PhysicsStepEnabled;
-	bool m_IsRunning;
+	// State for debug tools
+	bool m_ShowDebugLog;
+	bool m_ShowViewport;
+	bool m_ShowImguiDemo;
+	bool m_ShowImplotDemo;
+	bool m_ShowEntityEditor;
 
 
 	std::shared_ptr<Graphics::Renderer> m_Renderer;

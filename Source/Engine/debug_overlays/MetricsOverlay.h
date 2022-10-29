@@ -56,7 +56,7 @@ public:
 	MetricsOverlay(MetricsOverlay const&) = delete;
 	MetricsOverlay& operator=(MetricsOverlay const&) = delete;
 
-	void render_overlay() override;
+	void RenderOverlay() override;
 
 	enum Timer
 	{

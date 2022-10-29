@@ -143,7 +143,7 @@ void EntityDebugOverlay::render_object(rttr::instance& obj)
 	ImGui::PopID();
 }
 
-void EntityDebugOverlay::render_overlay()
+void EntityDebugOverlay::RenderOverlay()
 {
 	if (!_isOpen)
 		return;
@@ -239,7 +239,7 @@ void EntityDebugOverlay::render_overlay()
 	ImGui::End();
 }
 
-void EntityDebugOverlay::render_viewport()
+void EntityDebugOverlay::RenderViewport()
 {
 #if 0
 	static ImGuizmo::OPERATION op = ImGuizmo::OPERATION::TRANSLATE;

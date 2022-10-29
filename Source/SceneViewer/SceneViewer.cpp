@@ -75,7 +75,7 @@ void SceneViewer::initialize(GameCfg& gameSettings)
 	gameSettings.m_WindowHeight = 1080;
 }
 
-std::string show_file_dialog(HWND owner)
+std::string ShowFileDialog(SDL_Window* owner)
 {
 	OPENFILENAMEA ofn;
 	char szFileName[MAX_PATH] = "";
@@ -83,7 +83,7 @@ std::string show_file_dialog(HWND owner)
 	ZeroMemory(&ofn, sizeof(ofn));
 
 	ofn.lStructSize = sizeof(ofn); // SEE NOTE BELOW
-	ofn.hwndOwner = owner;
+	ofn.hwndOwner = nullptr;
 	ofn.lpstrFilter = "Model Files (*.glb;*.gltf)\0*.glb;*.gltf\0All Files (*.*)\0*.*\0\0";
 	ofn.lpstrFile = szFileName;
 	ofn.nMaxFile = MAX_PATH;
@@ -128,7 +128,7 @@ void SceneViewer::start()
 	auto ctx = Graphics::get_ctx();
 
 	// Capture the mouse in the window
-	::SetCapture(GameEngine::instance()->get_window());
+	GetGlobalContext()->m_InputManager->set_cursor_visible(false);
 
 	// Setup the game world
 	using namespace framework;
@@ -339,6 +339,9 @@ void SceneViewer::tick(double deltaTime)
 void SceneViewer::debug_ui()
 {
 	static bool s_open = true;
+
+	ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
+	ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_FirstUseEver);
 	ImGui::Begin("Viewer", &s_open);
 
 	const char* cameras[] = {
@@ -435,7 +438,7 @@ static const char* s_world_path = "Scenes/test_world.scene";
 void SceneViewer::open_file()
 {
 	LOG_VERBOSE(UI, "Opening file...");
-	std::string file = show_file_dialog(GameEngine::instance()->get_window());
+	std::string file = ShowFileDialog(GameEngine::instance()->GetWindow());
 	if (!file.empty())
 	{
 		this->swap_model(file.c_str());

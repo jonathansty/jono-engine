@@ -36,7 +36,7 @@ public:
 
 	bool draw_background(u32 backgroundColor);
 	//! Draws a line from p1 to p2 using the strokewidth
-	bool draw_line(float2 p1, float2 p2, double strokeWidth = 1.0);
+	bool draw_line(float2 p1, float2 p2, float strokeWidth = 1.0f);
 	//! Draws a line from the coordinate defined by x1 and y1 to the coordinate define by x2 and y2
 	bool draw_line(int x1, int y1, int x2, int y2);
 
@@ -61,70 +61,28 @@ public:
 	bool fill_polygon(const std::vector<POINT> &ptsArr, unsigned int count);
 
 	using Rect = D2D1_RECT_F;
-	//! Draws a rectangle defined by a RECT2 struct
-	bool draw_rect(Rect rect, double strokeWidth = 1);
-	//! Draws a rectangle defined by two coordinates: topleft and rightbottom
-	bool draw_rect(float2 topLeft, float2 rightbottom, double strokeWidth = 1.0);
-	//! Draws a rectangle defined by a RECT struct
+
+	bool draw_rect(Rect rect, float strokeWidth = 1);
+	bool draw_rect(float2 topLeft, float2 rightbottom, float strokeWidth = 1.0f);
 	bool draw_rect(RECT rect);
-	//! Draws a rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
 	bool draw_rect(int left, int top, int right, int bottom);
 
-	//! Fills the interior of a rectangle defined by a RECT2 struct
 	bool fill_rect(Rect rect);
-	//! Fills the interior of a rectangle defined by two coordinates: topleft and rightbottom
 	bool fill_rect(float2 topLeft, float2 rightbottom);
-	//! Fills the interior of a rectangle defined by a RECT struct
 	bool fill_rect(RECT rect);
-	//! Fills the interior of a rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
 	bool fill_rect(int left, int top, int right, int bottom);
 
-	//! Draws a rounded rectangle defined by a RECT2 struct,
-	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool draw_rounded_rect(Rect rect, int radiusX, int radiusY, double strokeWidth = 1.0);
-
-	//! Draws a rounded rectangle defined by two coordinates: topleft and rightbottom,
-	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	bool draw_rounded_rect(float2 topLeft, float2 rightbottom, int radiusX, int radiusY, double strokeWidth = 1.0);
-
-	//! Draws a rounded rectangle defined by a RECT struct
-	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
+	bool draw_rounded_rect(Rect rect, int radiusX, int radiusY, float strokeWidth = 1.0f);
+	bool draw_rounded_rect(float2 topLeft, float2 rightbottom, int radiusX, int radiusY, float strokeWidth = 1.0f);
 	bool draw_rounded_rect(RECT rect, int radiusX, int radiusY);
-
-	//! Draws a rounded rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
-	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	bool draw_rounded_rect(int left, int top, int right, int bottom, int radiusX, int radiusY);
 
-	//! Fills the interior of a rounded rectangle defined by a RECT2 struct,
-	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	bool fill_rounded_rect(Rect rect, int radiusX, int radiusY);
-
-	//! Fills the interior of a rounded rectangle defined by two coordinates: topleft and rightbottom,
-	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	bool fill_rounded_rect(float2 topLeft, float2 rightbottom, int radiusX, int radiusY);
-
-	//! Fills the interior of a rounded rectangle defined by a RECT struct
-	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	bool fill_rounded_rect(RECT rect, int radiusX, int radiusY);
-
-	//! Fills the interior of a rounded rectangle defined by 4 numbers representing the left side, top side, the right side and the bottom side
-	//!   the x-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
-	//!   the y-radius for the quarter ellipse that is drawn to replace every corner of the rectangle.
 	bool fill_rounded_rect(int left, int top, int right, int bottom, int radiusX, int radiusY);
 
-	//! Draws the outline of the specified ellipse using the specified position and radius
-	//! strokeWidth: The width of the stroke, in device-independent pixels. The value must be greater than or equal to 0.0f.
-	//! If this parameter isn't specified, it defaults to 1.0f. The stroke is centered on the line.
-	bool draw_ellipse(float2 centerPt, double radiusX, double radiusY, double strokeWidth = 1.0);
-
-	//! Draws the outline of the specified ellipse using the specified position and radius
+	bool draw_ellipse(float2 centerPt, double radiusX, double radiusY, float strokeWidth = 1.0f);
 	bool draw_ellipse(int centerX, int centerY, int radiusX, int radiusY);
 
 	//! Paints the interior of the specified ellipse using the specified position and radius

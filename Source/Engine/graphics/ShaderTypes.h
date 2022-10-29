@@ -9,13 +9,16 @@ struct float2
 {
 	float2() = default;
 
+	constexpr float2(f32 x, f32 y)
+			: x(x), y(y) {}
+
 	float2(hlslpp::float2 const& pos)
 			: x(pos.x)
 			, y(pos.y)
 	{
 	}
 
-	operator hlslpp::float2()
+	operator hlslpp::float2() const
 	{
 		return hlslpp::float2(x, y);
 	}

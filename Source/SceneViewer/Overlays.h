@@ -15,9 +15,9 @@ public:
 
 	void render_object(rttr::instance& obj);
 
-	virtual void render_overlay() override;
+	virtual void RenderOverlay() override;
 
-	virtual void render_viewport() override;
+	virtual void RenderViewport() override;
 
 private:
 	framework::EntityHandle _selected;

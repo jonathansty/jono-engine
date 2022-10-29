@@ -17,12 +17,14 @@ MetricsOverlay::~MetricsOverlay()
 
 }
 
-void MetricsOverlay::render_overlay()
+void MetricsOverlay::RenderOverlay()
 {
 	auto engine = GameEngine::instance();
 	if (_isOpen)
 	{
 
+		ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
+		ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_FirstUseEver);
 		ImGui::Begin(_name.c_str(), &_isOpen);
 
 		static bool s_EnableVsync = GameEngine::instance()->get_vsync();
