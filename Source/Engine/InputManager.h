@@ -1,48 +1,46 @@
 #pragma once
 
 // The values of keycode match up with the codes coming in from the Win32 event api
-enum class KeyCode : u32
+enum class KeyCode : SDL_Keycode
 {
-	Back = 0x08,
-	Tab = 0x09,
-	LeftAlt = 18,
-	Clear = 0x0C,
-	Return = 0x0D,
-	// 0x0E-0x0F undefined
-	Shift = 0x10,
-	Control = 0x11,
-	Menu = 0x12,
-	Pause = 0x13,
-	Capslock = 0x14,
-	// 0x15 - 0x1A: IME key codes
-	Escape = 0x1B,
-	Space = 0x20,
-	PageUp = 0x21,
-	PageDown = 0x22,
-	End = 0x23,
-	Home = 0x24,
-	Left = 0x25,
-	Up = 0x26,
-	Right = 0x27,
-	Down = 0x28,
-	Select = 0x29,
-	Execute = 0x2B,
-	Snapshot = 0x2C,
-	Insert = 0x2D,
-	Delete = 0x2E,
-	Help = 0x2F,
-	Num0 = 0x30,
-	Num1 = 0x31,
-	Num2 = 0x32,
-	Num3 = 0x33,
-	Num4 = 0x34,
-	Num5 = 0x35,
-	Num6 = 0x36,
-	Num7 = 0x37,
-	Num8 = 0x38,
-	Num9 = 0x39,
+	Back = SDLK_AC_BACK,
+	Tab = SDLK_TAB,
+	LAlt = SDLK_LALT,
+	Clear = SDLK_CLEAR,
+	Return = SDLK_RETURN,
+	LShift = SDLK_LSHIFT,
+	LControl = SDLK_LCTRL,
+	Menu = SDLK_MENU,
+	Pause = SDLK_PAUSE,
+	Capslock = SDLK_CAPSLOCK,
+	Escape = SDLK_ESCAPE,
+	Space = SDLK_SPACE,
+	PageUp = SDLK_PAGEUP,
+	PageDown = SDLK_PAGEDOWN,
+	End = SDLK_END,
+	Home = SDLK_HOME,
+	Left = SDLK_LEFT,
+	Up = SDLK_UP,
+	Right = SDLK_RIGHT,
+	Down = SDLK_DOWN,
+	Select = SDLK_SELECT,
+	Execute = SDLK_EXECUTE,
+	PrintScreen = SDLK_PRINTSCREEN,
+	Insert = SDLK_INSERT,
+	Delete = SDLK_DELETE,
+	Help = SDLK_HELP,
+	Num0 = SDLK_KP_0,
+	Num1 = SDLK_KP_1,
+	Num2 = SDLK_KP_2,
+	Num3 = SDLK_KP_3,
+	Num4 = SDLK_KP_4,
+	Num5 = SDLK_KP_5,
+	Num6 = SDLK_KP_6,
+	Num7 = SDLK_KP_7,
+	Num8 = SDLK_KP_8,
+	Num9 = SDLK_KP_9,
 	// 0x3a - 0x40 undefined
-	A = 0x41,
+	A = SDLK_a,
 	B,
 	C,
 	D,
@@ -67,7 +65,7 @@ enum class KeyCode : u32
 	W,
 	X,
 	Y,
-	Z = 0x5A
+	Z = SDLK_z
 };
 
 inline u32 get_raw(KeyCode code)
@@ -97,7 +95,7 @@ public:
 	void update();
 
 	int2 get_mouse_position(bool previousFrame = false) const;
-	int2 get_mouse_delta() const { return _mouse_delta; }
+	int2 get_mouse_delta() const { return m_MouseDelta; }
 	f32 get_scroll_delta() const { return _mouse_wheel; }
 
 	bool is_key_down(KeyCode key) const;
@@ -112,9 +110,14 @@ public:
 	void set_cursor_visible(bool visible);
 
 private:
-	using KeyState = bool[2];
-	using KeyHandler = std::function<void(WPARAM, LPARAM)>;
-	using MouseHandler = std::function<void(WPARAM, LPARAM)>;
+	struct KeyState
+	{
+		bool pressed;
+		bool prevPressed;
+	};
+
+	using KeyHandler = std::function<void(SDL_Event& e)>;
+	using MouseHandler = std::function<void(SDL_Event& e)>;
 
 	// Input handling is done by registering a bunch of handlers into fixed size arrays
 	void register_key_handler(UINT msg, KeyHandler handler);
@@ -123,7 +126,8 @@ private:
 	void register_mouse_handler(UINT msg, MouseHandler handler);
 	void register_mouse_handler(std::vector<UINT> msgs, MouseHandler handler);
 
-	bool handle_events(UINT msg, WPARAM wParam, LPARAM lParam);
+	bool handle_events(SDL_Event& e);
+
 
 	// IDs to index into our state arrays
 	// Mainly used for convenience and to avoid hardcoding numbers
@@ -134,16 +138,19 @@ private:
 	std::array<int2, 2> _mouse_pos;
 	f32 _mouse_wheel;
 
-	std::array<KeyState, 5> _mouse_buttons;
+	static constexpr u32 s_MaxMouseButtons = 5;
+	static constexpr u32 s_MaxKeys = SDL_NUM_SCANCODES;
+	static constexpr u32 s_MaxMouseHandlers = SDL_MOUSEWHEEL - SDL_MOUSEMOTION + 1;
+	static constexpr u32 s_MaxKeyHandlers = SDL_TEXTEDITING_EXT - SDL_KEYDOWN + 1;
 
-	std::array<KeyHandler, WM_KEYLAST - WM_KEYFIRST> _key_handlers;
-	std::array<MouseHandler, WM_MOUSELAST - WM_MOUSEFIRST> _mouse_handlers;
+	std::array<KeyState,     s_MaxMouseButtons>  m_MouseButtons;
+	std::array<KeyHandler,   s_MaxKeyHandlers>   m_KeyHandlers;
+	std::array<MouseHandler, s_MaxMouseHandlers> m_MouseHandlers;
+	std::array<KeyState,     s_MaxKeys>          m_Keys;
 
-	std::unordered_map<u32, KeyState> _keys;
-	std::unordered_map<KeyCode, u32> _vk_to_scan;
-	int2 _mouse_delta;
+	int2 m_MouseDelta;
 
-	bool _capture_mouse;
+	bool m_CaptureMouse;
 
 	friend class GameEngine;
 };

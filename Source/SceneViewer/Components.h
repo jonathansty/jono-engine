@@ -84,7 +84,7 @@ public:
 
 	void render()
 	{
-		GameEngine::instance()->_d2d_ctx->draw_bitmap(_bmp.get(), (int)(-_bmp->get_width() / 2.0), (int)(-_bmp->get_height() / 2.0));
+		//GameEngine::instance()->_d2d_ctx->draw_bitmap(_bmp.get(), (int)(-_bmp->get_width() / 2.0), (int)(-_bmp->get_height() / 2.0));
 	}
 
 	unique_ptr<Bitmap> _bmp;

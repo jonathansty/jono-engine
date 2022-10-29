@@ -47,7 +47,7 @@ void OrbitCamera::tick(double dt)
 
 		// Rotate camera
 		float2 mouse_delta = float2(input_manager->get_mouse_delta());
-		if (input_manager->is_mouse_button_down(0))
+		if (input_manager->is_mouse_button_down(SDL_BUTTON_LEFT))
 		{
 			_timer -= mouse_delta.x * f32_dt * 0.5f;
 			_up_timer += mouse_delta.y * f32_dt * 0.5f;
@@ -59,7 +59,7 @@ void OrbitCamera::tick(double dt)
 		float3 pos = camera->get_position();
 
 		float3 localPan = float3(0.0f, 0.0f, 0.0f);
-		if (input_manager->is_mouse_button_down(1))
+		if (input_manager->is_mouse_button_down(SDL_BUTTON_RIGHT))
 		{
 			float4x4 view = camera->get_view();
 

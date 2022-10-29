@@ -1,9 +1,9 @@
 #pragma once
 
-struct GameSettings final
+struct GameCfg final
 {
-	GameSettings();
-	~GameSettings();
+	GameCfg();
+	~GameCfg();
 	enum class FullScreenMode
 	{
 		Windowed,

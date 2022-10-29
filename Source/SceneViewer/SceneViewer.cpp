@@ -58,7 +58,7 @@ extern int g_DebugMode;
 {
 }
 
-void SceneViewer::configure_engine(EngineSettings& engineSettings)
+void SceneViewer::configure_engine(EngineCfg& engineSettings)
 {
 	engineSettings.d2d_use = false;
 
@@ -68,9 +68,9 @@ void SceneViewer::configure_engine(EngineSettings& engineSettings)
 	engineSettings.max_frame_time = 1.0 / 72.0;
 }
 
-void SceneViewer::initialize(GameSettings& gameSettings)
+void SceneViewer::initialize(GameCfg& gameSettings)
 {
-	gameSettings.m_FullscreenMode = GameSettings::FullScreenMode::Windowed;
+	gameSettings.m_FullscreenMode = GameCfg::FullScreenMode::Windowed;
 	gameSettings.m_WindowWidth = 1920;
 	gameSettings.m_WindowHeight = 1080;
 }
@@ -286,12 +286,12 @@ void SceneViewer::tick(double deltaTime)
 		_light_tick -= 0.5f;
 	}
 
-	if (input_manager->is_key_pressed(KeyCode::R) && input_manager->is_key_down(KeyCode::Control))
+	if (input_manager->is_key_pressed(KeyCode::R) && input_manager->is_key_down(KeyCode::LControl))
 	{
 		rebuild_shaders();
 	}
 
-	if (input_manager->is_key_pressed(KeyCode::O) && input_manager->is_key_down(KeyCode::Control))
+	if (input_manager->is_key_pressed(KeyCode::O) && input_manager->is_key_down(KeyCode::LControl))
 	{
 		open_file();
 	}
@@ -520,7 +520,7 @@ void SceneViewer::save_world(const char* path)
 {
 	using namespace serialization;
 
-	auto io = GameEngine::instance()->io();
+	auto io = GetGlobalContext()->m_PlatformIO;
 	std::shared_ptr<IO::IFile> file = io->open(path, IO::Mode::Write, true);
 	assert(file);
 

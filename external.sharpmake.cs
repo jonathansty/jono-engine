@@ -113,6 +113,7 @@ public class ImGui : ExternalProject
         base.ConfigureAll(conf, target);
 
         conf.Output = Configuration.OutputType.Lib;
+        conf.IncludePaths.Add(Path.Combine(ExternalDir, "SDL2/SDL2-2.24.1/include/SDL2"));
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]");
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]/examples");
     }
@@ -240,3 +241,27 @@ public class DirectXTK : ExternalProject
 
 
 
+[Export]
+public class  SDL2 : ExternalProject
+{
+    public SDL2() : base()
+    {
+        Name = "SDL2";
+        SourceRootPath = Path.Combine(ExternalDir, "SDL2/");
+    }
+    
+    override public void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        conf.Output = Configuration.OutputType.None;
+        conf.IncludePaths.Add(Path.Combine(ExternalDir, "SDL2/SDL2-2.24.1/include"));
+        conf.IncludePaths.Add(Path.Combine(ExternalDir, "SDL2/SDL2-2.24.1/include/SDL"));
+        conf.LibraryPaths.Add(Path.Combine(ExternalDir, "SDL2/SDL2-2.24.1/lib/x64"));
+        conf.LibraryFiles.AddRange(new string[]{
+            "SDL2.lib", "SDL2main.lib"
+        });
+        conf.TargetCopyFiles.Add(Path.Combine(ExternalDir, "SDL2/SDL2-2.24.1/lib/x64/SDL2.dll"));
+        conf.TargetCopyFilesPath = conf.TargetPath;
+    }
+}

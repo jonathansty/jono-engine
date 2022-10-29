@@ -7,7 +7,7 @@ enum class MSAAMode
 	MSAA_4x,
 };
 
-struct EngineSettings
+struct EngineCfg
 {
 	// Allow 2D rendering
 	bool d2d_use = false;

@@ -3,7 +3,7 @@
 #include "CommandLine.h"
 
 
-cli::CommandLine cli::parse(const char** argvs, const int argc)
+cli::CommandLine cli::parse(char** argvs, int argc)
 {
 	std::string cmdLine = "";
 	for (int i = 0; i < argc; ++i)

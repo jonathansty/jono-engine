@@ -22,16 +22,16 @@ void FreeCam::tick(double deltaTime)
 	if (!has_viewport_focus)
 		return;
 
-	if(manager->is_mouse_button_pressed(0))
+	if(manager->is_mouse_button_pressed(SDL_BUTTON_LEFT))
 	{
 		manager->set_cursor_visible(false);
 	}
-	if(manager->is_mouse_button_released(0))
+	if(manager->is_mouse_button_released(SDL_BUTTON_LEFT))
 	{
 		manager->set_cursor_visible(true);
 	}
 
-	if (!manager->is_mouse_button_down(0))
+	if (!manager->is_mouse_button_down(SDL_BUTTON_LEFT))
 	{
 		return;
 	}
@@ -75,7 +75,7 @@ void FreeCam::tick(double deltaTime)
 		pos += Math::c_up * c_speed * deltaTime;
 	}
 
-	if(manager->is_key_down(KeyCode::Control))
+	if(manager->is_key_down(KeyCode::LControl))
 	{
 		pos -= Math::c_up * c_speed * deltaTime;
 	}

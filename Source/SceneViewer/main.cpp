@@ -7,7 +7,7 @@
 
 #include "Graphics/ShaderCompiler.h"
 
-int main(const int argcs, const char** argvs)
+int main(int argcs, char** argvs)
 {
 	MemoryTracker::init();
 
@@ -39,7 +39,7 @@ int main(const int argcs, const char** argvs)
 		game_ptr = make_unique<SceneViewer>(scene);
 	}
 
-	GameEngine::run_game(NULL, cmd, 1, std::move(game_ptr));
+	GameEngine::Run(NULL, cmd, 1, std::move(game_ptr));
 
 	get_memory_tracker()->DumpLeakInfo();
 

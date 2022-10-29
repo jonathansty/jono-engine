@@ -14,8 +14,8 @@ public:
 	SceneViewer(std::string const& path);
 	virtual ~SceneViewer();
 
-	virtual void configure_engine(EngineSettings &engineSettings) override;
-	virtual void initialize(GameSettings& gameSettings);
+	virtual void configure_engine(EngineCfg &engineSettings) override;
+	virtual void initialize(GameCfg& gameSettings);
 	virtual void start() override;
 	virtual void end() override;
 

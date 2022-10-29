@@ -31,14 +31,14 @@ void MetricsOverlay::render_overlay()
 			engine->set_vsync(s_EnableVsync);
 		}
 
-		bool enable_limiter = (GameEngine::instance()->_engine_settings.max_frame_time > 0.0f);
-		s32 s_target = enable_limiter ? s32(1.0 / engine->_engine_settings.max_frame_time) : 0;
+		bool enable_limiter = (GameEngine::instance()->m_EngineCfg.max_frame_time > 0.0f);
+		s32 s_target = enable_limiter ? s32(1.0 / engine->m_EngineCfg.max_frame_time) : 0;
 		if (ImGui::Checkbox("Enable Frame Limiter", &enable_limiter))
 		{
-			engine->_engine_settings.max_frame_time = m_Times[Timer::FrameTime] * 0.001;
+			engine->m_EngineCfg.max_frame_time = m_Times[Timer::FrameTime] * 0.001;
 			if(!enable_limiter)
 			{
-				engine->_engine_settings.max_frame_time = 0.0f;
+				engine->m_EngineCfg.max_frame_time = 0.0f;
 			}
 		}
 
@@ -46,7 +46,7 @@ void MetricsOverlay::render_overlay()
 		if(ImGui::InputInt("Target FPS", &s_target, 1, 5, ImGuiInputTextFlags_EnterReturnsTrue) && enable_limiter)
 		{
 			s_target = std::max(30, s_target);
-			engine->_engine_settings.max_frame_time = 1.0 / (f64)s_target;
+			engine->m_EngineCfg.max_frame_time = 1.0 / (f64)s_target;
 		}
 
 		f64 fps = 1.0 / (m_Times[Timer::FrameTime] * 0.001);

@@ -3,7 +3,7 @@
 #include "Graphics.h"
 #include "ConstantBuffer.h"
 #include "StructuredBuffer.h"
-#include "EngineSettings.h"
+#include "EngineCfg.h"
 #include "GameSettings.h"
 
 #include "debug_overlays/OverlayManager.h"
@@ -171,11 +171,13 @@ struct DeviceContext
 class Renderer final
 {
 public:
-	void init(EngineSettings const& settings, GameSettings const& game_settings, cli::CommandLine const& cmdline);
+	void Init(EngineCfg const& settings, GameCfg const& game_settings, cli::CommandLine const& cmdline);
+	void InitForWindow(SDL_Window* wnd);
 
-	void init_for_hwnd(HWND wnd);
+	u32 GetDrawableWidth() const { return m_DrawableAreaWidth; };
+	u32 GetDrawableHeight() const { return m_DrawableAreaHeight; };
 
-	void deinit();
+	void DeInit();
 
 	DeviceContext get_ctx() const { return DeviceContext{ _device, _device_ctx }; }
 
@@ -247,8 +249,8 @@ public:
 
 
 private:
-	void create_factories(EngineSettings const& settings, cli::CommandLine const& cmdline);
-	void create_d2d_factory(EngineSettings const& settings);
+	void create_factories(EngineCfg const& settings, cli::CommandLine const& cmdline);
+	void create_d2d_factory(EngineCfg const& settings);
 	void create_wic_factory();
 	void create_write_factory();
 
@@ -278,11 +280,11 @@ private:
 
 	// 0: Game camera | 1: Debug camera
 	u32 _active_cam = 0;
-	EngineSettings _engine_settings;
-	GameSettings _game_settings;
+	EngineCfg _engine_settings;
+	GameCfg _game_settings;
 
 	MSAAMode _msaa;
-	HWND _wnd;
+	SDL_Window* m_Window;
 
 	DXGI_FORMAT   _swapchain_format;
 	IDXGIFactory* _factory;
@@ -356,6 +358,9 @@ private:
 	u32 _viewport_width;
 	u32 _viewport_height;
 	float2 _viewport_pos;
+
+	u32 m_DrawableAreaWidth;
+	u32 m_DrawableAreaHeight;
 
 	std::unique_ptr<DirectX::CommonStates> _states = nullptr;
 	std::unique_ptr<DirectX::BasicEffect> _common_effect = nullptr;

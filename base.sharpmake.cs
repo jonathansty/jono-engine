@@ -24,7 +24,7 @@ public class Utils
 
     public static void ConfigureProjectName(Project.Configuration conf, Target target)
     {
-        conf.Name = @"[target.Optimization] [target.OutputType]";
+        conf.Name = @"[target.Optimization]";
 
         conf.ProjectFileName = "[project.Name]_[target.DevEnv]_[target.Platform]";
         conf.ProjectPath = @"[project.SharpmakeCsPath]\build\projects";

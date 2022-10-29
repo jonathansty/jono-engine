@@ -97,6 +97,11 @@ struct float4x4
 		return result;
 	}
 
+	operator DirectX::XMMATRIX()
+	{
+		return XMLoadFloat4x4((DirectX::XMFLOAT4X4*)data);
+	}
+
 	f32 data[16];
 };
 

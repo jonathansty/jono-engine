@@ -30,7 +30,7 @@ using Helpers::SafeRelease;
 static f32 s_box_size = 15.0f;
 
 
-void Renderer::init(EngineSettings const& settings, GameSettings const& game_settings, cli::CommandLine const& cmdline)
+void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli::CommandLine const& cmdline)
 {
 	MEMORY_TAG(MemoryCategory::Graphics);
 
@@ -119,26 +119,23 @@ void Renderer::init(EngineSettings const& settings, GameSettings const& game_set
 
 }
 
-void Renderer::init_for_hwnd(HWND wnd)
+void Renderer::InitForWindow(SDL_Window* window)
 {
 	MEMORY_TAG(MemoryCategory::Graphics);
 
-	assert(!_wnd);
-	_wnd = wnd;
+	assert(!m_Window);
+	m_Window = window;
+	SDL_GetWindowSize(window, (int*)&m_DrawableAreaWidth, (int*)&m_DrawableAreaHeight);
 
-	RECT r{};
-	if (::GetWindowRect(wnd, &r))
+
 	{
-		u32 w = r.right - r.left;
-		u32 h = r.bottom - r.top;
-
 		// Initially start out with the window as our viewport. This will most likely get
 		// resized when ImGui creates our viewport control
-		_viewport_width = w;
-		_viewport_height = h;
 		_viewport_pos = { 0, 0 };
+		_viewport_width = m_DrawableAreaWidth;
+		_viewport_height = m_DrawableAreaHeight;
 
-		resize_swapchain(w, h);
+		resize_swapchain(_viewport_width, _viewport_height);
 	}
 
 	if (_d2d_rt)
@@ -151,7 +148,7 @@ void Renderer::init_for_hwnd(HWND wnd)
 	}
 }
 
-void Renderer::deinit()
+void Renderer::DeInit()
 {
 	MEMORY_TAG(MemoryCategory::Graphics);
 
@@ -165,7 +162,7 @@ void Renderer::deinit()
 	release_device_resources();
 }
 
-void Renderer::create_factories(EngineSettings const& settings, cli::CommandLine const& cmdline)
+void Renderer::create_factories(EngineCfg const& settings, cli::CommandLine const& cmdline)
 {
 	MEMORY_TAG(MemoryCategory::Graphics);
 
@@ -226,7 +223,7 @@ void Renderer::create_factories(EngineSettings const& settings, cli::CommandLine
 }
 
 #if FEATURE_D2D
-void Renderer::create_d2d_factory(EngineSettings const& settings)
+void Renderer::create_d2d_factory(EngineCfg const& settings)
 {
 	if (settings.d2d_use)
 	{
@@ -323,7 +320,7 @@ void Renderer::release_frame_resources()
 
 void Renderer::resize_swapchain(u32 w, u32 h)
 {
-	assert(_wnd);
+	assert(m_Window);
 
 	LOG_VERBOSE(Graphics, "Resizing swapchain to {}x{}", w, h);
 	DXGI_FORMAT swapchain_format = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -437,8 +434,17 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
 		desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_SHADER_INPUT;
-		desc.OutputWindow = _wnd;
-		if (_game_settings.m_FullscreenMode == GameSettings::FullScreenMode::Windowed || _game_settings.m_FullscreenMode == GameSettings::FullScreenMode::BorderlessWindowed)
+
+		SDL_SysWMinfo info;
+		SDL_VERSION(&info.version);
+		if(SDL_GetWindowWMInfo(m_Window, &info))
+		{
+			desc.OutputWindow = info.info.win.window;
+		}
+
+		SDL_PixelFormatEnum pixelFormat = (SDL_PixelFormatEnum)SDL_GetWindowPixelFormat(m_Window);
+
+		if (_game_settings.m_FullscreenMode == GameCfg::FullScreenMode::Windowed || _game_settings.m_FullscreenMode == GameCfg::FullScreenMode::BorderlessWindowed)
 		{
 			desc.Windowed = TRUE;
 		}
@@ -466,8 +472,11 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	set_debug_name(backBuffer.Get(), "Swapchain::Output");
 
 	// Create the D2D target for 2D rendering
-	UINT dpi = GetDpiForWindow(_wnd);
-	D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(swapchain_format, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)dpi, (FLOAT)dpi);
+	int display = SDL_GetWindowDisplayIndex(m_Window);
+
+	float dpi, hdpi, vdpi;
+	SDL_GetDisplayDPI(display, &dpi, &hdpi, &vdpi);
+	D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(swapchain_format, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)hdpi, (FLOAT)vdpi);
 
 	ComPtr<IDXGISurface> surface;
 	_output_tex->QueryInterface(surface.GetAddressOf());
@@ -1270,9 +1279,13 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "Post");
 
+
+
+
+
 	PostCB* data = (PostCB*)_cb_post->map(_device_ctx);
-	data->m_ViewportWidth = f32(GameEngine::instance()->get_width());
-	data->m_ViewportHeight = f32(GameEngine::instance()->get_height());
+	data->m_ViewportWidth = (f32)(m_DrawableAreaWidth);
+	data->m_ViewportHeight = (f32)(m_DrawableAreaHeight);
 	_cb_post->unmap(_device_ctx);
 
 	if (!_states)
@@ -1303,8 +1316,10 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 	}
 
 	using namespace DirectX;
-	XMMATRIX xm_view = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&view);
-	XMMATRIX xm_proj = DirectX::XMLoadFloat4x4((XMFLOAT4X4*)&proj);
+	Shaders::float4x4 view4x4 = Shaders::float4x4(view);
+	Shaders::float4x4 proj4x4 = Shaders::float4x4(proj);
+	XMMATRIX xm_view = view4x4;
+	XMMATRIX xm_proj = proj4x4;
 	_common_effect->SetView(xm_view);
 	_common_effect->SetProjection(xm_proj);
 	_common_effect->Apply(_device_ctx);
@@ -1313,6 +1328,15 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 		GPU_SCOPED_EVENT(_user_defined_annotation, "Post:RenderOverlays");
 		overlays->render_3d(_device_ctx);
 	}
+
+	D3D11_VIEWPORT vp{};
+	vp.Width = static_cast<float>(m_DrawableAreaWidth);
+	vp.Height = static_cast<float>(m_DrawableAreaHeight);
+	vp.TopLeftX = 0.0f;
+	vp.TopLeftY = 0.0f;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	_device_ctx->RSSetViewports(1, &vp);
 
 		// Resolve msaa to non msaa for imgui render
 	_device_ctx->ResolveSubresource(_non_msaa_output_tex, 0, _output_tex, 0, _swapchain_format);

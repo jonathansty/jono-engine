@@ -2,8 +2,8 @@
 
 class PhysicsActor;
 
-struct GameSettings;
-struct EngineSettings;
+struct GameCfg;
+struct EngineCfg;
 
 #include "graphics/2DRenderContext.h"
 
@@ -21,9 +21,9 @@ public :
 	AbstractGame(const AbstractGame&) = delete;
 	AbstractGame& operator=(const AbstractGame&) = delete;
 
-	virtual void configure_engine(EngineSettings &){};
+	virtual void configure_engine(EngineCfg &){};
 
-	virtual void initialize(GameSettings &gameSettings) { 	UNREFERENCED_PARAMETER(gameSettings); }								// empty definition
+	virtual void initialize(GameCfg &gameSettings) { 	UNREFERENCED_PARAMETER(gameSettings); }								// empty definition
 	virtual void start(void) {}																// empty definition
 	virtual void end(void) {}																// empty definition
 	#if FEATURE_D2D

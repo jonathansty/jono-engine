@@ -19,7 +19,7 @@ using CommandLine = std::vector<std::string>;
 
 // Parsing interface
 CommandLine parse(std::string cmdLine);
-CommandLine parse(const char** cmdLine, const int argc);
+CommandLine parse(char** cmdLine, int argc);
 
 // Convert parsed command line back into string
 std::string to_string(CommandLine const& cmd);

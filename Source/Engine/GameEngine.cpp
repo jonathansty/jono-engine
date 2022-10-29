@@ -29,6 +29,8 @@
 #include "Graphics/ShaderCache.h"
 #include "Memory.h"
 
+#include <SDL2/SDL.h>
+
 int g_DebugMode = 0;
 
 static constexpr uint32_t max_task_threads = 8;
@@ -39,46 +41,41 @@ enki::TaskScheduler* GameEngine::s_TaskScheduler;
 // Thread ID used to identify if we are on the main thread.
 std::thread::id GameEngine::s_main_thread;
 
-// Window procedure to forward events to the game engine
-LRESULT CALLBACK GameEngine::wndproc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	// Route all Windows messages to the game engine
-	return GameEngine::instance()->handle_event(hWindow, msg, wParam, lParam);
-}
-
 // #TODO: Remove this once full 2D graphics has been refactored into it's own context
 #if FEATURE_D2D
 using Graphics::bitmap_interpolation_mode;
 #endif
 
 GameEngine::GameEngine()
-		: _hinstance(0)
-		, _hwindow(NULL)
-		, _icon(0)
-		, _small_icon(0) //changed in june 2014, reset to false in dec 2014
-		, _window_width(0)
-		, _window_height(0)
-		, _should_sleep(true)
-		, _game(nullptr)
-		, _can_paint(false)
-		, _vsync_enabled(true)
-		, _initialized(false)
-		, _default_font(nullptr)
-		, _input_manager(nullptr)
-		, _xaudio_system(nullptr)
-		, _physics_step_enabled(true)
-		, _is_viewport_focused(true) // TODO: When implementing some kind of editor system this should be updating
-		, _recreate_game_texture(false)
-		, _recreate_swapchain(false)
-		, _debug_physics_rendering(false)
-		, _gravity(float2(0, 9.81))
+		: m_hInstance(0)
+		, m_hWindow(NULL)
+		, m_Icon(0)
+		, m_SmallIcon(0) //changed in june 2014, reset to false in dec 2014
+		, m_WindowWidth(0)
+		, m_WindowHeight(0)
+		, m_ShouldSleep(true)
+		, m_Game(nullptr)
+		, m_CanPaint2D(false)
+		, m_VSyncEnabled(true)
+		, m_DefaultFont(nullptr)
+		, m_InputManager(nullptr)
+		, m_AudioSystem(nullptr)
+		, m_PhysicsStepEnabled(true)
+		, m_ViewportIsFocused(true) // TODO: When implementing some kind of editor system this should be updating
+		, m_RecreateGameTextureRequested(false)
+		, m_RecreateSwapchainRequested(false)
+		, m_DebugPhysicsRendering(false)
+		, m_Gravity(float2(0, 9.81))
 		, _show_debuglog(true)
 		, _show_viewport(true)
 		, _show_imgui_demo(false)
 		, _show_implot_demo(false)
 		, _show_entity_editor(false)
-		, _renderer(nullptr)
+		, m_Renderer(nullptr)
 {
+	ASSERT(!GetGlobalContext()->m_Engine);
+	GetGlobalContext()->m_Engine = this;
+
 	// Seed the random number generator
 	srand((unsigned int)(GetTickCount64()));
 }
@@ -89,21 +86,22 @@ GameEngine::~GameEngine()
 
 void GameEngine::set_game(unique_ptr<AbstractGame>&& gamePtr)
 {
-	_game = std::move(gamePtr);
+	m_Game = std::move(gamePtr);
 }
 
 void GameEngine::set_title(const string& titleRef)
 {
-	_title = titleRef;
+	m_Title = titleRef;
 }
 
-int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
+int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 {
 	JONO_THREAD("MainThread");
 
 	// Create the IO first as our logging depends on creating the right folder
-	_platform_io = IO::create();
-	IO::set(_platform_io);
+	m_PlatformIO = IO::create();
+	IO::set(m_PlatformIO);
+	GetGlobalContext()->m_PlatformIO = m_PlatformIO.get();
 
 	// Create all the singletons needed by the game, the game engine singleton is initialized from run_game
 	Logger::create();
@@ -115,17 +113,17 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 	// Now we can start logging information and we mount our resources volume.
 	LOG_INFO(IO, "Mounting resources directory.");
-	_platform_io->mount("Resources");
+	m_PlatformIO->mount("Resources");
 
-	ASSERTMSG(_game, "No game has been setup! Make sure to first create a game instance before launching the engine!");
-	if (_game)
+	ASSERTMSG(m_Game, "No game has been setup! Make sure to first create a game instance before launching the engine!");
+	if (m_Game)
 	{
 		MEMORY_TAG(MemoryCategory::Game);
-		_game->configure_engine(this->_engine_settings);
+		m_Game->configure_engine(this->m_EngineCfg);
 	}
 
 	// Validate engine settings
-	ASSERTMSG(!(_engine_settings.d2d_use && (_engine_settings.d3d_use && _engine_settings.d3d_msaa_mode != MSAAMode::Off)), " Currently the engine does not support rendering D2D with MSAA because DrawText does not respond correctly!");
+	ASSERTMSG(!(m_EngineCfg.d2d_use && (m_EngineCfg.d3d_use && m_EngineCfg.d3d_msaa_mode != MSAAMode::Off)), " Currently the engine does not support rendering D2D with MSAA because DrawText does not respond correctly!");
 
 	s_main_thread = std::this_thread::get_id();
 
@@ -133,20 +131,22 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	SUCCEEDED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED));
 
 	// Setup our default overlays
-	_overlay_manager = std::make_shared<OverlayManager>();
-	_metrics_overlay = new MetricsOverlay(true);
+	m_OverlayManager = std::make_shared<OverlayManager>();
+	m_MetricsOverlay = new MetricsOverlay(true);
 
-	_overlay_manager->register_overlay(_metrics_overlay);
-	_overlay_manager->register_overlay(new RTTIDebugOverlay());
-	_overlay_manager->register_overlay(new ImGuiDemoOverlay());
-	_overlay_manager->register_overlay(new ImGuiAboutOverlay());
+	m_OverlayManager->register_overlay(m_MetricsOverlay);
+	m_OverlayManager->register_overlay(new RTTIDebugOverlay());
+	m_OverlayManager->register_overlay(new ImGuiDemoOverlay());
+	m_OverlayManager->register_overlay(new ImGuiAboutOverlay());
 
 	// set the instance member variable of the game engine
-	this->_hinstance = hInstance;
+	this->m_hInstance = hInstance;
 
 	// Initialize enkiTS
-	s_TaskScheduler = Tasks::get_scheduler();
-	Tasks::get_scheduler()->Initialize();
+	ASSERT(!GetGlobalContext()->m_TaskScheduler);
+	GetGlobalContext()->m_TaskScheduler = Tasks::get_scheduler();
+
+	GetGlobalContext()->m_TaskScheduler->Initialize();
 
 	struct InitTask : enki::IPinnedTask
 	{
@@ -165,27 +165,31 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 	::SetThreadDescription(GetCurrentThread(), L"MainThread");
 
+	enki::TaskScheduler* taskScheduler = GetGlobalContext()->m_TaskScheduler;
 	std::vector<std::unique_ptr<InitTask>> tasks;
-	for (uint32_t i = 1; i < s_TaskScheduler->GetNumTaskThreads(); ++i)
+	for (uint32_t i = 1; i < taskScheduler->GetNumTaskThreads(); ++i)
 	{
 		tasks.push_back(std::make_unique<InitTask>(i));
-		s_TaskScheduler->AddPinnedTask(tasks.back().get());
+		taskScheduler->AddPinnedTask(tasks.back().get());
 	}
-	s_TaskScheduler->RunPinnedTasks();
-	s_TaskScheduler->WaitforAll();
+	taskScheduler->RunPinnedTasks();
+	taskScheduler->WaitforAll();
 
 
 	//Initialize the high precision timers
-	_game_timer = make_unique<PrecisionTimer>();
-	_game_timer->reset();
+	m_FrameTimer = make_unique<PrecisionTimer>();
+	m_FrameTimer->reset();
 
-	_input_manager = make_unique<InputManager>();
-	_input_manager->init();
+	m_InputManager = make_unique<InputManager>();
+	m_InputManager->init();
+
+	ASSERT(!GetGlobalContext()->m_InputManager);
+	GetGlobalContext()->m_InputManager = m_InputManager.get();
 
 	// Sound system
 #if FEATURE_XAUDIO
-	_xaudio_system = make_unique<XAudioSystem>();
-	_xaudio_system->init();
+	m_AudioSystem = make_unique<XAudioSystem>();
+	m_AudioSystem->init();
 #endif
 
 #ifdef _DEBUG
@@ -204,43 +208,43 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	//_render_thread->wait_for_stage(RenderThread::Stage::Terminated);
 	//_render_thread->join();
 
-	_renderer = std::make_shared<Graphics::Renderer>();
-	_renderer->init(_engine_settings, _game_settings, _command_line);
+	m_Renderer = std::make_shared<Graphics::Renderer>();
+	m_Renderer->Init(m_EngineCfg, m_GameCfg, m_CommandLine);
 
 	// Game Initialization
-	if (_game)
+	if (m_Game)
 	{
 		MEMORY_TAG(MemoryCategory::Game);
-		_game->initialize(_game_settings);
+		m_Game->initialize(m_GameCfg);
 	}
-	apply_settings(_game_settings);
+	apply_settings(m_GameCfg);
 
-	// Open the window
-	if (!this->register_wnd_class())
-	{
-		MessageBoxA(NULL, "Register class failed", "error", MB_OK);
-		return false;
-	}
-	if (!this->open_window(iCmdShow))
+	SDL_Init(SDL_INIT_EVERYTHING);
+
+	if (!this->InitWindow(iCmdShow))
 	{
 		MessageBoxA(NULL, "Open window failed", "error", MB_OK);
 		return false;
 	}
-	_renderer->init_for_hwnd(_hwindow);
-	Graphics::init(_renderer->get_ctx());
 
-	// Initialize the Graphics Engine
-	d3d_init();
+	m_Renderer->InitForWindow(m_Window);
+	Graphics::init(m_Renderer->get_ctx());
+
+	m_ViewportWidth = m_Renderer->GetDrawableWidth();
+	m_ViewportHeight = m_Renderer->GetDrawableHeight();
+	m_ViewportPos = { 0.0f, 0.0f };
+
+	m_DefaultFont = make_shared<Font>("Consolas", 12.0f);
 
 	TextureHandle::init_default();
 
 	LOG_INFO(System, "Initialising worlds...");
 	{
-		_world = std::make_shared<framework::World>();
-		_world->init();
+		m_World = std::make_shared<framework::World>();
+		m_World->init();
 
-		_render_world = std::make_shared<RenderWorld>();
-		_render_world->init();
+		m_RenderWorld = std::make_shared<RenderWorld>();
+		m_RenderWorld->init();
 	}
 	LOG_INFO(System, "Finished initialising worlds.");
 
@@ -326,8 +330,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 		}
 
-		Graphics::DeviceContext ctx = _renderer->get_ctx();
-		ImGui_ImplWin32_Init(get_window());
+		Graphics::DeviceContext ctx = m_Renderer->get_ctx();
+		ImGui_ImplSDL2_InitForD3D(m_Window);
 		ImGui_ImplDX11_Init(ctx._device.Get(), ctx._ctx.Get());
 
 	}
@@ -335,29 +339,29 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 #pragma region Box2D
 	// Initialize Box2D
 	// Define the gravity vector.
-	b2Vec2 gravity((float)_gravity.x, (float)_gravity.y);
+	b2Vec2 gravity((float)m_Gravity.x, (float)m_Gravity.y);
 
 	// Construct a world object, which will hold and simulate the rigid bodies.
-	_b2d_world = make_shared<b2World>(gravity);
-	_b2d_contact_filter = make_shared<b2ContactFilter>();
+	m_Box2DWorld = make_shared<b2World>(gravity);
+	m_Box2DContactFilter = make_shared<b2ContactFilter>();
 
-	_b2d_world->SetContactFilter(_b2d_contact_filter.get());
-	_b2d_world->SetContactListener(this);
+	m_Box2DWorld->SetContactFilter(m_Box2DContactFilter.get());
+	m_Box2DWorld->SetContactListener(this);
 
 #if FEATURE_D2D
-	_b2d_debug_renderer.SetFlags(b2Draw::e_shapeBit);
-	_b2d_debug_renderer.AppendFlags(b2Draw::e_centerOfMassBit);
-	_b2d_debug_renderer.AppendFlags(b2Draw::e_jointBit);
-	_b2d_debug_renderer.AppendFlags(b2Draw::e_pairBit);
-	_b2d_world->SetDebugDraw(&_b2d_debug_renderer);
+	m_Box2DDebugRenderer.SetFlags(b2Draw::e_shapeBit);
+	m_Box2DDebugRenderer.AppendFlags(b2Draw::e_centerOfMassBit);
+	m_Box2DDebugRenderer.AppendFlags(b2Draw::e_jointBit);
+	m_Box2DDebugRenderer.AppendFlags(b2Draw::e_pairBit);
+	m_Box2DWorld->SetDebugDraw(&m_Box2DDebugRenderer);
 #endif
 #pragma endregion
 
 	// User defined functions for start of the game
-	if (_game)
+	if (m_Game)
 	{
 		MEMORY_TAG(MemoryCategory::Game);
-		_game->start();
+		m_Game->start();
 	}
 
 	// Ensure world has default setup
@@ -383,12 +387,12 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 
 	// Initialize our performance tracking
-	Perf::initialize(_renderer->get_raw_device());
+	Perf::initialize(m_Renderer->get_raw_device());
 
 	// Initialize our GPU timers
 	for (u32 j = 0; j < std::size(m_GpuTimings); ++j)
 	{
-		m_GpuTimings[j] = Perf::Timer(_renderer->get_raw_device());
+		m_GpuTimings[j] = Perf::Timer(m_Renderer->get_raw_device());
 	}
 
 	// Timer to track the elapsed time in the game
@@ -397,12 +401,8 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	f64 time_previous = 0.0;
 	f64 time_lag = 0.0; 
 
-	_running = true;
-	if (!_game)
-	{
-		_running = false;
-	}
-	while (_running)
+	m_IsRunning = m_Game ? true : false;
+	while (m_IsRunning)
 	{
 		JONO_FRAME("Frame");
 
@@ -414,6 +414,13 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			Timer t{};
 			t.Start();
 			// Process all window messages
+
+			SDL_Event e;
+			while (SDL_PollEvent(&e))
+			{
+				GameEngine::instance()->ProcessEvent(e);
+			}
+
 			MSG msg{};
 			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
 			{
@@ -422,11 +429,11 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			}
 
 			t.Stop();
-			_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::EventHandlingCPU, t.GetTimeInMS());
+			m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::EventHandlingCPU, t.GetTimeInMS());
 		}
 
 		// Running might have been updated by the windows message loop. Handle this here.
-		if (!_running)
+		if (!m_IsRunning)
 		{
 			break;
 		}
@@ -439,53 +446,56 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				JONO_EVENT("Simulation");
 				f64 current = time_elapsed;
 				f64 elapsed = current - time_previous; 
-				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::FrameTime, (float)(elapsed * 1000.0f));
+				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::FrameTime, (float)(elapsed * 1000.0f));
 
 				time_previous = current; 
 				time_lag += elapsed;
 
 				Timer t{};
 				t.Start();
-				while (time_lag >= _physics_timestep)
+				while (time_lag >= c_FixedPhysicsTimestep)
 				{
 					// Call the Game Tick method
-					if (_game)
+					if (m_Game)
 					{
 						MEMORY_TAG(MemoryCategory::Game);
-						_game->tick(_physics_timestep);
+						m_Game->tick(c_FixedPhysicsTimestep);
 					}
 
 					int32 velocityIterations = 6;
 					int32 positionIterations = 2;
-					if (_physics_step_enabled)
+					if (m_PhysicsStepEnabled)
 					{
-						_b2d_world->Step((float)_physics_timestep, velocityIterations, positionIterations);
+						m_Box2DWorld->Step((float)c_FixedPhysicsTimestep, velocityIterations, positionIterations);
 					}
 
 					// Step generates contact lists, pass to Listeners and clear the vector
 					CallListeners();
-					time_lag -= _physics_timestep;
+					time_lag -= c_FixedPhysicsTimestep;
 
 					// Input manager update takes care of swapping the state
-					_input_manager->update();
+					m_InputManager->update();
 				}
 				t.Stop();
-				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
+				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
 			}
 
 
-			Perf::begin_frame(_renderer->get_raw_device_context());
-			if (_recreate_swapchain)
+			Perf::begin_frame(m_Renderer->get_raw_device_context());
+			if (m_RecreateSwapchainRequested)
 			{
-				_renderer->resize_swapchain(_window_width, _window_height);
-				_recreate_swapchain = false;
+				m_Renderer->resize_swapchain(m_WindowWidth, m_WindowHeight);
+				m_RecreateSwapchainRequested = false;
 			}
 
 			// Recreating the game viewport texture needs to happen before running IMGUI and the actual rendering
 			{
 				JONO_EVENT("DebugUI");
 				ImGui_ImplDX11_NewFrame();
-				ImGui_ImplWin32_NewFrame();
+
+				//ImVec2 displaySize = { (float)m_Renderer->GetDrawableWidth(), (float)m_Renderer->GetDrawableHeight() };
+				ImGui_ImplSDL2_NewFrame(nullptr);
+
 				ImGui::NewFrame();
 
 				build_ui();
@@ -494,12 +504,12 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 				ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, { 0.0f, 0.0f });
 				ImGui::PopStyleVar(1);
 
-				if (_game)
+				if (m_Game)
 				{
 					MEMORY_TAG(MemoryCategory::Debug);
-					_game->debug_ui();
+					m_Game->debug_ui();
 				}
-				_overlay_manager->render_overlay();
+				m_OverlayManager->render_overlay();
 
 				ImGui::EndFrame();
 				ImGui::UpdatePlatformWindows();
@@ -520,15 +530,15 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 			UINT64 start;
 			UINT64 end;
 
-			if (Perf::collect_disjoint(_renderer->get_raw_device_context(), timestampDisjoint))
+			if (Perf::collect_disjoint(m_Renderer->get_raw_device_context(), timestampDisjoint))
 			{
 				auto& timing_data = m_GpuTimings[current];
 				f64 cpuTime;
-				timing_data.flush(_renderer->get_raw_device_context(), start, end, cpuTime);
+				timing_data.flush(m_Renderer->get_raw_device_context(), start, end, cpuTime);
 
 				double diff = (double)(end - start) / (double)timestampDisjoint.Frequency;
-				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::RenderGPU, (float)(diff * 1000.0));
-				_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::RenderCPU, (float)(cpuTime * 1000.0));
+				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::RenderGPU, (float)(diff * 1000.0));
+				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::RenderCPU, (float)(cpuTime * 1000.0));
 			}
 		}
 
@@ -545,10 +555,10 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 		// Update CPU only timings
 		{
 			JONO_EVENT("FrameLimiter");
-			_metrics_overlay->UpdateTimer(MetricsOverlay::Timer::PresentCPU, present_timer.get_delta_time() * 1000.0);
-			if (_engine_settings.max_frame_time > 0.0)
+			m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::PresentCPU, present_timer.get_delta_time() * 1000.0);
+			if (m_EngineCfg.max_frame_time > 0.0)
 			{
-				f64 targetTimeMs = _engine_settings.max_frame_time;
+				f64 targetTimeMs = m_EngineCfg.max_frame_time;
 
 				// Get the current frame time
 				f64 framet = full_frame_timer.get_delta_time();
@@ -565,12 +575,12 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 
 
 	// User defined code for exiting the game
-	if (_game)
+	if (m_Game)
 	{
 		MEMORY_TAG(MemoryCategory::Game);
-		_game->end();
+		m_Game->end();
 	}
-	_game.reset();
+	m_Game.reset();
 
 	// Make sure all tasks have finished before shutting down
 	Tasks::get_scheduler()->WaitforAllAndShutdown();
@@ -581,20 +591,20 @@ int GameEngine::run(HINSTANCE hInstance, int iCmdShow)
 	ResourceLoader::shutdown();
 
 	ImGui_ImplDX11_Shutdown();
-	ImGui_ImplWin32_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
 
 	ImGui::DestroyContext();
 
+	SDL_DestroyWindow(m_Window);
+	SDL_Quit();
+
 	// Teardown graphics resources and windows procedures
 	{
-		_default_font.reset();
+		m_DefaultFont.reset();
 
 		Graphics::deinit();
-		_renderer->deinit();
-		_renderer = nullptr;
-
-		// deinit the engine graphics layer
-		d3d_deinit();
+		m_Renderer->DeInit();
+		m_Renderer = nullptr;
 
 		::CoUninitialize();
 	}
@@ -609,31 +619,31 @@ void GameEngine::d2d_render()
 	// 1. Collect all the draw commands in buffers and capture the required data
 	// 2. during end_paint 'flush' draw commands and create required vertex buffers
 	// 3. Execute each draw command binding the right buffers and views
-	if (!_d2d_render_context)
+	if (!m_D2DRenderContext)
 	{
-		_d2d_render_context = std::make_unique<Graphics::D2DRenderContext>(_renderer.get(), _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get());
+		m_D2DRenderContext = std::make_unique<Graphics::D2DRenderContext>(m_Renderer.get(), m_Renderer->get_raw_d2d_factory(), m_Renderer->get_2d_draw_ctx(), m_Renderer->get_2d_color_brush(), m_DefaultFont.get());
 	}
-	Graphics::D2DRenderContext& context = *_d2d_render_context;
-	context.begin_paint(_renderer.get(), _renderer->get_raw_d2d_factory(), _renderer->get_2d_draw_ctx(), _renderer->get_2d_color_brush(), _default_font.get());
+	Graphics::D2DRenderContext& context = *m_D2DRenderContext;
+	context.begin_paint(m_Renderer.get(), m_Renderer->get_raw_d2d_factory(), m_Renderer->get_2d_draw_ctx(), m_Renderer->get_2d_color_brush(), m_DefaultFont.get());
 
 	auto size = this->get_viewport_size();
 
-	_can_paint = true;
+	m_CanPaint2D = true;
 	// make sure tvp.Heighthe view matrix is taken in account
 	context.set_world_matrix(float4x4::identity());
 
 	{
-		GPU_SCOPED_EVENT(_renderer->get_raw_annotation(), "D2D:Paint");
-		if (_game)
+		GPU_SCOPED_EVENT(m_Renderer->get_raw_annotation(), "D2D:Paint");
+		if (m_Game)
 		{
 			MEMORY_TAG(MemoryCategory::Game);
-			_game->paint(context);
+			m_Game->paint(context);
 		}
 	}
 
 	// draw Box2D debug rendering
 	// http://www.iforce2d.net/b2dtut/debug-draw
-	if (_debug_physics_rendering)
+	if (m_DebugPhysicsRendering)
 	{
 		// dimming rect in screenspace
 		context.set_world_matrix(float4x4::identity());
@@ -643,14 +653,13 @@ void GameEngine::d2d_render()
 		context.fill_rect(0, 0, get_width(), get_height());
 		context.set_view_matrix(matView);
 
-		_b2d_debug_renderer.set_draw_ctx(&context);
-		_b2d_world->DebugDraw();
-		_b2d_debug_renderer.set_draw_ctx(nullptr);
+		m_Box2DDebugRenderer.set_draw_ctx(&context);
+		m_Box2DWorld->DebugDraw();
+		m_Box2DDebugRenderer.set_draw_ctx(nullptr);
 	}
 
-	_can_paint = false;
+	m_CanPaint2D = false;
 	bool result = context.end_paint();
-	_d2d_ctx = nullptr;
 
 	// if drawing failed, terminate the game
 	if (!result)
@@ -660,72 +669,46 @@ void GameEngine::d2d_render()
 }
 #endif
 
-bool GameEngine::register_wnd_class()
-{
-	WNDCLASSEX wndclass;
-
-	std::wstring title{ _title.begin(), _title.end() };
-	// Create the window class for the main window
-	wndclass.cbSize = sizeof(wndclass);
-	wndclass.style = CS_HREDRAW | CS_VREDRAW;
-	wndclass.lpfnWndProc = wndproc;
-	wndclass.cbClsExtra = 0;
-	wndclass.cbWndExtra = 0;
-	wndclass.hInstance = _hinstance;
-	wndclass.hIcon = LoadIcon(_hinstance, MAKEINTRESOURCE(get_icon()));
-	wndclass.hIconSm = LoadIcon(_hinstance, MAKEINTRESOURCE(get_small_icon()));
-	wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wndclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wndclass.lpszMenuName = NULL;
-	wndclass.lpszClassName = title.c_str();
-
-	// Register the window class
-	if (!RegisterClassEx(&wndclass))
-		return false;
-	return true;
-}
-
-bool GameEngine::open_window(int iCmdShow)
+bool GameEngine::InitWindow(int iCmdShow)
 {
 	// Calculate the window size and position based upon the game size
-	DWORD windowStyle = WS_POPUPWINDOW | WS_CAPTION | WS_MINIMIZEBOX | WS_CLIPCHILDREN | WS_MAXIMIZEBOX | WS_OVERLAPPEDWINDOW | WS_VISIBLE;
-	RECT R = { 0, 0, _window_width, _window_height };
-	AdjustWindowRect(&R, windowStyle, false);
-	int iWindowWidth = R.right - R.left;
-	int iWindowHeight = R.bottom - R.top;
+	int iWindowWidth = m_WindowWidth;
+	int iWindowHeight = m_WindowHeight;
 	int iXWindowPos = (GetSystemMetrics(SM_CXSCREEN) - iWindowWidth) / 2;
 	int iYWindowPos = (GetSystemMetrics(SM_CYSCREEN) - iWindowHeight) / 2;
 
-	std::wstring title = std::wstring(_title.begin(), _title.end());
-	_hwindow = CreateWindow(title.c_str(), title.c_str(),
-			windowStyle,
-			iXWindowPos, iYWindowPos, iWindowWidth,
-			iWindowHeight, NULL, NULL, _hinstance, NULL);
+	u32 flags = 0;
+	if (m_GameCfg.m_WindowFlags & GameCfg::WindowFlags::StartMaximized)
+	{
+		flags |= SDL_WINDOW_MAXIMIZED;
+	}
 
-	if (!_hwindow)
+	std::wstring title = std::wstring(m_Title.begin(), m_Title.end());
+	m_Window = SDL_CreateWindow(m_Title.c_str(), iXWindowPos, iYWindowPos, iWindowWidth, iWindowHeight, flags);
+	if (!m_Window)
+	{
+		FAILMSG("Failed to create the SDL window.");
 		return false;
+	}
 
-	// Show and update the window
-	if (_game_settings.m_WindowFlags & GameSettings::WindowFlags::StartMaximized)
-		iCmdShow = SW_SHOWMAXIMIZED;
+	SDL_GetWindowSize(m_Window, &m_WindowWidth, &m_WindowHeight);
+	assert(m_WindowWidth > 0 && m_WindowHeight > 0);
 
-	ShowWindow(_hwindow, iCmdShow);
-	UpdateWindow(_hwindow);
+	SDL_SysWMinfo info;
+	SDL_VERSION(&info.version);
+	if (SDL_GetWindowWMInfo(m_Window, &info))
+	{
+		m_hWindow = info.info.win.window;
+		m_hInstance = info.info.win.hinstance;
+	}
 
-	// Update size
-
-	RECT r;
-	::GetClientRect(_hwindow, &r);
-	_window_width = r.right - r.left;
-	_window_height = r.bottom - r.top;
-	assert(_window_width > 0 && _window_height > 0);
 
 	return true;
 }
 
-void GameEngine::quit_game()
+void GameEngine::Quit()
 {
-	this->_running = false;
+	this->m_IsRunning = false;
 }
 
 void GameEngine::enable_aa(bool isEnabled)
@@ -743,42 +726,42 @@ void GameEngine::enable_aa(bool isEnabled)
 
 void GameEngine::enable_physics_debug_rendering(bool isEnabled)
 {
-	_debug_physics_rendering = isEnabled;
+	m_DebugPhysicsRendering = isEnabled;
 }
 
 HINSTANCE GameEngine::get_instance() const
 {
-	return _hinstance;
+	return m_hInstance;
 }
 
 HWND GameEngine::get_window() const
 {
-	return _hwindow;
+	return m_hWindow;
 }
 
 string GameEngine::get_title() const
 {
-	return _title;
+	return m_Title;
 }
 
 WORD GameEngine::get_icon() const
 {
-	return _icon;
+	return m_Icon;
 }
 
 WORD GameEngine::get_small_icon() const
 {
-	return _small_icon;
+	return m_SmallIcon;
 }
 
 ImVec2 GameEngine::get_window_size() const
 {
-	return { (float)_window_width, (float)_window_height };
+	return { (float)m_WindowWidth, (float)m_WindowHeight };
 }
 
 ImVec2 GameEngine::get_viewport_size(int) const
 {
-	return { (float)_viewport_width, (float)_viewport_height };
+	return { (float)m_ViewportWidth, (float)m_ViewportHeight };
 }
 
 ImVec2 GameEngine::get_viewport_pos(int id /*= 0*/) const
@@ -787,23 +770,23 @@ ImVec2 GameEngine::get_viewport_pos(int id /*= 0*/) const
 	GetWindowRect(get_window(), &rect);
 
 	return {
-		(float)_viewport_pos.x - rect.left, (float)_viewport_pos.y - rect.top
+		(float)m_ViewportPos.x - rect.left, (float)m_ViewportPos.y - rect.top
 	};
 }
 
 int GameEngine::get_width() const
 {
-	return _window_width;
+	return m_WindowWidth;
 }
 
 int GameEngine::get_height() const
 {
-	return _window_height;
+	return m_WindowHeight;
 }
 
 bool GameEngine::get_sleep() const
 {
-	return _should_sleep ? true : false;
+	return m_ShouldSleep ? true : false;
 }
 
 float2 GameEngine::get_mouse_pos_in_window() const
@@ -811,52 +794,52 @@ float2 GameEngine::get_mouse_pos_in_window() const
 	RECT rect;
 	if (GetWindowRect(get_window(), &rect))
 	{
-		return float2{ (float)_input_manager->get_mouse_position().x, (float)_input_manager->get_mouse_position().y } - float2(rect.left, rect.top);
+		return float2{ (float)m_InputManager->get_mouse_position().x, (float)m_InputManager->get_mouse_position().y } - float2(rect.left, rect.top);
 	}
 	return {};
 }
 
 float2 GameEngine::get_mouse_pos_in_viewport() const
 {
-	float2 tmp = float2(_input_manager->get_mouse_position());
-	return float2{ (float)tmp.x, (float)tmp.y } - _viewport_pos;
+	float2 tmp = float2(m_InputManager->get_mouse_position());
+	return float2{ (float)tmp.x, (float)tmp.y } - m_ViewportPos;
 }
 
 unique_ptr<XAudioSystem> const& GameEngine::get_audio_system() const
 {
-	return _xaudio_system;
+	return m_AudioSystem;
 }
 
 void GameEngine::set_icon(WORD wIcon)
 {
-	_icon = wIcon;
+	m_Icon = wIcon;
 }
 
 void GameEngine::set_small_icon(WORD wSmallIcon)
 {
-	_small_icon = wSmallIcon;
+	m_SmallIcon = wSmallIcon;
 }
 
 void GameEngine::set_width(int iWidth)
 {
-	_window_width = iWidth;
-	assert(_window_width > 0);
+	m_WindowWidth = iWidth;
+	assert(m_WindowWidth > 0);
 }
 
 void GameEngine::set_height(int iHeight)
 {
-	_window_height = iHeight;
-	assert(_window_height > 0);
+	m_WindowHeight = iHeight;
+	assert(m_WindowHeight > 0);
 }
 
 void GameEngine::set_physics_step(bool bEnabled)
 {
-	_physics_step_enabled = bEnabled;
+	m_PhysicsStepEnabled = bEnabled;
 }
 
 bool GameEngine::is_viewport_focused() const
 {
-	return _is_viewport_focused;
+	return m_ViewportIsFocused;
 }
 
 bool GameEngine::is_input_captured() const
@@ -872,86 +855,86 @@ bool GameEngine::is_input_captured() const
 
 void GameEngine::set_sleep(bool bSleep)
 {
-	if (_game_timer == nullptr)
+	if (m_FrameTimer == nullptr)
 		return;
 
-	_should_sleep = bSleep;
+	m_ShouldSleep = bSleep;
 	if (bSleep)
 	{
-		_game_timer->stop();
+		m_FrameTimer->stop();
 	}
 	else
 	{
-		_game_timer->start();
+		m_FrameTimer->start();
 	}
 }
 
 void GameEngine::enable_vsync(bool bEnable)
 {
-	_vsync_enabled = bEnable;
+	m_VSyncEnabled = bEnable;
 }
 
-void GameEngine::apply_settings(GameSettings& game_settings)
+void GameEngine::apply_settings(GameCfg& game_settings)
 {
-	enable_aa(_engine_settings.d2d_use_aa);
+	enable_aa(m_EngineCfg.d2d_use_aa);
 
 	set_width(game_settings.m_WindowWidth);
 	set_height(game_settings.m_WindowHeight);
 	set_title(game_settings.m_WindowTitle);
-	enable_vsync(game_settings.m_WindowFlags & GameSettings::WindowFlags::EnableVSync);
+	enable_vsync(game_settings.m_WindowFlags & GameCfg::WindowFlags::EnableVSync);
 }
 
 void GameEngine::set_vsync(bool vsync)
 {
-	_vsync_enabled = vsync;
+	m_VSyncEnabled = vsync;
 }
 
 bool GameEngine::get_vsync()
 {
-	return _vsync_enabled;
+	return m_VSyncEnabled;
 }
 
 std::shared_ptr<OverlayManager> const& GameEngine::get_overlay_manager() const
 {
-	return _overlay_manager;
+	return m_OverlayManager;
 }
 
 // Input methods
 bool GameEngine::is_key_down(int key) const
 {
-	return _input_manager->is_key_down((KeyCode)key);
+	return m_InputManager->is_key_down((KeyCode)key);
 }
 
 bool GameEngine::is_key_pressed(int key) const
 {
-	return _input_manager->is_key_pressed((KeyCode)key);
+	return m_InputManager->is_key_pressed((KeyCode)key);
 }
 
 bool GameEngine::is_key_released(int key) const
 {
-	return _input_manager->is_key_released((KeyCode)key);
+	return m_InputManager->is_key_released((KeyCode)key);
 }
 
 bool GameEngine::is_mouse_button_down(int button) const
 {
-	return _input_manager->is_mouse_button_down(button);
+	return m_InputManager->is_mouse_button_down(button);
 }
 
 bool GameEngine::is_mouse_button_pressed(int button) const
 {
-	return _input_manager->is_mouse_button_pressed(button);
+	return m_InputManager->is_mouse_button_pressed(button);
 }
 
 bool GameEngine::is_mouse_button_released(int button) const
 {
-	return _input_manager->is_mouse_button_released(button);
+	return m_InputManager->is_mouse_button_released(button);
 }
 
-LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam)
+void GameEngine::ProcessEvent(SDL_Event& e)
 {
 	// Get window rectangle and HDC
 	RECT windowClientRect;
-	GetClientRect(hWindow, &windowClientRect);
+	GetClientRect(m_hWindow, &windowClientRect);
 
 	RECT usedClientRect;
 	usedClientRect.left = 0;
@@ -960,47 +943,44 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 	usedClientRect.bottom = get_height();
 
 	// Route Windows messages to game engine member functions
-	switch (msg)
+	switch (e.type)
 	{
-		case WM_CREATE:
-			// Set the game window
-			this->_hwindow = hWindow;
-			return 0;
-		case WM_SYSCOMMAND: // trapping this message prevents a freeze after the ALT key is released
-			if (wParam == SC_KEYMENU)
-				return 0; // see win32 API : WM_KEYDOWN
-			else
-				break;
-		case WM_DESTROY:
-			GameEngine::instance()->quit_game();
-			return 0;
-
-		case WM_SIZE:
-			if (wParam == SIZE_MAXIMIZED)
+		case SDL_WINDOWEVENT:
+		{
+			if (e.window.event == SDL_WINDOWEVENT_CLOSE)
 			{
-				//If you have changed certain window data using SetWindowLong, you must call SetWindowPos for the changes to take effect.
-				SetWindowPos(_hwindow, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+				GameEngine::instance()->Quit();
+				return;
 			}
-			RECT r;
-			::GetClientRect(_hwindow, &r);
-			_window_width = r.right - r.left;
-			_window_height = r.bottom - r.top;
-
-			this->_recreate_swapchain = true;
-			return 0;
-
-			//case WM_KEYUP:
-			//	m_GamePtr->KeyPressed((TCHAR)wParam);
-			//	return 0;
-
-		// Posted to the window with the keyboard focus when a nonsystem key is pressed. A nonsystem key is a key that is pressed when the ALT key is not pressed.
-		case WM_SYSKEYDOWN:
-		case WM_SYSKEYUP:
-		case WM_KEYDOWN:
-		case WM_KEYUP:
-			if (msg == WM_KEYUP && wParam == VK_F9)
+			else if (e.window.event == SDL_WINDOWEVENT_MAXIMIZED)
 			{
-				_overlay_manager->set_visible(!_overlay_manager->get_visible());
+				SetWindowPos(m_hWindow, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+				RECT r;
+				::GetClientRect(m_hWindow, &r);
+				m_WindowWidth = r.right - r.left;
+				m_WindowHeight = r.bottom - r.top;
+
+				this->m_RecreateSwapchainRequested = true;
+			}
+			else if (e.window.event == SDL_WINDOWEVENT_RESIZED)
+			{
+				RECT r;
+				::GetClientRect(m_hWindow, &r);
+				m_WindowWidth = r.right - r.left;
+				m_WindowHeight = r.bottom - r.top;
+
+				this->m_RecreateSwapchainRequested = true;
+				return;
+			}
+		}
+		break;
+		case SDL_MOUSEBUTTONDOWN:
+		case SDL_MOUSEBUTTONUP:
+		case SDL_KEYDOWN:
+		case SDL_KEYUP:
+			if ((e.key.keysym.mod & KMOD_CTRL ) && e.key.keysym.sym == SDLK_F9)
+			{
+				m_OverlayManager->set_visible(!m_OverlayManager->get_visible());
 			}
 			break;
 	}
@@ -1009,59 +989,27 @@ LRESULT GameEngine::handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM l
 
 	if (ImGui::GetCurrentContext() != nullptr)
 	{
-		//bool bWantImGuiCapture = ImGui::GetIO().WantCaptureKeyboard ||
-		//						 ImGui::GetIO().WantCaptureMouse;
+		 bool bWantImGuiCapture = ImGui::GetIO().WantCaptureKeyboard ||
+								 ImGui::GetIO().WantCaptureMouse;
 
-		//if (bWantImGuiCapture)
+		if (bWantImGuiCapture)
 		{
-			extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
-			if (LRESULT v = ImGui_ImplWin32_WndProcHandler(hWindow, msg, wParam, lParam); v != 0)
-			{
-				handled |= (v != 0);
-			}
+			ImGui_ImplSDL2_ProcessEvent(&e);
 		}
 	}
 
 	if (!handled)
 	{
 		// Input manager doesn't consume the inputs
-		handled |= _input_manager->handle_events(msg, wParam, lParam);
+		handled |= m_InputManager->handle_events(e);
 	}
 
 	if (handled)
-		return 0;
-
-	return DefWindowProc(hWindow, msg, wParam, lParam);
-}
-
-//
-//  This method creates resources which are bound to a particular
-//  Direct3D device. It's all centralized here, in case the resources
-//  need to be recreated in case of Direct3D device loss (eg. display
-//  change, remoting, removal of video card, etc).
-//
-void GameEngine::d3d_init()
-{
-	//Create a Font
-	RECT r{};
-	if (GetWindowRect(_hwindow, &r))
 	{
-		_viewport_width = r.right - r.left;
-		_viewport_height = r.bottom - r.top;
-		_viewport_pos = { 0.0f,0.0f };
+		return;
 	}
-	_default_font = make_shared<Font>("Consolas", 12.0f);
-	_initialized = true;
 }
 
-//
-//  Discard device-specific resources which need to be recreated
-//  when a Direct3D device is lost
-//
-void GameEngine::d3d_deinit()
-{
-	_initialized = false;
-}
 
 // Box2D overloads
 void GameEngine::BeginContact(b2Contact* contactPtr)
@@ -1087,7 +1035,7 @@ void GameEngine::BeginContact(b2Contact* contactPtr)
 		if (contactData.actThisPtr != nullptr && contactData.actOtherPtr != nullptr)
 		{
 			// store in caller list
-			_b2d_begin_contact_data.push_back(contactData);
+			m_Box2DBeginContactData.push_back(contactData);
 		}
 	}
 
@@ -1105,7 +1053,7 @@ void GameEngine::BeginContact(b2Contact* contactPtr)
 		if (contactData.actThisPtr != nullptr && contactData.actOtherPtr != nullptr)
 		{
 			// store in caller list
-			_b2d_begin_contact_data.push_back(contactData);
+			m_Box2DBeginContactData.push_back(contactData);
 		}
 	}
 };
@@ -1133,7 +1081,7 @@ void GameEngine::EndContact(b2Contact* contactPtr)
 		if (contactData.actThisPtr != nullptr && contactData.actOtherPtr != nullptr)
 		{
 			// store in caller list
-			_b2d_end_contact_data.push_back(contactData);
+			m_Box2DEndContactData.push_back(contactData);
 		}
 	}
 
@@ -1151,7 +1099,7 @@ void GameEngine::EndContact(b2Contact* contactPtr)
 		if (contactData.actThisPtr != nullptr && contactData.actOtherPtr != nullptr)
 		{
 			// store in caller list
-			_b2d_end_contact_data.push_back(contactData);
+			m_Box2DEndContactData.push_back(contactData);
 		}
 	}
 };
@@ -1181,42 +1129,42 @@ void GameEngine::PostSolve(b2Contact* contactPtr, const b2ContactImpulse* impuls
 	impulseData.impulseA = impulseData.impulseB = sum;
 
 	if (sum > 0.00001)
-		_b2d_impulse_data.push_back(impulseData);
+		m_Box2DImpulseData.push_back(impulseData);
 }
 
 void GameEngine::CallListeners()
 {
 	// begin contact
-	for (size_t i = 0; i < _b2d_begin_contact_data.size(); i++)
+	for (size_t i = 0; i < m_Box2DBeginContactData.size(); i++)
 	{
-		ContactListener* contactListenerPtr = reinterpret_cast<ContactListener*>(_b2d_begin_contact_data[i].contactListenerPtr);
+		ContactListener* contactListenerPtr = reinterpret_cast<ContactListener*>(m_Box2DBeginContactData[i].contactListenerPtr);
 		contactListenerPtr->BeginContact(
-				reinterpret_cast<PhysicsActor*>(_b2d_begin_contact_data[i].actThisPtr),
-				reinterpret_cast<PhysicsActor*>(_b2d_begin_contact_data[i].actOtherPtr));
+				reinterpret_cast<PhysicsActor*>(m_Box2DBeginContactData[i].actThisPtr),
+				reinterpret_cast<PhysicsActor*>(m_Box2DBeginContactData[i].actOtherPtr));
 	}
-	_b2d_begin_contact_data.clear();
+	m_Box2DBeginContactData.clear();
 
 	// end contact
-	for (size_t i = 0; i < _b2d_end_contact_data.size(); i++)
+	for (size_t i = 0; i < m_Box2DEndContactData.size(); i++)
 	{
-		ContactListener* contactListenerPtr = reinterpret_cast<ContactListener*>(_b2d_end_contact_data[i].contactListenerPtr);
+		ContactListener* contactListenerPtr = reinterpret_cast<ContactListener*>(m_Box2DEndContactData[i].contactListenerPtr);
 		contactListenerPtr->EndContact(
-				reinterpret_cast<PhysicsActor*>(_b2d_end_contact_data[i].actThisPtr),
-				reinterpret_cast<PhysicsActor*>(_b2d_end_contact_data[i].actOtherPtr));
+				reinterpret_cast<PhysicsActor*>(m_Box2DEndContactData[i].actThisPtr),
+				reinterpret_cast<PhysicsActor*>(m_Box2DEndContactData[i].actOtherPtr));
 	}
-	_b2d_end_contact_data.clear();
+	m_Box2DEndContactData.clear();
 
 	// impulses
-	for (size_t i = 0; i < _b2d_impulse_data.size(); i++)
+	for (size_t i = 0; i < m_Box2DImpulseData.size(); i++)
 	{
-		ContactListener* contactListenerAPtr = reinterpret_cast<ContactListener*>(_b2d_impulse_data[i].contactListenerAPtr);
-		ContactListener* contactListenerBPtr = reinterpret_cast<ContactListener*>(_b2d_impulse_data[i].contactListenerBPtr);
+		ContactListener* contactListenerAPtr = reinterpret_cast<ContactListener*>(m_Box2DImpulseData[i].contactListenerAPtr);
+		ContactListener* contactListenerBPtr = reinterpret_cast<ContactListener*>(m_Box2DImpulseData[i].contactListenerBPtr);
 		if (contactListenerAPtr != nullptr)
-			contactListenerAPtr->ContactImpulse(reinterpret_cast<PhysicsActor*>(_b2d_impulse_data[i].actAPtr), _b2d_impulse_data[i].impulseA);
+			contactListenerAPtr->ContactImpulse(reinterpret_cast<PhysicsActor*>(m_Box2DImpulseData[i].actAPtr), m_Box2DImpulseData[i].impulseA);
 		if (contactListenerBPtr != nullptr)
-			contactListenerBPtr->ContactImpulse(reinterpret_cast<PhysicsActor*>(_b2d_impulse_data[i].actBPtr), _b2d_impulse_data[i].impulseB);
+			contactListenerBPtr->ContactImpulse(reinterpret_cast<PhysicsActor*>(m_Box2DImpulseData[i].actBPtr), m_Box2DImpulseData[i].impulseB);
 	}
-	_b2d_impulse_data.clear();
+	m_Box2DImpulseData.clear();
 }
 
 // String helpers for hlsl types
@@ -1256,7 +1204,7 @@ struct fmt::formatter<float4x4> : formatter<string_view>
 
 void GameEngine::render_view(Graphics::RenderPass::Value pass)
 {
-	_renderer->render_view(_render_world, pass);
+	m_Renderer->render_view(m_RenderWorld, pass);
 }
 
 void GameEngine::build_ui()
@@ -1300,38 +1248,38 @@ void GameEngine::build_ui()
 void GameEngine::render()
 {
 	JONO_EVENT();
-	auto d3d_annotation = _renderer->get_raw_annotation();
+	auto d3d_annotation = m_Renderer->get_raw_annotation();
 	GPU_SCOPED_EVENT(d3d_annotation, "Frame");
 
 	size_t idx = Perf::get_current_frame_resource_index();
 
 	// Begin frame gpu timer
 	auto& timer = m_GpuTimings[idx];
-	timer.begin(_renderer->get_raw_device_context());
+	timer.begin(m_Renderer->get_raw_device_context());
 
-	_renderer->begin_frame();
+	m_Renderer->begin_frame();
 
 	// Render 3D before 2D
-	if (_engine_settings.d3d_use)
+	if (m_EngineCfg.d3d_use)
 	{
-		_renderer->pre_render(_render_world);
+		m_Renderer->pre_render(m_RenderWorld);
 
 		GPU_SCOPED_EVENT(d3d_annotation, "Render");
 		// Render the shadows
 		if(Graphics::s_EnableShadowRendering)
 		{
-			_renderer->render_shadow_pass(_render_world);
+			m_Renderer->render_shadow_pass(m_RenderWorld);
 		}
 
 		{
 			GPU_SCOPED_EVENT(d3d_annotation, "Main");
-			_renderer->render_zprepass(_render_world);
-			_renderer->render_opaque_pass(_render_world);
+			m_Renderer->render_zprepass(m_RenderWorld);
+			m_Renderer->render_opaque_pass(m_RenderWorld);
 		}
 	}
 
 	// Render Direct2D to the swapchain
-	if (_engine_settings.d2d_use)
+	if (m_EngineCfg.d2d_use)
 	{
 #if FEATURE_D2D
 		d2d_render();
@@ -1341,27 +1289,27 @@ void GameEngine::render()
 #endif
 	}
 
-	_renderer->render_post(_render_world, _overlay_manager);
-	_renderer->end_frame();
+	m_Renderer->render_post(m_RenderWorld, m_OverlayManager);
+	m_Renderer->end_frame();
 }
 
 void GameEngine::present()
 {
 	JONO_EVENT();
-	auto d3d_ctx = _renderer->get_raw_device_context();
-	auto d3d_annotation = _renderer->get_raw_annotation();
-	auto d3d_swapchain = _renderer->get_raw_swapchain();
+	auto d3d_ctx = m_Renderer->get_raw_device_context();
+	auto d3d_annotation = m_Renderer->get_raw_annotation();
+	auto d3d_swapchain = m_Renderer->get_raw_swapchain();
 
 	size_t idx = Perf::get_current_frame_resource_index();
 
 	// Present, 
 	GPU_MARKER(d3d_annotation, L"DrawEnd");
 	u32 flags = 0;
-	if (!_vsync_enabled)
+	if (!m_VSyncEnabled)
 	{
 		flags |= DXGI_PRESENT_ALLOW_TEARING;
 	}
-	d3d_swapchain->Present(_vsync_enabled ? 1 : 0, flags);
+	d3d_swapchain->Present(m_VSyncEnabled ? 1 : 0, flags);
 
 	auto& timer = m_GpuTimings[idx];
 	timer.end(d3d_ctx);
@@ -1461,7 +1409,7 @@ void GameEngine::build_viewport()
 
 		ImVec2 window_pos = ImGui::GetWindowPos();
 
-		_is_viewport_focused = ImGui::IsWindowHovered();
+		m_ViewportIsFocused = ImGui::IsWindowHovered();
 
 // Enable this to draw a debug rect around the viewport
 #if 0
@@ -1487,11 +1435,11 @@ void GameEngine::build_viewport()
 			// Update the viewport sizes
 			s_vp_size = current_size;
 			s_vp_pos = vMin;
-			_viewport_width = (u32)s_vp_size.x;
-			_viewport_height = (u32)s_vp_size.y;
-			_viewport_pos = float2(s_vp_pos.x, s_vp_pos.y);
+			m_ViewportWidth = (u32)s_vp_size.x;
+			m_ViewportHeight = (u32)s_vp_size.y;
+			m_ViewportPos = float2(s_vp_pos.x, s_vp_pos.y);
 
-			_renderer->update_viewport(static_cast<u32>(vMin.x), static_cast<u32>(vMin.y), static_cast<u32>(s_vp_size.x), static_cast<u32>(s_vp_size.y));
+			m_Renderer->update_viewport(static_cast<u32>(vMin.x), static_cast<u32>(vMin.y), static_cast<u32>(s_vp_size.x), static_cast<u32>(s_vp_size.y));
 		}
 
 		// Draw the actual scene image
@@ -1499,8 +1447,8 @@ void GameEngine::build_viewport()
 		max_uv.x = s_vp_size.x / get_width();
 		max_uv.y = s_vp_size.y / get_height();
 
-		_viewport_pos = float2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
-		ImGui::Image(_renderer->get_raw_output_non_msaa_srv(), s_vp_size, ImVec2(0, 0), max_uv);
+		m_ViewportPos = float2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
+		ImGui::Image(m_Renderer->get_raw_output_non_msaa_srv(), s_vp_size, ImVec2(0, 0), max_uv);
 
 
 		//ImGuizmo::SetDrawlist();
@@ -1611,7 +1559,7 @@ void GameEngine::build_menubar()
 	}
 }
 
-int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<AbstractGame>&& game)
+int GameEngine::Run(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<AbstractGame>&& game)
 {
 
 #if defined(DEBUG) | defined(_DEBUG)
@@ -1637,7 +1585,7 @@ int GameEngine::run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, i
 	GameEngine::instance()->set_command_line(cmdLine);
 	GameEngine::instance()->set_game(std::move(game));
 
-	result = GameEngine::instance()->run(hInstance, iCmdShow); // run the game engine and return the result
+	result = GameEngine::instance()->Run(hInstance, iCmdShow); // run the game engine and return the result
 
 	// Shutdown the game engine to make sure there's no leaks left.
 	GameEngine::shutdown();
@@ -1677,3 +1625,8 @@ void RenderThread::run()
 	_stage = Stage::Terminated;
 }
 
+static GlobalContext g_GlobalContext{};
+GlobalContext* GetGlobalContext()
+{
+	return &g_GlobalContext;
+}

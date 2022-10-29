@@ -56,6 +56,10 @@ using namespace D2D1;
 
 #include <backends/imgui_impl_dx11.h>
 #include <backends/imgui_impl_win32.h>
+#include <backends/imgui_impl_sdl.h>
 
 #include <tinyxml2/tinyxml2.h>
 #include <stb_image.h>
+
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_syswm.h>

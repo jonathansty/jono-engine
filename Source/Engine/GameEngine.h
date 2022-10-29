@@ -17,7 +17,7 @@
 #include "PlatformIO.h"
 #include "Framework/World.h"
 #include "Graphics/RenderWorld.h"
-#include "EngineSettings.h"
+#include "EngineCfg.h"
 #include "Graphics/Perf.h"
 
 
@@ -84,6 +84,15 @@ private:
 
 };
 
+struct GlobalContext
+{
+	class GameEngine* m_Engine;
+	class InputManager* m_InputManager;
+	class enki::TaskScheduler* m_TaskScheduler;
+	struct IO::IPlatformIO* m_PlatformIO;
+};
+GlobalContext* GetGlobalContext();
+
 
 class GameEngine : public TSingleton<GameEngine>, public b2ContactListener
 {
@@ -96,19 +105,19 @@ private:
 	friend class framework::Entity;
 
 public:
+	static constexpr double c_FixedPhysicsTimestep = 1.0 / 60.0;
+
 	virtual ~GameEngine();
 
 	GameEngine(const GameEngine&) = delete;
 	GameEngine& operator=(const GameEngine&) = delete;
 
 	// entry point to run a specific game
-	static int run_game(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<class AbstractGame>&& game);
+	static int Run(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<class AbstractGame>&& game);
 
 public:
-	std::shared_ptr<IO::IPlatformIO> io() const { return _platform_io; };
-
 	// Quits the game
-	void quit_game();
+	void Quit();
 
 	// Box2D virtual overloads
 	virtual void BeginContact(b2Contact* contactPtr);
@@ -122,7 +131,7 @@ public:
 
 	// Input methods
 
-	unique_ptr<InputManager> const& get_input() const { return _input_manager; };
+	unique_ptr<InputManager> const& get_input() const { return m_InputManager; };
 
 	//! Returns true when button is down and was down the previous GG
 	//! Example values for key are: VK_LEFT, 'A'. ONLY CAPITALS.
@@ -168,11 +177,11 @@ public:
 	//! returns pointer to the Audio object
 	unique_ptr<XAudioSystem> const& get_audio_system() const;
 	//! returns pointer to the box2D world object
-	shared_ptr<b2World> const& GetBox2DWorld() const { return _b2d_world; }
+	shared_ptr<b2World> const& GetBox2DWorld() const { return m_Box2DWorld; }
 
 	void set_icon(WORD wIcon);
 	void set_small_icon(WORD wSmallIcon);
-	void apply_settings(GameSettings& gameSettings);
+	void apply_settings(GameCfg& gameSettings);
 
 	void set_vsync(bool vsync);
 	bool get_vsync();
@@ -192,13 +201,13 @@ public:
 
 
 	// Returns the platform IO interface
-	shared_ptr<IO::IPlatformIO> get_io() const { return _platform_io; }
+	shared_ptr<IO::IPlatformIO> get_io() const { return m_PlatformIO; }
 
 	// Returns the current render world
-	std::shared_ptr<RenderWorld> get_render_world() const { return _render_world; }
+	std::shared_ptr<RenderWorld> get_render_world() const { return m_RenderWorld; }
 
 	// Returns the current game world
-	std::shared_ptr<framework::World> get_world() const { return _world; }
+	std::shared_ptr<framework::World> get_world() const { return m_World; }
 
 	enum class BuildMenuOrder
 	{
@@ -207,26 +216,21 @@ public:
 	};
 	void set_build_menu_callback(std::function<void(BuildMenuOrder)> fn) { _build_menu = fn; }
 
-	IDWriteFactory* GetDWriteFactory() const { return _renderer->get_raw_dwrite_factory(); }
+	IDWriteFactory* GetDWriteFactory() const { return m_Renderer->get_raw_dwrite_factory(); }
 
 private:
 	// Internal run function called by GameEngine::run
-	int run(HINSTANCE hInstance, int iCmdShow);
+	int Run(HINSTANCE hInstance, int iCmdShow);
 
 	// Sets the current game implementation
 	void set_game(unique_ptr<AbstractGame>&& gamePtr);
 
 	// Sets the current command line
-	void set_command_line(cli::CommandLine const& cmdLine) { _command_line = cmdLine; }
-
-	// Registers our WND class using the Win32 API
-	bool register_wnd_class();
+	void set_command_line(cli::CommandLine const& cmdLine) { m_CommandLine = cmdLine; }
 
 	// Opens the registered window. Should be called after wnd class has been registered
-	bool open_window(int iCmdShow);
-
-	LRESULT handle_event(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK wndproc(HWND hWindow, UINT msg, WPARAM wParam, LPARAM lParam);
+	bool InitWindow(int iCmdShow);
+	void ProcessEvent(SDL_Event& e);
 
 	void set_sleep(bool bSleep);
 
@@ -242,9 +246,6 @@ private:
 	// Direct2D methods
 	void d2d_render();
 #endif
-
-	void d3d_init();
-	void d3d_deinit();
 
 	// Trigger Contacts are stored as pairs in a std::vector.
 	// Iterates the vector and calls the ContactListeners
@@ -287,79 +288,77 @@ private:
 
 	std::array<Perf::Timer, 50> m_GpuTimings;
 
-	cli::CommandLine _command_line;
+	cli::CommandLine m_CommandLine;
 
 	// Member Variables
-	HINSTANCE _hinstance;
-	HWND      _hwindow;
-	string    _title;
-	WORD      _icon, _small_icon;
-	int       _window_width, _window_height;
-	bool      _should_sleep;
+	HINSTANCE m_hInstance;
+	HWND      m_hWindow;
 
-	unique_ptr<AbstractGame> _game;
+	struct SDL_Window* m_Window;
 
-	// DirectX resources
-	bool _initialized;
+	string    m_Title;
+	WORD      m_Icon, m_SmallIcon;
+	s32 m_WindowWidth;
+	s32 m_WindowHeight;
+	bool      m_ShouldSleep;
+
+	u32 m_ViewportWidth;
+	u32 m_ViewportHeight;
+	float2 m_ViewportPos;
+
+	ImGuiID m_ViewportImGuiID;
+
+	unique_ptr<AbstractGame> m_Game;
 
 	// Fonts used for text rendering
-	shared_ptr<Font> _default_font;
+	shared_ptr<Font> m_DefaultFont;
 
 	// Box2D
-	shared_ptr<b2World> _b2d_world;
-	shared_ptr<b2ContactFilter> _b2d_contact_filter;
+	shared_ptr<b2World> m_Box2DWorld;
+	shared_ptr<b2ContactFilter> m_Box2DContactFilter;
+	double m_Box2DTime = 0;
 
-	double _b2d_time = 0;
 #if FEATURE_D2D
-	Box2DDebugRenderer _b2d_debug_renderer;
+	Box2DDebugRenderer m_Box2DDebugRenderer;
 #endif
-	std::vector<ContactData> _b2d_begin_contact_data;
-	std::vector<ContactData> _b2d_end_contact_data;
-	std::vector<ImpulseData> _b2d_impulse_data;
-	double _physics_timestep = 1 / 60.0f;
-	float2 _gravity;
+
+	std::vector<ContactData> m_Box2DBeginContactData;
+	std::vector<ContactData> m_Box2DEndContactData;
+	std::vector<ImpulseData> m_Box2DImpulseData;
+	float2 m_Gravity;
 
 	// Systems
-	unique_ptr<PrecisionTimer> _game_timer;
-	unique_ptr<InputManager> _input_manager;
-	unique_ptr<XAudioSystem> _xaudio_system = nullptr;
+	unique_ptr<PrecisionTimer> m_FrameTimer;
+	unique_ptr<InputManager> m_InputManager;
+	unique_ptr<XAudioSystem> m_AudioSystem = nullptr;
 
-	MetricsOverlay* _metrics_overlay;
-	std::shared_ptr<OverlayManager> _overlay_manager;
-	GameSettings _game_settings;
-	EngineSettings _engine_settings;
+	MetricsOverlay* m_MetricsOverlay;
+	std::shared_ptr<OverlayManager> m_OverlayManager;
+	GameCfg m_GameCfg;
+	EngineCfg m_EngineCfg;
 
-#if FEATURE_D2D
-	Graphics::D2DRenderContext* _d2d_ctx;
-#endif
-
-	std::shared_ptr<IO::IPlatformIO> _platform_io;
+	std::shared_ptr<IO::IPlatformIO> m_PlatformIO;
 
 	// Game world and render world should be in sync!
-	std::shared_ptr<RenderWorld>      _render_world;
-	std::shared_ptr<framework::World> _world;
+	std::shared_ptr<RenderWorld>      m_RenderWorld;
+	std::shared_ptr<framework::World> m_World;
 
 	// Handle to the render thread. Owned by the game engine
-	std::unique_ptr<RenderThread> _render_thread;
+	std::unique_ptr<RenderThread> m_RenderThread;
 
 	// State
-	bool _can_paint;
-	bool _vsync_enabled;
-	bool _debug_physics_rendering;
-	bool _is_viewport_focused;
-	bool _recreate_game_texture;
-	bool _recreate_swapchain;
-	bool _physics_step_enabled;
-	bool _running;
+	bool m_CanPaint2D;
+	bool m_VSyncEnabled;
+	bool m_DebugPhysicsRendering;
+	bool m_ViewportIsFocused;
+	bool m_RecreateGameTextureRequested;
+	bool m_RecreateSwapchainRequested;
+	bool m_PhysicsStepEnabled;
+	bool m_IsRunning;
 
-	u32    _viewport_width;
-	u32    _viewport_height;
-	float2 _viewport_pos;
 
-	ImGuiID _viewport_id;
-
-	std::shared_ptr<Graphics::Renderer> _renderer;
-	std::unique_ptr<Graphics::D2DRenderContext> _d2d_render_context;
+	std::shared_ptr<Graphics::Renderer> m_Renderer;
+	std::unique_ptr<Graphics::D2DRenderContext> m_D2DRenderContext;
 
 	friend class MetricsOverlay;
 };

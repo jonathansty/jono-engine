@@ -14,8 +14,8 @@ public:
 	GameTest2D() = default;
 	virtual ~GameTest2D() = default;
 
-	void configure_engine(EngineSettings& engineSettings);
-	void initialize(GameSettings& gameSettings) {}
+	void configure_engine(EngineCfg& engineSettings);
+	void initialize(GameCfg& gameSettings) {}
 
 	void start() override;
 

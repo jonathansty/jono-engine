@@ -45,7 +45,7 @@ NavPathGrid construct_grid_from_pos(NavGrid& grid, u32 x0, u32 y0)
 	return temp;
 }
 
-void PathFindingGame::configure_engine(EngineSettings& settings)
+void PathFindingGame::configure_engine(EngineCfg& settings)
 {
 	settings.d2d_use = true;
 	settings.d3d_use = false;
@@ -54,7 +54,7 @@ void PathFindingGame::configure_engine(EngineSettings& settings)
 	settings.max_frame_time = 1.0f / 60.0f;
 }
 
-void PathFindingGame::initialize(GameSettings& settings)
+void PathFindingGame::initialize(GameCfg& settings)
 {
 	settings.m_WindowWidth = 1280;
 	settings.m_WindowHeight = 720;
@@ -223,16 +223,16 @@ void PathFindingGame::tick(double deltaTime)
 		float2 grid_pos = world_pos / _grid._cell_size;
 		grid_pos = hlslpp::clamp(grid_pos, float2(0, 0), float2(_grid._width, _grid._height));
 
-		if (input->is_key_down(KeyCode::Shift) && input->is_mouse_button_pressed(0))
+		if (input->is_key_down(KeyCode::LShift) && input->is_mouse_button_pressed(0))
 		{
 			_start = uint2(u32(grid_pos.x), u32(grid_pos.y));
 			_nav_grid = construct_grid_from_pos(_grid, _start.x, _start.y);
 		}
-		else if (input->is_key_down(KeyCode::Control) && input->is_mouse_button_pressed(0))
+		else if (input->is_key_down(KeyCode::LControl) && input->is_mouse_button_pressed(0))
 		{
 			_end = uint2(u32(grid_pos.x), u32(grid_pos.y));
 		}
-		else if (input->is_key_down(KeyCode::LeftAlt) && input->is_mouse_button_pressed(0))
+		else if (input->is_key_down(KeyCode::LAlt) && input->is_mouse_button_pressed(0))
 		{
 			if (auto cell = get_cell(_grid, u32(grid_pos.x), u32(grid_pos.y)); cell)
 			{
@@ -268,7 +268,7 @@ void PathFindingGame::tick(double deltaTime)
 			_view_translation.y += 10.0f;
 		}
 
-		if (input->is_key_pressed(KeyCode::R) && input->is_key_down(KeyCode::Control))
+		if (input->is_key_pressed(KeyCode::R) && input->is_key_down(KeyCode::LControl))
 		{
 			rebuild_shaders();
 		}

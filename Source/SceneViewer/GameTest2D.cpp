@@ -6,7 +6,7 @@
 #include "Components.h"
 #include "Overlays.h"
 
-void GameTest2D::configure_engine(EngineSettings& engineSettings) {
+void GameTest2D::configure_engine(EngineCfg& engineSettings) {
 	engineSettings.d2d_use = true;
 	engineSettings.d2d_use_aa = true;
 }

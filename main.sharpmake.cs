@@ -72,7 +72,7 @@ public class EngineProject : JonaBaseProject
         conf.AddPublicDependency<CliProject>(target);
         conf.AddPublicDependency<CoreProject>(target);
         conf.AddPublicDependency<DirectXTK>(target);
-
+        conf.AddPublicDependency<SDL2>(target);
 
         conf.Output = Configuration.OutputType.Lib;
         conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
@@ -101,6 +101,8 @@ public class EngineProject : JonaBaseProject
         //conf.EventPreBuildExe.Add(ReflectionGenerator.GetCustomBuildStep());
         //conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/obj/reflection/src/engine/");
         conf.IncludePaths.Add(@"[project.SourceRootPath]/..");
+
+
     }
 
     protected override void ExcludeOutputFiles()

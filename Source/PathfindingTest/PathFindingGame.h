@@ -138,9 +138,9 @@ class PathFindingGame : public AbstractGame
 {
 
 public:
-	void configure_engine(EngineSettings&) override;
+	void configure_engine(EngineCfg&) override;
 
-	void initialize(GameSettings& gameSettings) override;
+	void initialize(GameCfg& gameSettings) override;
 
 	void start(void) override;
 
