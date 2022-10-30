@@ -288,8 +288,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 
 	{
-
-		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+		//ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
 		// ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;
 		// ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
@@ -565,12 +564,12 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 		}
 
 
-		render();
+		Render();
 
 		PrecisionTimer present_timer{};
 		present_timer.reset();
 		present_timer.start();
-		present();
+		Present();
 		present_timer.stop();
 
 
@@ -713,11 +712,12 @@ bool GameEngine::InitWindow(int iCmdShow)
 	g_WindowData.maximized = false;
 
 	// Setup custom handler for IMGUI to store our window dimensions, position and state
+	// Then we trigger a load of the config manually to allow us to load our editor data.
 	{
 		ImGuiIO& io = ImGui::GetIO();
 		ImGuiSettingsHandler handler;
-		handler.TypeName = "EditorUserData";
-		handler.TypeHash = ImHashStr("EditorUserData");
+		handler.TypeName = "Editor";
+		handler.TypeHash = ImHashStr("Editor");
 		handler.UserData = this;
 		handler.ReadOpenFn = [](ImGuiContext* ctx, ImGuiSettingsHandler* handler, const char* name) -> void*
 		{
@@ -761,14 +761,11 @@ bool GameEngine::InitWindow(int iCmdShow)
 		}
 	}
 
-
 	u32 flags = SDL_WINDOW_RESIZABLE;
 	if ((m_GameCfg.m_WindowFlags & GameCfg::WindowFlags::StartMaximized) || g_WindowData.maximized)
 	{
 		flags |= SDL_WINDOW_MAXIMIZED;
 	}
-
-
 
 	std::wstring title = std::wstring(m_Title.begin(), m_Title.end());
 	m_Window = SDL_CreateWindow(m_Title.c_str(), g_WindowData.position.x, g_WindowData.position.y, g_WindowData.size.x, g_WindowData.size.y, flags);
@@ -777,9 +774,6 @@ bool GameEngine::InitWindow(int iCmdShow)
 		FAILMSG("Failed to create the SDL window.");
 		return false;
 	}
-
-	SDL_GetWindowSize(m_Window, &m_WindowWidth, &m_WindowHeight);
-	assert(m_WindowWidth > 0 && m_WindowHeight > 0);
 
 	return true;
 }
@@ -1258,11 +1252,6 @@ struct fmt::formatter<float4x4> : formatter<string_view>
 	}
 };
 
-void GameEngine::render_view(Graphics::RenderPass::Value pass)
-{
-	m_Renderer->render_view(m_RenderWorld, pass);
-}
-
 void GameEngine::BuildEditorUI()
 {
 	MEMORY_TAG(MemoryCategory::Debug);
@@ -1270,13 +1259,17 @@ void GameEngine::BuildEditorUI()
 	static ImGuiID s_ViewportDockID;
 	static ImGuiID s_PropertyDockID;
 	static ImGuiID s_DebugLogDockID;
-	ImGuiID dockSpaceID = ImGui::GetID("Dockspace##Root");
+	static bool s_DockInitialized = false;
+	static ImGuiID dockSpaceID = ImGui::GetID("Dockspace##Root");
+
 
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
 	{
 		ImGui::SetNextWindowPos(viewport->WorkPos);
-		ImGui::SetNextWindowSize(viewport->WorkSize);
+
+		ImVec2 workSize = ImVec2( viewport->WorkSize.x, viewport->WorkSize.y );
+		ImGui::SetNextWindowSize(workSize);
 		ImGui::SetNextWindowViewport(viewport->ID);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
 		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
@@ -1288,11 +1281,26 @@ void GameEngine::BuildEditorUI()
 	ImGui::Begin(s_RootImguiID, nullptr, window_flags);
 	ImGui::PopStyleVar(3);
 
+	if (ImGui::DockBuilderGetNode(dockSpaceID) == nullptr)
+	{
+		ImGui::DockBuilderRemoveNode(dockSpaceID);
+		ImGui::DockBuilderAddNode(dockSpaceID, (u32)ImGuiDockNodeFlags_DockSpace | (u32)ImGuiDockNodeFlags_PassthruCentralNode);
+		ImGui::DockBuilderSetNodeSize(dockSpaceID, viewport->Size);
+
+		ImGuiID dockMain = dockSpaceID;
+		s_DebugLogDockID = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Down, 0.25f, nullptr, &dockMain);
+		s_PropertyDockID = ImGui::DockBuilderSplitNode(dockMain, ImGuiDir_Right, 0.25f, nullptr, &dockMain);
+		s_ViewportDockID = dockMain;
+
+		m_PropertyDockID = s_PropertyDockID;
+
+		ImGui::DockBuilderFinish(dockMain);
+	}
 	ImGui::DockSpace(dockSpaceID);
 
 	BuildMenuBarUI();
-	BuildViewportUI(nullptr);
-	BuildDebugLogUI(nullptr);
+	BuildViewportUI(&s_ViewportDockID);
+	BuildDebugLogUI(&s_DebugLogDockID);
 
 	if (m_ShowImplotDemo)
 	{
@@ -1302,7 +1310,7 @@ void GameEngine::BuildEditorUI()
 	ImGui::End();
 }
 
-void GameEngine::render()
+void GameEngine::Render()
 {
 	JONO_EVENT();
 	auto d3d_annotation = m_Renderer->get_raw_annotation();
@@ -1350,7 +1358,7 @@ void GameEngine::render()
 	m_Renderer->end_frame();
 }
 
-void GameEngine::present()
+void GameEngine::Present()
 {
 	JONO_EVENT();
 	auto d3d_ctx = m_Renderer->get_raw_device_context();
@@ -1382,6 +1390,11 @@ void GameEngine::BuildDebugLogUI(ImGuiID* dockID)
 	if (!m_ShowDebugLog)
 	{
 		return;
+	}
+
+	if (dockID && (*dockID != 0))
+	{
+		ImGui::SetNextWindowDockID(*dockID, ImGuiCond_Once);
 	}
 
 	if (ImGui::Begin("Output Log", &m_ShowDebugLog, 0))
@@ -1458,9 +1471,9 @@ void GameEngine::BuildViewportUI(ImGuiID* dockID)
 		return;
 	}
 
-	if (dockID)
+	if (dockID && (*dockID != 0))
 	{
-		//ImGui::SetNextWindowDockID(*dockID, ImGuiCond_Once);
+		ImGui::SetNextWindowDockID(*dockID, ImGuiCond_Once);
 	}
 	if (ImGui::Begin("Viewport##GameViewport", &m_ShowViewport))
 	{
@@ -1551,6 +1564,7 @@ void GameEngine::BuildMenuBarUI()
 			_build_menu(BuildMenuOrder::First);
 		}
 
+#if 0
 		if (ImGui::BeginMenu("Simulation"))
 		{
 			static bool s_should_simulate = true;
@@ -1564,6 +1578,7 @@ void GameEngine::BuildMenuBarUI()
 
 			ImGui::EndMenu();
 		}
+#endif
 
 		if (ImGui::BeginMenu("Windows"))
 		{
@@ -1589,30 +1604,31 @@ void GameEngine::BuildMenuBarUI()
 				}
 			}
 
-			if (ImGui::BeginMenu("Overlays"))
+
+			ImGui::EndMenu();
+		}
+
+		if (ImGui::BeginMenu("Overlays"))
+		{
+			if (ImGui::IsItemClicked())
 			{
-				if (ImGui::IsItemClicked())
-				{
-					get_overlay_manager()->set_visible(!get_overlay_manager()->get_visible());
-				}
-
-				for (auto overlay : get_overlay_manager()->get_overlays())
-				{
-					bool enabled = overlay->get_visible();
-					if (ImGui::Checkbox(fmt::format("##{}", overlay->get_name()).c_str(), &enabled))
-					{
-						overlay->set_visible(enabled);
-					}
-
-					ImGui::SameLine();
-					if (ImGui::MenuItem(overlay->get_name()))
-					{
-						overlay->set_visible(!overlay->get_visible());
-					}
-				}
-				ImGui::EndMenu();
+				get_overlay_manager()->set_visible(!get_overlay_manager()->get_visible());
 			}
 
+			for (auto overlay : get_overlay_manager()->get_overlays())
+			{
+				bool enabled = overlay->get_visible();
+				if (ImGui::Checkbox(fmt::format("##{}", overlay->get_name()).c_str(), &enabled))
+				{
+					overlay->set_visible(enabled);
+				}
+
+				ImGui::SameLine();
+				if (ImGui::MenuItem(overlay->get_name()))
+				{
+					overlay->set_visible(!overlay->get_visible());
+				}
+			}
 			ImGui::EndMenu();
 		}
 

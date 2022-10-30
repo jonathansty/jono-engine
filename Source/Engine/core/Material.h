@@ -134,9 +134,9 @@ class MaterialInstance final : public IMaterialObject
 
 		void get_texture_views(std::vector<ID3D11ShaderResourceView const*>& views) const;
 
-		Graphics::ShaderRef const& get_vertex_shader() const { return get_material_obj()->get_vertex_shader(); }
-		Graphics::ShaderRef const& get_pixel_shader() const { return get_material_obj()->get_pixel_shader(); }
-		Graphics::ShaderRef const& get_debug_pixel_shader() const { return get_material_obj()->get_debug_pixel_shader(); }
+		Graphics::ShaderRef const& get_vertex_shader() const { return GetMaterialObj()->get_vertex_shader(); }
+		Graphics::ShaderRef const& get_pixel_shader() const { return GetMaterialObj()->get_pixel_shader(); }
+		Graphics::ShaderRef const& get_debug_pixel_shader() const { return GetMaterialObj()->get_debug_pixel_shader(); }
 
 		ConstantBufferRef const& get_cb() const;
 
@@ -159,21 +159,21 @@ class MaterialInstance final : public IMaterialObject
 		using Float4Parameter = TParameter<float4>;
 
 	private:
-		IMaterialObject const* get_material_obj()  const;
+		IMaterialObject const* GetMaterialObj()  const;
 
 
-		IMaterialObject const* _obj;
-		std::shared_ptr<MaterialHandle const> _resource;
+		IMaterialObject const* m_Obj;
+		std::shared_ptr<MaterialHandle const> m_Resource;
 
 		template<typename ParamType> 
 		using ParameterCollection = std::vector<TParameter<ParamType>>;
-		ParameterCollection<float> _float_params;
-		ParameterCollection<float3> _float3_params;
+		ParameterCollection<float>  m_FloatParameters;
+		ParameterCollection<float3> m_Float3Parameters;
 
-		bool _has_overrides;
-		bool _needs_flush;
-		std::vector<u8> _param_data;
+		bool m_HasOverriddenParameters;
+		bool m_NeedsFlush;
+		std::vector<u8> m_MaterialData;
 
-		std::vector<std::shared_ptr<class TextureHandle>> _textures;
-		ConstantBufferRef _instance_cb;
+		std::vector<std::shared_ptr<class TextureHandle>> m_Textures;
+		ConstantBufferRef m_InstanceCB;
 };

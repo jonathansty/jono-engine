@@ -332,16 +332,21 @@ void Material::apply(Graphics::Renderer* renderer, Graphics::ViewParams const& p
 }
 
 MaterialInstance::MaterialInstance(std::shared_ptr<MaterialHandle const> const& baseMaterial)
-		: _resource(baseMaterial)
-		, _has_overrides(false)
-		, _needs_flush(false)
-		 , _obj(nullptr)
+		: m_Resource(baseMaterial)
+		, m_HasOverriddenParameters(false)
+		, m_NeedsFlush(false)
+		 , m_Obj(nullptr)
 {
 	// Construct a copy of the original buffer + overrides
-	_textures.resize(get_material_obj()->get_texture_count());
+	m_Textures.resize(GetMaterialObj()->get_texture_count());
 }
 
  MaterialInstance::MaterialInstance()
+	 : m_Resource(nullptr)
+	 , m_HasOverriddenParameters(false)
+	 , m_NeedsFlush(false)
+	 , m_Obj(nullptr)
+	 , m_Textures()
 {
 }
 
@@ -351,8 +356,8 @@ MaterialInstance::~MaterialInstance()
 
 void MaterialInstance::bind(IMaterialObject const* obj)
 {
-	_obj = obj;
-	_param_data = obj->get_param_data();
+	m_Obj = obj;
+	m_MaterialData = obj->get_param_data();
 }
 
 void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams const& params) const
@@ -422,19 +427,19 @@ void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams 
 
 u32 MaterialInstance::get_slot(Identifier64 const& slot_id) const
 {
-	return get_material_obj()->get_slot(slot_id);
+	return GetMaterialObj()->get_slot(slot_id);
 }
 
 void MaterialInstance::set_texture(Identifier64 const& slot_id, std::shared_ptr<class TextureHandle> const& tex)
 {
-	_needs_flush = true;
-	_textures[get_slot(slot_id)] = tex;
+	m_NeedsFlush = true;
+	m_Textures[get_slot(slot_id)] = tex;
 }
 
 void MaterialInstance::set_texture(u32 slot, std::shared_ptr<class TextureHandle> const& resource)
 {
-	_textures[slot] = resource;
-	_needs_flush = true;
+	m_Textures[slot] = resource;
+	m_NeedsFlush = true;
 }
 
 void MaterialInstance::set_param_float(Identifier64 const& parameter_id, float value)
@@ -443,8 +448,8 @@ void MaterialInstance::set_param_float(Identifier64 const& parameter_id, float v
 		parameter_id,
 		value
 	};
-	_float_params.push_back(param);
-	_needs_flush = true;
+	m_FloatParameters.push_back(param);
+	m_NeedsFlush = true;
 }
 
 void MaterialInstance::set_param_float3(Identifier64 const& parameter_id, float3 value)
@@ -453,26 +458,26 @@ void MaterialInstance::set_param_float3(Identifier64 const& parameter_id, float3
 		parameter_id,
 		value
 	};
-	_float3_params.push_back(param);
-	_needs_flush = true;
+	m_Float3Parameters.push_back(param);
+	m_NeedsFlush = true;
 }
 
 void MaterialInstance::update()
 {
-	if (_needs_flush)
+	if (m_NeedsFlush)
 	{
-		IMaterialObject const* obj = get_material_obj();
+		IMaterialObject const* obj = GetMaterialObj();
 
 		// Apply all the float parameters
-		float* data = reinterpret_cast<float*>(_param_data.data());
-		for (FloatParameter const& param : _float_params)
+		float* data = reinterpret_cast<float*>(m_MaterialData.data());
+		for (FloatParameter const& param : m_FloatParameters)
 		{
 			ParameterInfo const* info = obj->find_parameter(param.hash);
 			data[info->offset] = param.value;
 		}
-		_float_params.clear();
+		m_FloatParameters.clear();
 
-		for(Float3Parameter const& param : _float3_params)
+		for(Float3Parameter const& param : m_Float3Parameters)
 		{
 			ParameterInfo const* info = obj->find_parameter(param.hash);
 			data[info->offset + 0] = param.value.x;
@@ -480,29 +485,29 @@ void MaterialInstance::update()
 			data[info->offset + 2] = param.value.z;
 		
 		}
-		_float3_params.clear();
+		m_Float3Parameters.clear();
 
-		if (_has_overrides)
+		if (m_HasOverriddenParameters)
 		{
 			// update the paramter data
-			_instance_cb = ConstantBuffer::create(Graphics::get_device().Get(), u32(_param_data.size()) * sizeof(float), false, BufferUsage::Default, _param_data.data());
+			m_InstanceCB = ConstantBuffer::create(Graphics::get_device().Get(), u32(m_MaterialData.size()) * sizeof(float), false, BufferUsage::Default, m_MaterialData.data());
 		}
 
-		_needs_flush = false;
+		m_NeedsFlush = false;
 	}
 }
 
 void MaterialInstance::get_texture_views(std::vector<ID3D11ShaderResourceView const*>& views) const
 {
 	// Get the base views
-	get_material_obj()->get_texture_views(views);
+	GetMaterialObj()->get_texture_views(views);
 
 	// Now apply the instance it's views
-	for (std::size_t i = 0; i < _textures.size(); ++i)
+	for (std::size_t i = 0; i < m_Textures.size(); ++i)
 	{
-		if (_textures[i])
+		if (m_Textures[i])
 		{
-			Texture const* texture = _textures[i]->get();
+			Texture const* texture = m_Textures[i]->get();
 			views[i] = texture->get_srv();
 		}
 	}
@@ -510,41 +515,41 @@ void MaterialInstance::get_texture_views(std::vector<ID3D11ShaderResourceView co
 
 ConstantBufferRef const& MaterialInstance::get_cb() const
 {
-	if (_instance_cb)
+	if (m_InstanceCB)
 	{
-		return _instance_cb;
+		return m_InstanceCB;
 	}
 
-	return get_material_obj()->get_cb();
+	return GetMaterialObj()->get_cb();
 }
 
 Material const* MaterialInstance::get_material() const
 {
-	MaterialHandle const* res = _resource.get();
+	MaterialHandle const* res = m_Resource.get();
 	return res->get();
 }
 
 bool MaterialInstance::is_double_sided() const
 {
-	return get_material_obj()->is_double_sided();
+	return GetMaterialObj()->is_double_sided();
 }
 
-IMaterialObject const* MaterialInstance::get_material_obj() const
+IMaterialObject const* MaterialInstance::GetMaterialObj() const
 {
-	return _obj ? _obj : _resource->get();
+	return m_Obj ? m_Obj : m_Resource->get();
 }
 
 u32 MaterialInstance::get_texture_count() const
 {
-	return get_material_obj()->get_texture_count();
+	return GetMaterialObj()->get_texture_count();
 }
 
 std::vector<u8> const& MaterialInstance::get_param_data() const
 {
-	return get_material_obj()->get_param_data();
+	return GetMaterialObj()->get_param_data();
 }
 
 ParameterInfo const* MaterialInstance::find_parameter(Identifier64 const& id) const
 {
-	return get_material_obj()->find_parameter(id);
+	return GetMaterialObj()->find_parameter(id);
 }

@@ -171,7 +171,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 	float3 final_colour = float3(0.0,0.0,0.0);
 
 	uint numDirectionalLights = g_NumDirectionalLights;
-	numDirectionalLights = 0;
+	// numDirectionalLights = 0;
 	[loop]
 	for (unsigned int i = 0; i < numDirectionalLights; ++i) 
 	{

@@ -24,6 +24,11 @@ void MetricsOverlay::RenderOverlay()
 	{
 
 		ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
+		if(propertyDockID)
+		{
+			ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_Once);
+		}
+
 		ImGui::Begin(_name.c_str(), &_isOpen);
 
 		static bool s_EnableVsync = GameEngine::instance()->get_vsync();

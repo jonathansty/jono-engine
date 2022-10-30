@@ -255,12 +255,8 @@ private:
 	// This for begin and endcontacts
 	void CallListeners();
 
-
-	void render();
-	void present();
-
-	// Renders the main view
-	void render_view(Graphics::RenderPass::Value pass);
+	void Render();
+	void Present();
 
 	void BuildEditorUI();
 	void BuildDebugLogUI(ImGuiID* dockID = nullptr);
