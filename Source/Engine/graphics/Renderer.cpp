@@ -322,6 +322,9 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 {
 	assert(m_Window);
 
+	m_DrawableAreaWidth = w;
+	m_DrawableAreaHeight = h;
+
 	LOG_VERBOSE(Graphics, "Resizing swapchain to {}x{}", w, h);
 	DXGI_FORMAT swapchain_format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	_swapchain_format = swapchain_format;
@@ -415,7 +418,6 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 
 	ENSURE_HR(_device->CreateShaderResourceView(_output_depth_copy, &srv_desc, &_output_depth_srv_copy));
 	Helpers::SetDebugObjectName(_output_depth_srv_copy, "Renderer::Output Depth (COPY)");
-
 
 	// Either create the swapchain or retrieve the existing description
 	DXGI_SWAP_CHAIN_DESC desc{};
@@ -1276,10 +1278,6 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "Post");
 
-
-
-
-
 	PostCB* data = (PostCB*)_cb_post->map(_device_ctx);
 	data->m_ViewportWidth = (f32)(m_DrawableAreaWidth);
 	data->m_ViewportHeight = (f32)(m_DrawableAreaHeight);
@@ -1327,8 +1325,8 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 	}
 
 	D3D11_VIEWPORT vp{};
-	vp.Width = static_cast<float>(m_DrawableAreaWidth);
-	vp.Height = static_cast<float>(m_DrawableAreaHeight);
+	vp.Width = static_cast<float>(_viewport_width);
+	vp.Height = static_cast<float>(_viewport_height);
 	vp.TopLeftX = 0.0f;
 	vp.TopLeftY = 0.0f;
 	vp.MinDepth = 0.0f;
@@ -1344,6 +1342,15 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 	render_post_predebug();
 
 	render_post_postdebug();
+
+	vp.Width = static_cast<float>(m_DrawableAreaWidth);
+	vp.Height = static_cast<float>(m_DrawableAreaHeight);
+	vp.TopLeftX = 0.0f;
+	vp.TopLeftY = 0.0f;
+	vp.MinDepth = 0.0f;
+	vp.MaxDepth = 1.0f;
+	_device_ctx->RSSetViewports(1, &vp);
+
 
 	// Render main viewport ImGui
 	{

@@ -341,7 +341,6 @@ void SceneViewer::debug_ui()
 	static bool s_open = true;
 
 	ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
-	ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_FirstUseEver);
 	ImGui::Begin("Viewer", &s_open);
 
 	const char* cameras[] = {

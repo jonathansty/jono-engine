@@ -2,8 +2,7 @@ Texture2D<float4>      g_world : register(t0);
 
 cbuffer ShaderConsts : register(b0) 
 {
-	float g_ViewportWidth;
-	float g_ViewportHeight;
+	float2 g_WindowSize;
 };
 
 // Default Samplers
@@ -17,8 +16,7 @@ float Grayscale(float3 rgb)
 
 float4 main(float4 pos : SV_Position, float2 uv : TEXCOORD0) : SV_Target 
 {
-	float2 scaled_pos = pos.xy / float2(g_ViewportWidth, g_ViewportHeight);
-
+	float2 scaled_pos = pos.xy / g_WindowSize;
 
 	float3 world_colour = g_world.Sample(g_point_sampler, scaled_pos).rgb;
 	float3 gray_scale_colour = Grayscale(world_colour.rgb).rrr;

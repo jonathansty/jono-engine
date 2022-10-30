@@ -146,7 +146,6 @@ void RendererDebugTool::render_shader_tool()
 	if (s_open)
 	{
 		ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
-		ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_FirstUseEver);
 		if (ImGui::Begin("Shaders", &s_open))
 		{
 			ImGui::BeginTable("##ShaderTable", 2);
@@ -179,7 +178,6 @@ void RendererDebugTool::render_shader_tool()
 void RendererDebugTool::render_debug_tool()
 {
 	ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
-	ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_FirstUseEver);
 	if (ImGui::Begin("RendererDebug"), _isOpen)
 	{
 		ImGui::Checkbox("Enable Shadow Rendering", &Graphics::s_EnableShadowRendering);

@@ -141,7 +141,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	// Then we initialize the logger as this might create a log file
 	Logger::instance()->init();
 
-
 	// Now we can start logging information and we mount our resources volume.
 	LOG_INFO(IO, "Mounting resources directory.");
 	m_PlatformIO->mount("Resources");
@@ -203,8 +202,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	taskScheduler->RunPinnedTasks();
 	taskScheduler->WaitforAll();
 
-
-	//Initialize the high precision timers
+	// Initialize the high precision timers
 	m_FrameTimer = make_unique<PrecisionTimer>();
 	m_FrameTimer->reset();
 
@@ -228,8 +226,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	LOG_ERROR(Unknown, "Test error message");
 #endif
 
-
-
 	//_render_thread = std::make_unique<RenderThread>();
 	//_render_thread->wait_for_stage(RenderThread::Stage::Running);
 	//_render_thread->terminate();
@@ -246,6 +242,20 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 		m_Game->initialize(m_GameCfg);
 	}
 	apply_settings(m_GameCfg);
+
+	{
+		ImGui::SetAllocatorFunctions(
+				[](size_t size, void*)
+				{
+					return std::malloc(size);
+				},
+				[](void* mem, void*)
+				{
+					return std::free(mem);
+				});
+		ImGui::CreateContext();
+		ImPlot::CreateContext();
+	}
 
 	SDL_Init(SDL_INIT_EVERYTHING);
 
@@ -278,17 +288,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 
 	{
-		ImGui::SetAllocatorFunctions(
-				[](size_t size, void*)
-				{
-					return std::malloc(size);
-				},
-				[](void* mem, void*)
-				{
-					return std::free(mem);
-				});
-		ImGui::CreateContext();
-		ImPlot::CreateContext();
 
 		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
@@ -361,7 +360,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 		Graphics::DeviceContext ctx = m_Renderer->get_ctx();
 		ImGui_ImplSDL2_InitForD3D(m_Window);
 		ImGui_ImplDX11_Init(ctx._device.Get(), ctx._ctx.Get());
-
 	}
 
 #pragma region Box2D
@@ -693,6 +691,15 @@ void GameEngine::d2d_render()
 }
 #endif
 
+struct EditorWindowData
+{
+	ImVec2ih position;
+	ImVec2ih size;
+
+	bool maximized = false;
+};
+EditorWindowData g_WindowData;
+
 bool GameEngine::InitWindow(int iCmdShow)
 {
 	// Calculate the window size and position based upon the game size
@@ -701,14 +708,70 @@ bool GameEngine::InitWindow(int iCmdShow)
 	int iXWindowPos = (GetSystemMetrics(SM_CXSCREEN) - iWindowWidth) / 2;
 	int iYWindowPos = (GetSystemMetrics(SM_CYSCREEN) - iWindowHeight) / 2;
 
+	g_WindowData.position = ImVec2ih((short)iXWindowPos, (short)iYWindowPos);
+	g_WindowData.size = ImVec2ih((short)iWindowWidth, (short)iWindowHeight);
+	g_WindowData.maximized = false;
+
+	// Setup custom handler for IMGUI to store our window dimensions, position and state
+	{
+		ImGuiIO& io = ImGui::GetIO();
+		ImGuiSettingsHandler handler;
+		handler.TypeName = "EditorUserData";
+		handler.TypeHash = ImHashStr("EditorUserData");
+		handler.UserData = this;
+		handler.ReadOpenFn = [](ImGuiContext* ctx, ImGuiSettingsHandler* handler, const char* name) -> void*
+		{
+			return &g_WindowData;
+		};
+		handler.ReadLineFn = [](ImGuiContext* ctx, ImGuiSettingsHandler* handler, void* entry, const char* line)
+		{
+			EditorWindowData* data = (EditorWindowData*)entry;
+			int x, y;
+			if (sscanf_s(line, "Pos=%i,%i", &x, &y) == 2)
+			{
+				g_WindowData.position = ImVec2ih((short)x, (short)y);
+			}
+			else if (sscanf_s(line, "Size=%i,%i", &x, &y) == 2)
+			{
+				g_WindowData.size = ImVec2ih((short)x, (short)y);
+			}
+			else if (sscanf_s(line, "Maximized=%i", &x) == 1)
+			{
+				g_WindowData.maximized = (bool)x;
+			};
+
+		};
+		handler.WriteAllFn = [](ImGuiContext* ctx, ImGuiSettingsHandler* handler, ImGuiTextBuffer* buf)
+		{
+			const char* settings_name = "WindowData";
+			{
+				buf->appendf("[%s][%s]\n", handler->TypeName, settings_name);
+				buf->appendf("Pos=%d,%d\n", g_WindowData.position.x, g_WindowData.position.y);
+				buf->appendf("Size=%d,%d\n", g_WindowData.size.x, g_WindowData.size.y);
+				buf->appendf("Maximized=%d\n", g_WindowData.maximized ? 1 : 0);
+				buf->append("\n");
+			}
+		};
+
+		ImGui::GetCurrentContext()->SettingsHandlers.push_back(handler);
+
+		if (ImGui::GetIO().IniFilename)
+		{
+			ImGui::LoadIniSettingsFromDisk(ImGui::GetIO().IniFilename);
+		}
+	}
+
+
 	u32 flags = SDL_WINDOW_RESIZABLE;
-	if (m_GameCfg.m_WindowFlags & GameCfg::WindowFlags::StartMaximized)
+	if ((m_GameCfg.m_WindowFlags & GameCfg::WindowFlags::StartMaximized) || g_WindowData.maximized)
 	{
 		flags |= SDL_WINDOW_MAXIMIZED;
 	}
 
+
+
 	std::wstring title = std::wstring(m_Title.begin(), m_Title.end());
-	m_Window = SDL_CreateWindow(m_Title.c_str(), iXWindowPos, iYWindowPos, iWindowWidth, iWindowHeight, flags);
+	m_Window = SDL_CreateWindow(m_Title.c_str(), g_WindowData.position.x, g_WindowData.position.y, g_WindowData.size.x, g_WindowData.size.y, flags);
 	if (!m_Window)
 	{
 		FAILMSG("Failed to create the SDL window.");
@@ -934,6 +997,22 @@ void GameEngine::ProcessEvent(SDL_Event& e)
 	{
 		case SDL_WINDOWEVENT:
 		{
+			SDL_GetWindowSize(m_Window, &m_WindowWidth, &m_WindowHeight);
+
+			int x, y;
+			SDL_GetWindowPosition(m_Window, &x, &y);
+
+			u32 flags = SDL_GetWindowFlags(m_Window);
+
+			g_WindowData.size = ImVec2ih((short)m_WindowWidth, (short)m_WindowHeight);
+			g_WindowData.position = ImVec2ih((short)x, (short)y);
+			g_WindowData.maximized = false;
+			if (flags & SDL_WINDOW_MAXIMIZED)
+			{
+				g_WindowData.maximized = true;
+			}
+
+
 			if (e.window.event == SDL_WINDOWEVENT_CLOSE)
 			{
 				GameEngine::instance()->Quit();
@@ -941,9 +1020,6 @@ void GameEngine::ProcessEvent(SDL_Event& e)
 			}
 			else if (e.window.event == SDL_WINDOWEVENT_MAXIMIZED)
 			{
-				SDL_SetWindowPosition(m_Window, 0, 0);
-				SDL_GetWindowSize(m_Window, &m_WindowWidth, &m_WindowHeight);
-
 				this->m_RecreateSwapchainRequested = true;
 			}
 			else if (e.window.event == SDL_WINDOWEVENT_RESIZED)
@@ -1191,12 +1267,10 @@ void GameEngine::BuildEditorUI()
 {
 	MEMORY_TAG(MemoryCategory::Debug);
 
-	static bool s_DockspaceInitialized = false;
-
 	static ImGuiID s_ViewportDockID;
 	static ImGuiID s_PropertyDockID;
 	static ImGuiID s_DebugLogDockID;
-	static constexpr const char* dockSpaceRoot = "Dockspace##Main";
+	ImGuiID dockSpaceID = ImGui::GetID("Dockspace##Root");
 
 	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 	ImGuiViewport* viewport = ImGui::GetMainViewport();
@@ -1211,34 +1285,10 @@ void GameEngine::BuildEditorUI()
 		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 	}
 
-	ImGui::Begin("EngineDockspace", nullptr, window_flags);
+	ImGui::Begin(s_RootImguiID, nullptr, window_flags);
 	ImGui::PopStyleVar(3);
 
-
-	ImGuiID dockSpaceID = ImGui::GetID((void*)dockSpaceRoot);
-	m_DockImGuiID = dockSpaceID;
-
 	ImGui::DockSpace(dockSpaceID);
-	if (!s_DockspaceInitialized)
-	{
-		//s_DockspaceInitialized = true;
-
-		//ImGui::DockBuilderRemoveNode(dockSpaceID);
-		//ImGui::DockBuilderAddNode(dockSpaceID, ImGuiDockNodeFlags_DockSpace);
-		//ImGui::DockBuilderGetNode(dockSpaceID)->LocalFlags &= ~ImGuiDockNodeFlags_CentralNode;
-		//ImGui::DockBuilderSetNodeSize(dockSpaceID, viewport->Size);
-		//ImGui::DockBuilderSetNodePos(dockSpaceID, ImVec2(0.f, 0.f));
-
-		//s_PropertyDockID = ImGui::DockBuilderSplitNode(m_DockImGuiID, ImGuiDir_Right, 0.35f, nullptr, &m_DockImGuiID);
-		//s_DebugLogDockID = ImGui::DockBuilderSplitNode(m_DockImGuiID, ImGuiDir_Down, 0.2f, nullptr, &m_DockImGuiID);
-		//s_ViewportDockID = m_DockImGuiID;
-
-		//m_PropertyDockID = s_PropertyDockID;
-
-		//ImGui::DockBuilderFinish(m_DockImGuiID);
-
-		//ImGui::DockBuilderFinish(m_DockImGuiID);
-	}
 
 	BuildMenuBarUI();
 	BuildViewportUI(nullptr);
@@ -1246,7 +1296,6 @@ void GameEngine::BuildEditorUI()
 
 	if (m_ShowImplotDemo)
 	{
-		ImGui::SetNextWindowDockID(s_PropertyDockID, ImGuiCond_FirstUseEver);
 		ImPlot::ShowDemoWindow(&m_ShowImplotDemo);
 	}
 
@@ -1335,11 +1384,6 @@ void GameEngine::BuildDebugLogUI(ImGuiID* dockID)
 		return;
 	}
 
-	if (dockID)
-	{
-		ImGui::SetNextWindowDockID(*dockID, ImGuiCond_Once);
-	}
-
 	if (ImGui::Begin("Output Log", &m_ShowDebugLog, 0))
 	{
 
@@ -1416,7 +1460,7 @@ void GameEngine::BuildViewportUI(ImGuiID* dockID)
 
 	if (dockID)
 	{
-		ImGui::SetNextWindowDockID(*dockID, ImGuiCond_Once);
+		//ImGui::SetNextWindowDockID(*dockID, ImGuiCond_Once);
 	}
 	if (ImGui::Begin("Viewport##GameViewport", &m_ShowViewport))
 	{
@@ -1466,8 +1510,8 @@ void GameEngine::BuildViewportUI(ImGuiID* dockID)
 
 		// Draw the actual scene image
 		ImVec2 max_uv = {};
-		max_uv.x = s_vp_size.x / get_width();
-		max_uv.y = s_vp_size.y / get_height();
+		max_uv.x = s_vp_size.x / m_Renderer->GetDrawableWidth();
+		max_uv.y = s_vp_size.y / m_Renderer->GetDrawableHeight();
 
 		m_ViewportPos = float2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
 		ImGui::Image(m_Renderer->get_raw_output_non_msaa_srv(), s_vp_size, ImVec2(0, 0), max_uv);

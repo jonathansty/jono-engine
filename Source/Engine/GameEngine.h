@@ -274,6 +274,7 @@ private:
 	std::function<void(BuildMenuOrder)> _build_menu;
 
 private:
+	static constexpr const char* s_RootImguiID = "RootWindow##Root";
 
 	struct GpuTimer
 	{
