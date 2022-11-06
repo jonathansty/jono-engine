@@ -1,0 +1,26 @@
+name: build
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '17 2 * * *'
+    
+env:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2019, windows-2022]
+        configuration: [debug,release]
+        
+        steps:
+          - name: Checkout repo
+            uses: actions/checkout
+          - name: Bootstrap.bat  ${{ matrix.configuration }}
+            uses: .\bootstrap.bat
+          - name: Build Solution
+            uses: .\BuildSolution.bat
+          
