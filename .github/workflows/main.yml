@@ -21,7 +21,7 @@ jobs:
       - name: Installing conan
         uses: turtlebrowser/get-conan@main
       - name: Install dependencies
-        run: 
+        run: | 
           conan profile new default --detect
           conan install . -s build_type=Debug -pr profile_Debug --install-folder=${{github.workspace}}/build/conan_debug
           conan install . -s build_type=Release -pr profile_Release --install-folder=${{github.workspace}}/build/conan_Release
