@@ -2,7 +2,9 @@
 
 #include "PlatformIO.h"
 
-namespace serialization {
+#ifdef ENABLE_RTTR
+namespace serialization
+{
 
 // Writing binary
 template <typename T>
@@ -62,7 +64,6 @@ inline std::string read(IO::IFileRef const& f)
 	return tmp;
 }
 
-
 // Writing of atomic types to binary
 bool write_atomic_types(IO::IFileRef const& file, rttr::variant const& variant);
 bool write_instance(IO::IFileRef const& file, rttr::instance const& instance);
@@ -82,11 +83,9 @@ bool write_associative_container(IO::IFileRef const& file, rttr::variant const& 
 bool read_sequential_container(IO::IFileRef const& file, rttr::instance obj);
 bool read_associative_container(IO::IFileRef const& file, rttr::instance obj);
 
-
-
 /// <summary>
 /// Binary serialization construct that writes/reads directly to a binary file using raw memory copies.
-/// This only works for built-in types and a select few implementations 
+/// This only works for built-in types and a select few implementations
 /// </summary>
 /// <typeparam name="T">Type of the object to serialize</typeparam>
 /// <param name="file"></param>
@@ -106,14 +105,14 @@ void serialize(IO::IFileRef const& file, T& obj)
 }
 
 /// <summary>
-/// Serializes `instance` into `file`. Only supports serializing if the file was opened as binary. 
+/// Serializes `instance` into `file`. Only supports serializing if the file was opened as binary.
 /// It asserts when a file is not opened as binary.
 /// </summary>
 /// <param name="file">The file to serialize from/to</param>
 /// <param name="instance">The data to serialize</param>
 /// <returns>Boolean to indicate success or failure</returns>
 template <IO::Mode Mode>
-bool serialize_instance(IO::IFileRef const& file, rttr::instance instance) 
+bool serialize_instance(IO::IFileRef const& file, rttr::instance instance)
 {
 	assert(file->is_binary() && Mode == file->get_mode());
 
@@ -149,7 +148,6 @@ bool serialize_instance(IO::IFileRef const& file, rttr::instance instance)
 			continue;
 		}
 
-
 		// todo(jonathan): refactor this code to possibly not have constexprs in this function
 		rttr::type const& t_prop = prop.get_type();
 
@@ -158,11 +156,18 @@ bool serialize_instance(IO::IFileRef const& file, rttr::instance instance)
 		{
 			rttr::variant value = prop.get_value(obj);
 
-			if (read_atomic_types(file, value)) {} 
-			else if (read_container(file, value)) {}
-			else if(read_instance(file, value)) {}
+			if (read_atomic_types(file, value))
+			{
+			}
+			else if (read_container(file, value))
+			{
+			}
+			else if (read_instance(file, value))
+			{
+			}
 
-			if (value.is_valid() && value.convert(t_prop)) {
+			if (value.is_valid() && value.convert(t_prop))
+			{
 				prop.set_value(obj, value);
 			}
 		}
@@ -171,10 +176,17 @@ bool serialize_instance(IO::IFileRef const& file, rttr::instance instance)
 		if constexpr (Mode == IO::Mode::Write)
 		{
 			rttr::variant prop_value = prop.get_value(obj);
-			if (write_atomic_types(file, prop_value)) {
-			} else if(write_container(file, prop_value)) {
-			} else if (write_instance(file, prop_value)) {
-			} else {
+			if (write_atomic_types(file, prop_value))
+			{
+			}
+			else if (write_container(file, prop_value))
+			{
+			}
+			else if (write_instance(file, prop_value))
+			{
+			}
+			else
+			{
 				handled_all_props = false;
 				fmt::print("Failed to handle property \"{}\"!", prop.get_name().begin());
 			}
@@ -186,7 +198,6 @@ bool serialize_instance(IO::IFileRef const& file, rttr::instance instance)
 	return handled_all_props;
 }
 
-
-
-}
+} // namespace serialization
+#endif
 

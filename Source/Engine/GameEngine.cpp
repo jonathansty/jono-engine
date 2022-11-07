@@ -4,9 +4,9 @@
 #include "ContactListener.h"
 #include "GameEngine.h"
 
-#include "debug_overlays/ImGuiOverlays.h"
-#include "debug_overlays/MetricsOverlay.h"
-#include "debug_overlays/RTTIDebugOverlay.h"
+#include "Debug/ImGuiOverlays.h"
+#include "Debug/MetricsOverlay.h"
+#include "Debug/RTTIDebugOverlay.h"
 
 #include "core/ResourceLoader.h"
 
@@ -98,7 +98,8 @@ GameEngine::GameEngine()
 	, m_ShowImplotDemo(false)
 	, m_ShowEntityEditor(false)
 	, m_Renderer(nullptr)
-	, m_D2DRenderContext(nullptr)
+	, m_SignalGraphicsToMain({0})
+	, m_SignalMainToGraphics({0})
 {
 	ASSERT(!GetGlobalContext()->m_Engine);
 	GetGlobalContext()->m_Engine = this;
@@ -226,13 +227,10 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	LOG_ERROR(Unknown, "Test error message");
 #endif
 
-	//_render_thread = std::make_unique<RenderThread>();
-	//_render_thread->wait_for_stage(RenderThread::Stage::Running);
-	//_render_thread->terminate();
-	//_render_thread->wait_for_stage(RenderThread::Stage::Terminated);
-	//_render_thread->join();
+	// Kick-off the graphics thread
+	m_GraphicsThread.Execute();
 
-	m_Renderer = std::make_shared<Graphics::Renderer>();
+	m_Renderer = SharedPtr(new Graphics::Renderer());
 	m_Renderer->Init(m_EngineCfg, m_GameCfg, m_CommandLine);
 
 	// Game Initialization
@@ -265,6 +263,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 		return false;
 	}
 
+	
 	m_Renderer->InitForWindow(m_Window);
 	Graphics::init(m_Renderer->get_ctx());
 
@@ -382,6 +381,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 #endif
 #pragma endregion
 
+
 	// User defined functions for start of the game
 	if (m_Game)
 	{
@@ -393,7 +393,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	if (!get_render_world()->get_view_camera())
 	{
 		RenderWorldCameraRef camera = get_render_world()->create_camera();
-		ImVec2 size = GameEngine::instance()->get_viewport_size();
+		ImVec2 size = GameEngine::instance()->GetViewportSize();
 		const float aspect = (float)size.x / (float)size.y;
 		const float near_plane = 5.0f;
 		const float far_plane = 1000.0f;
@@ -426,10 +426,17 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	f64 time_previous = 0.0;
 	f64 time_lag = 0.0; 
 
+
+	// Wait until graphics stage is initialized
+	m_GraphicsThread.WaitForStage(GraphicsThread::Stage::Running);
+	m_SignalGraphicsToMain.release();
+
 	m_IsRunning = m_Game ? true : false;
+	u64 frame = 0;
 	while (m_IsRunning)
 	{
 		JONO_FRAME("Frame");
+		++frame;
 
 		full_frame_timer.start();
 
@@ -460,12 +467,12 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 		// Running might have been updated by the windows message loop. Handle this here.
 		if (!m_IsRunning)
 		{
+			m_GraphicsThread.Terminate();
+			m_SignalMainToGraphics.release();
 			break;
 		}
 
 		{
-
-
 			// Execute the game simulation loop
 			{
 				JONO_EVENT("Simulation");
@@ -506,12 +513,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 			}
 
 
-			Perf::begin_frame(m_Renderer->get_raw_device_context());
-			if (m_RecreateSwapchainRequested)
-			{
-				m_Renderer->resize_swapchain(m_WindowWidth, m_WindowHeight);
-				m_RecreateSwapchainRequested = false;
-			}
 
 			// Recreating the game viewport texture needs to happen before running IMGUI and the actual rendering
 			{
@@ -541,42 +542,14 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 		ResourceLoader::instance()->update();
 
-		// Process the previous frame gpu timers here to allow our update thread to run first
-		if (Perf::can_collect())
-		{
-			JONO_EVENT("PerfCollect");
-			size_t current = Perf::get_previous_frame_resource_index();
-
-			D3D11_QUERY_DATA_TIMESTAMP_DISJOINT timestampDisjoint;
-			UINT64 start;
-			UINT64 end;
-
-			if (Perf::collect_disjoint(m_Renderer->get_raw_device_context(), timestampDisjoint))
-			{
-				auto& timing_data = m_GpuTimings[current];
-				f64 cpuTime;
-				timing_data.flush(m_Renderer->get_raw_device_context(), start, end, cpuTime);
-
-				double diff = (double)(end - start) / (double)timestampDisjoint.Frequency;
-				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::RenderGPU, (float)(diff * 1000.0));
-				m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::RenderCPU, (float)(cpuTime * 1000.0));
-			}
-		}
-
-
-		Render();
-
-		PrecisionTimer present_timer{};
-		present_timer.reset();
-		present_timer.start();
-		Present();
-		present_timer.stop();
-
+		// First sync our game update to the RT 
+		m_SignalGraphicsToMain.acquire();
+		Sync();
+		m_SignalMainToGraphics.release();
 
 		// Update CPU only timings
 		{
 			JONO_EVENT("FrameLimiter");
-			m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::PresentCPU, present_timer.get_delta_time() * 1000.0);
 			if (m_EngineCfg.max_frame_time > 0.0)
 			{
 				f64 targetTimeMs = m_EngineCfg.max_frame_time;
@@ -585,14 +558,17 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 				f64 framet = full_frame_timer.get_delta_time();
 				f64 time_to_sleep = targetTimeMs - framet;
 
-				Perf::precise_sleep(time_to_sleep);
+				Perf::PreciseSleep(time_to_sleep);
 			}
 		}
 		full_frame_timer.stop();
 		f64 framet = full_frame_timer.get_delta_time();
 		time_elapsed += framet;
-
 	}
+
+	m_GraphicsThread.Terminate();
+	m_GraphicsThread.WaitForStage(GraphicsThread::Stage::Terminated);
+	m_GraphicsThread.Join();
 
 
 	// User defined code for exiting the game
@@ -633,62 +609,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	return 0;
 }
 
-#if FEATURE_D2D
-void GameEngine::d2d_render()
-{
-	// Plan to modernize the 2D and deprecate Direct2D
-	// 1. Collect all the draw commands in buffers and capture the required data
-	// 2. during end_paint 'flush' draw commands and create required vertex buffers
-	// 3. Execute each draw command binding the right buffers and views
-	if (!m_D2DRenderContext)
-	{
-		m_D2DRenderContext = std::make_unique<Graphics::D2DRenderContext>(m_Renderer.get(), m_Renderer->get_raw_d2d_factory(), m_Renderer->get_2d_draw_ctx(), m_Renderer->get_2d_color_brush(), m_DefaultFont.get());
-	}
-	Graphics::D2DRenderContext& context = *m_D2DRenderContext;
-	context.begin_paint(m_Renderer.get(), m_Renderer->get_raw_d2d_factory(), m_Renderer->get_2d_draw_ctx(), m_Renderer->get_2d_color_brush(), m_DefaultFont.get());
-
-	auto size = this->get_viewport_size();
-
-	m_CanPaint2D = true;
-	// make sure tvp.Heighthe view matrix is taken in account
-	context.set_world_matrix(float4x4::identity());
-
-	{
-		GPU_SCOPED_EVENT(m_Renderer->get_raw_annotation(), "D2D:Paint");
-		if (m_Game)
-		{
-			MEMORY_TAG(MemoryCategory::Game);
-			m_Game->paint(context);
-		}
-	}
-
-	// draw Box2D debug rendering
-	// http://www.iforce2d.net/b2dtut/debug-draw
-	if (m_DebugPhysicsRendering)
-	{
-		// dimming rect in screenspace
-		context.set_world_matrix(float4x4::identity());
-		float4x4 matView = context.get_view_matrix();
-		context.set_view_matrix(float4x4::identity());
-		context.set_color(MK_COLOR(0, 0, 0, 127));
-		context.fill_rect(0, 0, get_width(), get_height());
-		context.set_view_matrix(matView);
-
-		m_Box2DDebugRenderer.set_draw_ctx(&context);
-		m_Box2DWorld->DebugDraw();
-		m_Box2DDebugRenderer.set_draw_ctx(nullptr);
-	}
-
-	m_CanPaint2D = false;
-	bool result = context.end_paint();
-
-	// if drawing failed, terminate the game
-	if (!result)
-	{
-		SDL_Quit();
-	}
-}
-#endif
 
 struct EditorWindowData
 {
@@ -816,12 +736,12 @@ WORD GameEngine::get_small_icon() const
 	return m_SmallIcon;
 }
 
-ImVec2 GameEngine::get_window_size() const
+ImVec2 GameEngine::GetWindowSize() const
 {
 	return { (float)m_WindowWidth, (float)m_WindowHeight };
 }
 
-ImVec2 GameEngine::get_viewport_size(int) const
+ImVec2 GameEngine::GetViewportSize(int) const
 {
 	return { (float)m_ViewportWidth, (float)m_ViewportHeight };
 }
@@ -845,6 +765,16 @@ int GameEngine::get_height() const
 bool GameEngine::get_sleep() const
 {
 	return m_ShouldSleep ? true : false;
+}
+
+bool GameEngine::WantCaptureMouse() const
+{
+	return ImGui::GetIO().WantCaptureMouse;
+}
+
+bool GameEngine::WantCaptureKeyboard() const
+{
+	return ImGui::GetIO().WantCaptureKeyboard;
 }
 
 float2 GameEngine::get_mouse_pos_in_window() const
@@ -1217,6 +1147,16 @@ void GameEngine::CallListeners()
 	m_Box2DImpulseData.clear();
 }
 
+void GameEngine::Sync()
+{
+	m_GraphicsThread.Sync();
+
+	// Update the old app thread parameters
+	m_RecreateSwapchainRequested = false;
+
+
+}
+
 // String helpers for hlsl types
 template <>
 struct fmt::formatter<float4x4> : formatter<string_view>
@@ -1310,80 +1250,7 @@ void GameEngine::BuildEditorUI()
 	ImGui::End();
 }
 
-void GameEngine::Render()
-{
-	JONO_EVENT();
-	auto d3d_annotation = m_Renderer->get_raw_annotation();
-	GPU_SCOPED_EVENT(d3d_annotation, "Frame");
 
-	size_t idx = Perf::get_current_frame_resource_index();
-
-	// Begin frame gpu timer
-	auto& timer = m_GpuTimings[idx];
-	timer.begin(m_Renderer->get_raw_device_context());
-
-	m_Renderer->begin_frame();
-
-	// Render 3D before 2D
-	if (m_EngineCfg.d3d_use)
-	{
-		m_Renderer->pre_render(m_RenderWorld);
-
-		GPU_SCOPED_EVENT(d3d_annotation, "Render");
-		// Render the shadows
-		if(Graphics::s_EnableShadowRendering)
-		{
-			m_Renderer->render_shadow_pass(m_RenderWorld);
-		}
-
-		{
-			GPU_SCOPED_EVENT(d3d_annotation, "Main");
-			m_Renderer->render_zprepass(m_RenderWorld);
-			m_Renderer->render_opaque_pass(m_RenderWorld);
-		}
-	}
-
-	// Render Direct2D to the swapchain
-	if (m_EngineCfg.d2d_use)
-	{
-#if FEATURE_D2D
-		d2d_render();
-#else
-		LOG_ERROR(System, "Trying to use D2D but the build isn't compiled with D2D enabled!");
-		DebugBreak();
-#endif
-	}
-
-	m_Renderer->render_post(m_RenderWorld, m_OverlayManager);
-	m_Renderer->end_frame();
-}
-
-void GameEngine::Present()
-{
-	JONO_EVENT();
-	auto d3d_ctx = m_Renderer->get_raw_device_context();
-	auto d3d_annotation = m_Renderer->get_raw_annotation();
-	auto d3d_swapchain = m_Renderer->get_raw_swapchain();
-
-	size_t idx = Perf::get_current_frame_resource_index();
-
-	// Present, 
-	GPU_MARKER(d3d_annotation, L"DrawEnd");
-	u32 flags = 0;
-	if (!m_VSyncEnabled)
-	{
-		flags |= DXGI_PRESENT_ALLOW_TEARING;
-	}
-	d3d_ctx->OMSetRenderTargets(0, nullptr, nullptr);
-	d3d_swapchain->Present(m_VSyncEnabled ? 1 : 0, flags);
-
-	auto& timer = m_GpuTimings[idx];
-	timer.end(d3d_ctx);
-	Perf::end_frame(d3d_ctx);
-
-	// Render all other imgui windows
-	ImGui::RenderPlatformWindowsDefault();
-}
 
 void GameEngine::BuildDebugLogUI(ImGuiID* dockID)
 {
@@ -1528,7 +1395,6 @@ void GameEngine::BuildViewportUI(ImGuiID* dockID)
 
 		m_ViewportPos = float2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
 		ImGui::Image(m_Renderer->get_raw_output_non_msaa_srv(), s_vp_size, ImVec2(0, 0), max_uv);
-
 
 		//ImGuizmo::SetDrawlist();
 		//ImGuizmo::SetRect(_viewport_pos.x, _viewport_pos.y, float1(_viewport_width), float1(_viewport_height));
@@ -1682,33 +1548,89 @@ int GameEngine::Run(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iC
 	return result;
 }
 
-void RenderThread::run()
+void GameEngine::RenderD2D()
 {
-	_stage = Stage::Initialization;
-	LOG_INFO(Graphics, "Launching render thread...");
-	Perf::precise_sleep(2.0f);
+	//#TODO: Revisit thread safety here. Remove engine->m_DefaultFont
 
+	GameEngine* engine = this;
+	Graphics::Renderer* renderer = engine->m_Renderer.get();
 
-	_stage = Stage::Running;
+	// Plan to modernize the 2D and deprecate Direct2D
+	// 1. Collect all the draw commands in buffers and capture the required data
+	// 2. during end_paint 'flush' draw commands and create required vertex buffers
+	// 3. Execute each draw command binding the right buffers and views
+	Graphics::D2DRenderContext& context = *m_D2DRenderContext;
+	context.begin_paint(renderer, renderer->get_raw_d2d_factory(), renderer->get_2d_draw_ctx(), renderer->get_2d_color_brush(), engine->m_DefaultFont.get());
 
-	u64 _frame = 0;
-	while(is_running())
+	uint2 size = uint2(GetViewportSize().x, GetViewportSize().y);
+
+	// make sure tvp.Heighthe view matrix is taken in account
+	context.set_world_matrix(float4x4::identity());
+
 	{
-		LOG_INFO(Graphics, "Frame  {}", _frame);
-
-		Perf::precise_sleep(0.25f);
-	
-		++_frame;
+		GPU_SCOPED_EVENT(renderer->get_raw_annotation(), "D2D:Paint");
+		if (engine->m_Game)
+		{
+			MEMORY_TAG(MemoryCategory::Game);
+			engine->m_Game->paint(context);
+		}
 	}
-	_stage = Stage::Cleanup;
-	LOG_INFO(Graphics, "Shutting down render thread...");
-	Perf::precise_sleep(2.0f);
 
-	_stage = Stage::Terminated;
+	// draw Box2D debug rendering
+	// http://www.iforce2d.net/b2dtut/debug-draw
+	if (m_DebugPhysicsRendering)
+	{
+		// dimming rect in screenspace
+		context.set_world_matrix(float4x4::identity());
+		float4x4 matView = context.get_view_matrix();
+		context.set_view_matrix(float4x4::identity());
+		context.set_color(MK_COLOR(0, 0, 0, 127));
+		context.fill_rect(0, 0, (int)GetWindowSize().x, (int)GetWindowSize().y);
+		context.set_view_matrix(matView);
+
+		engine->m_Box2DDebugRenderer.set_draw_ctx(&context);
+		engine->m_Box2DWorld->DebugDraw();
+		engine->m_Box2DDebugRenderer.set_draw_ctx(nullptr);
+	}
+
+	bool result = context.end_paint();
+
+	// if drawing failed, terminate the game
+	if (!result)
+	{
+		FAILMSG("Something went wrong drawing D2D elements. Crashing the game...");
+		//this->Terminate();
+		engine->m_IsRunning = false;
+	}
 }
 
-static GlobalContext g_GlobalContext{};
-GlobalContext* GetGlobalContext()
+#ifdef ENGINE_DLL
+BOOL WINAPI DllMain(
+	HINSTANCE hInstDLL,
+	DWORD reason,
+	LPVOID lpReserved
+)
 {
-	return &g_GlobalContext;
+	switch(reason)
+	{
+		case DLL_PROCESS_ATTACH:
+			OutputDebugString(L"GameEngine::ProcessAttach\n");
+			break;
+		case DLL_THREAD_ATTACH:
+			OutputDebugString(L"GameEngine::ThreadAttach\n");
+			break;
+		case DLL_THREAD_DETACH:
+			OutputDebugString(L"GameEngine::ThreadDetach\n");
+			break;
+		case DLL_PROCESS_DETACH:
+			OutputDebugString(L"GameEngine::ProcessDetach\n");
+			break;
+	
+	}
+
+	return TRUE;
 }
+#endif
+
+
+

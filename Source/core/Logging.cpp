@@ -55,6 +55,7 @@ void Logger::log(LogEntry const& entry)
 
 void Logger::thread_flush()
 {
+	::SetThreadDescription(GetCurrentThread(), L"LoggingThread");
 	if (!IO::get()->exists("Logs"))
 	{
 		IO::get()->create_directory("Logs");

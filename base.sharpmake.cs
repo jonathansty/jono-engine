@@ -7,6 +7,7 @@ using Sharpmake;
 public class Utils
 {
     public static string g_FilterFolderEngine = "Engine";
+    public static string g_FilterFolderLibraries = "Libraries";
     public static string g_FilterFolderGame = "Samples";
     public static string SourceFolderName = "Source";
 
@@ -19,7 +20,7 @@ public class Utils
                   Platform.win64,
                   DevEnv.vs2022,
                   Optimization.Debug | Optimization.Release,
-                  OutputType.Dll),
+                  OutputType.Dll)
             };
         }
     }
@@ -35,11 +36,109 @@ public class Utils
         conf.VcxprojUserFile = new Project.Configuration.VcxprojUserFileSettings();
         conf.VcxprojUserFile.LocalDebuggerWorkingDirectory = @"[project.SharpmakeCsPath]";
     }
+
+    public static void ReferenceAllEngineLibraries(Project.Configuration conf, Target target)
+    {
+        conf.AddPrivateDependency<SDL2>(target);
+
+        conf.AddPrivateDependency<CoreModule>(target);
+        conf.AddPrivateDependency<CliModule>(target);
+        conf.AddPrivateDependency<EngineModule>(target);
+
+    }
 }
 
-public abstract class JonaBaseProject : Project
+
+public abstract class Module : Project
 {
-    public JonaBaseProject() : base()
+    public Module() : base()
+    {
+        FileInfo fileInfo = Util.GetCurrentSharpmakeFileInfo();
+        string rootDirectory = Path.Combine(fileInfo.DirectoryName, ".");
+        RootPath = Util.SimplifyPath(rootDirectory);
+
+        SourceRootPath = $"[project.SharpmakeCsPath]/{Utils.SourceFolderName}/[project.Name]";
+
+        AddTargets(Utils.Targets);
+    }
+
+    [Configure(), ConfigurePriority(1)]
+    virtual public void ConfigureAll(Configuration conf, Target target)
+    {
+        Utils.ConfigureProjectName(conf, target);
+        conf.SolutionFolder = Utils.g_FilterFolderEngine;
+
+        conf.Options.Add(Options.Vc.General.WindowsTargetPlatformVersion.Latest);
+        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
+        conf.Options.Add(Options.Vc.Compiler.MinimalRebuild.Enable);
+
+        conf.Output = target.OutputType == OutputType.Lib ? Configuration.OutputType.Lib : Configuration.OutputType.Dll;
+
+        if (conf.Output == Configuration.OutputType.Dll)
+        {
+            string capitalisedName = conf.Project.Name.ToUpper();
+            conf.Defines.Add($"{capitalisedName}_DLL");
+            conf.Defines.Add($"{capitalisedName}_EXPORTS");
+
+            conf.ExportDefines.Add($"{capitalisedName}_DLL");
+        }
+
+        conf.PrecompHeader = "[project.Name].pch.h";
+        conf.PrecompSource = "[project.Name].pch.cpp";
+
+        conf.Defines.Add("WIN32_LEAN_AND_MEAN");
+        conf.Defines.Add("NOMINMAX");
+
+        conf.Defines.Add("FEATURE_D2D");
+        conf.Defines.Add("FEATURE_XAUDIO");
+
+        conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP20);
+        conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
+
+        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
+        conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
+            "4100", // Unused method variables
+            "4189",  // Unused local variables
+            "4251", // DLL export
+            "4275" // DLL export
+        ));
+
+        conf.Options.Add(new Options.Vc.Linker.DisableSpecificWarnings(
+            "4099" // No PDB with library.
+        ));
+        conf.Options.Add(Options.Vc.General.TreatWarningsAsErrors.Enable);
+
+        conf.IncludePaths.Add(@"[project.SourceRootPath]");
+        conf.IncludePaths.Add(@"[project.SourceRootPath]/" + Utils.SourceFolderName);
+        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]");
+
+        // Handle all conan packages
+        conf.AddPublicDependency<ConanDependencies>(target);
+    }
+
+    [Configure(Blob.Blob)]
+    public virtual void ConfigureBlob(Configuration conf, Target target)
+    {
+        conf.IsBlobbed = true;
+        conf.IncludeBlobbedSourceFiles = false;
+    }
+
+    [Configure(Optimization.Debug), ConfigurePriority(2)]
+    virtual public void ConfigureDebug(Configuration config, Target target)
+    {
+        config.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDebugDLL);
+    }
+
+    [Configure(Optimization.Release), ConfigurePriority(3)]
+    virtual public void ConfigureRelease(Configuration config, Target target)
+    {
+        config.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDLL);
+    }
+}
+
+public abstract class Application : Project
+{
+    public Application() : base()
     {
         FileInfo fileInfo = Util.GetCurrentSharpmakeFileInfo();
         string rootDirectory = Path.Combine(fileInfo.DirectoryName, ".");
@@ -59,8 +158,6 @@ public abstract class JonaBaseProject : Project
         conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
         conf.Options.Add(Options.Vc.Compiler.MinimalRebuild.Enable);
 
-        conf.Output = target.OutputType == OutputType.Lib ? Configuration.OutputType.Lib : Configuration.OutputType.Dll;
-
         conf.PrecompHeader = "[project.Name].pch.h";
         conf.PrecompSource = "[project.Name].pch.cpp";
 
@@ -72,11 +169,12 @@ public abstract class JonaBaseProject : Project
 
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP20);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
-
-        conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
         conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
             "4100", // Unused method variables
-            "4189"  // Unused local variables
+            "4189",  // Unused local variables
+            "4251", // DLL export
+            "4275" // DLL export
+
         ));
 
         conf.Options.Add(new Options.Vc.Linker.DisableSpecificWarnings(
@@ -147,7 +245,7 @@ public class VCPKG : Project
    
 }
 
-public abstract class ExternalProject : JonaBaseProject
+public abstract class ExternalProject : Module
 {
     public string ExternalDir = @"[project.SharpmakeCsPath]/external";
 
@@ -157,7 +255,7 @@ public abstract class ExternalProject : JonaBaseProject
         
         conf.Options.Add(Options.Vc.General.TreatWarningsAsErrors.Disable);
 
-        conf.SolutionFolder = "libraries";
+        conf.SolutionFolder = Utils.g_FilterFolderLibraries;
 
         conf.PrecompHeader = null;
         conf.PrecompSource = null;

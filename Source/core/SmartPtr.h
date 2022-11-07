@@ -6,13 +6,16 @@ class RefCounter
 {
 public:
 	RefCounter(ObjectType* obj)
+			: m_Ptr(obj)
+			, m_RefCount(0)
 	{
 	
 	}
 
 	~RefCounter()
 	{
-	
+		ASSERT(m_RefCount == 0);
+		m_Ptr = nullptr;
 	}
 
 	void AddRef() 
@@ -35,50 +38,84 @@ private:
 };
 
 template<typename ObjectType>
-class SharedPtr
+class SharedPtr final
 {
 public:
-	SharedPtr(ObjectType* obj)
+
+	SharedPtr()
+		: m_Ptr(nullptr)
+		, m_Counter(nullptr)
 	{
-		m_Counter = new RefCounter<ObjectType>(obj);
+	}
+
+	SharedPtr(ObjectType* obj)
+		: m_Ptr(obj)
+		, m_Counter(new RefCounter<ObjectType>(obj))
+	{
 		m_Counter->AddRef();
 	}
 
-	SharedPtr(RefCounter<ObjectType>* counter)
+	SharedPtr(RefCounter<ObjectType>& counter)
+		: m_Counter(&counter)
+		, m_Ptr(counter.GetPtr())
 	{
-		m_Counter = counter;
-		m_Ptr = counter->GetPtr();
 		m_Counter->AddRef();
 	}
 
 	SharedPtr(SharedPtr<ObjectType> const& rhs)
+		: m_Ptr(rhs.m_Ptr)
+		, m_Counter(rhs.m_Counter)
 	{
-
-		m_Ptr = rhs->m_Ptr;
-		m_Counter = rhs->m_Counter;
 		m_Counter->AddRef();
 	}
 
 	SharedPtr<ObjectType> const& operator=(SharedPtr<ObjectType> const& rhs)
 	{
-		m_Ptr = rhs->m_Ptr;
-		m_Counter = rhs->m_Counter;
+		m_Ptr = rhs.m_Ptr;
+		m_Counter = rhs.m_Counter;
 		m_Counter->AddRef();
 		return *this;
 	}
 
 	~SharedPtr()
 	{
-		m_Counter->DecRef();
-		if(m_Counter->GetRefCount() == 0)
+		if(IsValid())
 		{
-			delete m_Counter;
-			m_Counter = nullptr;
+			m_Counter->DecRef();
+			if (m_Counter->GetRefCount() == 0)
+			{
+				delete m_Counter;
+				m_Counter = nullptr;
 
-			delete m_Ptr;
-			m_Ptr = nullptr;
+				delete m_Ptr;
+				m_Ptr = nullptr;
+			}
 		}
 	}
+	bool IsValid() const { return m_Ptr; }
+
+	ObjectType* operator->() { return m_Ptr; }
+
+	ObjectType const* operator->() const { return m_Ptr; }
+
+	ObjectType* Get() { return get(); }
+	ObjectType const* Get() const { return get(); }
+
+	// Compatibility with C++
+	ObjectType* get() { return m_Ptr; }
+	ObjectType const* get() const { return m_Ptr; }
+
+	ObjectType& operator*()
+	{
+		ASSERT(m_Ptr);
+		return *m_Ptr;
+	}
+	ObjectType const& operator*() const 
+	{
+		ASSERT(m_Ptr);
+		return *m_Ptr;
+	}
+
 
 private:
 	ObjectType* m_Ptr;
@@ -91,6 +128,7 @@ class WeakPtr
 {
 public:
 	WeakPtr(SharedPtr<ObjectType> const& data)
+		: m_Counter(data)
 	{
 	
 	}
@@ -104,12 +142,12 @@ public:
 	{
 		if(m_Counter->GetRefCount() > 0)
 		{
-			return SharedPtr(m_Ptr);
-		
+			return SharedPtr(m_Counter->m_Ptr);
 		}
 	}
 
 private:
+	ObjectType* m_Ptr;
 	RefCounter<ObjectType>* m_Counter;
 
 };

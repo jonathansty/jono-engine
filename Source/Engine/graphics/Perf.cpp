@@ -88,7 +88,7 @@ bool collect_disjoint(ComPtr<ID3D11DeviceContext> const& ctx, D3D11_QUERY_DATA_T
 	s64 previous = get_previous_frame_resource_index();
 	while (S_OK != ctx->GetData(s_disjoint_query[previous].Get(), &disjoint, sizeof(D3D11_QUERY_DATA_TIMESTAMP_DISJOINT), 0))
 	{
-		Perf::precise_sleep(0.001);
+		Perf::PreciseSleep(0.001);
 	}
 	return !disjoint.Disjoint;
 }

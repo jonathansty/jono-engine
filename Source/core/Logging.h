@@ -31,7 +31,7 @@ enum class LogCategory
 namespace logging
 {
 
-inline const char* to_string(LogCategory category)
+CORE_API inline const char* to_string(LogCategory category)
 {
 	switch (category)
 	{
@@ -53,7 +53,7 @@ inline const char* to_string(LogCategory category)
 	}
 }
 
-inline const char* to_string(LogSeverity severity)
+CORE_API inline const char* to_string(LogSeverity severity)
 {
 	switch (severity)
 	{
@@ -74,20 +74,28 @@ inline const char* to_string(LogSeverity severity)
 } // namespace logging
 
 // Entry used to store log information
-struct LogEntry
+#pragma warning(push)
+#pragma warning(disable : 4251)
+struct CORE_API LogEntry
 {
 	LogSeverity _severity;
 	LogCategory _category;
-	std::string _message;
-	std::thread::id _thread_id;
 	const char* _file;
 	int _line;
 
 	std::string to_message() const
 	{
-		return fmt::sprintf("[%s(%d)][%s][%s] %s", _file, _line, logging::to_string(_category), logging::to_string(_severity), _message.c_str());
+		return fmt::sprintf("[%s(%d)][%s][%s] %s", _file, _line, logging::to_string(_category), logging::to_string(_severity), GetMessage().c_str());
 	}
+
+	std::string const& GetMessage() const { return _message; }
+
+	std::thread::id GetThreadID() const { return _thread_id; }
+
+	std::thread::id _thread_id;
+	std::string _message;
 };
+#pragma warning(pop)
 
 inline SYSTEMTIME get_system_time()
 {
@@ -101,8 +109,11 @@ inline std::string get_timestamp(SYSTEMTIME const& time)
 	return fmt::format("{}{}{}{}{}{}", time.wYear, time.wMonth, time.wDay, time.wHour, time.wMinute, time.wSecond);
 }
 
+#pragma warning(push)
+#pragma warning(disable : 4251)
+
 // Log manager that allows storing log entries in memory
-class Logger : public TSingleton<Logger>
+class CORE_API Logger : public TSingleton<Logger>
 {
 public:
 	Logger();
@@ -140,6 +151,7 @@ private:
 
 	IO::IFileRef _file;
 };
+#pragma warning(pop)
 
 // Namespace that contains helper functions related to logging
 namespace Logging

@@ -1,15 +1,21 @@
 #pragma once
+#ifdef ENABLE_RTTR
 #include <rttr/registration>
+#endif
 
 namespace framework
 {
 	class Entity;
 
-	class Component
+	class ENGINE_API Component
 	{
 		friend class World;
+
+#ifdef ENABLE_RTTR
 		RTTR_REGISTRATION_FRIEND
 		RTTR_ENABLE()
+#endif
+
 	public:
 		Component();
 

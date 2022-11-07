@@ -2,8 +2,6 @@
 *.make
 Makefile
 obj/
-Debug/
-Release/
 ipch/
 .vs/
 *.sdf
@@ -14,6 +12,7 @@ ipch/
 build/
 generated/
 Intermediate/
+output/
 
 *.csproj
 *.csproj.user

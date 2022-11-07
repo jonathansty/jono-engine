@@ -1,2 +1,2 @@
-"SharpMake/Sharpmake.application.exe" /sources(@"main.sharpmake.cs") %* 
+"SharpMake/Sharpmake.application.exe"  %* 
 pause

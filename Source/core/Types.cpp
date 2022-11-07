@@ -7,6 +7,7 @@ using hlslpp::float4;
 
 
 
+#ifdef ENABLE_RTTR
 RTTR_REGISTRATION{
 	using namespace rttr;
 	using namespace Helpers;
@@ -69,6 +70,7 @@ std::string GuidToString(GUID guid)
 }
 
 
+#ifdef ENABLE_RTTR
 rttr::type const& Helpers::get_type_by_id(u64 id)
 {
 	if (!g_TypeStorage.initialised)
@@ -83,5 +85,7 @@ rttr::type const& Helpers::get_type_by_id(u64 id)
 
 	return *g_TypeStorage.mappings[id];
 }
+#endif
 
 } // namespace helpers
+#endif

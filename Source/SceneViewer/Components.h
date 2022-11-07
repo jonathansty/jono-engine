@@ -13,7 +13,7 @@ using hlslpp::quaternion;
 
 class SimpleMovement2D final : public framework::Component
 {
-	RTTR_ENABLE(framework::Component);
+	//RTTR_ENABLE(framework::Component);
 
 public:
 	SimpleMovement2D();
@@ -36,7 +36,7 @@ public:
 
 class SimpleMovement3D final : public framework::Component
 {
-	RTTR_ENABLE(framework::Component);
+	//RTTR_ENABLE(framework::Component);
 
 public:
 	SimpleMovement3D() = default;
@@ -65,7 +65,7 @@ public:
 #if FEATURE_D2D
 class BitmapComponent final : public framework::Component
 {
-	RTTR_ENABLE(framework::Component);
+	//RTTR_ENABLE(framework::Component);
 
 public:
 	BitmapComponent()
@@ -93,7 +93,7 @@ public:
 
 class ModelComponent final : public framework::Component
 {
-	RTTR_ENABLE(framework::Component);
+	//RTTR_ENABLE(framework::Component);
 
 public:
 	using Entity = framework::Entity;
@@ -118,8 +118,8 @@ private:
 
 class LightComponent final : public framework::Component
 {
-	RTTR_ENABLE(framework::Component);
-	RTTR_REGISTRATION_FRIEND;
+	//RTTR_ENABLE(framework::Component);
+	//RTTR_REGISTRATION_FRIEND;
 
 public:
 	using Entity = framework::Entity;
@@ -141,8 +141,8 @@ private:
 
 class CameraComponent final : public framework::Component
 {
-	RTTR_ENABLE(framework::Component);
-	RTTR_REGISTRATION_FRIEND;
+	//RTTR_ENABLE(framework::Component);
+	//RTTR_REGISTRATION_FRIEND;
 
 public:
 	using Entity = framework::Entity;

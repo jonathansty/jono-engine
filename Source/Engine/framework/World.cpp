@@ -1,15 +1,15 @@
-#include "engine.pch.h"
 #include "World.h"
+#include "engine.pch.h"
 
-#include "Entity.h"
 #include "Component.h"
+#include "Entity.h"
 
 using namespace framework;
 
 EntityHandle::EntityHandle(uint64_t id, uint64_t generation, std::weak_ptr<World> world)
-	: id(id)
-	, generation(generation)
-	, world(world)
+		: id(id)
+		, generation(generation)
+		, world(world)
 {
 }
 
@@ -38,9 +38,8 @@ Entity* EntityHandle::get() const
 }
 
 World::World()
-: _root()
+		: _root()
 {
-
 	_entities.reserve(1000);
 	_generation.reserve(1000);
 }
@@ -92,11 +91,13 @@ Entity* World::get_entity(EntityHandle const& id)
 	return _entities[id.id];
 }
 
+#ifdef ENABLE_RTTR
 Component* World::find_first_component(rttr::type const& info) const
 {
 	for (std::size_t i = 0; i < _entities.size(); ++i)
 	{
-		if(_entities[i]) {
+		if (_entities[i])
+		{
 			if (auto comp = _entities[i]->get_component(info); comp)
 			{
 				return comp;
@@ -106,6 +107,7 @@ Component* World::find_first_component(rttr::type const& info) const
 
 	return nullptr;
 }
+#endif
 
 bool World::remove_entity(EntityHandle const& handle)
 {
@@ -122,10 +124,11 @@ bool World::remove_entity(EntityHandle const& handle)
 	return true;
 }
 
-bool framework::World::attach_to(EntityHandle const& attach_to, EntityHandle const& child) {
-
+bool framework::World::attach_to(EntityHandle const& attach_to, EntityHandle const& child)
+{
 	auto current_parent = _entities[child.id]->_parent;
-	if (current_parent) {
+	if (current_parent)
+	{
 		current_parent->_children.erase(std::find(current_parent->_children.begin(), current_parent->_children.end(), child));
 	}
 
@@ -137,9 +140,10 @@ bool framework::World::attach_to(EntityHandle const& attach_to, EntityHandle con
 	return true;
 }
 
-bool framework::World::attach_to(EntityHandle const& attach_to, Component* child) {
-
-	if(child->_parent) {
+bool framework::World::attach_to(EntityHandle const& attach_to, Component* child)
+{
+	if (child->_parent)
+	{
 		child->on_detach(child->_parent);
 	}
 
@@ -152,26 +156,36 @@ bool framework::World::attach_to(EntityHandle const& attach_to, Component* child
 	return true;
 }
 
-void framework::World::init() {
+std::shared_ptr<framework::World> World::create()
+{
+	auto world = std::make_shared<World>();
+	world->init();
+	return world;
+}
 
-	// Create the root entity 
+void framework::World::init()
+{
+	// Create the root entity
 	Entity* ent = new Entity();
 
 	std::size_t id = _entities.size();
 
 	// If we have free slots
-	if (!_free_list.empty()) {
+	if (!_free_list.empty())
+	{
 		id = _free_list[_free_list.size() - 1];
 		_free_list.pop_back();
 	}
 	// No free slots means we need to create some
-	else {
+	else
+	{
 		_entities.push_back(ent);
 	}
 
 	// Update our generation it's size
-	if (_generation.size() <= id) {
-		//TODO: Abstract vector resizing to be more robust
+	if (_generation.size() <= id)
+	{
+		// TODO: Abstract vector resizing to be more robust
 		_generation.resize(id + 1000, 0);
 	}
 
@@ -181,8 +195,8 @@ void framework::World::init() {
 	_root->set_name("Root");
 }
 
-void framework::World::clear() {
-
+void framework::World::clear()
+{
 	_deletion_list.clear();
 	_free_list.clear();
 
@@ -190,8 +204,8 @@ void framework::World::clear() {
 	_root->_children.clear();
 
 	// process each entity except our root
-	for (uint64_t id = 1; id < _entities.size(); ++id) {
-
+	for (uint64_t id = 1; id < _entities.size(); ++id)
+	{
 		// Free the entity
 		delete _entities[id];
 		_entities[id] = nullptr;
@@ -204,14 +218,16 @@ void framework::World::clear() {
 	_entities.resize(1);
 }
 
-EntityHandle framework::World::create_entity(Identifier64 id) {
+EntityHandle framework::World::create_entity(Identifier64 id)
+{
 	Entity* obj = new Entity();
 	obj->_id = id;
 
 	std::size_t idx = _entities.size();
 
 	// If we have free slots
-	if (!_free_list.empty()) {
+	if (!_free_list.empty())
+	{
 		idx = _free_list[_free_list.size() - 1];
 		_free_list.pop_back();
 
@@ -220,13 +236,14 @@ EntityHandle framework::World::create_entity(Identifier64 id) {
 		_entities[idx] = obj;
 	}
 	// No free slots means we need to create some
-	else {
+	else
+	{
 		_entities.push_back(obj);
 	}
 
-
 	// Update our generation it's size
-	if (_generation.size() <= idx) {
+	if (_generation.size() <= idx)
+	{
 		_generation.resize(idx + 1000, 0);
 	}
 
@@ -238,14 +255,18 @@ EntityHandle framework::World::create_entity(Identifier64 id) {
 	return handle;
 }
 
-EntityHandle framework::World::find_by_id(Identifier64 const& id) const {
+EntityHandle framework::World::find_by_id(Identifier64 const& id) const
+{
 	auto it = _entities_by_id.find(id);
-	if (it != _entities_by_id.end()) {
-		return it->second;	
+	if (it != _entities_by_id.end())
+	{
+		return it->second;
 	}
 	return {};
 }
 
-u64 framework::World::get_number_of_entities() const {
-	return std::count_if(_entities.begin(), _entities.end(), [](Entity* ent) { return ent; });
+u64 framework::World::get_number_of_entities() const
+{
+	return std::count_if(_entities.begin(), _entities.end(), [](Entity* ent)
+			{ return ent; });
 }

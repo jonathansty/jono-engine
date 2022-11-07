@@ -1,5 +1,5 @@
 #pragma once
-#include "debug_overlays/OverlayManager.h"
+#include "Debug/OverlayManager.h"
 
 struct ID3D11DeviceContext;
 

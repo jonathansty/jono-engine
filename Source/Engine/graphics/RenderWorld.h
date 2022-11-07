@@ -10,10 +10,11 @@ using RenderWorldCameraRef = std::shared_ptr<class RenderWorldCamera>;
 using RenderWorldLightRef = std::shared_ptr<class RenderWorldLight>;
 
 // Render world 'model' instance
-class RenderWorldInstance
+class ENGINE_API RenderWorldInstance
 {
 public:
 	RenderWorldInstance(float4x4 const& transform);
+	RenderWorldInstance(RenderWorldInstance const& rhs);
 
 	~RenderWorldInstance();
 
@@ -40,7 +41,7 @@ public:
 	friend class RenderWorld;
 };
 
-class RenderWorldCamera
+class ENGINE_API RenderWorldCamera
 {
 public:
 	enum class Projection
@@ -62,7 +63,7 @@ public:
 	};
 
 	RenderWorldCamera();
-	RenderWorldCamera(RenderWorldCamera const&) = delete;
+	RenderWorldCamera(RenderWorldCamera const&);;
 
 	RenderWorldCamera& operator=(RenderWorldCamera const& rhs)
 	{
@@ -172,7 +173,7 @@ struct CascadeInfo
 	float4x4 vp;
 };
 
-class RenderWorldLight : public RenderWorldCamera
+class ENGINE_API RenderWorldLight : public RenderWorldCamera
 {
 public:
 	enum class LightType
@@ -183,6 +184,8 @@ public:
 	};
 
 	RenderWorldLight(LightType type);
+	RenderWorldLight(RenderWorldLight const& light);
+	RenderWorldLight& operator=(RenderWorldLight const&) = delete;
 	~RenderWorldLight() {}
 
 	bool is_directional() const { return _type == LightType::Directional; }
@@ -236,7 +239,7 @@ private:
 	f32 _outer_cone_angle = 0.0f;
 };
 
-class RenderWorld final
+class ENGINE_API RenderWorld final
 {
 public:
 	using InstanceCollection = std::vector<std::shared_ptr<RenderWorldInstance>>;
@@ -245,6 +248,9 @@ public:
 
 	RenderWorld() = default;
 	~RenderWorld() = default;
+
+	RenderWorld(RenderWorld const& rhs);
+	RenderWorld& operator=(RenderWorld const& rhs);
 
 	static constexpr u32 c_instance_reserve = 512;
 	static constexpr u32 c_light_reserve = 10;

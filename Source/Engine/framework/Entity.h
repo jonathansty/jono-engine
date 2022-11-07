@@ -2,11 +2,12 @@
 
 #include "core/Types.h"
 
-#include <rttr/registration>
 
 #include "framework/World.h"
 
+#ifdef ENABLE_RTTR
 // Component versioning helper
+#include <rttr/registration>
 struct Versioning {
 	static rttr::detail::metadata version(uint32_t id) {
 		return rttr::detail::metadata(Versioning::get_key(), id);
@@ -14,6 +15,7 @@ struct Versioning {
 
 	static const char* get_key() { return "version"; }
 };
+#endif
 
 
 namespace framework
@@ -22,9 +24,11 @@ namespace framework
 	class EntityDebugOverlay;
 	class Component;
 
-	class Entity
+	class ENGINE_API Entity
 	{
+		#ifdef ENABLE_RTTR
 		RTTR_REGISTRATION_FRIEND;
+		#endif
 		friend class World;
 
 	public:
@@ -39,14 +43,17 @@ namespace framework
 		virtual void update(float dt);
 
 		// Create a component from a type
+		#ifdef ENABLE_RTTR
 		Component* create_component(rttr::type const& t);
+
+
+		Component* get_component(rttr::type const& t) const;
+		#endif
 
 		template<typename T, typename...Args>
 		T* create_component( Args...args);
 
 		void add_component(Component* component);
-
-		Component* get_component(rttr::type const& t) const;
 
 		std::vector<Component*> get_components() const { return _components; }
 
@@ -139,12 +146,14 @@ namespace framework
 	}
 
 
+	#ifdef ENABLE_RTTR
 	template<typename T>
 	T* Entity::get_component() const
 	{
 		rttr::type const& info = rttr::type::get<T>();
 		return static_cast<T*>(get_component(info));
 	}
+	#endif
 
 
 

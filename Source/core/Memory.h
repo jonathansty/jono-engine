@@ -17,39 +17,38 @@ enum class MemoryCategory : u32
 };
 ENUM_UNDERLYING_TYPE(MemoryCategory)
 
-const char* MemoryCategoryToString(MemoryCategory category);
+CORE_API const char* MemoryCategoryToString(MemoryCategory category);
 
+#pragma warning(push)
+#pragma warning(disable: 4251)
 
-
-class MemoryTracker final
+class CORE_API MemoryTracker final
 {
 public:
 	static void init();
 	bool should_track() const;
 
+
+	void TrackAllocation(void* mem, size_t size);
+	void TrackDeallocation(void* mem);
+
+	void DumpLeakInfo();
+
+	MemoryCategory _current_category = MemoryCategory::None;
+
+	std::mutex _tracking_lock;
+	std::unordered_map<void*, MemoryAllocationInfo> _allocation_map[*MemoryCategory::Count];
+	u64 _total_per_category[*MemoryCategory::Count];
+
+	std::unordered_map<void*, MemoryCategory> _allocation_to_category;
 	std::atomic<s64> _current_allocs = 0;
 	std::atomic<u64> _total_memory_usage = 0;
 
 	std::atomic<u64> _total_allocated = 0;
 	std::atomic<u64> _total_freed = 0;
-
-	MemoryCategory _current_category = MemoryCategory::None;
-
-	std::unordered_map<void*, MemoryAllocationInfo> _allocation_map[*MemoryCategory::Count];
-	u64 _total_per_category[*MemoryCategory::Count];
-
-	std::unordered_map<void*, MemoryCategory> _allocation_to_category;
-
-	void TrackAllocation(void* mem, size_t size);
-	void TrackDeallocation(void* mem);
-
-
-	void DumpLeakInfo();
-
-	std::mutex _tracking_lock;
 };
 
-MemoryTracker* get_memory_tracker();
+CORE_API MemoryTracker* get_memory_tracker();
 
 struct MemoryTag final
 {
@@ -67,5 +66,7 @@ struct MemoryTag final
 	}
 };
 #define MEMORY_TAG(cat) MemoryTag _mem_tag##__COUNTER__ = MemoryTag(cat)
+
+#pragma warning(pop)
 
 

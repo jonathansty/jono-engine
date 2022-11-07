@@ -4,13 +4,8 @@
 #include "Component.h"
 #include "core/Math.h"
 
+#ifdef ENABLE_RTTR
 #include <rttr/registration>
-
-using hlslpp::float3;
-using hlslpp::float4;
-using hlslpp::float4x4;
-using hlslpp::quaternion;
-using hlslpp::float1;
 
 RTTR_REGISTRATION{
 
@@ -24,7 +19,13 @@ RTTR_REGISTRATION{
 			.property("rotation", &Entity::get_rot_euler, &Entity::set_rot_euler)
 			.property("scale", &Entity::get_scale, &Entity::set_scale);
 }
+#endif
 
+using hlslpp::float3;
+using hlslpp::float4;
+using hlslpp::float4x4;
+using hlslpp::quaternion;
+using hlslpp::float1;
 
 
 namespace framework {
@@ -121,10 +122,13 @@ float4 Entity::get_local_position() const {
 	return _pos;
 }
 
-framework::Component* Entity::create_component(rttr::type const& t) {
+#ifdef ENABLE_RTTR
+framework::Component* Entity::create_component(rttr::type const& t)
+{
 	assert(t.is_derived_from(rttr::type::get<Component>()));
 	rttr::variant obj = t.create();
-	if (obj.can_convert<Component*>()) {
+	if (obj.can_convert<Component*>())
+	{
 		obj.convert<Component*>();
 	}
 	Component* comp = obj.get_value<Component*>();
@@ -134,20 +138,26 @@ framework::Component* Entity::create_component(rttr::type const& t) {
 
 	return comp;
 }
+#endif
 
 void Entity::add_component(Component* component) {
 	_components.push_back(component);
 }
 
-Component* Entity::get_component(rttr::type const& t) const {
-	for (Component* c : _components) {
+#ifdef ENABLE_RTTR
+Component* Entity::get_component(rttr::type const& t) const
+{
+	for (Component* c : _components)
+	{
 		rttr::type info = rttr::type::get(*c);
-		if (info == t) {
+		if (info == t)
+		{
 			return c;
 		}
 	}
 
 	return nullptr;
 }
+#endif
 
 } // namespace framework

@@ -18,20 +18,20 @@ namespace cli
 using CommandLine = std::vector<std::string>;
 
 // Parsing interface
-CommandLine parse(std::string cmdLine);
-CommandLine parse(char** cmdLine, int argc);
+CLI_API CommandLine parse(std::string cmdLine);
+CLI_API CommandLine parse(char** cmdLine, int argc);
 
 // Convert parsed command line back into string
-std::string to_string(CommandLine const& cmd);
+CLI_API std::string to_string(CommandLine const& cmd);
 
 // Query API
-bool has_arg(CommandLine const& cmd_args, std::string const& arg);
+CLI_API bool has_arg(CommandLine const& cmd_args, std::string const& arg);
 
 // Retrieves arguments as string
-std::string get_arg(CommandLine const& cmd_args, std::string const& arg);
+CLI_API std::string get_arg(CommandLine const& cmd_args, std::string const& arg);
 
-bool get_string(CommandLine const& cmd_args, std::string const& arg, std::string& val);
-bool get_bool(CommandLine const& cmd_args, std::string const& arg, bool& val);
-bool get_number(CommandLine const& cmd_args, std::string const& arg, int& number);
+CLI_API bool get_string(CommandLine const& cmd_args, std::string const& arg, std::string& val);
+CLI_API bool get_bool(CommandLine const& cmd_args, std::string const& arg, bool& val);
+CLI_API bool get_number(CommandLine const& cmd_args, std::string const& arg, int& number);
 
 } // namespace cli

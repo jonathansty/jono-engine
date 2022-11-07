@@ -40,7 +40,7 @@ void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
 	Debug::DrawRay(_batch.get(), float4(0.0f), float4(0.0f, 1.0f, 0.0f, 0.0f), true, float4(0.0f, 1.0f, 0.0f, 1.0f));
 	Debug::DrawRay(_batch.get(), float4(0.0f), float4(0.0f, 0.0f, 1.0f, 0.0f), true, float4(0.0f, 0.0f, 1.0f, 1.0f));
 
-	RenderWorldRef world = GameEngine::instance()->get_render_world();
+	RenderWorld const& world = GetGlobalContext()->m_GraphicsThread->m_FrameData.m_RenderWorld;
 
 	// Visualize camera frustums
 	{
@@ -52,9 +52,9 @@ void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
 			float4(1.0f, 1.0f, 0.0f, 1.0f),
 			float4(0.0f, 1.0f, 1.0f, 1.0f)
 		};
-		for (u32 i = 0; i < world->get_cameras().size(); ++i)
+		for (u32 i = 0; i < world.get_cameras().size(); ++i)
 		{
-			if(world->get_view_camera() != world->get_camera(i))
+			if(world.get_view_camera() != world.get_camera(i))
 			{
 				Math::Frustum frustum = _renderer->get_frustum_world(world, i);
 				float4 color = colors[i % colors.size()];
@@ -73,7 +73,7 @@ void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
 	if (_show_shadow_debug)
 	{
 		float4 frustum_color = float4(0.7f, 0.0f, 0.0f, 1.0f);
-		if (world->get_camera(0) != world->get_view_camera())
+		if (world.get_camera(0) != world.get_view_camera())
 		{
 			std::vector<float4> colors = {
 				float4(1.0f, 0.0f, 0.0f, 1.0f),
@@ -86,7 +86,7 @@ void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
 			u32 num_cascades = MAX_CASCADES;
 			for (u32 i = 0; i < num_cascades; ++i)
 			{
-				Math::Frustum frustum = _renderer->get_cascade_frustum(world->get_camera(0), i, num_cascades);
+				Math::Frustum frustum = _renderer->get_cascade_frustum(world.get_camera(0), i, num_cascades);
 				Debug::DrawFrustum(_batch.get(), frustum._corners, colors[i % colors.size()]);
 
 				// Find the world space min/ max for each cascade
@@ -114,7 +114,7 @@ void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
 			}
 		}
 
-		if (RenderWorldLightRef const& light = world->get_light(0); light != nullptr)
+		if (RenderWorldLightRef const& light = world.get_light(0); light != nullptr)
 		{
 			static const float4 c_basic_cascade = float4(1.0f, 1.0f, 0.0f, 1.0f);
 			static const float4 c_transformed = float4(0.0f, 1.0f, 0.0f, 1.0f);

@@ -112,6 +112,8 @@ public class ImGui : ExternalProject
     {
         base.ConfigureAll(conf, target);
 
+        conf.AddPublicDependency<SDL2>(target);
+
         conf.Output = Configuration.OutputType.Lib;
         conf.IncludePaths.Add(Path.Combine(ExternalDir, "SDL2/SDL2-2.24.1/include/SDL2"));
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]");
@@ -152,7 +154,14 @@ public class Rttr : ExternalProject
     {
         base.ConfigureAll(conf, target);
 
-        conf.Output = Configuration.OutputType.Lib;
+        if(conf.Output == Configuration.OutputType.Dll)
+        {
+            conf.Defines.Add("RTTR_DLL");
+            conf.Defines.Add("RTTR_DLL_EXPORTS");
+            conf.ExportDefines.Add("RTTR_DLL");
+        }
+
+
         conf.IncludePaths.Add(Path.Combine(ExternalDir, "rttr/src"));
         conf.IncludePaths.Add(Path.Combine(ExternalDir, "rttr/build/src"));
     }
@@ -190,8 +199,15 @@ public class OpTick : ExternalProject
     {
         base.ConfigureAll(conf, target);
 
-        conf.Output = Configuration.OutputType.Lib;
+        conf.Defines.Add("OPTICK_ENABLE_GPU=0");
+        conf.Defines.Add("OPTICK_ENABLE_GPU_D3D12=0");
+
         conf.IncludePaths.Add(Path.Combine(ExternalDir, "optick/include"));
+
+        if(target.OutputType == OutputType.Dll)
+        {
+            conf.Defines.Add("OPTICK_EXPORTS");
+        }
         // conf.LibraryFiles.AddRange(new string[] { 
         //     "OpTickCore.lib"
         // });

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Framework/framework.h"
-#include "debug_overlays/OverlayManager.h"
+#include "Debug/OverlayManager.h"
 
 namespace framework {
 
@@ -13,7 +13,9 @@ public:
 
 	void render_tree(framework::EntityHandle ent);
 
+	#ifdef ENABLE_RTTR
 	void render_object(rttr::instance& obj);
+	#endif
 
 	virtual void RenderOverlay() override;
 

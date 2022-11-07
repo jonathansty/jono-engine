@@ -74,10 +74,10 @@ void InputManager::register_mouse_handler(std::vector<UINT> msgs, MouseHandler h
 }
 
 InputManager::InputManager(void)
-		: _mouse_pos()
+		: m_MousePos()
 		, m_MouseDelta()
 		, m_Keys()
-		, _mouse_wheel(0.0f)
+		, m_MouseWheel(0.0f)
 		, m_MouseButtons()
 {
 }
@@ -118,7 +118,7 @@ void InputManager::init()
 
 	register_mouse_handler(SDL_MOUSEWHEEL, [this](SDL_Event& e)
 			{
-				_mouse_wheel = e.wheel.preciseY;
+				m_MouseWheel = e.wheel.preciseY;
 #if VERBOSE_LOGGING
 				LOG_INFO(Input, "Wheel: {}", delta);
 #endif
@@ -139,20 +139,20 @@ void InputManager::update()
 	}
 
 	// Update the previous mouse position
-	_mouse_pos[s_prev_frame] = _mouse_pos[s_curr_frame];
+	m_MousePos[s_prev_frame] = m_MousePos[s_curr_frame];
 
 	int x, y;
 	Uint32 buttonState = SDL_GetMouseState(&x, &y);
-	_mouse_pos[s_curr_frame] = { x, y };
-	m_MouseDelta = _mouse_pos[s_curr_frame] - _mouse_pos[s_prev_frame];
+	m_MousePos[s_curr_frame] = { x, y };
+	m_MouseDelta = m_MousePos[s_curr_frame] - m_MousePos[s_prev_frame];
 
 	// Calculate the delta
-	_mouse_wheel = 0;
+	m_MouseWheel = 0;
 }
 
 int2 InputManager::get_mouse_position(bool previousFrame) const
 {
-	return _mouse_pos[previousFrame ? 1 : 0];
+	return m_MousePos[previousFrame ? 1 : 0];
 }
 
 bool InputManager::is_key_down(KeyCode key) const

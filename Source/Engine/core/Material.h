@@ -109,7 +109,7 @@ private:
 	friend class MaterialInstance;
 };
 
-class MaterialInstance final : public IMaterialObject
+class ENGINE_API MaterialInstance final : public IMaterialObject
 {
 	public:
 		MaterialInstance(std::shared_ptr<MaterialHandle const>const& baseMaterial);

@@ -46,7 +46,7 @@ using IFileRef = std::shared_ptr<IFile>;
 // IPlatformIO
 //
 // Interface defining the available operations to interact with the file system.
-class IPlatformIO
+class CORE_API IPlatformIO
 {
 public:
 	virtual ~IPlatformIO() = default;
@@ -65,10 +65,10 @@ public:
 };
 using IPlatformIORef = std::shared_ptr<IPlatformIO>;
 
-IPlatformIORef create();
+CORE_API IPlatformIORef create();
 
-void set(IPlatformIORef io);
+CORE_API void set(IPlatformIORef io);
 
-IPlatformIORef const& get();
+CORE_API IPlatformIORef const& get();
 
 } // namespace IO

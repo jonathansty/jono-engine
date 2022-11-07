@@ -1,13 +1,13 @@
 #include "engine.pch.h"
 #include "Component.h"
 
+#ifdef ENABLE_RTTR
 #include <rttr/policy.h>
-
 
 using namespace framework;
 
-RTTR_REGISTRATION {
-
+RTTR_REGISTRATION 
+{
 	using namespace rttr;
 	registration::class_<Component>("Component")
 		.constructor<>()(
@@ -15,15 +15,18 @@ RTTR_REGISTRATION {
 		)
 		.property("Active", &Component::_active);
 }
+#endif
 
+namespace framework
+{
 Component::~Component()
 {
-
 }
 
 Component::Component()
-	: _active(true)
-	, _parent(nullptr)
+		: _active(true)
+		, _parent(nullptr)
 {
-
 }
+}
+

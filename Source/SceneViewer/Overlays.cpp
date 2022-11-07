@@ -49,8 +49,10 @@ void EntityDebugOverlay::render_tree(framework::EntityHandle ent)
 	}
 }
 
+#ifdef ENABLE_RTTR
 void EntityDebugOverlay::render_object(rttr::instance& obj)
 {
+	#ifdef ENABLE_RTTR
 	ImGui::PushID(&obj);
 	std::vector<rttr::type> chain;
 	rttr::type parent = obj.get_derived_type();
@@ -141,12 +143,15 @@ void EntityDebugOverlay::render_object(rttr::instance& obj)
 		}
 	}
 	ImGui::PopID();
+	#endif
 }
+#endif
 
 void EntityDebugOverlay::RenderOverlay()
 {
 	if (!_isOpen)
 		return;
+#ifdef ENABLE_RTTR
 
 	static int s_current = 0;
 	if (ImGui::Begin("Scene Outliner", &_isOpen))
@@ -237,6 +242,7 @@ void EntityDebugOverlay::RenderOverlay()
 		}
 	}
 	ImGui::End();
+	#endif
 }
 
 void EntityDebugOverlay::RenderViewport()

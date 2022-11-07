@@ -1,5 +1,5 @@
 #include "sceneviewer.pch.h"
-#include <hlsl++.h>
+
 #include "SceneViewer.h"
 
 #include "Engine/Core/ModelResource.h"
@@ -18,8 +18,6 @@
 
 #include "OrbitCamera.h"
 #include "FreeCam.h"
-
-#include "Serialization.h"
 
 using framework::Entity;
 using framework::Component;
@@ -42,7 +40,7 @@ struct DebugVisualizeMode
 };
 
 
-extern int g_DebugMode;
+//extern int g_DebugMode;
 
  SceneViewer::SceneViewer(std::string const& path)
 	:_scene_path(path)
@@ -104,24 +102,24 @@ void SceneViewer::start()
 
 	ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order)
 	{
-		if (order == GameEngine::BuildMenuOrder::First)
-		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::MenuItem("Open"))
-				{
-					open_file();
-				}
+		//if (order == GameEngine::BuildMenuOrder::First)
+		//{
+		//	if (ImGui::BeginMenu("File"))
+		//	{
+		//		if (ImGui::MenuItem("Open"))
+		//		{
+		//			open_file();
+		//		}
 
-				if (ImGui::MenuItem("Rebuild Shaders"))
-				{
-					LOG_INFO(Graphics, "Rebuilding all shaders.");
+		//		if (ImGui::MenuItem("Rebuild Shaders"))
+		//		{
+		//			LOG_INFO(Graphics, "Rebuilding all shaders.");
 
-					this->rebuild_shaders();
-				}
-				ImGui::EndMenu();
-			}
-		} 
+		//			this->rebuild_shaders();
+		//		}
+		//		ImGui::EndMenu();
+		//	}
+		//} 
 	});
 
 	auto device = Graphics::get_device();
@@ -136,7 +134,7 @@ void SceneViewer::start()
 
 	auto render_world = GameEngine::instance()->get_render_world();
 
-	ImVec2 size = GameEngine::instance()->get_viewport_size();
+	ImVec2 size = GameEngine::instance()->GetViewportSize();
 	const float aspect = (float)size.x / (float)size.y;
 	const float near_plane = 0.5f;
 	const float far_plane = 250.0f;
@@ -296,7 +294,6 @@ void SceneViewer::tick(double deltaTime)
 		open_file();
 	}
 
-	auto imgui = ImGui::GetIO();
 	if(_camera_type == 0)
 	{
 		_camera->tick(deltaTime);
@@ -340,100 +337,100 @@ void SceneViewer::debug_ui()
 {
 	static bool s_open = true;
 
-	ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
-	if(propertyDockID)
-	{
-		ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_Once);
-	}
-
-	ImGui::Begin("Viewer", &s_open);
-
-	const char* cameras[] = {
-		"Orbit",
-		"Free"
-	};
-	ImGui::Combo("Camera", &_camera_type, cameras, int(std::size(cameras)));
-
-	ImGui::Text("Light: %.2f", _light_tick);
-
-	const char* items[] = {
-		"Default",
-		"(Input) Base Color",
-		"(Input) Roughness",
-		"(Input) Metalness",
-		"(Input) Normals",         // 4
-		"(Input) AO",              // 5
-		"(Input) Normals (World)", // 6
-		"(Input) Vertex Colours",  // 7
-		"(Input) UV",              // 8
-		"Lighting",                // 9
-		"ForwardPlusDebug"         // 10
-	};
-
-	ImGui::Combo("Debug Mode", &g_DebugMode, items, static_cast<int>(std::size(items)));
-
-
-	if(ImGui::CollapsingHeader("Model Info"))
-	{
-		if(_model)
-		{
-			MaterialInstance* inst = _model->get_material_instance(0);
-			if (inst)
-			{
-				static float col[3] = { 1.0f, 1.0f, 1.0f };
-				if (ImGui::ColorPicker3("Color", col))
-				{
-					inst->set_param_float3("Albedo", { col[0], col[1], col[2] });
-				}
-
-				static f32 s_roughness = 0.25f;
-				if(ImGui::SliderFloat("Roughness", &s_roughness, 0.001f, 1.0f))
-				{
-					inst->set_param_float("Roughness", s_roughness);
-				}
-
-				static f32 s_metalness = 0.25f;
-				if (ImGui::SliderFloat("Metalness", &s_metalness, 0.001f, 1.0f))
-				{
-					inst->set_param_float("Metalness", s_metalness);
-				}
-
-
-			}
-		}
-	}
-
-
-	//std::shared_ptr<ModelResource> res = _model->_model;
-	//Model const* model = res->get();
-	//for(u32 i = 0; i < model->get_material_count(); ++i)
+	//ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
+	//if(propertyDockID)
 	//{
-	//	model->get_material(i);
+	//	ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_Once);
 	//}
 
-	//ImGui::PushID("#SceneName");
-	//static char buff[512] = "test.scene";
-	//ImGui::InputText("", buff, 512);
-	//ImGui::PopID();
-	//ImGui::SameLine();
+	//ImGui::Begin("Viewer", &s_open);
 
-	//if (ImGui::Button("Save")) {
-	//	std::string p = "Scenes/";
-	//	p += buff;
-	//	save_world(p.c_str());	
+	//const char* cameras[] = {
+	//	"Orbit",
+	//	"Free"
+	//};
+	//ImGui::Combo("Camera", &_camera_type, cameras, int(std::size(cameras)));
+
+	//ImGui::Text("Light: %.2f", _light_tick);
+
+	////const char* items[] = {
+	////	"Default",
+	////	"(Input) Base Color",
+	////	"(Input) Roughness",
+	////	"(Input) Metalness",
+	////	"(Input) Normals",         // 4
+	////	"(Input) AO",              // 5
+	////	"(Input) Normals (World)", // 6
+	////	"(Input) Vertex Colours",  // 7
+	////	"(Input) UV",              // 8
+	////	"Lighting",                // 9
+	////	"ForwardPlusDebug"         // 10
+	////};
+
+	////ImGui::Combo("Debug Mode", &g_DebugMode, items, static_cast<int>(std::size(items)));
+
+
+	//if(ImGui::CollapsingHeader("Model Info"))
+	//{
+	//	if(_model)
+	//	{
+	//		MaterialInstance* inst = _model->get_material_instance(0);
+	//		if (inst)
+	//		{
+	//			static float col[3] = { 1.0f, 1.0f, 1.0f };
+	//			if (ImGui::ColorPicker3("Color", col))
+	//			{
+	//				inst->set_param_float3("Albedo", { col[0], col[1], col[2] });
+	//			}
+
+	//			static f32 s_roughness = 0.25f;
+	//			if(ImGui::SliderFloat("Roughness", &s_roughness, 0.001f, 1.0f))
+	//			{
+	//				inst->set_param_float("Roughness", s_roughness);
+	//			}
+
+	//			static f32 s_metalness = 0.25f;
+	//			if (ImGui::SliderFloat("Metalness", &s_metalness, 0.001f, 1.0f))
+	//			{
+	//				inst->set_param_float("Metalness", s_metalness);
+	//			}
+
+
+	//		}
+	//	}
 	//}
 
-	//ImGui::SameLine();
-	//if (ImGui::Button("Load")) {
-	//	std::string p = "Scenes/";
-	//	p += buff;
 
-	//	_world->clear();
-	//	load_world(p.c_str());
-	//}
+	////std::shared_ptr<ModelResource> res = _model->_model;
+	////Model const* model = res->get();
+	////for(u32 i = 0; i < model->get_material_count(); ++i)
+	////{
+	////	model->get_material(i);
+	////}
+
+	////ImGui::PushID("#SceneName");
+	////static char buff[512] = "test.scene";
+	////ImGui::InputText("", buff, 512);
+	////ImGui::PopID();
+	////ImGui::SameLine();
+
+	////if (ImGui::Button("Save")) {
+	////	std::string p = "Scenes/";
+	////	p += buff;
+	////	save_world(p.c_str());	
+	////}
+
+	////ImGui::SameLine();
+	////if (ImGui::Button("Load")) {
+	////	std::string p = "Scenes/";
+	////	p += buff;
+
+	////	_world->clear();
+	////	load_world(p.c_str());
+	////}
 
 
-	ImGui::End();
+	//ImGui::End();
 
 }
 
@@ -465,110 +462,110 @@ void SceneViewer::rebuild_shaders()
 }
 
 bool SceneViewer::load_world(const char* path) {
-	auto io = IO::get();
-	if (io->exists(path)) {
-		std::shared_ptr<IO::IFile> file = io->open(path, IO::Mode::Read, true);
-		assert(file);
+	//auto io = IO::get();
+	//if (io->exists(path)) {
+	//	std::shared_ptr<IO::IFile> file = io->open(path, IO::Mode::Read, true);
+	//	assert(file);
 
-		u32 number_of_entities = serialization::read<u32>(file);
+	//	u32 number_of_entities = serialization::read<u32>(file);
 
-		// Phase 1: Read in the entire world
-		struct ReadData {
-			Identifier64 parent_id;
-			framework::EntityHandle ent;
-		};
-		std::vector<ReadData> handles;
-		handles.reserve(number_of_entities);
+	//	// Phase 1: Read in the entire world
+	//	struct ReadData {
+	//		Identifier64 parent_id;
+	//		framework::EntityHandle ent;
+	//	};
+	//	std::vector<ReadData> handles;
+	//	handles.reserve(number_of_entities);
 
-		for (u32 i = 1; i < number_of_entities; ++i) {
-					
-			Identifier64 id = serialization::read<Identifier64>(file);
-			Identifier64 parent_id = serialization::read<Identifier64>(file);
+	//	for (u32 i = 1; i < number_of_entities; ++i) {
+	//				
+	//		Identifier64 id = serialization::read<Identifier64>(file);
+	//		Identifier64 parent_id = serialization::read<Identifier64>(file);
 
-			framework::EntityHandle ent = _world->create_entity(id);
-			rttr::instance obj = rttr::instance(ent.get());
+	//		framework::EntityHandle ent = _world->create_entity(id);
+	//		rttr::instance obj = rttr::instance(ent.get());
 
-			serialization::serialize_instance<IO::Mode::Read>(file, obj);
+	//		serialization::serialize_instance<IO::Mode::Read>(file, obj);
 
-			// Write components manually
-			u32 n_components = serialization::read<u32>(file);
-			for (u32 j =0; j < n_components; ++j) {
-				u64 pos = file->tell();
-				u64 hash = serialization::read<u64>(file);
-				file->seek(pos, IO::SeekMode::FromBeginning);
+	//		// Write components manually
+	//		u32 n_components = serialization::read<u32>(file);
+	//		for (u32 j =0; j < n_components; ++j) {
+	//			u64 pos = file->tell();
+	//			u64 hash = serialization::read<u64>(file);
+	//			file->seek(pos, IO::SeekMode::FromBeginning);
 
-				auto t = Helpers::get_type_by_id(hash);
-				rttr::variant inst = t.create();
-				serialization::serialize_instance<IO::Mode::Read>(file, inst);
+	//			auto t = Helpers::get_type_by_id(hash);
+	//			rttr::variant inst = t.create();
+	//			serialization::serialize_instance<IO::Mode::Read>(file, inst);
 
-				Component* comp = inst.get_value<Component*>();
-				_world->attach_to(ent, inst.get_value<Component*>());
-			}
+	//			Component* comp = inst.get_value<Component*>();
+	//			_world->attach_to(ent, inst.get_value<Component*>());
+	//		}
 
-			// Store for resolving later
-			handles.push_back({ parent_id, ent });
-		}
+	//		// Store for resolving later
+	//		handles.push_back({ parent_id, ent });
+	//	}
 
-		// Phase 2: Fixup the parent IDs
-		std::for_each(handles.begin(), handles.end(), [&](ReadData const& h) {
+	//	// Phase 2: Fixup the parent IDs
+	//	std::for_each(handles.begin(), handles.end(), [&](ReadData const& h) {
 
-			framework::EntityHandle parent = _world->find_by_id(h.parent_id);
-			if (!parent.is_valid()) {
-				parent = _world->get_root();
-			}
-			_world->attach_to(parent, h.ent);
-		});
-	}
+	//		framework::EntityHandle parent = _world->find_by_id(h.parent_id);
+	//		if (!parent.is_valid()) {
+	//			parent = _world->get_root();
+	//		}
+	//		_world->attach_to(parent, h.ent);
+	//	});
+	//}
 	return true;
 }
 
 
 void SceneViewer::save_world(const char* path)
 {
-	using namespace serialization;
+	//using namespace serialization;
 
-	auto io = GetGlobalContext()->m_PlatformIO;
-	std::shared_ptr<IO::IFile> file = io->open(path, IO::Mode::Write, true);
-	assert(file);
+	//auto io = GetGlobalContext()->m_PlatformIO;
+	//std::shared_ptr<IO::IFile> file = io->open(path, IO::Mode::Write, true);
+	//assert(file);
 
-	std::vector<Entity*> all_entities = _world->get_entities();
+	//std::vector<Entity*> all_entities = _world->get_entities();
 
-	u32 number_of_entities = static_cast<u32>(_world->get_number_of_entities());
-	serialization::write<u32>(file, number_of_entities);
+	//u32 number_of_entities = static_cast<u32>(_world->get_number_of_entities());
+	//serialization::write<u32>(file, number_of_entities);
 
-	// Skip the root entity
-	for (u32 i = 1; i < all_entities.size(); ++i)
-	{
-		if (!all_entities[i])
-		{
-			continue;
-		}
+	//// Skip the root entity
+	//for (u32 i = 1; i < all_entities.size(); ++i)
+	//{
+	//	if (!all_entities[i])
+	//	{
+	//		continue;
+	//	}
 
-		rttr::instance obj = all_entities[i];
+	//	rttr::instance obj = all_entities[i];
 
-		Entity* ent = all_entities[i];
+	//	Entity* ent = all_entities[i];
 
-		serialization::write(file, ent->get_id());
+	//	serialization::write(file, ent->get_id());
 
-		// Serialize parent id
-		Identifier64 parent_id;
-		if (ent->get_parent() && ent->get_parent() != _world->get_root())
-		{
-			parent_id = ent->get_parent()->get_id();
-		}
-		serialization::write<Identifier64>(file, parent_id);
+	//	// Serialize parent id
+	//	Identifier64 parent_id;
+	//	if (ent->get_parent() && ent->get_parent() != _world->get_root())
+	//	{
+	//		parent_id = ent->get_parent()->get_id();
+	//	}
+	//	serialization::write<Identifier64>(file, parent_id);
 
-		serialization::serialize_instance<IO::Mode::Write>(file, obj);
+	//	serialization::serialize_instance<IO::Mode::Write>(file, obj);
 
-		// Write components manually
-		u32 n_components = static_cast<u32>(all_entities[i]->get_components().size());
-		write<u32>(file, n_components);
-		for (Component* comp : all_entities[i]->get_components())
-		{
-			rttr::instance inst = comp;
-			serialization::serialize_instance<IO::Mode::Write>(file, inst);
-		}
-	}
+	//	// Write components manually
+	//	u32 n_components = static_cast<u32>(all_entities[i]->get_components().size());
+	//	write<u32>(file, n_components);
+	//	for (Component* comp : all_entities[i]->get_components())
+	//	{
+	//		rttr::instance inst = comp;
+	//		serialization::serialize_instance<IO::Mode::Write>(file, inst);
+	//	}
+	//}
 }
 
 void SceneViewer::swap_model(const char* path)

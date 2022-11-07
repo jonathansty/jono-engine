@@ -3,4 +3,5 @@ enkits/1.11
 fmt/9.0.0
 box2d/2.4.0
 assimp/5.2.2
-freetype/2.12.1
+freetype/2.11.1
+zlib/1.2.12

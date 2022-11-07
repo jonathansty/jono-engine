@@ -8,7 +8,7 @@ namespace framework
 	class Entity;
 	class Component;
 
-	struct EntityHandle
+	struct ENGINE_API EntityHandle
 	{
 		static constexpr uint64_t invalid_id = std::numeric_limits<uint64_t>::max();
 
@@ -54,16 +54,12 @@ namespace framework
 		friend class World;
 	};
 
-	class World final : public std::enable_shared_from_this<World>
+	class ENGINE_API World final : public std::enable_shared_from_this<World>
 	{
 	public:
 		using EntityId = EntityHandle;
 
-		static std::shared_ptr<World> create() {
-			auto world = std::make_shared<World>();
-			world->init();
-			return world;
-		}
+		static std::shared_ptr<World> create();
 
 		World();
 		~World();
@@ -84,14 +80,18 @@ namespace framework
 
 		Entity* get_entity(EntityHandle const& id);
 
+#ifdef ENABLE_RTTR
 		template<typename T>
 		T* find_first_component() const
 		{
 			auto t = rttr::type::get<T>();
 			return reinterpret_cast<T*>(find_first_component(t));
 		}
+#endif
 
+#ifdef ENABLE_RTTR
 		Component* find_first_component(rttr::type const& info) const;
+#endif
 
 		bool remove_entity(EntityHandle const& handle);
 

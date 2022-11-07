@@ -12,7 +12,7 @@ inline void sleep(u32 ms)
 
 // Blog post talking about the inaccuracy of the windows sleep function and how they arrived at this solution
 // https://blat-blatnik.github.io/computerBear/making-accurate-sleep-function/
-inline void precise_sleep(f64 seconds)
+inline void PreciseSleep(f64 seconds)
 {
 	using namespace std;
 	using namespace std::chrono;

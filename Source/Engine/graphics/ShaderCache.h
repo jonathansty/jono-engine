@@ -61,7 +61,7 @@ inline bool operator==(ShaderCreateParams const& lhs, ShaderCreateParams const& 
 }
 
 
-class ShaderCache : public TSingleton<ShaderCache>
+class ENGINE_API ShaderCache : public TSingleton<ShaderCache>
 {
 public:
 	ShaderCache()

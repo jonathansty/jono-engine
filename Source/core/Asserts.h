@@ -1,8 +1,6 @@
 #pragma once
 
-#include "Types.h"
-
-void mb_error(const char* file, int line, std::string const& msg);
+CORE_API void mb_error(const char* file, int line, std::string const& msg);
 
 #define ASSERT(condition) \
 	if (!(condition))     \

@@ -6,7 +6,7 @@
 #include "EngineCfg.h"
 #include "GameSettings.h"
 
-#include "debug_overlays/OverlayManager.h"
+#include "Debug/OverlayManager.h"
 #include "Core/Math.h"
 #include <DirectXColors.h>
 #include <DirectXCollision.h>
@@ -210,11 +210,11 @@ public:
 	// Respond to external swapchain change requests
 	void resize_swapchain(u32 w, u32 h);
 
-	void pre_render(shared_ptr<RenderWorld> const& world);
+	void pre_render(RenderWorld const& world);
 
 	// Rendering passes and commands
-	void render_view(shared_ptr<RenderWorld> const& world, RenderPass::Value pass);
-	void render_world(shared_ptr<RenderWorld> const& world, ViewParams const& params);
+	void render_view(RenderWorld const& world, RenderPass::Value pass);
+	void render_world(RenderWorld const& world, ViewParams const& params);
 
 
 	void prepare_shadow_pass();
@@ -226,16 +226,16 @@ public:
 	void end_frame();
 
 	// Renders the shadow pass for this world. (Currently just CSM)
-	void render_shadow_pass(shared_ptr<RenderWorld> const& world);
+	void render_shadow_pass(RenderWorld const& world);
 
 	// Renders a zprepass for the world 
-	void render_zprepass(shared_ptr<RenderWorld> const& world);
+	void render_zprepass(RenderWorld const& world);
 
 	// Renders the opaque pass 
-	void render_opaque_pass(shared_ptr<RenderWorld> const& world);
+	void render_opaque_pass(RenderWorld const& world);
 
 	// Renders the final post processing pass. For now we also render ImGui and other debug code in here.
-	void render_post(shared_ptr<RenderWorld> const& world, shared_ptr<OverlayManager> const& overlays);
+	void render_post(RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui = true);
 
 	// Copies the last rendered main frustum depth to be used as input during the main pass
 	void copy_depth();
@@ -257,7 +257,7 @@ private:
 	void release_frame_resources();
 	void release_device_resources();
 
-	Math::Frustum get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const;
+	Math::Frustum get_frustum_world(RenderWorld const& world, u32 cam) const;
 
 	Math::Frustum get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const;
 

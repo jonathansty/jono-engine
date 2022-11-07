@@ -1,24 +1,23 @@
 #pragma once
 
 #include "singleton.h"
-#include "EnkiTS/TaskScheduler.h"
-
 #include "Box2DDebugRenderer.h"
-
-#include "debug_overlays/MetricsOverlay.h"
-#include "debug_overlays/OverlayManager.h"
-
 #include "CommandLine.h"
-
-#include "Graphics/2DRenderContext.h"
-#include "Graphics/Renderer.h"
-
+#include "GlobalContext.h"
 #include "GameSettings.h"
 #include "PlatformIO.h"
 #include "Framework/World.h"
-#include "Graphics/RenderWorld.h"
 #include "EngineCfg.h"
+#include "EnkiTS/TaskScheduler.h"
 #include "Graphics/Perf.h"
+#include "Graphics/RenderWorld.h"
+#include "Graphics/GraphicsThread.h"
+#include "Graphics/2DRenderContext.h"
+#include "Graphics/Renderer.h"
+#include "Debug/MetricsOverlay.h"
+#include "Debug/OverlayManager.h"
+#include <semaphore>
+#include "Core/SmartPtr.h"
 
 
 class Bitmap;
@@ -42,72 +41,24 @@ class Timer;
 using Graphics::bitmap_interpolation_mode;
 #endif
 
-
 namespace framework
 {
 class Entity;
 }
 
-class RenderThread : public Threading::Thread
+
+
+
+class ENGINE_API GameEngine : public TSingleton<GameEngine>, public b2ContactListener
 {
-
-public:
-	RenderThread() 
-		: Thread()
-		, _stage(Stage::Initialization)
-	{
-	}
-
-	~RenderThread() {}
-
-	enum class Stage
-	{
-		Initialization, // During this stage all D3D objects are being setup
-		Running, // During this stage we are processing frames and running the game
-		Cleanup, // During this stage we are doing cleanup
-		Terminated
-	};
-
-	// #TODO: Rather than spin locking we should wait for a specific condition variable for each stage to be fired?
-	void wait_for_stage(Stage stage) 
-	{
-		while(_stage != stage)
-		{
-			Sleep(10);
-		}
-	}
-
-	void run() override;
-
-private:
-	std::atomic<Stage> _stage;
-
-};
-
-struct GlobalContext
-{
-	class GameEngine* m_Engine;
-	class InputManager* m_InputManager;
-	class enki::TaskScheduler* m_TaskScheduler;
-	class IO::IPlatformIO* m_PlatformIO;
-	class AbstractGame* m_Game;
-};
-GlobalContext* GetGlobalContext();
-
-
-class GameEngine : public TSingleton<GameEngine>, public b2ContactListener
-{
-private:
-	GameEngine();
 	friend class TSingleton<GameEngine>;
-
-	// #TODO: Generalise render interface into 2D and 3D
-	friend class BitmapComponent;
-	friend class framework::Entity;
+	friend class Graphics::Renderer;
+	friend class GraphicsThread;
 
 public:
 	static constexpr double c_FixedPhysicsTimestep = 1.0 / 60.0;
 
+	GameEngine();
 	virtual ~GameEngine();
 
 	GameEngine(const GameEngine&) = delete;
@@ -160,12 +111,15 @@ public:
 	string get_title() const;
 	WORD get_icon() const;
 	WORD get_small_icon() const;
-	ImVec2 get_viewport_size(int id = 0) const;
+	ImVec2 GetViewportSize(int id = 0) const;
 	ImVec2 get_viewport_pos(int id = 0) const;
-	ImVec2 get_window_size() const;
+	ImVec2 GetWindowSize() const;
 	int get_width() const;
 	int get_height() const;
 	bool get_sleep() const;
+
+	bool WantCaptureMouse() const;
+	bool WantCaptureKeyboard() const;
 
 	// Mouse position relative to the viewport position (Should be used in most cases for game logic)
 	float2 get_mouse_pos_in_viewport() const;
@@ -188,9 +142,7 @@ public:
 	// The overlay manager manages all active IMGUI debug overlays
 	shared_ptr<OverlayManager> const& get_overlay_manager() const;
 
-	// Task scheduler used during resource loading
-	static enki::TaskScheduler* s_TaskScheduler;
-	static std::thread::id s_MainThreadID;
+
 
 	// Enables/disables physics simulation stepping.
 	void set_physics_step(bool bEnabled);
@@ -247,7 +199,7 @@ private:
 
 #if FEATURE_D2D
 	// Direct2D methods
-	void d2d_render();
+	void RenderD2D();
 #endif
 
 	// Trigger Contacts are stored as pairs in a std::vector.
@@ -255,15 +207,12 @@ private:
 	// This for begin and endcontacts
 	void CallListeners();
 
-	void Render();
-	void Present();
+	void Sync();
 
 	void BuildEditorUI();
 	void BuildDebugLogUI(ImGuiID* dockID = nullptr);
 	void BuildViewportUI(ImGuiID* dockID = nullptr);
 	void BuildMenuBarUI();
-
-	ImGuiID m_PropertyDockID;
 
 
 	// Callback for applications to create custom menu
@@ -271,6 +220,9 @@ private:
 
 private:
 	static constexpr const char* s_RootImguiID = "RootWindow##Root";
+
+	static enki::TaskScheduler* s_TaskScheduler;
+	static std::thread::id s_MainThreadID;
 
 	struct GpuTimer
 	{
@@ -296,6 +248,7 @@ private:
 	float2  m_ViewportPos;
 	ImGuiID m_ViewportImGuiID;
 	ImGuiID m_DockImGuiID;
+	ImGuiID m_PropertyDockID;
 
 	// Fonts used for text rendering
 	shared_ptr<Font> m_DefaultFont;
@@ -328,8 +281,15 @@ private:
 
 	// Game world and render world should be in sync!
 	std::shared_ptr<RenderWorld>      m_RenderWorld;
+
 	std::shared_ptr<framework::World> m_World;
 	unique_ptr<AbstractGame>          m_Game;
+
+	SharedPtr<class Graphics::D2DRenderContext> m_D2DRenderContext;
+
+	GraphicsThread m_GraphicsThread;
+	std::binary_semaphore m_SignalMainToGraphics;
+	std::binary_semaphore m_SignalGraphicsToMain;
 
 	bool m_IsRunning : 1; 
 	bool m_ShouldSleep : 1;
@@ -349,8 +309,7 @@ private:
 	bool m_ShowEntityEditor;
 
 
-	std::shared_ptr<Graphics::Renderer> m_Renderer;
-	std::unique_ptr<Graphics::D2DRenderContext> m_D2DRenderContext;
+	SharedPtr<Graphics::Renderer> m_Renderer;
 
 	friend class MetricsOverlay;
 };

@@ -7,36 +7,36 @@
 #include "Core/Material.h"
 
 
-RTTR_REGISTRATION{
-	using namespace rttr;
-
-	registration::class_<SimpleMovement2D>("SimpleMovement2D")(Versioning::version(2))
-		.constructor()(rttr::policy::ctor::as_raw_ptr);
-
-	registration::class_<SimpleMovement3D>("SimpleMovement3D")(Versioning::version(2))
-		.constructor()(rttr::policy::ctor::as_raw_ptr)
-		.property("Speed", &SimpleMovement3D::_speed)
-		.property("Elapsed", &SimpleMovement3D::_elapsed)
-		;
-
-	#if FEATURE_D2D
-	registration::class_<BitmapComponent>("BitmapComponent")(Versioning::version(2))
-		.constructor()(rttr::policy::ctor::as_raw_ptr);
-	#endif
-
-	registration::class_<CameraComponent>("CameraComponent")(Versioning::version(2))
-		.constructor()(rttr::policy::ctor::as_raw_ptr)
-		.property("FoV", &CameraComponent::_fov);
-
-	registration::class_<LightComponent>("LightComponent")(Versioning::version(2))
-		.constructor()(rttr::policy::ctor::as_raw_ptr)
-		.property("Intensity", &LightComponent::_intensity)
-		.property("Color", &LightComponent::_color);
-
-	registration::class_<ModelComponent>("SimpleMeshComponent")(Versioning::version(2))
-		.constructor()(rttr::policy::ctor::as_raw_ptr)
-		.property("ModelPath", &ModelComponent::get_model_path, &ModelComponent::set_model_path);
-}
+//RTTR_REGISTRATION{
+//	using namespace rttr;
+//
+//	registration::class_<SimpleMovement2D>("SimpleMovement2D")(Versioning::version(2))
+//		.constructor()(rttr::policy::ctor::as_raw_ptr);
+//
+//	registration::class_<SimpleMovement3D>("SimpleMovement3D")(Versioning::version(2))
+//		.constructor()(rttr::policy::ctor::as_raw_ptr)
+//		.property("Speed", &SimpleMovement3D::_speed)
+//		.property("Elapsed", &SimpleMovement3D::_elapsed)
+//		;
+//
+//	#if FEATURE_D2D
+//	registration::class_<BitmapComponent>("BitmapComponent")(Versioning::version(2))
+//		.constructor()(rttr::policy::ctor::as_raw_ptr);
+//	#endif
+//
+//	registration::class_<CameraComponent>("CameraComponent")(Versioning::version(2))
+//		.constructor()(rttr::policy::ctor::as_raw_ptr)
+//		.property("FoV", &CameraComponent::_fov);
+//
+//	registration::class_<LightComponent>("LightComponent")(Versioning::version(2))
+//		.constructor()(rttr::policy::ctor::as_raw_ptr)
+//		.property("Intensity", &LightComponent::_intensity)
+//		.property("Color", &LightComponent::_color);
+//
+//	registration::class_<ModelComponent>("SimpleMeshComponent")(Versioning::version(2))
+//		.constructor()(rttr::policy::ctor::as_raw_ptr)
+//		.property("ModelPath", &ModelComponent::get_model_path, &ModelComponent::set_model_path);
+//}
 
 SimpleMovement2D::SimpleMovement2D(float2 pos, float speed) : Component()
 , _speed(speed)
@@ -165,7 +165,7 @@ void CameraComponent::update(float dt)
 {
 
 	// Ignore any input if ImGui is focused
-	bool bSkip = ImGui::GetIO().WantCaptureMouse || ImGui::GetIO().WantCaptureKeyboard;
+	bool bSkip = GameEngine::instance()->WantCaptureMouse() || GameEngine::instance()->WantCaptureKeyboard() ;
 	if (bSkip || !GameEngine::instance()->is_viewport_focused() || !GameEngine::instance()->is_mouse_button_down(VK_LBUTTON))
 	{
 		_prev_position = GameEngine::instance()->get_mouse_pos_in_viewport();

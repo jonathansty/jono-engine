@@ -80,15 +80,15 @@ void init(DeviceContext const& ctx);
 void deinit();
 
 // Public API to retrieve the currently initialized graphics data and common states
-ComPtr<ID3D11Device> get_device();
-ComPtr<ID3D11DeviceContext> get_ctx();
-ComPtr<ID3D11BlendState> get_blend_state(BlendState blendState);
-ComPtr<ID3D11RasterizerState> get_rasterizer_state(RasterizerState rasterizerState);
-ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState blendState);
-ComPtr<ID3D11SamplerState> get_sampler_state(SamplerState blendState);
+ENGINE_API ComPtr<ID3D11Device> get_device();
+ENGINE_API ComPtr<ID3D11DeviceContext> get_ctx();
+ENGINE_API ComPtr<ID3D11BlendState> get_blend_state(BlendState blendState);
+ENGINE_API ComPtr<ID3D11RasterizerState> get_rasterizer_state(RasterizerState rasterizerState);
+ENGINE_API ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState blendState);
+ENGINE_API ComPtr<ID3D11SamplerState> get_sampler_state(SamplerState blendState);
 
-std::shared_ptr<class Shader> get_error_shader_px();
-std::shared_ptr<class Shader> get_error_shader_vx();
+ENGINE_API std::shared_ptr<class Shader> get_error_shader_px();
+ENGINE_API std::shared_ptr<class Shader> get_error_shader_vx();
 
 template <typename T>
 HRESULT set_debug_name(T* obj, std::string const& n)

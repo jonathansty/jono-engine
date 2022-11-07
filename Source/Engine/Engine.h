@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CLI/CLI.h" 
 #include "Core/Core.h"
 
 #ifdef WIN64
@@ -63,3 +64,13 @@ using namespace D2D1;
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>
+
+#ifdef ENGINE_DLL
+#ifdef ENGINE_EXPORTS
+#define ENGINE_API __declspec(dllexport)
+#else
+#define ENGINE_API __declspec(dllimport)
+#endif
+#else
+#define ENGINE_API
+#endif

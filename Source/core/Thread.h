@@ -7,37 +7,60 @@ namespace Threading
 class Thread
 {
 public:
-	Thread()
-	{
-		_running = true;
-		_thread = std::thread([this]()
-				{ this->run(); });
-	}
+	JONO_INLINE Thread(const char* name);
 
 	Thread(Thread const&) = delete;
 	Thread operator=(Thread const&) = delete;
 
-	virtual ~Thread() {}
-
-	void terminate()
-	{
-		_running = false;
+	virtual ~Thread() 
+	{ 
+		if(m_Thread.joinable())
+		{
+			Join(); 
+		}
 	}
 
-	void join()
-	{
-		assert(_thread.joinable());
-		_thread.join();
-	}
+	void Terminate();
 
-	virtual void run() = 0;
+	void Join();
 
-	bool is_running() const { return _running; }
+	JONO_INLINE void Execute();
+
+	virtual void Run() = 0;
+
+	JONO_INLINE bool IsRunning() const { return m_Running; }
+
+protected:
+	std::atomic<bool> m_Running;
+
+	std::thread const& GetThread() const { return m_Thread; }
+	std::string_view GetName() const { return m_Name; }
 
 private:
-	std::thread _thread;
-
-	std::atomic<bool> _running;
+	std::string m_Name;
+	std::thread m_Thread;
 };
+
+JONO_INLINE void Thread::Execute()
+{
+	m_Thread = std::thread([this](){ this->Run(); });
+}
+
+JONO_INLINE void Thread::Join()
+{
+	assert(m_Thread.joinable());
+	m_Thread.join();
+}
+
+JONO_INLINE void Thread::Terminate()
+{
+	m_Running = false;
+}
+
+JONO_INLINE Thread::Thread(const char* name)
+		: m_Name(name)
+		, m_Running(false)
+{
+}
 
 } // namespace Threading

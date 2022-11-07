@@ -4,7 +4,7 @@
 struct ID2D1Bitmap;
 class TextureHandle;
 
-class Bitmap
+class ENGINE_API Bitmap
 {
 public:
 	Bitmap();

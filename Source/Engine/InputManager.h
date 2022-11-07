@@ -82,7 +82,7 @@ enum class MouseKeyCode
 	Mouse5 = 0x6
 };
 
-class InputManager
+class ENGINE_API InputManager
 {
 public:
 	InputManager(void);
@@ -96,7 +96,7 @@ public:
 
 	int2 get_mouse_position(bool previousFrame = false) const;
 	int2 get_mouse_delta() const { return m_MouseDelta; }
-	f32 get_scroll_delta() const { return _mouse_wheel; }
+	f32  get_scroll_delta() const { return m_MouseWheel; }
 
 	bool is_key_down(KeyCode key) const;
 	bool is_key_pressed(KeyCode key) const;
@@ -135,8 +135,8 @@ private:
 	static constexpr u32 s_prev_frame = 1;
 	static constexpr u32 s_frame_count = 2;
 
-	std::array<int2, 2> _mouse_pos;
-	f32 _mouse_wheel;
+	std::array<int2, 2> m_MousePos;
+	f32 m_MouseWheel;
 
 	static constexpr u32 s_MaxMouseButtons = 5;
 	static constexpr u32 s_MaxKeys = SDL_NUM_SCANCODES;

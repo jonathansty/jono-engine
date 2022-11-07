@@ -10,12 +10,15 @@
 #endif
 #include <Windows.h>
 #include <commdlg.h>
-#endif
+#endif // _WIN64
 
-
+#ifdef ENABLE_RTTR
 #include <rttr/registration>
 #include <rttr/registration_friend>
 #include <rttr/type>
+#else
+#define RTTR_REGISTRATION_FRIEND
+#endif
 
 // Feature Defines used to control compile time behaviour
 //#define FEATURE_D2D    true    // Flag to control if D2D can be used or not
@@ -35,6 +38,10 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <unordered_map>
+#include <unordered_set>
+#include <map>
+#include <set>
 
 #include <Identifier.h>
 
@@ -50,10 +57,6 @@
 #include <fmt/printf.h>
 #include <fmt/xchar.h>
 
-#include <rttr/registration>
-#include <rttr/registration_friend>
-#include <rttr/type>
-
 #include "enkiTS/TaskScheduler.h"
 
 #include <cassert>
@@ -68,20 +71,6 @@
 #define tstringstream std::stringstream
 #endif
 
-#include "Asserts.h"
-#include "Hash.h"
-#include "Math.h"
-#include "Types.h"
-#include "Identifier.h"
-#include "Thread.h"
-#include <chrono>
-
-namespace Tasks
-{
-
-enki::TaskScheduler* get_scheduler();
-
-}
 
 // Optick integration
 #define JONO_FRAME(_arg0) OPTICK_FRAME(_arg0)
@@ -99,3 +88,32 @@ enki::TaskScheduler* get_scheduler();
 #define JONO_INIT_GPU(device, cmd_queue, n_cmd_queues) OPTICK_GPU_INIT_D3D12(device, cmd_queue, n_cmd_queues)
 
 #define JONO_NEW(TypeName, ...) new TypeName(__VA_ARGS__)
+
+#define JONO_INLINE inline
+
+#ifdef CORE_DLL
+#ifdef CORE_EXPORTS
+#define CORE_API __declspec(dllexport)
+#else
+#define CORE_API __declspec(dllimport)
+#endif
+#else
+#define CORE_API
+#endif
+
+namespace Tasks
+{
+
+CORE_API enki::TaskScheduler* get_scheduler();
+
+}
+
+#include "Asserts.h"
+#include "Hash.h"
+#include "Math.h"
+#include "Types.h"
+#include "Identifier.h"
+#include "Thread.h"
+#include <chrono>
+#include <semaphore>
+

@@ -64,7 +64,7 @@ void operator delete[](void* mem)
 }
 
 
- const char* MemoryCategoryToString(MemoryCategory category)
+const char* MemoryCategoryToString(MemoryCategory category)
 {
 	static const char* s_values[] = {
 		"None",

@@ -223,16 +223,16 @@ void PathFindingGame::tick(double deltaTime)
 		float2 grid_pos = world_pos / _grid._cell_size;
 		grid_pos = hlslpp::clamp(grid_pos, float2(0, 0), float2(_grid._width, _grid._height));
 
-		if (input->is_key_down(KeyCode::LShift) && input->is_mouse_button_pressed(0))
+		if (input->is_key_down(KeyCode::LShift) && input->is_mouse_button_pressed(SDL_BUTTON_LEFT))
 		{
 			_start = uint2(u32(grid_pos.x), u32(grid_pos.y));
 			_nav_grid = construct_grid_from_pos(_grid, _start.x, _start.y);
 		}
-		else if (input->is_key_down(KeyCode::LControl) && input->is_mouse_button_pressed(0))
+		else if (input->is_key_down(KeyCode::LControl) && input->is_mouse_button_pressed(SDL_BUTTON_LEFT))
 		{
 			_end = uint2(u32(grid_pos.x), u32(grid_pos.y));
 		}
-		else if (input->is_key_down(KeyCode::LAlt) && input->is_mouse_button_pressed(0))
+		else if (input->is_key_down(KeyCode::LAlt) && input->is_mouse_button_pressed(SDL_BUTTON_LEFT))
 		{
 			if (auto cell = get_cell(_grid, u32(grid_pos.x), u32(grid_pos.y)); cell)
 			{
@@ -240,7 +240,7 @@ void PathFindingGame::tick(double deltaTime)
 			}
 			_nav_grid = construct_grid_from_pos(_grid, _start.x, _start.y);
 		}
-		else if (input->is_mouse_button_down(0))
+		else if (input->is_mouse_button_down(SDL_BUTTON_LEFT))
 		{
 			int2 delta = input->get_mouse_delta();
 			_view_translation -= float3(delta, 0.0f);

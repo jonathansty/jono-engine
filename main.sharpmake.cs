@@ -8,9 +8,9 @@ using Sharpmake;
 
 
 [Generate]
-public class CliProject : JonaBaseProject
+public class CliModule : Module
 {
-    public CliProject() : base()
+    public CliModule() : base()
     {
         Name = "CLI";
     }
@@ -18,15 +18,13 @@ public class CliProject : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        conf.SolutionFolder = Utils.g_FilterFolderEngine;
-        conf.Output = Configuration.OutputType.Lib;
     }
 }
 
 [Generate]
-public class CoreProject : JonaBaseProject
+public class CoreModule : Module
 {
-    public CoreProject() : base()
+    public CoreModule() : base()
     {
         Name = "Core";
     }
@@ -34,8 +32,6 @@ public class CoreProject : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        conf.SolutionFolder = Utils.g_FilterFolderEngine;
-        conf.Output = Configuration.OutputType.Lib;
 
         conf.AddPublicDependency<OpTick>(target);
         conf.AddPublicDependency<Rttr>(target);
@@ -45,9 +41,9 @@ public class CoreProject : JonaBaseProject
 
 
 [Generate]
-public class EngineProject : JonaBaseProject
+public class EngineModule : Module
 {
-	public EngineProject()
+	public EngineModule()
          : base()
 	{
 
@@ -61,7 +57,6 @@ public class EngineProject : JonaBaseProject
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        conf.SolutionFolder = Utils.g_FilterFolderEngine;
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
@@ -69,16 +64,10 @@ public class EngineProject : JonaBaseProject
         conf.AddPublicDependency<ImPlot>(target);
 
         // Own public libraries
-        conf.AddPublicDependency<CliProject>(target);
-        conf.AddPublicDependency<CoreProject>(target);
+        conf.AddPublicDependency<CliModule>(target);
+        conf.AddPublicDependency<CoreModule>(target);
         conf.AddPublicDependency<DirectXTK>(target);
         conf.AddPublicDependency<SDL2>(target);
-
-        conf.Output = Configuration.OutputType.Lib;
-        conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
-            "4100", // Unused method variables
-            "4189"  // Unused local variables
-        ));
 
         conf.LibraryFiles.AddRange(new string[] { 
             "dxgi", 
@@ -114,7 +103,7 @@ public class EngineProject : JonaBaseProject
 }
 
 [Generate]
-public class EngineTestProject : JonaBaseProject
+public class EngineTestProject : Application
 {
     public EngineTestProject()
          : base()
@@ -128,7 +117,7 @@ public class EngineTestProject : JonaBaseProject
         conf.SolutionFolder = "tests";
 
         // Private dependencies
-        conf.AddPrivateDependency<EngineProject>(target, DependencySetting.DefaultWithoutBuildSteps);
+        conf.AddPrivateDependency<EngineModule>(target, DependencySetting.DefaultWithoutBuildSteps);
 
         // Compile C++17 
         conf.Output = Configuration.OutputType.Dll;
@@ -140,7 +129,7 @@ public class EngineTestProject : JonaBaseProject
 }
 
 [Generate]
-public class SceneViewerProject : JonaBaseProject
+public class SceneViewerProject : Application
 {
     public SceneViewerProject() : base()
     {
@@ -154,7 +143,11 @@ public class SceneViewerProject : JonaBaseProject
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
-        conf.AddPrivateDependency<EngineProject>(target);
+        conf.AddPrivateDependency<EngineModule>(target);
+        conf.AddPrivateDependency<CoreModule>(target);
+        conf.AddPrivateDependency<CliModule>(target);
+        conf.AddPrivateDependency<ImGui>(target);
+        conf.AddPrivateDependency<SDL2>(target);
 
         conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
         conf.Output = Configuration.OutputType.Exe;
@@ -164,7 +157,7 @@ public class SceneViewerProject : JonaBaseProject
 }
 
 [Generate]
-public class PathFindingProject : JonaBaseProject
+public class PathFindingProject : Application
 {
     public PathFindingProject() : base()
     {
@@ -173,12 +166,14 @@ public class PathFindingProject : JonaBaseProject
 
     public override void ConfigureAll(Configuration conf, Target target)
     {
+        conf.Output = Configuration.OutputType.Exe;
+
         base.ConfigureAll(conf, target);
         conf.SolutionFolder = Utils.g_FilterFolderGame;
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
-        conf.AddPrivateDependency<EngineProject>(target);
+        conf.AddPrivateDependency<EngineModule>(target);
 
         conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
         conf.Output = Configuration.OutputType.Exe;
@@ -190,7 +185,7 @@ public class PathFindingProject : JonaBaseProject
 
 
 [Generate]
-public abstract class ToolsProject : JonaBaseProject
+public abstract class ToolsProject : Application
 {
     public ToolsProject()
     {
@@ -234,9 +229,9 @@ public class EngineSolution : Solution
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
 
 
-        conf.AddProject<EngineProject>(target);
+        conf.AddProject<EngineModule>(target);
         conf.AddProject<SceneViewerProject>(target);
-        conf.AddProject<PathFindingProject>(target);
+        //conf.AddProject<PathFindingProject>(target);
     }
 }
 
@@ -264,7 +259,7 @@ public class ToolsOnlySolution : Solution
         conf.SolutionPath = @"[solution.SharpmakeCsPath]/build";
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
 
-        conf.AddProject<EngineProject>(target);
+        conf.AddProject<EngineModule>(target);
         conf.AddProject<SceneViewerProject>(target);
         conf.AddProject<PathFindingProject>(target);
         conf.AddProject<EngineTestProject>(target);
@@ -308,7 +303,7 @@ public class TestSolution : Solution
             conf.AddProject(type, target);
         }
 
-        conf.AddProject<EngineProject>(target);
+        conf.AddProject<EngineModule>(target);
     }
 }
 
@@ -339,7 +334,7 @@ public static class Main
 
     private static void Builder_EventPostProjectLink(Project project)
     {
-        if(project is JonaBaseProject && !(project is ExternalProject) && !(project is ToolsProject))
+        if(project is Application && !(project is ExternalProject) && !(project is ToolsProject))
         {
             Sharpmake.Resolver resolver = new Sharpmake.Resolver();
             resolver.SetParameter("project", project);

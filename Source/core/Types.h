@@ -156,7 +156,9 @@ using Helpers::WrapperQuat;
 namespace Helpers
 {
 
+#ifdef ENABLE_RTTR
 rttr::type const& get_type_by_id(u64 id);
+#endif
 
 GUID StringToGuid(const std::string& str);
 std::string GuidToString(GUID guid);

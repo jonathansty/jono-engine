@@ -1,3 +1,4 @@
+#include "Common.hlsl"
 
 Texture2D<float4> Bitmap : register(t0);
 

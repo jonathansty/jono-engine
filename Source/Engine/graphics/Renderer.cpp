@@ -478,7 +478,8 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 
 	float dpi, hdpi, vdpi;
 	SDL_GetDisplayDPI(display, &dpi, &hdpi, &vdpi);
-	D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(swapchain_format, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)hdpi, (FLOAT)vdpi);
+
+	D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)hdpi, (FLOAT)vdpi);
 
 	ComPtr<IDXGISurface> surface;
 	_output_tex->QueryInterface(surface.GetAddressOf());
@@ -492,7 +493,7 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	}
 }
 
-void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
+void Renderer::pre_render(RenderWorld const& world)
 {
 	JONO_EVENT();
 	GPU_SCOPED_EVENT(_user_defined_annotation, "PreRender");
@@ -506,7 +507,7 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 	}
 
 	// Update the cameras
-	for (auto& cam : world->get_cameras())
+	for (auto& cam : world.get_cameras())
 	{
 		// Update our view camera to properly match the viewport aspect
 		cam->set_aspect((f32)_viewport_width / (f32)_viewport_height);
@@ -514,7 +515,7 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 	}
 
 	// Update all the render world instances
-	for (std::shared_ptr<RenderWorldInstance> const& inst : world->get_instances())
+	for (std::shared_ptr<RenderWorldInstance> const& inst : world.get_instances())
 	{
 		// Finalise a render instance after it's done loading
 		if (inst->_model->is_loaded() && !inst->is_finalised())
@@ -531,9 +532,9 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 	{
 
 		// Retrieve the first directional light in the render world
-		auto it = std::find_if(world->get_lights().begin(), world->get_lights().end(), [](auto const& light)
+		auto it = std::find_if(world.get_lights().begin(), world.get_lights().end(), [](auto const& light)
 				{ return light->is_directional() && light->get_casts_shadow(); });
-		if (it != world->get_lights().end())
+		if (it != world.get_lights().end())
 		{
 			directional_light = *it;
 		}
@@ -546,14 +547,14 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 		float4x4 light_space = directional_light->get_view();
 		if (directional_light->get_casts_shadow())
 		{
-			float4x4 view = world->get_light(0)->get_view();
-			float3 direction = world->get_light(0)->get_view_direction().xyz;
-			float3 position = world->get_light(0)->get_position().xyz;
+			float4x4 view = world.get_light(0)->get_view();
+			float3 direction = world.get_light(0)->get_view_direction().xyz;
+			float3 position = world.get_light(0)->get_position().xyz;
 
 			std::vector<CascadeInfo> matrices;
 			for (u32 i = 0; i < MAX_CASCADES; ++i)
 			{
-				Math::Frustum box_light = get_cascade_frustum(world->get_camera(0), i, MAX_CASCADES);
+				Math::Frustum box_light = get_cascade_frustum(world.get_camera(0), i, MAX_CASCADES);
 
 				// Transform to light view space
 				box_light.transform(light_space);
@@ -598,7 +599,7 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 		JONO_EVENT("Visibility");
 		_visibility->reset();
 
-		for (std::shared_ptr<RenderWorldInstance> const& inst : world->get_instances())
+		for (std::shared_ptr<RenderWorldInstance> const& inst : world.get_instances())
 		{
 			if (inst->is_ready())
 			{
@@ -626,7 +627,7 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 		ProcessedLight* light_data = static_cast<ProcessedLight*>(access.get_ptr());
 		u32 n_lights = 0;
 		u32 n_directional_lights = 0;
-		for (std::shared_ptr<RenderWorldLight> const& light : world->get_lights())
+		for (std::shared_ptr<RenderWorldLight> const& light : world.get_lights())
 		{
 			if (!light->is_directional())
 			{
@@ -665,8 +666,8 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 	{
 
 		constexpr u32 tile_res = FPLUS_TILE_RES;
-		float width = GameEngine::instance()->get_window_size().x;
-		float height = GameEngine::instance()->get_window_size().y;
+		float width = GameEngine::instance()->GetWindowSize().x;
+		float height = GameEngine::instance()->GetWindowSize().y;
 
 		u32 tiles_x = (u32)ceilf(width / tile_res);
 		u32 tiles_y = (u32)ceilf(height / tile_res);
@@ -699,7 +700,7 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 
 		ID3D11DeviceContext* ctx = _device_ctx;
 
-		shared_ptr<RenderWorldCamera> camera = world->get_camera(0);
+		shared_ptr<RenderWorldCamera> camera = world.get_camera(0);
 
 		// Update CB
 		{
@@ -749,12 +750,12 @@ void Renderer::pre_render(shared_ptr<RenderWorld> const& world)
 
 }
 
-void Renderer::render_view(shared_ptr<RenderWorld> const& world, RenderPass::Value pass)
+void Renderer::render_view(RenderWorld const& world, RenderPass::Value pass)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "Renderer::render_view");
 
 	// Setup global constant buffer
-	std::shared_ptr<RenderWorldCamera> camera = world->get_view_camera();
+	std::shared_ptr<RenderWorldCamera> camera  = world.get_view_camera();
 
 	ViewParams params{};
 	D3D11_TEXTURE2D_DESC desc;
@@ -779,7 +780,7 @@ void Renderer::render_view(shared_ptr<RenderWorld> const& world, RenderPass::Val
 	render_world(world, params);
 }
 
-void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams const& params)
+void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 {
 	std::string passName = RenderPass::ToString(params.pass);
 	GPU_SCOPED_EVENT(_user_defined_annotation, passName.c_str());
@@ -826,7 +827,7 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 	global->num_tiles_x = _num_tiles_x;
 
 	// Process all the lights
-	RenderWorld::LightCollection const& lights = world->get_lights();
+	RenderWorld::LightCollection const& lights = world.get_lights();
 	for (u32 i = 0; i < lights.size(); ++i)
 	{
 		DirectionalLightInfo* info = global->lights + i;
@@ -845,8 +846,8 @@ void Renderer::render_world(shared_ptr<RenderWorld> const& world, ViewParams con
 				info->num_cascades = MAX_CASCADES;
 				for (int j = 0; j < MAX_CASCADES; ++j)
 				{
-					f32 n = world->get_camera(0)->get_near();
-					f32 f = world->get_camera(0)->get_far();
+					f32 n = world.get_camera(0)->get_near();
+					f32 f = world.get_camera(0)->get_far();
 
 					f32 z0 = n * pow(f / n, f32(j) / f32(MAX_CASCADES));
 					f32 z1 = n * pow(f / n, f32(j + 1) / f32(MAX_CASCADES));
@@ -1049,8 +1050,8 @@ void Renderer::begin_frame()
 
 	GameEngine* engine = GameEngine::instance();
 	D3D11_VIEWPORT vp{};
-	vp.Width = static_cast<float>(engine->get_viewport_size().x);
-	vp.Height = static_cast<float>(engine->get_viewport_size().y);
+	vp.Width = static_cast<float>(engine->GetViewportSize().x);
+	vp.Height = static_cast<float>(engine->GetViewportSize().y);
 	vp.TopLeftX = 0.0f;
 	vp.TopLeftY = 0.0f;
 	vp.MinDepth = 0.0f;
@@ -1067,9 +1068,9 @@ void Renderer::end_frame()
 {
 }
 
-Math::Frustum Renderer::get_frustum_world(shared_ptr<RenderWorld> const& world, u32 cam) const
+Math::Frustum Renderer::get_frustum_world(RenderWorld const& world, u32 cam) const
 {
-	shared_ptr<RenderWorldCamera> camera = world->get_camera(cam);
+	shared_ptr<RenderWorldCamera> camera = world.get_camera(cam);
 	return Math::Frustum::from_vp(camera->get_vp());
 }
 
@@ -1200,7 +1201,7 @@ void Renderer::render_post_postdebug()
 
 }
 
-void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
+void Renderer::render_shadow_pass(RenderWorld const& world)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "Shadows");
 
@@ -1209,8 +1210,8 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 	shared_ptr<RenderWorldLight> light = nullptr;
 
 	// Retrieve the first directional light in the render world
-	auto it = std::find_if(world->get_lights().begin(), world->get_lights().end(), [](auto const& light){ return light->is_directional() && light->get_casts_shadow(); });
-	if(it != world->get_lights().end())
+	auto it = std::find_if(world.get_lights().begin(), world.get_lights().end(), [](auto const& light){ return light->is_directional() && light->get_casts_shadow(); });
+	if(it != world.get_lights().end())
 	{
 		light = *it;
 	}
@@ -1223,9 +1224,9 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 	float4x4 light_space = light->get_view();
 	if (light->get_casts_shadow())
 	{
-		float4x4 view = world->get_light(0)->get_view();
-		float3 direction = world->get_light(0)->get_view_direction().xyz;
-		float3 position = world->get_light(0)->get_position().xyz;
+		float4x4 view = world.get_light(0)->get_view();
+		float3 direction = world.get_light(0)->get_view_direction().xyz;
+		float3 position = world.get_light(0)->get_position().xyz;
 
 		// Render out the cascades shadow map for the directional light
 		for (u32 i = 0; i < MAX_CASCADES; ++i)
@@ -1253,7 +1254,7 @@ void Renderer::render_shadow_pass(shared_ptr<RenderWorld> const& world)
 	}
 }
 
-void Renderer::render_zprepass(shared_ptr<RenderWorld> const& world)
+void Renderer::render_zprepass(RenderWorld const& world)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "zprepass");
 
@@ -1263,7 +1264,7 @@ void Renderer::render_zprepass(shared_ptr<RenderWorld> const& world)
 	render_view(world, RenderPass::ZPrePass);
 }
 
-void Renderer::render_opaque_pass(shared_ptr<RenderWorld> const& world)
+void Renderer::render_opaque_pass(RenderWorld const& world)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "opaque");
 
@@ -1274,7 +1275,7 @@ void Renderer::render_opaque_pass(shared_ptr<RenderWorld> const& world)
 	render_view(world, Graphics::RenderPass::Opaque);
 }
 
-void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<OverlayManager> const& overlays)
+void Renderer::render_post(RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "Post");
 
@@ -1304,10 +1305,10 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 
 	float4x4 view = float4x4::identity();
 	float4x4 proj = float4x4::identity();
-	if(world->get_view_camera())
+	if(world.get_view_camera())
 	{
-		view = world->get_view_camera()->get_view();
-		proj = world->get_view_camera()->get_proj();
+		view = world.get_view_camera()->get_view();
+		proj = world.get_view_camera()->get_proj();
 	}
 
 	using namespace DirectX;
@@ -1353,10 +1354,12 @@ void Renderer::render_post(shared_ptr<RenderWorld> const& world, shared_ptr<Over
 
 
 	// Render main viewport ImGui
+	if(doImgui)
 	{
 		GPU_SCOPED_EVENT(_user_defined_annotation, "ImGui");
 		_device_ctx->OMSetRenderTargets(1, &_swapchain_rtv, nullptr);
-		ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+		ImDrawData* imguiData = &GetGlobalContext()->m_GraphicsThread->m_FrameData.m_DrawData;
+		ImGui_ImplDX11_RenderDrawData(imguiData);
 	}
 
 }
