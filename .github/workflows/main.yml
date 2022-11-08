@@ -10,6 +10,7 @@ jobs:
       fail-fast: false
       matrix:
        config: [Debug, Release]
+       linkage: [Dll, Lib]
         
     runs-on: windows-latest
     steps:
@@ -25,5 +26,5 @@ jobs:
           conan profile new default --detect
           ./Tools/Bootstrap.cmd
       - name: Building jono-engine ${{ matrix.config }}
-        run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration=${{ matrix.config }}
+        run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration="${{ matrix.config }} ${{matrix.linkage}}"
 
