@@ -9,6 +9,7 @@ on:
       - 'conanfile.txt'
       - 'Tools'
       - 'External'
+      - '**.cs'
 jobs:
   build:
     strategy:
