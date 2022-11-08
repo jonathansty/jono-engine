@@ -11,6 +11,7 @@ namespace Graphics
 class Renderer;
 class RendererDebugTool;
 class D2DRenderContext;
+class Shader;
 }
 
 class GraphicsThread : public Threading::Thread
@@ -60,7 +61,24 @@ private:
 		RenderWorld m_RenderWorld;
 		ImDrawData m_DrawData;
 
-		std::vector<Graphics::DrawCmd> m_Render2DDrawCommands;
+		struct Render2DData
+		{
+			std::vector<Graphics::DrawCmd> m_DrawCommands;
+			u32 m_TotalVertices = 0;
+			u32 m_TotalIndices = 0;
+
+			u32 m_CurrentVertices = 0;
+			u32 m_CurrentIndices = 0;
+
+			ComPtr<ID3D11Buffer> m_VertexBuffer;
+			ComPtr<ID3D11Buffer> m_IndexBuffer;
+			ComPtr<ID3D11InputLayout> m_InputLayout;
+
+			ConstantBufferRef m_GlobalCB;
+
+			float4x4 m_ProjectionMatrix;
+		};
+		Render2DData m_Render2DData;
 	};
 
 	FrameData m_FrameData;
@@ -70,4 +88,8 @@ private:
 	std::condition_variable m_StageChangedCV;
 
 	Stage m_Stage;
+
+	ConstantBufferRef m_GlobalCB;
+	shared_ptr<Graphics::Shader> m_VertexShader;
+	shared_ptr<Graphics::Shader> m_PixelShader;
 };

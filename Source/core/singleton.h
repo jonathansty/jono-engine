@@ -10,7 +10,7 @@ void safe_delete(T*& obj)
 	}
 }
 
-template <typename T>
+template <typename T, bool LazyCreate = false>
 class TSingleton
 {
 public:
@@ -31,27 +31,37 @@ private:
 	static T* _obj;
 };
 
-template <typename T>
-void TSingleton<T>::shutdown()
+template <typename T, bool LazyCreate>
+void TSingleton<T, LazyCreate>::shutdown()
 {
 	ASSERTMSG(_obj, "Singleton was never created! This is an invalid shutdown.");
 	delete _obj;
 	_obj = nullptr;
 }
 
-template <typename T>
-T* TSingleton<T>::instance()
+template <typename T, bool LazyCreate>
+T* TSingleton<T, LazyCreate>::instance()
 {
-	ASSERT(_obj);
+	if constexpr(LazyCreate)
+	{
+		if(!_obj)
+		{
+			create();
+		}
+	}
+	else
+	{
+		ASSERT(_obj);
+	}
 	return _obj;
 }
 
-template <typename T>
-void TSingleton<T>::create()
+template <typename T, bool LazyCreate>
+void TSingleton<T, LazyCreate>::create()
 {
 	ASSERTMSG(!_obj, "Singleton already contains an instance. Double create called!");
-	_obj = new T();
+	_obj = JONO_NEW(T);
 }
 
-template <typename T>
-__declspec(selectany) T* TSingleton<T>::_obj = nullptr;
+template <typename T, bool LazyCreate>
+__declspec(selectany) T* TSingleton<T, LazyCreate>::_obj = nullptr;

@@ -497,6 +497,11 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 
 
+			// Run 2D rendering on the app thread, merely populates the 2D drawing data
+			{
+				RenderD2D();
+			}
+
 			// Recreating the game viewport texture needs to happen before running IMGUI and the actual rendering
 			{
 				JONO_EVENT("DebugUI");
@@ -1569,6 +1574,11 @@ void GameEngine::RenderD2D()
 	// 1. Collect all the draw commands in buffers and capture the required data
 	// 2. during end_paint 'flush' draw commands and create required vertex buffers
 	// 3. Execute each draw command binding the right buffers and views
+	if(!m_D2DRenderContext.IsValid())
+	{
+		m_D2DRenderContext = SharedPtr(new Graphics::D2DRenderContext());
+	}
+
 	Graphics::D2DRenderContext& context = *m_D2DRenderContext;
 	context.begin_paint(renderer, renderer->get_raw_d2d_factory(), renderer->get_2d_draw_ctx(), renderer->get_2d_color_brush(), engine->m_DefaultFont.get());
 

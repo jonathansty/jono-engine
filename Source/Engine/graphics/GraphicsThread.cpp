@@ -6,6 +6,9 @@
 #include "GameEngine.h"
 #include "Graphics/Renderer.h"
 #include "Graphics/2DRenderContext.h"
+#include "Graphics/ShaderCache.h"
+#include "Graphics/Shader.h"
+#include "Core/TextureResource.h"
 #include "AbstractGame.h"
 
  GraphicsThread::GraphicsThread()
@@ -69,6 +72,17 @@ void GraphicsThread::Run()
 
 void GraphicsThread::Sync()
 {
+	if (!m_VertexShader)
+	{
+		using namespace Graphics;
+		ShaderCreateParams params = ShaderCreateParams::vertex_shader("Source/Engine/Shaders/default_2d.vx.hlsl");
+		m_VertexShader = ShaderCache::instance()->find_or_create(params);
+		params = ShaderCreateParams::pixel_shader("Source/Engine/Shaders/default_2d.px.hlsl");
+		m_PixelShader = ShaderCache::instance()->find_or_create(params);
+
+		m_GlobalCB = ConstantBuffer::create(Graphics::get_device().Get(), sizeof(Shaders::float4x4) + sizeof(Shaders::float4), true, BufferUsage::Dynamic);
+	}
+
 	// Setup the graphics thread parameters
 	GlobalContext* context = GetGlobalContext();
 	GameEngine* engine = context->m_Engine;
@@ -85,7 +99,10 @@ void GraphicsThread::Sync()
 
 	if(engine->m_D2DRenderContext.IsValid())
 	{
-		m_FrameData.m_Render2DDrawCommands = engine->m_D2DRenderContext->GetCommands();
+		m_FrameData.m_Render2DData.m_DrawCommands = engine->m_D2DRenderContext->GetCommands();
+		m_FrameData.m_Render2DData.m_TotalIndices = engine->m_D2DRenderContext->m_TotalIndices;
+		m_FrameData.m_Render2DData.m_TotalVertices = engine->m_D2DRenderContext->m_TotalVertices;
+		m_FrameData.m_Render2DData.m_ProjectionMatrix = engine->m_D2DRenderContext->m_ProjectionMatrix;
 	}
 
 	// Copy over ImDrawData for next frame
@@ -260,93 +277,156 @@ void GraphicsThread::RenderD2D()
 	// 1. Collect all the draw commands in buffers and capture the required data
 	// 2. during end_paint 'flush' draw commands and create required vertex buffers
 	// 3. Execute each draw command binding the right buffers and views
-	Graphics::D2DRenderContext& context = *engine->m_D2DRenderContext;
 	uint2 size = m_FrameData.m_ViewportSize;
 
-	std::vector<Graphics::DrawCmd> const& commands = m_FrameData.m_Render2DDrawCommands;
+	FrameData::Render2DData& renderData = m_FrameData.m_Render2DData;
+	std::vector<Graphics::DrawCmd>& commands =renderData.m_DrawCommands;
 
+	// Execute all the 2D draw commands 
 	{
 		using namespace Graphics;
 		GPU_SCOPED_EVENT(renderer->get_raw_annotation(), "D2D:Paint");
 
 		// First construct the necessary caching
-		//{
-		//	std::vector<SimpleVertex2D> vertices;
-		//	std::vector<u32> indices;
-
-		//	vertices.reserve(m_TotalVertices);
-		//	indices.reserve(m_TotalIndices);
-
-		//	u32 vtx_offset = 0;
-		//	for (DrawCmd const& cmd : commands)
-		//	{
-		//		cmd.m_IdxOffset = u32(indices.size());
-		//		cmd.m_VertexOffset = u32(vertices.size());
-
-		//		for (SimpleVertex2D const& vert : cmd.m_VertexBuffer)
-		//		{
-		//			vertices.push_back(vert);
-		//		}
-
-		//		for (u32 const& index : cmd.m_IdxBuffer)
-		//		{
-		//			indices.push_back(index);
-		//		}
-		//	}
-		//}
-
-
-		ID3D11DeviceContext* ctx = renderer->get_ctx()._ctx.Get();
-
-		ID3D11RenderTargetView* currentRTV = nullptr;
-		ID3D11DepthStencilView* currentDSV = nullptr;
-
-		for (DrawCmd const& cmd : commands)
 		{
-			switch(cmd.m_Type)
+			std::vector<SimpleVertex2D> vertices;
+			std::vector<u32> indices;
+
+			vertices.reserve(renderData.m_TotalVertices);
+			indices.reserve(renderData.m_TotalIndices);
+
+			u32 vtx_offset = 0;
+			for (DrawCmd& cmd : commands)
 			{
-				case DrawCmd::DC_MESH:
+				cmd.m_IdxOffset = u32(indices.size());
+				cmd.m_VertexOffset = u32(vertices.size());
+
+				for (SimpleVertex2D const& vert : cmd.m_VertexBuffer)
 				{
-				
-				}break;
-				case DrawCmd::DC_CLEAR:
+					vertices.push_back(vert);
+				}
+
+				for (u32 const& index : cmd.m_IdxBuffer)
+				{
+					indices.push_back(index);
+				}
+			}
+
+			if (renderData.m_TotalVertices > renderData.m_CurrentVertices)
+			{
+				renderData.m_VertexBuffer.Reset();
+
+				renderData.m_CurrentVertices = renderData.m_TotalVertices;
+
+				CD3D11_BUFFER_DESC desc = CD3D11_BUFFER_DESC(renderData.m_CurrentVertices * sizeof(SimpleVertex2D), D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE, 0, sizeof(SimpleVertex2D));
+				D3D11_SUBRESOURCE_DATA initial_data{};
+				initial_data.pSysMem = vertices.data();
+				ENSURE_HR(Graphics::get_device()->CreateBuffer(&desc, &initial_data, renderData.m_VertexBuffer.GetAddressOf()));
+			}
+			else
+			{
+				D3D11_MAPPED_SUBRESOURCE mapped_resource{};
+				Graphics::get_ctx()->Map(renderData.m_VertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+
+				SimpleVertex2D* data = (SimpleVertex2D*)mapped_resource.pData;
+				memcpy(data, vertices.data(), vertices.size() * sizeof(SimpleVertex2D));
+				Graphics::get_ctx()->Unmap(renderData.m_VertexBuffer.Get(), 0);
+			}
+
+			if (renderData.m_TotalIndices > renderData.m_CurrentIndices)
+			{
+				renderData.m_IndexBuffer.Reset();
+				renderData.m_CurrentIndices = renderData.m_TotalIndices;
+
+				CD3D11_BUFFER_DESC desc = CD3D11_BUFFER_DESC(renderData.m_CurrentIndices * sizeof(u32), D3D11_BIND_INDEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE, 0, 0);
+				D3D11_SUBRESOURCE_DATA initial_data{};
+				initial_data.pSysMem = indices.data();
+				ENSURE_HR(Graphics::get_device()->CreateBuffer(&desc, &initial_data, renderData.m_IndexBuffer.GetAddressOf()));
+			}
+			else
+			{
+				D3D11_MAPPED_SUBRESOURCE mapped_resource{};
+				Graphics::get_ctx()->Map(renderData.m_IndexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+				u32* data = (u32*)mapped_resource.pData;
+				memcpy(data, indices.data(), indices.size() * sizeof(u32));
+				Graphics::get_ctx()->Unmap(renderData.m_IndexBuffer.Get(), 0);
+			}
+		}
+
+		{
+			auto ctx = Graphics::get_ctx();
+
+			CD3D11_VIEWPORT viewport = CD3D11_VIEWPORT(renderer->get_raw_output_tex(), renderer->get_raw_output_rtv());
+			D3D11_RECT rect{ (LONG)viewport.TopLeftX, (LONG)viewport.TopLeftY, (LONG)viewport.TopLeftX + (LONG)viewport.Width, (LONG)viewport.TopLeftY + (LONG)viewport.Height };
+			ctx->RSSetViewports(1, &viewport);
+			ctx->RSSetScissorRects(1, &rect);
+
+			ctx->IASetIndexBuffer(renderData.m_IndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+
+			ID3D11RenderTargetView* rtv = renderer->get_raw_output_rtv();
+			ctx->OMSetRenderTargets(1, &rtv, nullptr);
+
+			constexpr UINT vertexStride = sizeof(SimpleVertex2D);
+			constexpr UINT vertexOffset = 0;
+			ctx->IASetVertexBuffers(0, 1, renderData.m_VertexBuffer.GetAddressOf(), &vertexStride, &vertexOffset);
+
+			ctx->IASetInputLayout(m_VertexShader->get_input_layout().Get());
+			ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+			ctx->VSSetShader(m_VertexShader->as<ID3D11VertexShader>().Get(), nullptr, 0);
+
+			ctx->PSSetShader(m_PixelShader->as<ID3D11PixelShader>().Get(), nullptr, 0);
+
+			ID3D11Buffer* cb = m_GlobalCB->Get();
+			ctx->VSSetConstantBuffers(0, 1, &cb);
+
+			ComPtr<ID3D11RasterizerState> rss = Graphics::get_rasterizer_state(RasterizerState::CullNone);
+			ComPtr<ID3D11BlendState> bss = Graphics::get_blend_state(BlendState::AlphaBlend);
+			ComPtr<ID3D11DepthStencilState> dss = Graphics::get_depth_stencil_state(DepthStencilState::NoDepth);
+			ctx->RSSetState(rss.Get());
+			ctx->OMSetBlendState(bss.Get(), nullptr, 0xFFFFFF);
+			ctx->OMSetDepthStencilState(dss.Get(), 0);
+
+			ID3D11SamplerState* samplers[] = {
+				Graphics::get_sampler_state(SamplerState::MinMagMip_Linear).Get()
+			};
+			ctx->PSSetSamplers(0, 1, samplers);
+			for (DrawCmd const& cmd : renderData.m_DrawCommands)
+			{
+				if(cmd.m_Type == DrawCmd::DC_MESH)
+				{
+					ID3D11ShaderResourceView* srvs[] = {
+						cmd.m_Texture ? cmd.m_Texture : TextureHandle::white()->get_srv()
+					};
+					ctx->PSSetShaderResources(0, 1, srvs);
+					float4x4 wv = cmd.m_WorldViewMatrix;
+					float4x4 result = hlslpp::mul(wv, renderData.m_ProjectionMatrix);
+					result._13 = 0.0f;
+					result._23 = 0.0f;
+					result._33 = 1.0f;
+					result._43 = 0.0f;
+
+					// Copy matrix to shader
+					struct DrawData
+					{
+						Shaders::float4x4 mat;
+						Shaders::float4 colour;
+					};
+
+					DrawData* dst = (DrawData*)m_GlobalCB->map(ctx.Get());
+					dst->mat = Shaders::float4x4(result);
+					dst->colour = cmd.m_Colour;
+					m_GlobalCB->unmap(ctx.Get());
+
+					ctx->DrawIndexed((UINT)cmd.m_IdxBuffer.size(), (UINT)cmd.m_IdxOffset, (UINT)cmd.m_VertexOffset);
+				}
+				else if(cmd.m_Type == DrawCmd::DC_CLEAR)
 				{
 					float const* color = reinterpret_cast<float const*>(&cmd.m_Data[0]);
-					ctx->ClearRenderTargetView(currentRTV, color);
-				} break;
-				default:
-					break;
+					ctx->ClearRenderTargetView(rtv, color);
+				}
 			}
-			
-
 		}
-	}
-
-	// draw Box2D debug rendering
-	// http://www.iforce2d.net/b2dtut/debug-draw
-	if (m_FrameData.m_DebugPhysicsRendering)
-	{
-		// dimming rect in screenspace
-		context.set_world_matrix(float4x4::identity());
-		float4x4 matView = context.get_view_matrix();
-		context.set_view_matrix(float4x4::identity());
-		context.set_color(MK_COLOR(0, 0, 0, 127));
-		context.fill_rect(0, 0, m_FrameData.m_WindowSize.x, m_FrameData.m_WindowSize.y);
-		context.set_view_matrix(matView);
-
-		engine->m_Box2DDebugRenderer.set_draw_ctx(&context);
-		engine->m_Box2DWorld->DebugDraw();
-		engine->m_Box2DDebugRenderer.set_draw_ctx(nullptr);
-	}
-
-	bool result = context.end_paint();
-
-	// if drawing failed, terminate the game
-	if (!result)
-	{
-		FAILMSG("Something went wrong drawing D2D elements. Crashing the game...");
-		this->Terminate();
-		engine->m_IsRunning = false;
 	}
 }
 #endif

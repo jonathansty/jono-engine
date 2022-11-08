@@ -232,7 +232,7 @@ public class EngineSolution : Solution
 
         conf.AddProject<EngineModule>(target);
         conf.AddProject<SceneViewerProject>(target);
-        //conf.AddProject<PathFindingProject>(target);
+        conf.AddProject<PathFindingProject>(target);
     }
 }
 

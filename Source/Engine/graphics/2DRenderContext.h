@@ -12,6 +12,7 @@ struct ID2D1RenderTarget;
 struct ID2D1SolidColorBrush;
 class Font;
 class Bitmap;
+class GraphicsThread;
 
 using hlslpp::float2;
 
@@ -222,6 +223,8 @@ public:
 	hlslpp::float4x4 m_ProjectionMatrix;
 
 	void update_transforms();
+
+	friend GraphicsThread;
 };
 
 } // namespace Graphics

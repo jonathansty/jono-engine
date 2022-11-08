@@ -55,11 +55,11 @@ D2DRenderContext::D2DRenderContext()
 
 bool D2DRenderContext::begin_paint(Renderer* renderer, ID2D1Factory* factory, ID2D1RenderTarget* rt, ID2D1SolidColorBrush* brush, Font* font)
 {
-	m_RenderTarget = rt;
-	m_Factory = factory;
-	m_Brush = brush;
-	m_Font = font;
-	m_Renderer = m_Renderer;
+	//m_RenderTarget = rt;
+	//m_Factory = factory;
+	//m_Brush = brush;
+	//m_Font = font;
+	m_Renderer = renderer;
 
 	CD3D11_VIEWPORT viewport = CD3D11_VIEWPORT(m_Renderer->get_raw_output_tex(), m_Renderer->get_raw_output_rtv());
 	D3D11_RECT rect{ (LONG)viewport.TopLeftX, (LONG)viewport.TopLeftY, (LONG)viewport.TopLeftX + (LONG)viewport.Width, (LONG)viewport.TopLeftY + (LONG)viewport.Height };
@@ -87,7 +87,12 @@ bool D2DRenderContext::begin_paint(Renderer* renderer, ID2D1Factory* factory, ID
 bool D2DRenderContext::end_paint()
 {
 	HRESULT hr = S_OK;
-	hr = m_RenderTarget->EndDraw();
+	#if 0
+
+	if (m_RenderTarget)
+	{
+		hr = m_RenderTarget->EndDraw();
+	}
 
 	if (hr == D2DERR_RECREATE_TARGET)
 	{
@@ -241,6 +246,7 @@ bool D2DRenderContext::end_paint()
 		}
 	}
 
+	#endif
 	return true;
 }
 
@@ -340,51 +346,54 @@ bool D2DRenderContext::fill_polygon(const std::vector<float2>& ptsArr, unsigned 
 
 	HRESULT hr;
 
-	// Create path geometry
-	ID2D1PathGeometry* geometryPtr;
-	hr = m_Factory->CreatePathGeometry(&(geometryPtr));
-	if (FAILED(hr))
+	if (m_RenderTarget)
 	{
-		geometryPtr->Release();
-		return false;
-	}
-
-	// Write to the path geometry using the geometry sink.
-	ID2D1GeometrySink* geometrySinkPtr = nullptr;
-	hr = geometryPtr->Open(&geometrySinkPtr);
-	if (FAILED(hr))
-	{
-		geometrySinkPtr->Release();
-		geometryPtr->Release();
-		return false;
-	}
-
-	if (SUCCEEDED(hr))
-	{
-		geometrySinkPtr->BeginFigure(
-				D2D1::Point2F((FLOAT)ptsArr[0].x, (FLOAT)ptsArr[0].y),
-				D2D1_FIGURE_BEGIN_FILLED);
-
-		for (unsigned int i = 0; i < count; ++i)
+		// Create path geometry
+		ID2D1PathGeometry* geometryPtr;
+		hr = m_Factory->CreatePathGeometry(&(geometryPtr));
+		if (FAILED(hr))
 		{
-			geometrySinkPtr->AddLine(D2D1::Point2F((FLOAT)ptsArr[i].x, (FLOAT)ptsArr[i].y));
+			geometryPtr->Release();
+			return false;
 		}
 
-		geometrySinkPtr->EndFigure(D2D1_FIGURE_END_CLOSED);
+		// Write to the path geometry using the geometry sink.
+		ID2D1GeometrySink* geometrySinkPtr = nullptr;
+		hr = geometryPtr->Open(&geometrySinkPtr);
+		if (FAILED(hr))
+		{
+			geometrySinkPtr->Release();
+			geometryPtr->Release();
+			return false;
+		}
 
-		hr = geometrySinkPtr->Close();
-	}
+		if (SUCCEEDED(hr))
+		{
+			geometrySinkPtr->BeginFigure(
+					D2D1::Point2F((FLOAT)ptsArr[0].x, (FLOAT)ptsArr[0].y),
+					D2D1_FIGURE_BEGIN_FILLED);
 
-	geometrySinkPtr->Release();
+			for (unsigned int i = 0; i < count; ++i)
+			{
+				geometrySinkPtr->AddLine(D2D1::Point2F((FLOAT)ptsArr[i].x, (FLOAT)ptsArr[i].y));
+			}
 
-	if (SUCCEEDED(hr))
-	{
-		m_RenderTarget->FillGeometry(geometryPtr, m_Brush);
+			geometrySinkPtr->EndFigure(D2D1_FIGURE_END_CLOSED);
+
+			hr = geometrySinkPtr->Close();
+		}
+
+		geometrySinkPtr->Release();
+
+		if (SUCCEEDED(hr))
+		{
+			m_RenderTarget->FillGeometry(geometryPtr, m_Brush);
+			geometryPtr->Release();
+			return true;
+		}
+
 		geometryPtr->Release();
-		return true;
 	}
-
-	geometryPtr->Release();
 	return false;
 }
 
@@ -398,48 +407,51 @@ bool D2DRenderContext::fill_polygon(const std::vector<POINT>& ptsArr, unsigned i
 
 	HRESULT hr;
 
-	// Create path geometry
-	ID2D1PathGeometry* geometryPtr;
-	hr = m_Factory->CreatePathGeometry(&geometryPtr);
-	if (FAILED(hr))
+		if (m_RenderTarget)
 	{
-		geometryPtr->Release();
-		return false;
-	}
-
-	// Write to the path geometry using the geometry sink.
-	ID2D1GeometrySink* geometrySinkPtr = nullptr;
-	hr = geometryPtr->Open(&geometrySinkPtr);
-	if (FAILED(hr))
-	{
-		geometrySinkPtr->Release();
-		geometryPtr->Release();
-		return false;
-	}
-	if (SUCCEEDED(hr))
-	{
-		geometrySinkPtr->BeginFigure(
-				D2D1::Point2F((FLOAT)ptsArr[0].x, (FLOAT)ptsArr[0].y),
-				D2D1_FIGURE_BEGIN_FILLED);
-
-		for (unsigned int i = 0; i < count; ++i)
+		// Create path geometry
+		ID2D1PathGeometry* geometryPtr;
+		hr = m_Factory->CreatePathGeometry(&geometryPtr);
+		if (FAILED(hr))
 		{
-			geometrySinkPtr->AddLine(D2D1::Point2F((FLOAT)ptsArr[i].x, (FLOAT)ptsArr[i].y));
+			geometryPtr->Release();
+			return false;
 		}
 
-		geometrySinkPtr->EndFigure(D2D1_FIGURE_END_CLOSED);
+		// Write to the path geometry using the geometry sink.
+		ID2D1GeometrySink* geometrySinkPtr = nullptr;
+		hr = geometryPtr->Open(&geometrySinkPtr);
+		if (FAILED(hr))
+		{
+			geometrySinkPtr->Release();
+			geometryPtr->Release();
+			return false;
+		}
+		if (SUCCEEDED(hr))
+		{
+			geometrySinkPtr->BeginFigure(
+					D2D1::Point2F((FLOAT)ptsArr[0].x, (FLOAT)ptsArr[0].y),
+					D2D1_FIGURE_BEGIN_FILLED);
 
-		hr = geometrySinkPtr->Close();
-		geometrySinkPtr->Release();
-	}
-	if (SUCCEEDED(hr))
-	{
-		m_RenderTarget->FillGeometry(geometryPtr, m_Brush);
+			for (unsigned int i = 0; i < count; ++i)
+			{
+				geometrySinkPtr->AddLine(D2D1::Point2F((FLOAT)ptsArr[i].x, (FLOAT)ptsArr[i].y));
+			}
+
+			geometrySinkPtr->EndFigure(D2D1_FIGURE_END_CLOSED);
+
+			hr = geometrySinkPtr->Close();
+			geometrySinkPtr->Release();
+		}
+		if (SUCCEEDED(hr))
+		{
+			m_RenderTarget->FillGeometry(geometryPtr, m_Brush);
+			geometryPtr->Release();
+			return true;
+		}
+
 		geometryPtr->Release();
-		return true;
 	}
-
-	geometryPtr->Release();
 	return false;
 }
 
@@ -562,7 +574,10 @@ bool D2DRenderContext::draw_rounded_rect(Rect rect, int radiusX, int radiusY, fl
 	FAILMSG("Method not implemented.");
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	m_RenderTarget->DrawRoundedRectangle(d2dRoundedRect, m_Brush, 1.0);
+	if(m_RenderTarget)
+	{
+		m_RenderTarget->DrawRoundedRectangle(d2dRoundedRect, m_Brush, 1.0);
+	}
 	return true;
 }
 
@@ -572,7 +587,10 @@ bool D2DRenderContext::draw_rounded_rect(float2 topLeft, float2 rightbottom, int
 
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(rightbottom.x), (FLOAT)(rightbottom.y));
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	m_RenderTarget->DrawRoundedRectangle(d2dRoundedRect, m_Brush, (FLOAT)strokeWidth);
+	if (m_RenderTarget)
+	{
+		m_RenderTarget->DrawRoundedRectangle(d2dRoundedRect, m_Brush, (FLOAT)strokeWidth);
+	}
 	return true;
 }
 
@@ -582,7 +600,10 @@ bool D2DRenderContext::draw_rounded_rect(RECT rect, int radiusX, int radiusY)
 
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	m_RenderTarget->DrawRoundedRectangle(d2dRoundedRect, m_Brush, 1.0);
+	if (m_RenderTarget)
+	{
+		m_RenderTarget->DrawRoundedRectangle(d2dRoundedRect, m_Brush, 1.0);
+	}
 	return true;
 }
 
@@ -592,7 +613,11 @@ bool D2DRenderContext::draw_rounded_rect(int left, int top, int right, int botto
 
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)left, (FLOAT)top, (FLOAT)(right), (FLOAT)(bottom));
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	m_RenderTarget->DrawRoundedRectangle(d2dRoundedRect, m_Brush, 1.0);
+
+	if (m_RenderTarget)
+	{
+		m_RenderTarget->DrawRoundedRectangle(d2dRoundedRect, m_Brush, 1.0);
+	}
 	return true;
 }
 
@@ -602,7 +627,11 @@ bool D2DRenderContext::fill_rounded_rect(Rect rect, int radiusX, int radiusY)
 
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	m_RenderTarget->FillRoundedRectangle(d2dRoundedRect, m_Brush);
+
+	if (m_RenderTarget)
+	{
+		m_RenderTarget->FillRoundedRectangle(d2dRoundedRect, m_Brush);
+	}
 	return true;
 }
 
@@ -612,7 +641,11 @@ bool D2DRenderContext::fill_rounded_rect(float2 topLeft, float2 rightbottom, int
 
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(rightbottom.x), (FLOAT)(rightbottom.y));
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	m_RenderTarget->FillRoundedRectangle(d2dRoundedRect, m_Brush);
+
+	if (m_RenderTarget)
+	{
+		m_RenderTarget->FillRoundedRectangle(d2dRoundedRect, m_Brush);
+	}
 	return true;
 }
 
@@ -622,7 +655,10 @@ bool D2DRenderContext::fill_rounded_rect(RECT rect, int radiusX, int radiusY)
 
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)rect.left, (FLOAT)rect.top, (FLOAT)rect.right, (FLOAT)rect.bottom);
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	m_RenderTarget->FillRoundedRectangle(d2dRoundedRect, m_Brush);
+	if (m_RenderTarget)
+	{
+		m_RenderTarget->FillRoundedRectangle(d2dRoundedRect, m_Brush);
+	}
 	return true;
 }
 
@@ -632,7 +668,10 @@ bool D2DRenderContext::fill_rounded_rect(int left, int top, int right, int botto
 
 	D2D1_RECT_F d2dRect = D2D1::RectF((FLOAT)left, (FLOAT)top, (FLOAT)(right), (FLOAT)(bottom));
 	D2D1_ROUNDED_RECT d2dRoundedRect = D2D1::RoundedRect(d2dRect, (FLOAT)radiusX, (FLOAT)radiusY);
-	m_RenderTarget->FillRoundedRectangle(d2dRoundedRect, m_Brush);
+	if (m_RenderTarget)
+	{
+		m_RenderTarget->FillRoundedRectangle(d2dRoundedRect, m_Brush);
+	}
 	return true;
 }
 
@@ -761,17 +800,20 @@ bool D2DRenderContext::draw_string(std::string const& text, float2 topLeft, doub
 {
 	FAILMSG("Method not implemented.");
 
-	D2D1_SIZE_F dstSize_f = m_RenderTarget->GetSize();
-	D2D1_DRAW_TEXT_OPTIONS options = D2D1_DRAW_TEXT_OPTIONS_CLIP;
-	if (right == -1 || bottom == -1) // ignore the right and bottom edge to enable drawing in entire Level
+	if(m_RenderTarget)
 	{
-		options = D2D1_DRAW_TEXT_OPTIONS_NONE;
-		right = bottom = FLT_MAX;
-	}
-	D2D1_RECT_F layoutRect = (D2D1::RectF)((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(right), (FLOAT)(bottom));
+		D2D1_SIZE_F dstSize_f = m_RenderTarget->GetSize();
+		D2D1_DRAW_TEXT_OPTIONS options = D2D1_DRAW_TEXT_OPTIONS_CLIP;
+		if (right == -1 || bottom == -1) // ignore the right and bottom edge to enable drawing in entire Level
+		{
+			options = D2D1_DRAW_TEXT_OPTIONS_NONE;
+			right = bottom = FLT_MAX;
+		}
+		D2D1_RECT_F layoutRect = (D2D1::RectF)((FLOAT)topLeft.x, (FLOAT)topLeft.y, (FLOAT)(right), (FLOAT)(bottom));
 
-	tstring wText(text.begin(), text.end());
-	m_RenderTarget->DrawText(wText.c_str(), (UINT32)wText.length(), m_Font->GetTextFormat(), layoutRect, m_Brush, options);
+		tstring wText(text.begin(), text.end());
+		m_RenderTarget->DrawText(wText.c_str(), (UINT32)wText.length(), m_Font->GetTextFormat(), layoutRect, m_Brush, options);
+	}
 
 	return true;
 }
@@ -883,7 +925,11 @@ void D2DRenderContext::set_color(u32 color)
 	u8 a = color & 0xff;
 	u32 fshift = color >> 8;
 	m_Colour = D2D1::ColorF(color >> 8, a / 255.0f);
-	m_Brush->SetColor(m_Colour);
+
+	if(m_Brush)
+	{
+		m_Brush->SetColor(m_Colour);
+	}
 }
 
 u32 D2DRenderContext::get_color() const
@@ -935,7 +981,10 @@ void D2DRenderContext::update_transforms()
 
 	float4x4 result = hlslpp::mul(m_WorldMatrix, m_ViewMatrix);
 	auto r = D2D1::Matrix3x2F(result._11, result._12, result._21, result._22, result._41, result._42);
-	m_RenderTarget->SetTransform(r);
+	if(m_RenderTarget)
+	{
+		m_RenderTarget->SetTransform(r);
+	}
 }
 
 } // namespace Graphics
