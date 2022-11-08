@@ -33,5 +33,5 @@ jobs:
       - name: Building DirectXTK (${{ matrix.config }})
         run: msbuild external/DirectXTK/DirectXTK_Desktop_2022_Win10.sln -t:rebuild -property:Configuration=${{ matrix.config }}
       - name: Building jono-engine ${{ matrix.config }}
-        run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration="${{ matrix.config }} ${{ matrix.linkage}}
+        run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration="${{ matrix.config }} ${{ matrix.linkage}}"
 
