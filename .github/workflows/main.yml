@@ -20,17 +20,10 @@ jobs:
         uses: microsoft/setup-msbuild@v1.1
       - name: Installing conan
         uses: turtlebrowser/get-conan@main
-      - name: Install dependencies
+      - name: Bootstrap 
         run: | 
           conan profile new default --detect
-          conan install . -s build_type=Debug -pr profile_Debug --install-folder=${{github.workspace}}/build/conan_debug
-          conan install . -s build_type=Release -pr profile_Release --install-folder=${{github.workspace}}/build/conan_Release
-      - name: Configuration and building RTTR
-        run: cmake -B ${{github.workspace}}/External/rttr/build -G Ninja ${{github.workspace}}/External/rttr
-      - name: Generation solutions
-        run:  ./GenerateSolution.cmd
-      - name: Building DirectXTK (${{ matrix.config }})
-        run: msbuild external/DirectXTK/DirectXTK_Desktop_2022_Win10.sln -t:rebuild -property:Configuration=${{ matrix.config }}
+          ./Tools/Bootstrap.cmd
       - name: Building jono-engine ${{ matrix.config }}
         run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration=${{ matrix.config }}
 

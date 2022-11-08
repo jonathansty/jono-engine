@@ -1,5 +1,7 @@
-mkdir build
-pushd build
+pushd %~dp0
+
+mkdir "../build"
+pushd "../build"
 
 REM debug dependencies
 echo Installing debug dependencies...
@@ -17,4 +19,4 @@ echo Done.
 
 popd
 echo Invoking Sharpmake.
-call GenerateSolution.cmd
+%~dp0/GenerateSolution.cmd

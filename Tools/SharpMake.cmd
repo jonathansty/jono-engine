@@ -1,0 +1,1 @@
+"../SharpMake/Sharpmake.application.exe"  %* 

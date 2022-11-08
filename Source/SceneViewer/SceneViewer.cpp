@@ -102,24 +102,24 @@ void SceneViewer::start()
 
 	ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order)
 	{
-		//if (order == GameEngine::BuildMenuOrder::First)
-		//{
-		//	if (ImGui::BeginMenu("File"))
-		//	{
-		//		if (ImGui::MenuItem("Open"))
-		//		{
-		//			open_file();
-		//		}
+		if (order == GameEngine::BuildMenuOrder::First)
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Open"))
+				{
+					open_file();
+				}
 
-		//		if (ImGui::MenuItem("Rebuild Shaders"))
-		//		{
-		//			LOG_INFO(Graphics, "Rebuilding all shaders.");
+				if (ImGui::MenuItem("Rebuild Shaders"))
+				{
+					LOG_INFO(Graphics, "Rebuilding all shaders.");
 
-		//			this->rebuild_shaders();
-		//		}
-		//		ImGui::EndMenu();
-		//	}
-		//} 
+					this->rebuild_shaders();
+				}
+				ImGui::EndMenu();
+			}
+		} 
 	});
 
 	auto device = Graphics::get_device();

@@ -114,7 +114,16 @@ public class ImGui : ExternalProject
 
         conf.AddPublicDependency<SDL2>(target);
 
-        conf.Output = Configuration.OutputType.Lib;
+        conf.Output = target.OutputType == OutputType.Lib ? Configuration.OutputType.Lib : Configuration.OutputType.Dll;
+        if (conf.Output == Configuration.OutputType.Dll)
+        {
+            string capitalisedName = conf.Project.Name.ToUpper();
+            conf.Defines.Add($"{capitalisedName}_DLL");
+            conf.Defines.Add($"{capitalisedName}_EXPORTS");
+
+            conf.ExportDefines.Add($"{capitalisedName}_DLL");
+        }
+
         conf.IncludePaths.Add(Path.Combine(ExternalDir, "SDL2/SDL2-2.24.1/include/SDL2"));
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]");
         conf.IncludeSystemPaths.Add(@"[project.SourceRootPath]/examples");
@@ -233,14 +242,16 @@ public class DirectXTK : ExternalProject
         Name = "DirectXTK";
         SourceRootPath = @"[project.ExternalDir]/DirectXTK/";
 
-        SourceFilesExtensions.Add("inc");
-        SourceFilesExcludeRegex.Add(".*(XBOX|Model(.h|.cpp)).*");
-        SourceFilesFiltersRegex.Add(".*(Src)|(Inc).*");
+        SourceFilesExtensions.Clear();
+        //SourceFilesExtensions.Add("inc");
+        //SourceFilesExcludeRegex.Add(".*(XBOX|Model(.h|.cpp)).*");
+        //SourceFilesFiltersRegex.Add(".*(Src)|(Inc).*");
     }
     override public void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        //conf.ProjectReferencesByPath.Add(@"[project.SharpmakeCsPath]/external/DirectXTK/DirectXTK_Desktop_2022_Win10.vcxproj");
+        //conf.ProjectReferencesByPath.Add(@"[project.SharpmakeCsPath]/External/DirectXTK/DirectXTK_Desktop_2022.vcxproj");
+
         conf.PrecompHeader = "pch.h";
         conf.PrecompSource = "[project.ExternalDir]/DirectXTK/Src/pch.cpp";
 

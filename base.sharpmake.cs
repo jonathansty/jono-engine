@@ -20,7 +20,7 @@ public class Utils
                   Platform.win64,
                   DevEnv.vs2022,
                   Optimization.Debug | Optimization.Release,
-                  OutputType.Dll)
+                  OutputType.Lib | OutputType.Dll)
             };
         }
     }
@@ -28,10 +28,9 @@ public class Utils
 
     public static void ConfigureProjectName(Project.Configuration conf, Target target)
     {
-        conf.Name = @"[target.Optimization]";
+        conf.Name = @"[target.Optimization]_[target.OutputType]";
 
-        conf.ProjectFileName = "[project.Name]_[target.DevEnv]_[target.Platform]";
-        conf.ProjectPath = @"[project.SharpmakeCsPath]\build\projects";
+        conf.ProjectPath = @"[project.SharpmakeCsPath]\build\projects\[project.Name]";
         conf.IntermediatePath = @"[project.SharpmakeCsPath]\build\intermediate\[target.Optimization]\[project.Name]_[target.DevEnv]_[target.Platform]";
         conf.VcxprojUserFile = new Project.Configuration.VcxprojUserFileSettings();
         conf.VcxprojUserFile.LocalDebuggerWorkingDirectory = @"[project.SharpmakeCsPath]";

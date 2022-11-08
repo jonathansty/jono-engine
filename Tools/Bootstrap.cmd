@@ -2,8 +2,10 @@
 echo Pulling latest submodules...
 git submodule update --init --recursive
 
-mkdir build
-pushd build
+pushd %~dp0
+
+mkdir "../build"
+pushd "%~dp0/../build"
 
 REM debug dependencies
 echo Installing debug dependencies...
@@ -20,5 +22,7 @@ cmake -B ../External/rttr/build -G Ninja ../External/rttr
 echo Done.
 
 popd
+popd
 echo Invoking Sharpmake.
-call "GenerateSolution.cmd"
+"%~dp0/GenerateSolution.cmd"
+pause
