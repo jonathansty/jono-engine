@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - 'main'
+    paths:
+      - 'Source/**'
+      - 'conanfile.txt'
+      - 'Tools'
+      - 'External'
 jobs:
   build:
     strategy:
