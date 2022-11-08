@@ -242,7 +242,6 @@ public class DirectXTK : ExternalProject
         Name = "DirectXTK";
         SourceRootPath = @"[project.ExternalDir]/DirectXTK/";
 
-        SourceFilesExtensions.Clear();
         SourceFilesExtensions.Add("inc");
         SourceFilesExcludeRegex.Add(".*(XBOX|Model(.h|.cpp)).*");
         SourceFilesFiltersRegex.Add(".*(Src)|(Inc).*");
