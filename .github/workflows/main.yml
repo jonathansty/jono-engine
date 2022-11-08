@@ -10,6 +10,7 @@ jobs:
       fail-fast: false
       matrix:
        config: [Debug, Release]
+       linkage: [Lib]
         
     runs-on: windows-latest
     steps:
@@ -28,9 +29,9 @@ jobs:
       - name: Configuration and building RTTR
         run: cmake -B ${{github.workspace}}/External/rttr/build -G Ninja ${{github.workspace}}/External/rttr
       - name: Generation solutions
-        run:  ./GenerateSolution.cmd
+        run:  ./Tools/GenerateSolution.cmd
       - name: Building DirectXTK (${{ matrix.config }})
         run: msbuild external/DirectXTK/DirectXTK_Desktop_2022_Win10.sln -t:rebuild -property:Configuration=${{ matrix.config }}
       - name: Building jono-engine ${{ matrix.config }}
-        run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration=${{ matrix.config }}
+        run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration="${{ matrix.config }} ${{ matrix.linkage}}
 

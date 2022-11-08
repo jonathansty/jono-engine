@@ -184,7 +184,11 @@ private:
 	void set_command_line(cli::CommandLine const& cmdLine) { m_CommandLine = cmdLine; }
 
 	// Opens the registered window. Should be called after wnd class has been registered
+	bool InitSubSystems();
 	bool InitWindow(int iCmdShow);
+
+	void DeInitSubSystems();
+
 	void ProcessEvent(SDL_Event& e);
 
 	void set_sleep(bool bSleep);

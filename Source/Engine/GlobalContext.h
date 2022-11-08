@@ -18,5 +18,6 @@ struct GlobalContext
 	class InputManager*   m_InputManager;
 	class AbstractGame*   m_Game;
 	class GraphicsThread* m_GraphicsThread;
+	class TypeManager*    m_TypeManager;
 };
-ENGINE_API GlobalContext* GetGlobalContext();
+extern ENGINE_API GlobalContext* GetGlobalContext();

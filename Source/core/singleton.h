@@ -34,11 +34,9 @@ private:
 template <typename T>
 void TSingleton<T>::shutdown()
 {
-	if (_obj)
-	{
-		delete _obj;
-		_obj = nullptr;
-	}
+	ASSERTMSG(_obj, "Singleton was never created! This is an invalid shutdown.");
+	delete _obj;
+	_obj = nullptr;
 }
 
 template <typename T>
@@ -51,10 +49,8 @@ T* TSingleton<T>::instance()
 template <typename T>
 void TSingleton<T>::create()
 {
-	if (!_obj)
-	{
-		_obj = new T();
-	}
+	ASSERTMSG(!_obj, "Singleton already contains an instance. Double create called!");
+	_obj = new T();
 }
 
 template <typename T>

@@ -29,7 +29,7 @@
 #include "Graphics/ShaderCache.h"
 #include "Memory.h"
 
-#include <SDL2/SDL.h>
+#include "Types/TypeManager.h"
 
 int g_DebugMode = 0;
 
@@ -130,17 +130,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 {
 	JONO_THREAD("MainThread");
 
-	// Create the IO first as our logging depends on creating the right folder
-	m_PlatformIO = IO::create();
-	IO::set(m_PlatformIO);
-	GetGlobalContext()->m_PlatformIO = m_PlatformIO.get();
-
-	// Create all the singletons needed by the game, the game engine singleton is initialized from run_game
-	Logger::create();
-	ResourceLoader::create();
-
-	// Then we initialize the logger as this might create a log file
-	Logger::instance()->init();
+	InitSubSystems();
 
 	// Now we can start logging information and we mount our resources volume.
 	LOG_INFO(IO, "Mounting resources directory.");
@@ -170,12 +160,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	m_OverlayManager->register_overlay(new ImGuiDemoOverlay());
 	m_OverlayManager->register_overlay(new ImGuiAboutOverlay());
 
-	// Initialize enkiTS
-	ASSERT(!GetGlobalContext()->m_TaskScheduler);
-	GetGlobalContext()->m_TaskScheduler = Tasks::get_scheduler();
-
-	GetGlobalContext()->m_TaskScheduler->Initialize();
-
 	struct InitTask : enki::IPinnedTask
 	{
 		InitTask(uint32_t threadNum)
@@ -190,7 +174,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 			SUCCEEDED(::CoInitialize(NULL));
 		}
 	};
-
 	::SetThreadDescription(GetCurrentThread(), L"MainThread");
 
 	enki::TaskScheduler* taskScheduler = GetGlobalContext()->m_TaskScheduler;
@@ -619,6 +602,28 @@ struct EditorWindowData
 };
 EditorWindowData g_WindowData;
 
+bool GameEngine::InitSubSystems()
+{
+	// Create the IO first as our logging depends on creating the right folder
+	m_PlatformIO = IO::create();
+	IO::set(m_PlatformIO);
+	GetGlobalContext()->m_PlatformIO = m_PlatformIO.get();
+
+	Logger::create();
+	Logger::instance()->init();
+
+	TypeManager::create();
+	ResourceLoader::create();
+
+	// Initialize enkiTS
+	GlobalContext* globalContext = GetGlobalContext();
+	ASSERT(!globalContext->m_TaskScheduler);
+	globalContext->m_TaskScheduler = Tasks::get_scheduler();
+	globalContext->m_TaskScheduler->Initialize();
+
+	return true;
+}
+
 bool GameEngine::InitWindow(int iCmdShow)
 {
 	// Calculate the window size and position based upon the game size
@@ -696,6 +701,11 @@ bool GameEngine::InitWindow(int iCmdShow)
 	}
 
 	return true;
+}
+
+void GameEngine::DeInitSubSystems()
+{
+	TypeManager::shutdown();
 }
 
 void GameEngine::Quit()
@@ -1507,11 +1517,11 @@ void GameEngine::BuildMenuBarUI()
 	}
 }
 
+
 int GameEngine::Run(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<AbstractGame>&& game)
 {
-
 #if defined(DEBUG) | defined(_DEBUG)
-	//notify user if heap is corrupt
+	// notify user if heap is corrupt
 	HeapSetInformation(nullptr, HeapEnableTerminationOnCorruption, nullptr, 0);
 
 	// Enable run-time memory leak check for debug builds.
