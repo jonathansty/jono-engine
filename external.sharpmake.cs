@@ -243,14 +243,13 @@ public class DirectXTK : ExternalProject
         SourceRootPath = @"[project.ExternalDir]/DirectXTK/";
 
         SourceFilesExtensions.Clear();
-        //SourceFilesExtensions.Add("inc");
-        //SourceFilesExcludeRegex.Add(".*(XBOX|Model(.h|.cpp)).*");
-        //SourceFilesFiltersRegex.Add(".*(Src)|(Inc).*");
+        SourceFilesExtensions.Add("inc");
+        SourceFilesExcludeRegex.Add(".*(XBOX|Model(.h|.cpp)).*");
+        SourceFilesFiltersRegex.Add(".*(Src)|(Inc).*");
     }
     override public void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
-        //conf.ProjectReferencesByPath.Add(@"[project.SharpmakeCsPath]/External/DirectXTK/DirectXTK_Desktop_2022.vcxproj");
 
         conf.PrecompHeader = "pch.h";
         conf.PrecompSource = "[project.ExternalDir]/DirectXTK/Src/pch.cpp";

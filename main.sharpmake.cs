@@ -66,16 +66,8 @@ public class EngineModule : Module
         // Own public libraries
         conf.AddPublicDependency<CliModule>(target);
         conf.AddPublicDependency<CoreModule>(target);
-
-        conf.ReferencesByNameExternal.Add("DirectXTK_Desktop_2022");
-        conf.ProjectReferencesByPath.Add(@"[project.SharpmakeCsPath]/external/DirectXTK/DirectXTK_Desktop_2022.vcxproj", refOptions: Configuration.ProjectReferencesByPathContainer.RefOptions.LinkLibraryDependencies);
-
-        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/external/DirectXTK/Inc");
-        conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/external/DirectXTK/Src");
-
-
+        conf.AddPublicDependency<DirectXTK>(target);
         conf.AddPublicDependency<SDL2>(target);
-
 
         conf.LibraryFiles.AddRange(new string[] { 
             "dxgi", 
@@ -237,8 +229,6 @@ public class EngineSolution : Solution
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
 
         conf.Name = @"[target.Optimization] [target.OutputType]";
-
-        conf.ProjectReferencesByPath.Add(@"[solution.SharpmakeCsPath]/external/DirectXTK/DirectXTK_Desktop_2022.vcxproj");
 
         conf.AddProject<EngineModule>(target);
         conf.AddProject<SceneViewerProject>(target);
