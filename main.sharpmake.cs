@@ -67,9 +67,9 @@ public class EngineModule : Module
         conf.AddPublicDependency<CliModule>(target);
         conf.AddPublicDependency<CoreModule>(target);
 
-        //conf.AddPublicDependency<DirectXTK>(target);
-        conf.ProjectReferencesByPath.Add(@"[project.SharpmakeCsPath]/external/DirectXTK/DirectXTK_Desktop_2022.vcxproj");
-        //conf.ReferencesByName.Add("DirectXTK_Desktop_2022");
+        conf.ReferencesByNameExternal.Add("DirectXTK_Desktop_2022");
+        conf.ProjectReferencesByPath.Add(@"[project.SharpmakeCsPath]/external/DirectXTK/DirectXTK_Desktop_2022.vcxproj", refOptions: Configuration.ProjectReferencesByPathContainer.RefOptions.LinkLibraryDependencies);
+
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/external/DirectXTK/Inc");
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]/external/DirectXTK/Src");
 
