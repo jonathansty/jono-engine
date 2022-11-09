@@ -256,6 +256,9 @@ bool D2DRenderContext::draw_background(u32 color)
 
 	DrawCmd cmd{};
 	cmd.m_Type = DrawCmd::DC_CLEAR;
+
+	D2D1::ColorF* pData = (D2D1::ColorF*)cmd.m_Data;
+	*pData = D2D1::ColorF(color >> 8, 1.0f);
 	m_DrawCommands.push_back(std::move(cmd));
 	return true;
 }

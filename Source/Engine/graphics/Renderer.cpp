@@ -1320,6 +1320,7 @@ void Renderer::render_post(RenderWorld const& world, shared_ptr<OverlayManager> 
 	_common_effect->SetProjection(xm_proj);
 	_common_effect->Apply(_device_ctx);
 
+	if(overlays)
 	{
 		GPU_SCOPED_EVENT(_user_defined_annotation, "Post:RenderOverlays");
 		overlays->Render3D(_device_ctx);

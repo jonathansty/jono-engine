@@ -262,7 +262,12 @@ void GraphicsThread::Render()
 #endif
 	}
 
-	renderer->render_post(world, engine->m_OverlayManager, doImgui);
+	shared_ptr<OverlayManager> overlayManager = nullptr;
+	if(cfg.d3d_use)
+	{
+		overlayManager = engine->m_OverlayManager;
+	}
+	renderer->render_post(world, overlayManager, doImgui);
 	renderer->end_frame();
 }
 
