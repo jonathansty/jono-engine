@@ -5,6 +5,8 @@
 #include "Types/IniStream.h"
 
 
+REGISTER_TYPE("/Types/Core/EngineCfg", EngineCfg);
+
 void EngineCfg::Serialize(IniStream& data, EngineCfg* cfg)
 {
 	EngineCfg* output = (EngineCfg*)(cfg);

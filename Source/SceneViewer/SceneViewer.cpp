@@ -185,7 +185,7 @@ void SceneViewer::start()
 		for(size_t x = 0; x < c_grid_size; ++x)
 		{
 			float3 pos = float3(10.0f + x * c_grid_spacing, 1.0f, y * c_grid_spacing);
-			RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(pos), "res:/sphere.glb");
+			RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(pos), "res:/Models/sphere.glb");
 			Model const* model = inst->_model->get();
 
 			f32 x_dt = (float)x / c_grid_size;
@@ -234,7 +234,7 @@ void SceneViewer::start()
 	#endif
 
 
-	RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(0.0f,0.0f,2.0f), "res:/sphere.glb");
+	RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(0.0f,0.0f,2.0f), "res:/Models/sphere.glb");
 	_model = inst;
 
 	Model const* model = inst->_model->get();
@@ -338,100 +338,100 @@ void SceneViewer::debug_ui()
 {
 	static bool s_open = true;
 
-	//ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
-	//if(propertyDockID)
-	//{
-	//	ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_Once);
-	//}
+	ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
+	if(propertyDockID)
+	{
+		ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_Once);
+	}
 
-	//ImGui::Begin("Viewer", &s_open);
+	ImGui::Begin("Viewer", &s_open);
 
-	//const char* cameras[] = {
-	//	"Orbit",
-	//	"Free"
+	const char* cameras[] = {
+		"Orbit",
+		"Free"
+	};
+	ImGui::Combo("Camera", &_camera_type, cameras, int(std::size(cameras)));
+
+	ImGui::Text("Light: %.2f", _light_tick);
+
+	//const char* items[] = {
+	//	"Default",
+	//	"(Input) Base Color",
+	//	"(Input) Roughness",
+	//	"(Input) Metalness",
+	//	"(Input) Normals",         // 4
+	//	"(Input) AO",              // 5
+	//	"(Input) Normals (World)", // 6
+	//	"(Input) Vertex Colours",  // 7
+	//	"(Input) UV",              // 8
+	//	"Lighting",                // 9
+	//	"ForwardPlusDebug"         // 10
 	//};
-	//ImGui::Combo("Camera", &_camera_type, cameras, int(std::size(cameras)));
 
-	//ImGui::Text("Light: %.2f", _light_tick);
-
-	////const char* items[] = {
-	////	"Default",
-	////	"(Input) Base Color",
-	////	"(Input) Roughness",
-	////	"(Input) Metalness",
-	////	"(Input) Normals",         // 4
-	////	"(Input) AO",              // 5
-	////	"(Input) Normals (World)", // 6
-	////	"(Input) Vertex Colours",  // 7
-	////	"(Input) UV",              // 8
-	////	"Lighting",                // 9
-	////	"ForwardPlusDebug"         // 10
-	////};
-
-	////ImGui::Combo("Debug Mode", &g_DebugMode, items, static_cast<int>(std::size(items)));
+	//ImGui::Combo("Debug Mode", &g_DebugMode, items, static_cast<int>(std::size(items)));
 
 
-	//if(ImGui::CollapsingHeader("Model Info"))
+	if(ImGui::CollapsingHeader("Model Info"))
+	{
+		if(_model)
+		{
+			MaterialInstance* inst = _model->get_material_instance(0);
+			if (inst)
+			{
+				static float col[3] = { 1.0f, 1.0f, 1.0f };
+				if (ImGui::ColorPicker3("Color", col))
+				{
+					inst->set_param_float3("Albedo", { col[0], col[1], col[2] });
+				}
+
+				static f32 s_roughness = 0.25f;
+				if(ImGui::SliderFloat("Roughness", &s_roughness, 0.001f, 1.0f))
+				{
+					inst->set_param_float("Roughness", s_roughness);
+				}
+
+				static f32 s_metalness = 0.25f;
+				if (ImGui::SliderFloat("Metalness", &s_metalness, 0.001f, 1.0f))
+				{
+					inst->set_param_float("Metalness", s_metalness);
+				}
+
+
+			}
+		}
+	}
+
+
+	//std::shared_ptr<ModelResource> res = _model->_model;
+	//Model const* model = res->get();
+	//for(u32 i = 0; i < model->get_material_count(); ++i)
 	//{
-	//	if(_model)
-	//	{
-	//		MaterialInstance* inst = _model->get_material_instance(0);
-	//		if (inst)
-	//		{
-	//			static float col[3] = { 1.0f, 1.0f, 1.0f };
-	//			if (ImGui::ColorPicker3("Color", col))
-	//			{
-	//				inst->set_param_float3("Albedo", { col[0], col[1], col[2] });
-	//			}
+	//	model->get_material(i);
+	//}
 
-	//			static f32 s_roughness = 0.25f;
-	//			if(ImGui::SliderFloat("Roughness", &s_roughness, 0.001f, 1.0f))
-	//			{
-	//				inst->set_param_float("Roughness", s_roughness);
-	//			}
+	//ImGui::PushID("#SceneName");
+	//static char buff[512] = "test.scene";
+	//ImGui::InputText("", buff, 512);
+	//ImGui::PopID();
+	//ImGui::SameLine();
 
-	//			static f32 s_metalness = 0.25f;
-	//			if (ImGui::SliderFloat("Metalness", &s_metalness, 0.001f, 1.0f))
-	//			{
-	//				inst->set_param_float("Metalness", s_metalness);
-	//			}
+	//if (ImGui::Button("Save")) {
+	//	std::string p = "Scenes/";
+	//	p += buff;
+	//	save_world(p.c_str());	
+	//}
 
+	//ImGui::SameLine();
+	//if (ImGui::Button("Load")) {
+	//	std::string p = "Scenes/";
+	//	p += buff;
 
-	//		}
-	//	}
+	//	_world->clear();
+	//	load_world(p.c_str());
 	//}
 
 
-	////std::shared_ptr<ModelResource> res = _model->_model;
-	////Model const* model = res->get();
-	////for(u32 i = 0; i < model->get_material_count(); ++i)
-	////{
-	////	model->get_material(i);
-	////}
-
-	////ImGui::PushID("#SceneName");
-	////static char buff[512] = "test.scene";
-	////ImGui::InputText("", buff, 512);
-	////ImGui::PopID();
-	////ImGui::SameLine();
-
-	////if (ImGui::Button("Save")) {
-	////	std::string p = "Scenes/";
-	////	p += buff;
-	////	save_world(p.c_str());	
-	////}
-
-	////ImGui::SameLine();
-	////if (ImGui::Button("Load")) {
-	////	std::string p = "Scenes/";
-	////	p += buff;
-
-	////	_world->clear();
-	////	load_world(p.c_str());
-	////}
-
-
-	//ImGui::End();
+	ImGui::End();
 
 }
 

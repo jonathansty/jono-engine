@@ -789,7 +789,7 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 	// ideally we would be able to have more detailed logic here to decided based on pass and mesh/material
 	{
 		DepthStencilState depth_stencil_state = DepthStencilState::Equal;
-		if (params.pass == RenderPass::ZPrePass || params.pass == RenderPass::Shadow)
+		if (params.pass == RenderPass::ZPrePass || RenderPass::IsShadowPass(params.pass))
 		{
 			depth_stencil_state = DepthStencilState::LessEqual;
 		}
@@ -900,7 +900,13 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 	{
 		JONO_EVENT("GenerateDrawCalls");
 
-		std::vector<RenderWorldInstance*> const& instances = _visibility->get_visible_instances();
+		VisibilityFrustum frustum = VisiblityFrustum_Main;
+		if (RenderPass::IsShadowPass(params.pass))
+		{
+			frustum = (VisibilityFrustum)(VisiblityFrustum_CSM0 + (params.pass - RenderPass::Shadow_CSM0));
+		}
+
+		std::vector<RenderWorldInstance*> const& instances = _visibility->get_visible_instances(frustum);
 		m_DrawCalls.reserve(instances.size());
 		m_DrawCalls.clear();
 
@@ -1247,7 +1253,7 @@ void Renderer::render_shadow_pass(RenderWorld const& world)
 #endif
 			params.view_position = position;
 			params.view_direction = direction;
-			params.pass = RenderPass::Shadow;
+			params.pass = RenderPass::Value(RenderPass::Shadow_CSM0 + i);
 			params.viewport = CD3D11_VIEWPORT(0.0f, 0.0f, 2048.0f, 2048.0f);
 			render_world(world, params);
 		}

@@ -42,10 +42,15 @@ struct RenderPass
 	{
 		ZPrePass,
 		Opaque,
-		Shadow,
+		Shadow_CSM0,
+		Shadow_CSM1,
+		Shadow_CSM2,
+		Shadow_CSM3,
 		Post
 
 	};
+
+	static bool IsShadowPass(RenderPass::Value pass) { return pass >= Shadow_CSM0 && pass <= Shadow_CSM3; }
 
 	static std::string ToString(RenderPass::Value pass)
 	{
@@ -57,8 +62,14 @@ struct RenderPass
 				return "Opaque";
 			case Value::Post:
 				return "Post";
-			case Value::Shadow:
-				return "Shadow";
+			case Value::Shadow_CSM0:
+				return "Shadow_CSM0";
+			case Value::Shadow_CSM1:
+				return "Shadow_CSM1";
+			case Value::Shadow_CSM2:
+				return "Shadow_CSM2";
+			case Value::Shadow_CSM3:
+				return "Shadow_CSM3";
 			default:
 				return "Invalid";
 				break;

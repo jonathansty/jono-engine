@@ -4,7 +4,6 @@
 
 #include "Types/IniStream.h"
 
-REGISTER_TYPE("/Types/Core/EngineCfg", EngineCfg);
 REGISTER_TYPE("/Types/Core/GameCfg", GameCfg)
 
 GameCfg::GameCfg() :

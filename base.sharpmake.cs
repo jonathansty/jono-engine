@@ -31,7 +31,7 @@ public class Utils
     {
         conf.Name = @"[target.Optimization]_[target.OutputType]";
 
-        conf.ProjectPath = @"[project.SharpmakeCsPath]\build\projects\[project.Name]";
+        conf.ProjectPath = @"[project.SharpmakeCsPath]\build\projects";
         conf.IntermediatePath = @"[project.SharpmakeCsPath]\build\intermediate\[target.Optimization]\[project.Name]_[target.DevEnv]_[target.Platform]";
         conf.VcxprojUserFile = new Project.Configuration.VcxprojUserFileSettings();
         conf.VcxprojUserFile.LocalDebuggerWorkingDirectory = @"[project.SharpmakeCsPath]";
@@ -39,12 +39,12 @@ public class Utils
 
     public static void ReferenceAllEngineLibraries(Project.Configuration conf, Target target)
     {
-        conf.AddPrivateDependency<SDL2>(target);
-
         conf.AddPrivateDependency<CoreModule>(target);
         conf.AddPrivateDependency<CliModule>(target);
         conf.AddPrivateDependency<EngineModule>(target);
-
+        conf.AddPrivateDependency<ImGui>(target);
+        conf.AddPrivateDependency<SDL2>(target);
+        conf.AddPrivateDependency<OpTick>(target);
     }
 }
 

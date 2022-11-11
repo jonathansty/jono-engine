@@ -261,14 +261,14 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 {
 	MEMORY_TAG(MemoryCategory::ResourceLoading);
 
-	LOG_INFO(IO, "Load request {}", params.to_string());
+	LOG_VERBOSE(IO, "Load request {}", params.to_string());
 	std::size_t h = std::hash<typename T::init_parameters>{}(params);
 
 	{
 		std::lock_guard lock{ _cache_lock };
 		if (auto it = _cache.find(h); it != _cache.end())
 		{
-			LOG_INFO(IO, "Returned cached copy for {}", params.to_string());
+			LOG_VERBOSE(IO, "Returned cached copy for {}", params.to_string());
 
 			if (blocking)
 			{

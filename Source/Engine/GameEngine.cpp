@@ -633,12 +633,9 @@ bool GameEngine::InitSubSystems()
 
 			u32 bytesRead = file->read(data, fileSize);
 
-			
 			IniStream iniStream = IniStream(data, bytesRead);
 
-			// Second pass over the data to populate each section
 			TypeManager* manager = GetGlobalContext()->m_TypeManager;
-
 			if (IniSectionInfo* info = iniStream.FindSectionInfo("BaseConfig"); info)
 			{
 				iniStream.SetCurrentInfo(info);
@@ -650,7 +647,6 @@ bool GameEngine::InitSubSystems()
 				iniStream.SetCurrentInfo(info);
 				manager->SerializeObject(info->m_Type, &m_GameCfg, iniStream);
 			}
-
 		}
 	}
 

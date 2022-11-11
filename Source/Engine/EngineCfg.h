@@ -22,3 +22,4 @@ struct EngineCfg
 
 	f64 max_frame_time = 0.0;
 };
+

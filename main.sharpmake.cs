@@ -142,12 +142,7 @@ public class SceneViewerProject : Application
         conf.SolutionFolder = Utils.g_FilterFolderGame;
 
         CompileHLSL.ConfigureShaderIncludes(conf);
-
-        conf.AddPrivateDependency<EngineModule>(target);
-        conf.AddPrivateDependency<CoreModule>(target);
-        conf.AddPrivateDependency<CliModule>(target);
-        conf.AddPrivateDependency<ImGui>(target);
-        conf.AddPrivateDependency<SDL2>(target);
+        Utils.ReferenceAllEngineLibraries(conf, target);
 
         conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
         conf.Output = Configuration.OutputType.Exe;
@@ -173,7 +168,7 @@ public class PathFindingProject : Application
 
         CompileHLSL.ConfigureShaderIncludes(conf);
 
-        conf.AddPrivateDependency<EngineModule>(target);
+		Utils.ReferenceAllEngineLibraries(conf, target);
 
         conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
         conf.Output = Configuration.OutputType.Exe;
