@@ -58,6 +58,8 @@ struct DebugVisualizeMode
 
 void SceneViewer::configure_engine(EngineCfg& engineSettings)
 {
+	Super::configure_engine(engineSettings);
+
 	engineSettings.d2d_use = false;
 
 	engineSettings.d3d_use = true;
@@ -68,6 +70,8 @@ void SceneViewer::configure_engine(EngineCfg& engineSettings)
 
 void SceneViewer::initialize(GameCfg& gameSettings)
 {
+	Super::initialize(gameSettings);
+
 	gameSettings.m_FullscreenMode = GameCfg::FullScreenMode::Windowed;
 	gameSettings.m_WindowWidth = 1920;
 	gameSettings.m_WindowHeight = 1080;
@@ -98,6 +102,8 @@ std::string ShowFileDialog(SDL_Window* owner)
 
 void SceneViewer::start()
 {
+	Super::start();
+
 	auto ge = GameEngine::instance();
 
 	ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order)
@@ -253,6 +259,8 @@ void SceneViewer::start()
 
 void SceneViewer::end()
 {
+	Super::end();
+
 	delete _camera;
 	_camera = nullptr;
 
@@ -263,6 +271,7 @@ void SceneViewer::end()
 #if FEATURE_D2D
 void SceneViewer::paint(Graphics::D2DRenderContext& ctx)
 {
+	Super::paint(ctx);
 }
 #endif
 
@@ -270,6 +279,7 @@ int* s_data = nullptr;
 
 void SceneViewer::tick(double deltaTime)
 {
+	Super::tick(deltaTime);
 
 	f32 f32_dt = (f32)deltaTime;
 	auto& input_manager = GameEngine::instance()->get_input();
@@ -312,8 +322,6 @@ void SceneViewer::tick(double deltaTime)
 			_light_tick -= mouse_delta.x * f32_dt * 0.5f;
 		}
 	}
-
-
 
 	RenderWorldRef world = GameEngine::instance()->get_render_world();
 	auto camera = world->get_view_camera();

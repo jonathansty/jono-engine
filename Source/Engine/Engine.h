@@ -74,3 +74,5 @@ using namespace D2D1;
 #else
 #define ENGINE_API
 #endif
+
+#include "Types/TypeManager.h"

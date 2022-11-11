@@ -11,6 +11,8 @@ class FreeCam;
 class SceneViewer final : public AbstractGame
 {
 public:
+	using Super = AbstractGame;
+
 	SceneViewer(std::string const& path);
 	virtual ~SceneViewer();
 

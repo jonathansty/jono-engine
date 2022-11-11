@@ -9,6 +9,8 @@ enum class MSAAMode
 
 struct EngineCfg
 {
+	CLASS_BASE();
+
 	// Allow 2D rendering
 	bool d2d_use = false;
 	bool d2d_use_aa = false;

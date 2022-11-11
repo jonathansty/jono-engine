@@ -2,6 +2,8 @@
 
 struct GameCfg final
 {
+	CLASS_BASE();
+
 	GameCfg();
 	~GameCfg();
 	enum class FullScreenMode

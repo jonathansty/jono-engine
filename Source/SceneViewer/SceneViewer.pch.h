@@ -7,4 +7,5 @@
 #include "Engine/Bitmap.h"
 #include "Engine/Framework/framework.h"
 #include "Engine/GameEngine.h"
+#include "Engine/Types/TypeManager.h"
 

@@ -1,5 +1,10 @@
 #include "engine.pch.h"
 #include "GameSettings.h"
+#include "EngineCfg.h"
+
+
+REGISTER_TYPE("/Types/Core/EngineCfg", EngineCfg);
+REGISTER_TYPE("/Types/Core/GameCfg", GameCfg)
 
 GameCfg::GameCfg() :
 m_WindowTitle("Game Engine"),

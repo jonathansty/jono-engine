@@ -132,6 +132,22 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 	InitSubSystems();
 
+	TypeManager* typeManager = GetGlobalContext()->m_TypeManager;
+	TypeMetaData* data = typeManager->FindType("Foo");
+
+	{
+		SharedPtr<Foo> fooData = SharedPtr<Foo>((Foo*)typeManager->CreateObject("/Types/Test/Foo"));
+		SharedPtr<Foo> fooData1 = SharedPtr(typeManager->CreateObject<Foo>());
+
+		SharedPtr<Bar> barData = SharedPtr(typeManager->CreateObject<Bar>());
+
+		if (fooData->GetType() == barData->GetType())
+		{
+			FAILMSG("Types are the same.");
+		}
+
+	}
+
 	// Now we can start logging information and we mount our resources volume.
 	LOG_INFO(IO, "Mounting resources directory.");
 	m_PlatformIO->mount("Resources");
@@ -617,7 +633,7 @@ bool GameEngine::InitSubSystems()
 	Logger::create();
 	Logger::instance()->init();
 
-	TypeManager::create();
+	//TypeManager::create();
 	ResourceLoader::create();
 
 	// Initialize enkiTS
@@ -1168,8 +1184,6 @@ void GameEngine::Sync()
 
 	// Update the old app thread parameters
 	m_RecreateSwapchainRequested = false;
-
-
 }
 
 // String helpers for hlsl types
