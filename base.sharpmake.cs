@@ -9,6 +9,7 @@ public class Utils
     public static string g_FilterFolderEngine = "Engine";
     public static string g_FilterFolderLibraries = "Libraries";
     public static string g_FilterFolderGame = "Samples";
+    public static string g_BuildFolder = "Build";
     public static string SourceFolderName = "Source";
 
     public static Target[] Targets

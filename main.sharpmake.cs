@@ -225,7 +225,7 @@ public class EngineSolution : Solution
     public void ConfigureAll(Solution.Configuration conf, Target target)
     {
         // Puts the generated solution in the /generated folder too.
-        conf.SolutionPath = @"[solution.SharpmakeCsPath]/build";
+        conf.SolutionPath = @"[solution.SharpmakeCsPath]/" + Utils.g_BuildFolder;
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
 
         conf.Name = @"[target.Optimization] [target.OutputType]";
@@ -257,7 +257,7 @@ public class ToolsOnlySolution : Solution
     public void ConfigureAll(Solution.Configuration conf, Target target)
     {
         // Puts the generated solution in the /generated folder too.
-        conf.SolutionPath = @"[solution.SharpmakeCsPath]/build";
+        conf.SolutionPath = @"[solution.SharpmakeCsPath]/" + Utils.g_BuildFolder;
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
 
         conf.AddProject<EngineModule>(target);
@@ -288,7 +288,7 @@ public class TestSolution : Solution
     public void ConfigureAll(Solution.Configuration conf, Target target)
     {
         // Puts the generated solution in the /generated folder too.
-        conf.SolutionPath = @"[solution.SharpmakeCsPath]/build";
+        conf.SolutionPath = @"[solution.SharpmakeCsPath]/" + Utils.g_BuildFolder;
         conf.SolutionFileName = "[solution.Name]_[target.DevEnv]";
 
         // Engine project
