@@ -40,6 +40,17 @@ struct IFile
 	virtual u64 tell() const = 0;
 
 	virtual void* get_raw_handle() const = 0;
+
+	u64 GetSize() 
+	{
+		u64 curr = tell();
+
+		seek(0, SeekMode::FromEnd);
+		u64 end = tell();
+
+		seek(curr, SeekMode::FromBeginning);
+		return end;
+	}
 };
 using IFileRef = std::shared_ptr<IFile>;
 

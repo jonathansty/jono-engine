@@ -2,14 +2,19 @@
 
 #include "Core/Singleton.h"
 
+class IniStream;
+
 class TypeMetaData
 {
 public:
-	void* (*m_Construct)();
-	void (*m_Destruct)(void*);
+	void* (*m_ConstructFn)(void*);
+
+	void  (*m_SerializeFn)(IniStream& data, void*);
 
 	const char* m_Name;
 	const char* m_Path;
+
+	u32 m_Size;
 };
 
 class ENGINE_API TypeManager final : public TSingleton<TypeManager, true>
@@ -34,24 +39,52 @@ public:
 		m_Types.erase(name);
 	}
 
-	TypeMetaData* FindType(const char* name);
+	TypeMetaData* FindType(std::string_view const& name);
 
-	void* CreateObject(const char* name) 
+	void* CreateObject(std::string_view const& name) 
 	{
 		if(TypeMetaData* obj = FindType(name); obj)
 		{
-			ASSERT(obj->m_Construct);
-			return obj->m_Construct();
+			ASSERT(obj->m_ConstructFn);
+			return obj->m_ConstructFn(nullptr);
 		}
 		return nullptr;
 	}
+
+	void* SerializeObject(std::string_view const& typePath, IniStream& data)
+	{
+		if (TypeMetaData* obj = FindType(typePath); obj)
+		{
+			ASSERT(obj->m_SerializeFn);
+
+			void* typeData = obj->m_ConstructFn(nullptr);
+			obj->m_SerializeFn(data, typeData);
+			return typeData;
+		}
+		return nullptr;
+	}
+
+	void* SerializeObject(std::string_view const& typePath, void* dst, IniStream& data)
+	{
+		if (TypeMetaData* obj = FindType(typePath); obj)
+		{
+			ASSERT(obj->m_SerializeFn);
+
+			void* typeData = obj->m_ConstructFn(dst);
+			obj->m_SerializeFn(data, typeData);
+			return typeData;
+		}
+		return nullptr;
+	}
+
+
 
 	template<typename T>
 	T* CreateObject()
 	{
 		TypeMetaData const* metaData = T::GetStaticType();
-		ASSERT(metaData->m_Construct);
-		return static_cast<T*>(metaData->m_Construct());
+		ASSERT(metaData->m_ConstructFn);
+		return static_cast<T*>(metaData->m_ConstructFn(nullptr));
 	
 	}
 
@@ -72,30 +105,42 @@ struct BaseType
 } // namespace Internal
 
 template<typename T>
-struct StaticType 
+struct TypeRegistrationHelper 
 {
 public:
-	StaticType(const char* typePath, const char* typeName);
+	TypeRegistrationHelper(const char* typePath, const char* typeName);
 
-	~StaticType();
+	~TypeRegistrationHelper();
 
 	TypeMetaData* m_Data;
 	const char* m_Path;
 };
 
 template<typename T>
-StaticType<T>::StaticType(const char* typePath, const char* typeName)
+TypeRegistrationHelper<T>::TypeRegistrationHelper(const char* typePath, const char* typeName)
 		: m_Path(typePath)
 {
 	m_Data = TypeManager::instance()->AddType(m_Path);
 
 	m_Data->m_Name = typeName;
 	m_Data->m_Path = typePath;
-	m_Data->m_Construct = []()->void* { return new T(); };
+	m_Data->m_ConstructFn = [](void* dest)->void* 
+	{
+		if(dest)
+		{
+			return new (dest) T();
+		}
+		else
+		{
+			return new T(); 
+		}
+	};
+
+	m_Data->m_SerializeFn = [](IniStream& iniStream, void* data) { T::Serialize(iniStream, (T*)data); };
 }
 
 template<typename T>
-StaticType<T>::~StaticType()
+TypeRegistrationHelper<T>::~TypeRegistrationHelper()
 {
 	TypeManager::instance()->RemoveType(m_Path);
 }
@@ -104,7 +149,7 @@ StaticType<T>::~StaticType()
 #define ANON_VARIABLE(VarName) _#VarName##__LINE__
 
 #define REGISTER_TYPE(Path, TypeName) \
-	StaticType<TypeName> _typeRegister_##TypeName = StaticType<TypeName>(Path, #TypeName); \
+	TypeRegistrationHelper<TypeName> _typeRegister_##TypeName = TypeRegistrationHelper<TypeName>(Path, #TypeName); \
 	TypeMetaData const* TypeName::GetStaticType() { return _typeRegister_##TypeName.m_Data; } \
 	TypeMetaData const* TypeName::GetType() { return TypeName::GetStaticType(); } 
 
@@ -116,18 +161,3 @@ StaticType<T>::~StaticType()
 	using Super = BaseClass;        \
 	static class TypeMetaData const* GetStaticType(); \
 	virtual class TypeMetaData const* GetType(); 
-
-
-struct Foo
-{
-	CLASS_BASE();
-
-	Foo(){};
-};
-
-struct Bar : public Foo
-{
-	CLASS(Bar, Foo);
-
-	Bar() {}
-};

@@ -128,15 +128,42 @@ bool cli::get_string(CommandLine const& cmd_args, std::string const& arg, std::s
 		return false;
 	}
 
-	std::string lhs;
-	Helpers::split_string(argument, "=", lhs, val);
+	std::string_view lhs;
+	std::string_view rhs;
+	Helpers::split_string(argument, "=", lhs, rhs);
+
+	val = rhs;
 
 	return true;
 }
 
-void Helpers::split_string(std::string const& in, std::string const& delim, std::string& lhs, std::string& rhs)
+void Helpers::split_string(std::string_view const& in, std::string_view const& delim, std::string_view& lhs, std::string_view& rhs)
 {
 	size_t pos = in.find(delim);
 	lhs = in.substr(0, pos);
 	rhs = in.substr(pos + delim.size());
+}
+
+void Helpers::split_lines(std::string_view const& in, std::vector<std::string_view>& lines)
+{
+	size_t n = 0;
+
+	size_t lineStart = 0;
+	size_t lineEnd = 0;
+	while(n < in.size())
+	{
+		if (in[n] == '\n')
+		{
+			lineEnd = n - 1;
+			lines.emplace_back(in.data() + lineStart, 1 + lineEnd - lineStart);
+
+			lineStart = n + 1;
+		}
+		++n;
+	}
+
+	if(lineStart < in.size())
+	{
+		lines.emplace_back(in.data() + lineStart, in.size() - lineStart);
+	}
 }

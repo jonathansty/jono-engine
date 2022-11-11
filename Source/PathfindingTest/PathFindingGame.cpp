@@ -48,17 +48,14 @@ NavPathGrid construct_grid_from_pos(NavGrid& grid, u32 x0, u32 y0)
 void PathFindingGame::configure_engine(EngineCfg& settings)
 {
 	settings.d2d_use = true;
-	settings.d3d_use = false;
 	settings.d2d_use_aa = true;
-	settings.d3d_msaa_mode = MSAAMode::MSAA_4x;
-	settings.max_frame_time = 1.0f / 60.0f;
 }
 
 void PathFindingGame::initialize(GameCfg& settings)
 {
 	settings.m_WindowWidth = 1280;
 	settings.m_WindowHeight = 720;
-	settings.m_WindowTitle = "Sample: PathFinding";
+	//settings.m_WindowTitle = "Sample: PathFinding";
 }
 
 void PathFindingGame::start(void)

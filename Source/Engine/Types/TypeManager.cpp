@@ -1,6 +1,8 @@
 #include "engine.pch.h"
-#include "TypeManager.h"
 
+#include "CLI/CommandLine.h"
+
+#include "TypeManager.h"
 #include "GlobalContext.h"
 
 TypeManager::TypeManager()
@@ -9,9 +11,11 @@ TypeManager::TypeManager()
 	globalContext->m_TypeManager = this;
 }
 
-TypeMetaData* TypeManager::FindType(const char* name)
+TypeMetaData* TypeManager::FindType(std::string_view const& name)
 {
-	if (auto it = m_Types.find(name); it != m_Types.end())
+	// Force a copy here
+	std::string n = std::string(name);
+	if (auto it = m_Types.find(n); it != m_Types.end())
 	{
 		return &it->second;
 	}
@@ -25,5 +29,3 @@ TypeManager::~TypeManager()
 }
 
 
-REGISTER_TYPE("/Types/Test/Foo", Foo);
-REGISTER_TYPE("/Types/Test/Bar", Bar);

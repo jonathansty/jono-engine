@@ -30,6 +30,7 @@
 #include "Memory.h"
 
 #include "Types/TypeManager.h"
+#include "Types/IniStream.h"
 
 int g_DebugMode = 0;
 
@@ -132,25 +133,6 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 	InitSubSystems();
 
-	TypeManager* typeManager = GetGlobalContext()->m_TypeManager;
-	TypeMetaData* data = typeManager->FindType("Foo");
-
-	{
-		SharedPtr<Foo> fooData = SharedPtr<Foo>((Foo*)typeManager->CreateObject("/Types/Test/Foo"));
-		SharedPtr<Foo> fooData1 = SharedPtr(typeManager->CreateObject<Foo>());
-
-		SharedPtr<Bar> barData = SharedPtr(typeManager->CreateObject<Bar>());
-
-		if (fooData->GetType() == barData->GetType())
-		{
-			FAILMSG("Types are the same.");
-		}
-
-	}
-
-	// Now we can start logging information and we mount our resources volume.
-	LOG_INFO(IO, "Mounting resources directory.");
-	m_PlatformIO->mount("Resources");
 
 	ASSERTMSG(m_Game, "No game has been setup! Make sure to first create a game instance before launching the engine!");
 	if (m_Game)
@@ -626,14 +608,53 @@ EditorWindowData g_WindowData;
 bool GameEngine::InitSubSystems()
 {
 	// Create the IO first as our logging depends on creating the right folder
-	m_PlatformIO = IO::create();
-	IO::set(m_PlatformIO);
-	GetGlobalContext()->m_PlatformIO = m_PlatformIO.get();
+	{
+		m_PlatformIO = IO::create();
+		IO::set(m_PlatformIO);
+
+		// Now we can start logging information and we mount our resources volume.
+		m_PlatformIO->mount("Resources");
+
+		GetGlobalContext()->m_PlatformIO = m_PlatformIO.get();
+	}
 
 	Logger::create();
 	Logger::instance()->init();
 
-	//TypeManager::create();
+	// Load the engine config to decide what other sub systems are needed
+	{
+		constexpr char const* c_ConfigPath = "res:/Config/Engine.ini";
+
+		std::string configPath = m_PlatformIO->resolve_path(c_ConfigPath);
+		if (IO::IFileRef file = m_PlatformIO->open(configPath.c_str(), IO::Mode::Read); file)
+		{
+			u32 fileSize = (u32)file->GetSize();
+			char* data = new char[fileSize];
+
+			u32 bytesRead = file->read(data, fileSize);
+
+			
+			IniStream iniStream = IniStream(data, bytesRead);
+
+			// Second pass over the data to populate each section
+			TypeManager* manager = GetGlobalContext()->m_TypeManager;
+
+			if (IniSectionInfo* info = iniStream.FindSectionInfo("BaseConfig"); info)
+			{
+				iniStream.SetCurrentInfo(info);
+				manager->SerializeObject(info->m_Type, &m_EngineCfg, iniStream);
+			}
+
+			if (IniSectionInfo* info = iniStream.FindSectionInfo("BaseGameConfig"); info)
+			{
+				iniStream.SetCurrentInfo(info);
+				manager->SerializeObject(info->m_Type, &m_GameCfg, iniStream);
+			}
+
+		}
+	}
+
+
 	ResourceLoader::create();
 
 	// Initialize enkiTS

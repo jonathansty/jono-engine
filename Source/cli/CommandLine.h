@@ -7,7 +7,9 @@ namespace Helpers
 {
 
 // Helper function to split strings
-void split_string(std::string const& in, std::string const& delim, std::string& lhs, std::string& rhs);
+void split_string(std::string_view const& in, std::string_view const& delim, std::string_view& lhs, std::string_view& rhs);
+
+void split_lines(std::string_view const& in, std::vector<std::string_view>& lines);
 
 } // namespace helpers
 

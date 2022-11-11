@@ -10,6 +10,7 @@ enum class MSAAMode
 struct EngineCfg
 {
 	CLASS_BASE();
+	static void Serialize(IniStream& data, EngineCfg* cfg);
 
 	// Allow 2D rendering
 	bool d2d_use = false;

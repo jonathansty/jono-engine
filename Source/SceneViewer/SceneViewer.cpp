@@ -59,13 +59,6 @@ struct DebugVisualizeMode
 void SceneViewer::configure_engine(EngineCfg& engineSettings)
 {
 	Super::configure_engine(engineSettings);
-
-	engineSettings.d2d_use = false;
-
-	engineSettings.d3d_use = true;
-	engineSettings.d3d_msaa_mode = MSAAMode::Off;
-
-	engineSettings.max_frame_time = 1.0 / 72.0;
 }
 
 void SceneViewer::initialize(GameCfg& gameSettings)
