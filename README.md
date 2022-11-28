@@ -30,6 +30,8 @@ The engine depends on the following libraries:
 # Building
 ## Requirements
 * Windows 10
+* .NET framework 5.0.0 for Sharpmake
+* [CMake](https://cmake.org/download/)
 * [Python](https://www.python.org/) (for conan)
 * [Conan package manager](https://conan.io/) installed and available on `PATH` environment variable
 * [VS2022](https://visualstudio.microsoft.com/downloads/)

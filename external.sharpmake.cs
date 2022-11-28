@@ -172,6 +172,7 @@ public class Rttr : ExternalProject
 
 
         conf.IncludePaths.Add(Path.Combine(ExternalDir, "rttr/src"));
+        conf.IncludePaths.Add(Path.Combine(ExternalDir, "rttr/src/detail"));
         conf.IncludePaths.Add(Path.Combine(ExternalDir, "rttr/build/src"));
     }
 }

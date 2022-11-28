@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: | 
           conan profile new default --detect
-          ./Tools/Bootstrap.cmd
+          ./Tools/Bootstrap.cmd CI
       - name: Building jono-engine ${{ matrix.config }}
         run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration="${{ matrix.config }} ${{ matrix.linkage}}"
 

@@ -1,4 +1,5 @@
 @echo off
+setlocal ENABLEDELAYEDEXPANSION
 echo ======================================
 echo (1/6) - Pulling latest submodules...
 echo ======================================
@@ -26,7 +27,12 @@ echo Done.
 echo ======================================
 echo (4/6) Generating RTTR build metadata
 echo ======================================
-cmake -B ../External/rttr/build -G Ninja ../External/rttr
+set CMAKE_GENERATOR="Visual Studio 17 2022"
+IF "%1"=="CI" (
+    set CMAKE_GENERATOR="Ninja"
+)
+echo Using %CMAKE_GENERATOR%
+cmake -B ../External/rttr/build -G %CMAKE_GENERATOR% ../External/rttr
 echo Done.
 
 echo ======================================
