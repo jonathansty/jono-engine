@@ -74,7 +74,7 @@ public:
 	{
 	}
 
-	virtual bool create_directory(const char* path) override
+	virtual bool CreateDirectory(const char* path) override
 	{
 		std::error_code ec;
 		std::filesystem::path p{ path };
@@ -83,18 +83,18 @@ public:
 		return std::filesystem::create_directories(parent, ec);
 	}
 
-	virtual bool exists(const char* path) override
+	virtual bool Exists(const char* path) override
 	{
-		std::string tmp = resolve_path(path);
+		std::string tmp = ResolvePath(path);
 		return std::filesystem::exists(tmp);
 	}
 
-	virtual void mount(const char* path) override
+	virtual void Mount(const char* path) override
 	{
 		_root = path;
 	}
 
-	virtual std::string resolve_path(std::string const& path) override
+	virtual std::string ResolvePath(std::string const& path) override
 	{
 		// Check if path is relative
 		std::filesystem::path p{ path };
@@ -115,14 +115,14 @@ public:
 		return path;
 	}
 
-	virtual std::shared_ptr<IFile> open(const char* path, Mode mode, bool binary) override
+	virtual std::shared_ptr<IFile> OpenFile(const char* path, Mode mode, bool binary) override
 	{
-		if (!exists(path))
+		if (!Exists(path) && mode == Mode::Write)
 		{
-			create_directory(path);
+			CreateDirectory(path);
 		}
 
-		if (exists(path) || mode == Mode::Write)
+		if (Exists(path) || mode == Mode::Write)
 		{
 			std::string t = "";
 			switch (mode)
@@ -142,7 +142,7 @@ public:
 				t += "b";
 			}
 
-			std::string tmp = resolve_path(path);
+			std::string tmp = ResolvePath(path);
 			FILE* s;
 			auto err = fopen_s(&s, tmp.c_str(), t.c_str());
 			if (s == nullptr)
@@ -158,7 +158,7 @@ public:
 		return nullptr;
 	}
 
-	virtual void close(IFileRef const& file) override
+	virtual void CloseFile(IFileRef const& file) override
 	{
 		Win64File* winFile = (Win64File*)file.get();
 		if (winFile->_stream)

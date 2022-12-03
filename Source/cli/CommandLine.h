@@ -9,6 +9,8 @@ namespace Helpers
 // Helper function to split strings
 CLI_API void split_string(std::string_view const& in, std::string_view const& delim, std::string_view& lhs, std::string_view& rhs);
 
+CLI_API void split_string(std::string_view const& in, std::string_view const& delim, std::vector<std::string_view>& result);
+
 CLI_API void split_lines(std::string_view const& in, std::vector<std::string_view>& lines);
 
 } // namespace helpers

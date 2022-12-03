@@ -15,6 +15,7 @@
 #include "Engine/Core/Material.h"
 #include "InputManager.h"
 #include "Graphics/Graphics.h"
+#include "Parsing/Yaml.h"
 
 #include "OrbitCamera.h"
 #include "FreeCam.h"
@@ -97,6 +98,7 @@ void SceneViewer::start()
 {
 	Super::start();
 
+
 	auto ge = GameEngine::instance();
 
 	ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order)
@@ -131,7 +133,50 @@ void SceneViewer::start()
 	using namespace framework;
 	_world = GameEngine::instance()->get_world();
 
+	const char* path = "res:/Scenes/default.yml";
+	std::string resolvedPath = IO::get()->ResolvePath(path);
+	yaml::Document doc = yaml::Document(resolvedPath.c_str());
+
 	auto render_world = GameEngine::instance()->get_render_world();
+
+	Yaml::Node& node = doc.GetRoot();
+	auto data = node["Models"][0]["name"].As<std::string>();
+	for (auto it = node["Models"].Begin(); it != node["Models"].End(); it++)
+	{
+		//LOG_INFO(Unknown, "{}: {}", (*it).first, (*it).second.As<string>()); 
+		std::string name = (*it).second["name"].As<std::string>();
+		std::string type = (*it).second["type"].As<std::string>();
+		std::string position = (*it).second["position"].As<std::string>();
+		std::string scaleT = (*it).second["scale"].As<std::string>();
+		std::string rotation = (*it).second["rotation"].As<std::string>();
+		std::string mesh = (*it).second["mesh"].As<std::string>();
+
+		float pos[3];
+		float scale[3];
+		float rot[3];
+
+		std::vector<std::string_view> result;
+		Helpers::split_string(position, ",", result);
+
+		pos[0] = (float)atof(result[0].data());
+		pos[1] = (float)atof(result[1].data());
+		pos[2] = (float)atof(result[2].data());
+
+		Helpers::split_string(scaleT, ",", result);
+		scale[0] = (float)atof(result[0].data());
+		scale[1] = (float)atof(result[1].data());
+		scale[2] = (float)atof(result[2].data());
+
+		Helpers::split_string(rotation, ",", result);
+		rot[0] = (float)atof(result[0].data());
+		rot[1] = (float)atof(result[1].data());
+		rot[2] = (float)atof(result[2].data());
+
+		float4x4 transform = float4x4::translation(float3(pos[0], pos[1], pos[2]));
+		render_world->create_instance(transform, mesh);
+	}
+
+
 
 	ImVec2 size = GameEngine::instance()->GetViewportSize();
 	const float aspect = (float)size.x / (float)size.y;
@@ -177,7 +222,7 @@ void SceneViewer::start()
 	//framework::EntityDebugOverlay* overlay = new framework::EntityDebugOverlay(_world.get());
 	//GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
 
-	#if true 
+	#if 0 
 	constexpr u32 c_grid_size = 25;
 	constexpr f32 c_grid_spacing = 3.0f;
 	for(size_t y = 0; y < c_grid_size; ++y)
@@ -234,6 +279,7 @@ void SceneViewer::start()
 	#endif
 
 
+	#if 0
 	RenderWorldInstanceRef inst = render_world->create_instance(float4x4::translation(0.0f,0.0f,2.0f), "res:/Models/sphere.glb");
 	_model = inst;
 
@@ -247,6 +293,7 @@ void SceneViewer::start()
 
 	//world->create_instance(float4x4::scale(2.0f) * float4x4::translation(float3(-5.0f,0.5f,0.0f)), "Resources/Models/gltf-models/2.0/FlightHelmet/glTF/FlightHelmet.gltf");
 	render_world->create_instance(float4x4::translation(float3(0.0f, 0.0f, 0.0f)), "Resources/Models/plane_big.glb");
+	#endif
 
 }
 

@@ -1,0 +1,40 @@
+shaders:
+  vertex: Source/Engine/Shaders/DefaultVertex.vx.hlsl
+  opaque: Source/Engine/Shaders/DefaultGGX_Opaque.px.hlsl
+  debug: Source/Engine/Shaders/DefaultGGX_Debug.px.hlsl
+info:
+  name: "BaseMaterial"
+  double_sided: false
+defines: 
+  - id: LIGHTING_MODEL
+    value: PBR_LIGHTING_MODEL
+parameters:
+  - name: Albedo
+    type: float4
+    offset: 0
+    value: 1,1,1,1
+  - name: Roughness
+    type: float
+    offset: 4
+    value: 0.5
+  - name: Metalness
+    type: float
+    offset: 5
+    value: 0
+textures:
+  - id: A
+    path: "*White"
+    slot: 0
+  - id: MR
+    path: "*MetalnessRoughness"
+    slot: 1
+  - id: Normal 
+    path: "*Normal"
+    slot: 2
+  - id: AO 
+    path: "*White"
+    slot: 3
+  - id: Emissive 
+    path: "*Black"
+    slot: 4
+

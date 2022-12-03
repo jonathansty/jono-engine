@@ -9,7 +9,7 @@ class TypeMetaData
 public:
 	void* (*m_ConstructFn)(void*);
 
-	void  (*m_SerializeFn)(IniStream& data, void*);
+	void (*m_SerializeFn)(class IFileStream* data, void*);
 
 	const char* m_Name;
 	const char* m_Path;
@@ -51,7 +51,7 @@ public:
 		return nullptr;
 	}
 
-	void* SerializeObject(std::string_view const& typePath, IniStream& data)
+	void* SerializeObject(std::string_view const& typePath, IFileStream* data)
 	{
 		if (TypeMetaData* obj = FindType(typePath); obj)
 		{
@@ -64,7 +64,7 @@ public:
 		return nullptr;
 	}
 
-	void* SerializeObject(std::string_view const& typePath, void* dst, IniStream& data)
+	void* SerializeObject(std::string_view const& typePath, void* dst, IFileStream* data)
 	{
 		if (TypeMetaData* obj = FindType(typePath); obj)
 		{
@@ -136,7 +136,7 @@ TypeRegistrationHelper<T>::TypeRegistrationHelper(const char* typePath, const ch
 		}
 	};
 
-	m_Data->m_SerializeFn = [](IniStream& iniStream, void* data) { T::Serialize(iniStream, (T*)data); };
+	m_Data->m_SerializeFn = [](IFileStream* iniStream, void* data) { T::Serialize(iniStream, (T*)data); };
 }
 
 template<typename T>
@@ -153,11 +153,16 @@ TypeRegistrationHelper<T>::~TypeRegistrationHelper()
 	TypeMetaData const* TypeName::GetStaticType() { return _typeRegister_##TypeName.m_Data; } \
 	TypeMetaData const* TypeName::GetType() { return TypeName::GetStaticType(); } 
 
-#define CLASS_BASE() \
+#define CLASS_BASE(ClassName) \
 	static class TypeMetaData const* GetStaticType(); \
-	virtual class TypeMetaData const* GetType();  
+	virtual class TypeMetaData const* GetType();   \
+	static void Serialize(IFileStream* data, ClassName* obj) { obj->Serialize(data); } \
+	void Serialize(IFileStream* data);
 
 #define CLASS(ClassName, BaseClass) \
 	using Super = BaseClass;        \
-	static class TypeMetaData const* GetStaticType(); \
-	virtual class TypeMetaData const* GetType(); 
+	CLASS_BASE()
+
+#define SERIALIZE_FN(TypeName) void TypeName::Serialize(IFileStream* fileStream)
+#define SERIALIZE_PROPERTY(PropertyName) fileStream->ReadProperty<decltype(this->m_##PropertyName)>(#PropertyName, this->m_##PropertyName)
+#define SERIALIZE_SUPER() Super::Serialize(fileStream)

@@ -144,6 +144,26 @@ void Helpers::split_string(std::string_view const& in, std::string_view const& d
 	rhs = in.substr(pos + delim.size());
 }
 
+void Helpers::split_string(std::string_view const& in, std::string_view const& delim, std::vector<std::string_view>& result)
+{
+	result.clear();
+	size_t prev = 0;
+	size_t pos = in.find(delim);
+	while(pos != std::string::npos)
+	{
+		result.emplace_back(in.begin() + prev, in.begin() + pos);
+
+		prev = pos + 1;
+		pos = in.find(delim, prev + 1);
+	}
+
+	if (prev < in.size())
+	{
+		result.emplace_back(in.begin() + prev, in.end());
+	}
+
+}
+
 void Helpers::split_lines(std::string_view const& in, std::vector<std::string_view>& lines)
 {
 	size_t n = 0;

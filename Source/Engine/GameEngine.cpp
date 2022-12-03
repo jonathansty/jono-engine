@@ -142,7 +142,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	}
 
 	// Validate engine settings
-	ASSERTMSG(!(m_EngineCfg.d2d_use && (m_EngineCfg.d3d_use && m_EngineCfg.d3d_msaa_mode != MSAAMode::Off)), " Currently the engine does not support rendering D2D with MSAA because DrawText does not respond correctly!");
+	ASSERTMSG(!(m_EngineCfg.m_UseD2D && (m_EngineCfg.m_UseD3D && m_EngineCfg.m_D3DMSAA != MSAAMode::Off)), " Currently the engine does not support rendering D2D with MSAA because DrawText does not respond correctly!");
 
 	s_MainThreadID = std::this_thread::get_id();
 
@@ -536,9 +536,9 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 		// Update CPU only timings
 		{
 			JONO_EVENT("FrameLimiter");
-			if (m_EngineCfg.max_frame_time > 0.0)
+			if (m_EngineCfg.m_MaxFrametime > 0.0)
 			{
-				f64 targetTimeMs = m_EngineCfg.max_frame_time;
+				f64 targetTimeMs = m_EngineCfg.m_MaxFrametime;
 
 				// Get the current frame time
 				f64 framet = full_frame_timer.get_delta_time();
@@ -613,7 +613,7 @@ bool GameEngine::InitSubSystems()
 		IO::set(m_PlatformIO);
 
 		// Now we can start logging information and we mount our resources volume.
-		m_PlatformIO->mount("Resources");
+		m_PlatformIO->Mount("Resources");
 
 		GetGlobalContext()->m_PlatformIO = m_PlatformIO.get();
 	}
@@ -623,31 +623,35 @@ bool GameEngine::InitSubSystems()
 
 	// Load the engine config to decide what other sub systems are needed
 	{
-		constexpr char const* c_ConfigPath = "res:/Config/Engine.ini";
+		constexpr char const* c_ConfigPath = "res:/Config/Engine.cfg";
+		constexpr char const* c_GameConfigPath = "res:/Config/Game.cfg";
 
-		std::string configPath = m_PlatformIO->resolve_path(c_ConfigPath);
-		if (IO::IFileRef file = m_PlatformIO->open(configPath.c_str(), IO::Mode::Read); file)
+		std::string configPath = m_PlatformIO->ResolvePath(c_ConfigPath);
+		if (IO::IFileRef file = m_PlatformIO->OpenFile(configPath.c_str(), IO::Mode::Read); file)
 		{
 			u32 fileSize = (u32)file->GetSize();
 			char* data = new char[fileSize];
 
 			u32 bytesRead = file->read(data, fileSize);
 
-			IniStream iniStream = IniStream(data, bytesRead);
-
+			SharedPtr<IFileStream> readStream = SharedPtr<IFileStream>(new YamlStream(data, bytesRead));
 			TypeManager* manager = GetGlobalContext()->m_TypeManager;
-			if (IniSectionInfo* info = iniStream.FindSectionInfo("BaseConfig"); info)
-			{
-				iniStream.SetCurrentInfo(info);
-				manager->SerializeObject(info->m_Type, &m_EngineCfg, iniStream);
-			}
-
-			if (IniSectionInfo* info = iniStream.FindSectionInfo("BaseGameConfig"); info)
-			{
-				iniStream.SetCurrentInfo(info);
-				manager->SerializeObject(info->m_Type, &m_GameCfg, iniStream);
-			}
+			manager->SerializeObject("/Types/Core/EngineCfg", &m_EngineCfg, readStream.Get());
 		}
+
+		std::string gameConfigPath = m_PlatformIO->ResolvePath(c_GameConfigPath);
+		if (IO::IFileRef file = m_PlatformIO->OpenFile(gameConfigPath.c_str(), IO::Mode::Read); file)
+		{
+			u32 fileSize = (u32)file->GetSize();
+			char* data = new char[fileSize];
+
+			u32 bytesRead = file->read(data, fileSize);
+
+			SharedPtr<IFileStream> readStream = SharedPtr<IFileStream>(new YamlStream(data, bytesRead));
+			TypeManager* manager = GetGlobalContext()->m_TypeManager;
+			manager->SerializeObject("/Types/Core/GameCfg", &m_GameCfg, readStream.Get());
+		}
+
 	}
 
 
@@ -908,7 +912,7 @@ void GameEngine::enable_vsync(bool bEnable)
 
 void GameEngine::apply_settings(GameCfg& game_settings)
 {
-	enable_aa(m_EngineCfg.d2d_use_aa);
+	enable_aa(m_EngineCfg.m_UseD2DAA);
 
 	set_width(game_settings.m_WindowWidth);
 	set_height(game_settings.m_WindowHeight);

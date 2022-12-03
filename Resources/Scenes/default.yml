@@ -1,0 +1,17 @@
+Models:
+  - name: Ground Plane
+    position: 0,0,0
+    scale: 1,1,1
+    rotation: 0,0,0
+    mesh: res:/Blockout/plane100x100.glb
+  - name: Sphere
+    position: 0,0,0
+    scale: 1,1,1
+    rotation: 0,0.5,0
+    mesh: res:/Blockout/Sphere.glb
+Cameras:
+  - name: MainCamera
+    type: Free
+  - name: OrbitCamera
+    type: Orbit
+Lights:

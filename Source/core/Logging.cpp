@@ -56,15 +56,15 @@ void Logger::log(LogEntry const& entry)
 void Logger::thread_flush()
 {
 	::SetThreadDescription(GetCurrentThread(), L"LoggingThread");
-	if (!IO::get()->exists("Logs"))
+	if (!IO::get()->Exists("Logs"))
 	{
-		IO::get()->create_directory("Logs");
+		IO::get()->CreateDirectory("Logs");
 	}
 
 	std::string time = get_timestamp(_time);
 	std::string log_output_file = fmt::format("Logs/log_{}.txt", time);
 
-	auto file = IO::get()->open(log_output_file.c_str(), IO::Mode::Write);
+	auto file = IO::get()->OpenFile(log_output_file.c_str(), IO::Mode::Write);
 	if (!file)
 	{
 		fmt::print("Failed to open log output file \"{}\"!", log_output_file);
@@ -88,7 +88,7 @@ void Logger::thread_flush()
 
 	if (file)
 	{
-		IO::get()->close(file);
+		IO::get()->CloseFile(file);
 		file.reset();
 	}
 }

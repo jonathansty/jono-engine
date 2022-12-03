@@ -1,6 +1,7 @@
 #include "engine.pch.h"
 #include "IniStream.h"
 #include "CommandLine.h"
+#include "Logging.h"
 
 IniStream::IniStream(const char* data, u32 size)
 		: m_Data(data)
@@ -89,4 +90,27 @@ IniStream::IniStream(const char* data, u32 size)
 			section.m_Attributes[attribute] = value;
 		}
 	}
+}
+
+YamlStream::YamlStream(const char* data, u32 size)
+	: IFileStream()
+{
+	m_Mode = SerializationMode::Read;
+
+	try
+	{
+		Yaml::Parse(m_Document, data, size);
+		m_Current = m_Document;
+
+		m_IsValid = true;
+	}
+	catch (Yaml::ParsingException e)
+	{
+		LOG_ERROR(IO, "Failed to parse yaml: {}", e.what());
+		m_IsValid = false;
+	}
+}
+
+YamlStream::~YamlStream()
+{
 }

@@ -47,8 +47,8 @@ NavPathGrid construct_grid_from_pos(NavGrid& grid, u32 x0, u32 y0)
 
 void PathFindingGame::configure_engine(EngineCfg& settings)
 {
-	settings.d2d_use = true;
-	settings.d2d_use_aa = true;
+	settings.m_UseD2D = true;
+	settings.m_UseD2DAA = true;
 }
 
 void PathFindingGame::initialize(GameCfg& settings)

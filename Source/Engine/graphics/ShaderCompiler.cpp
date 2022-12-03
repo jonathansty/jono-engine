@@ -12,7 +12,7 @@ bool compile(const char* shader, CompileParameters const& parameters, std::vecto
 	LOG_VERBOSE(Graphics, "[SHDRCMP] {}", shader);
 
 	auto io = IO::get();
-	if (IO::IFileRef file = io->open(shader, IO::Mode::Read); file)
+	if (IO::IFileRef file = io->OpenFile(shader, IO::Mode::Read); file)
 	{
 		file->seek(0, IO::SeekMode::FromEnd);
 		u64 file_size = file->tell();

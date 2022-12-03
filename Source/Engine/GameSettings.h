@@ -4,7 +4,7 @@ class IniStream;
 
 struct GameCfg final
 {
-	CLASS_BASE();
+	CLASS_BASE(GameCfg);
 
 	GameCfg();
 	~GameCfg();

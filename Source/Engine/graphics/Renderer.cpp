@@ -38,7 +38,7 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 
 	_stats = {};
 
-	_msaa = settings.d3d_msaa_mode;
+	_msaa = settings.m_D3DMSAA;
 	_engine_settings = settings;
 	_game_settings = game_settings;
 
@@ -59,6 +59,9 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 	}
 
 	// Create our cubemap 
+
+	// #TODO: Enable after re-creating the cubemap files
+#if 0
 	std::array<std::string_view, 6> faces = {
 		"Resources/skybox/right.jpg",
 		"Resources/skybox/left.jpg",
@@ -116,6 +119,7 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 	srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
 	ENSURE_HR(_device->CreateShaderResourceView(_cubemap.Get(), &srv_desc, _cubemap_srv.GetAddressOf()));
 	_device_ctx->GenerateMips(_cubemap_srv.Get());
+#endif
 
 }
 
@@ -225,7 +229,7 @@ void Renderer::create_factories(EngineCfg const& settings, cli::CommandLine cons
 #if FEATURE_D2D
 void Renderer::create_d2d_factory(EngineCfg const& settings)
 {
-	if (settings.d2d_use)
+	if (settings.m_UseD2D)
 	{
 		HRESULT hr;
 		// Create a Direct2D factory.

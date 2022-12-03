@@ -62,17 +62,17 @@ class CORE_API IPlatformIO
 public:
 	virtual ~IPlatformIO() = default;
 
-	virtual string resolve_path(string const& path) = 0;
+	virtual string ResolvePath(string const& path) = 0;
 
-	virtual bool create_directory(const char* path) = 0;
+	virtual bool CreateDirectory(const char* path) = 0;
 
-	virtual bool exists(const char* path) = 0;
+	virtual bool Exists(const char* path) = 0;
 
-	virtual void mount(const char* path) = 0;
+	virtual void Mount(const char* path) = 0;
 
-	virtual IFileRef open(const char* path, Mode mode, bool binary = false) = 0;
+	virtual IFileRef OpenFile(const char* path, Mode mode, bool binary = false) = 0;
 
-	virtual void close(IFileRef const& file) = 0;
+	virtual void CloseFile(IFileRef const& file) = 0;
 };
 using IPlatformIORef = std::shared_ptr<IPlatformIO>;
 

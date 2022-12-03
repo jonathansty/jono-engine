@@ -171,7 +171,6 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 	float3 final_colour = float3(0.0,0.0,0.0);
 
 	uint numDirectionalLights = g_NumDirectionalLights;
-	// numDirectionalLights = 0;
 	[loop]
 	for (unsigned int i = 0; i < numDirectionalLights; ++i) 
 	{
@@ -184,19 +183,21 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		// Need to invert the light vector here because we pass in the direction.
 		
 		const float g_shadow_intensity = 0.9f;
-		final_colour += 1.0 - (shadow * g_shadow_intensity); 
+		float4 lightColour = (float4)0.0f;
 
 		#if LIGHTING_MODEL == LIGHTING_MODEL_PBR
-			final_colour *= LightingModel_BRDF(material, view, light, final_normal) * light_colour;
+			lightColour += LightingModel_BRDF(material, view, light, final_normal) * light_colour;
 		#endif
 
 		#if  LIGHTING_MODEL == LIGHTING_MODEL_PHONG
-			final_colour *= LightingModel_Phong(material, view, light, light_colour, final_normal);
+			lightColour += LightingModel_Phong(material, view, light, light_colour, final_normal);
 		#endif
 
 		#if  LIGHTING_MODEL == LIGHTING_MODEL_BLINN_PHONG
-			final_colour *= LightingModel_BlinnPhong(material, view, light,light_colour, final_normal);
+			lightColour += LightingModel_BlinnPhong(material, view, light,light_colour, final_normal);
 		#endif
+		lightColour += 1.0 - (shadow * g_shadow_intensity); 
+		final_colour += lightColour;
 
 		// Cubemap reflections, not entirely correct but meh...
 		// float3 ReflectedView = reflect(-view, final_normal);

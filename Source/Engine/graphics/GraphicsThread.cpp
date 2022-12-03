@@ -233,7 +233,7 @@ void GraphicsThread::Render()
 
 	// Render 3D before 2D
 	EngineCfg const& cfg = m_FrameData.m_EngineCfg;
-	if (cfg.d3d_use)
+	if (cfg.m_UseD3D)
 	{
 		renderer->pre_render(world);
 
@@ -252,7 +252,7 @@ void GraphicsThread::Render()
 	}
 
 	// Render Direct2D to the swapchain
-	if (cfg.d2d_use)
+	if (cfg.m_UseD2D)
 	{
 #if FEATURE_D2D
 		this->RenderD2D();
@@ -263,7 +263,7 @@ void GraphicsThread::Render()
 	}
 
 	shared_ptr<OverlayManager> overlayManager = nullptr;
-	if(cfg.d3d_use)
+	if(cfg.m_UseD3D)
 	{
 		overlayManager = engine->m_OverlayManager;
 	}

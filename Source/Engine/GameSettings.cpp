@@ -21,10 +21,9 @@ GameCfg::~GameCfg()
 
 }
 
-void GameCfg::Serialize(IniStream& data, GameCfg* config)
+SERIALIZE_FN(GameCfg)
 {
-	if (data.HasProperty("WindowTitle"))
-	{
-		config->m_WindowTitle = data.GetPropertyValue<std::string_view>("WindowTitle");
-	}
+	SERIALIZE_PROPERTY(WindowTitle);
+	SERIALIZE_PROPERTY(WindowWidth);
+	SERIALIZE_PROPERTY(WindowHeight);
 }

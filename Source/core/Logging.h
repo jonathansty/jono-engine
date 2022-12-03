@@ -160,8 +160,8 @@ template <typename S, typename... Args>
 void log(const char* file, int line, LogCategory category, LogSeverity severity, const S& format, Args&&... args)
 {
 	// For now return manually here. This should be driven by some configuration
-	if (severity == LogSeverity::Verbose)
-		return;
+	//if (severity == LogSeverity::Verbose)
+	//	return;
 
 	std::thread::id current_id = std::this_thread::get_id();
 

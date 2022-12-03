@@ -6,14 +6,19 @@
 
 
 REGISTER_TYPE("/Types/Core/EngineCfg", EngineCfg);
+REGISTER_TYPE("/Types/Core/GraphicsSettings", GraphicsSettings);
 
-void EngineCfg::Serialize(IniStream& data, EngineCfg* cfg)
+SERIALIZE_FN(EngineCfg)
 {
-	EngineCfg* output = (EngineCfg*)(cfg);
+	SERIALIZE_PROPERTY(UseD2D);
+	SERIALIZE_PROPERTY(UseD2DAA);
+	SERIALIZE_PROPERTY(UseD3D);
+	SERIALIZE_PROPERTY(D3DMSAA);
+	SERIALIZE_PROPERTY(MaxFrametime);
+	SERIALIZE_PROPERTY(GraphicsSettings);
+}
 
-	output->d2d_use = data.GetPropertyValue<bool>("UseD2D");
-	output->d2d_use_aa = data.GetPropertyValue<bool>("UseD2DAA");
-	output->d3d_use = data.GetPropertyValue<bool>("UseD3D");
-	output->d3d_msaa_mode = (MSAAMode)data.GetPropertyValue<int>("MSAAMode");
-	output->max_frame_time = data.GetPropertyValue<float>("MaxFrameTime");
+SERIALIZE_FN(GraphicsSettings)
+{
+	SERIALIZE_PROPERTY(Foo);
 }

@@ -7,19 +7,28 @@ enum class MSAAMode
 	MSAA_4x,
 };
 
+struct GraphicsSettings
+{
+	CLASS_BASE(GraphicsSettings)
+
+	u32 m_Foo;
+};
+
 struct EngineCfg
 {
-	CLASS_BASE();
-	static void Serialize(IniStream& data, EngineCfg* cfg);
+	CLASS_BASE(EngineCfg);
 
 	// Allow 2D rendering
-	bool d2d_use = false;
-	bool d2d_use_aa = false;
+	bool m_UseD2D = false;
+	bool m_UseD2DAA = false;
 
 	// Allow 3D rendering
-	bool d3d_use = true;
-	MSAAMode d3d_msaa_mode = MSAAMode::Off;
+	bool m_UseD3D = true;
+	MSAAMode m_D3DMSAA = MSAAMode::Off;
 
-	f64 max_frame_time = 0.0;
+	f64 m_MaxFrametime;
+
+	GraphicsSettings m_GraphicsSettings;
+
 };
 

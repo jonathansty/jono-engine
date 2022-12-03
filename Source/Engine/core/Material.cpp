@@ -11,6 +11,8 @@
 #include "Graphics/ShaderCache.h"
 #include "Graphics/Renderer.h"
 
+#include "Parsing/Yaml.h"
+
  Material::Material()
 		: _double_sided(false)
 		, _vertex_shader()
@@ -34,34 +36,43 @@ std::unique_ptr<Material> Material::create(Graphics::ShaderRef const& vertex_sha
 
 std::unique_ptr<Material> Material::load(std::string const& path)
 {
-	IO::IFileRef file = IO::get()->open(path.c_str(), IO::Mode::Read, false);
+	IO::IFileRef file = IO::get()->OpenFile(path.c_str(), IO::Mode::Read, false);
 	if(file)
 	{
+		yaml::Document doc = yaml::Document(path.c_str());
+		Yaml::Node root = doc.GetRoot();
+
 		using namespace tinyxml2;
-		tinyxml2::XMLDocument document{};
-		if(document.LoadFile(path.c_str()) == tinyxml2::XML_SUCCESS)
+		if(doc.IsValid())
 		{
 			using namespace Graphics;
-			XMLElement* root = document.FirstChildElement("material");
-			XMLElement* infoNode = root->FirstChildElement("info");
-			XMLElement* definesNode = root->FirstChildElement("defines");
-			XMLElement* parametersNode = root->FirstChildElement("parameters");
-			XMLElement* texturesNode = root->FirstChildElement("textures");
+			//XMLElement* root = document.FirstChildElement("material");
+			//XMLElement* infoNode = root->FirstChildElement("info");
+			//XMLElement* definesNode = root->FirstChildElement("defines");
+			//XMLElement* parametersNode = root->FirstChildElement("parameters");
+			//XMLElement* texturesNode = root->FirstChildElement("textures");
 
-			std::string name = infoNode->FirstChildElement("name")->FindAttribute("value")->Value();
-			std::string pixel_path = infoNode->FirstChildElement("pixel_shader")->FindAttribute("value")->Value();
-			std::string debug_pixel_path = infoNode->FirstChildElement("debug_shader")->FindAttribute("value")->Value();
-			std::string vertex_shader_path = infoNode->FirstChildElement("vertex_shader")->FindAttribute("value")->Value();
-			bool double_sided = infoNode->FirstChildElement("double_sided")->FindAttribute("value")->BoolValue();
+			Yaml::Node infoNode = root["info"];
+			std::string name = infoNode["name"].As<std::string>();
+
+			Yaml::Node shadersNode = root["shaders"];
+			std::string pixel_path = shadersNode["opaque"].As<std::string>();
+			std::string debug_pixel_path = shadersNode["debug"].As<std::string>();
+			std::string vertex_shader_path = shadersNode["vertex"].As<std::string>();
+			bool double_sided = infoNode["double_sided"].As<bool>();
 
 			ShaderCompiler::CompileParameters params{};
 			params.entry_point = "main";
 
-			for (XMLElement* defineNode = definesNode->FirstChildElement(); defineNode != nullptr; defineNode = defineNode->NextSiblingElement())
+			Yaml::Node im = root["defines"];
+			if (im.Size())
 			{
-				std::string define = defineNode->FindAttribute("id")->Value();
-				std::string value = defineNode->FindAttribute("value")->Value();
-				params.defines.push_back({ define, value });
+				for (auto it = im.Begin(); it != im.End(); it++)
+				{
+					std::string define = (*it).second["id"].As<std::string>();
+					std::string value = (*it).second["value"].As<std::string>();
+					params.defines.push_back({ define, value });
+				}
 			}
 			params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
 			params.stage = ShaderType::Pixel;
@@ -73,15 +84,15 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 			// Get pixel shader
 			ShaderCreateParams create_params{};
 			create_params.params = params;
-			create_params.path = pixel_path;
+			create_params.path = IO::get()->ResolvePath(pixel_path);
 			auto pixel_shader = ShaderCache::instance()->find_or_create(create_params);
 
 			create_params.params = params;
-			create_params.path = debug_pixel_path;
+			create_params.path = IO::get()->ResolvePath(debug_pixel_path);
 			auto debug_shader = ShaderCache::instance()->find_or_create(create_params);
 
 			create_params.params.stage = ShaderType::Vertex;
-			create_params.path = vertex_shader_path;
+			create_params.path = IO::get()->ResolvePath(vertex_shader_path);
 			auto vertex_shader = ShaderCache::instance()->find_or_create(create_params);
 
 			if (!pixel_shader)
@@ -109,14 +120,14 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 			result->_debug_pixel_shader = debug_shader;
 
 			u32 param_data_byte_size = 0; 
-			for (XMLElement* parameterNode = parametersNode->FirstChildElement(); parameterNode != nullptr; parameterNode = parameterNode->NextSiblingElement())
+			for (auto it = root["parameters"].Begin(); it != root["parameters"].End(); it++)
 			{
 				// Offset in floats
-				u32 offset = parameterNode->FindAttribute("offset")->UnsignedValue();
-				std::string parameter_name = parameterNode->FindAttribute("id")->Value();
+				u32 offset = (*it).second["offset"].As<u32>();
+				std::string parameter_name = (*it).second["id"].As<std::string>();
 				Identifier64 param_hash = Identifier64(parameter_name);
-				std::string parameter_type = parameterNode->FindAttribute("type")->Value();
-				std::string parameter_value = parameterNode->FindAttribute("value")->Value();
+				std::string parameter_type = (*it).second["type"].As<std::string>();
+				std::string parameter_value = (*it).second["value"].As<std::string>();
 
 				static std::unordered_map<Identifier64, size_t> s_TypeSizes = {
 					{ Identifier64("float"), sizeof(f32) },
@@ -180,11 +191,13 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 
 			result->_material_cb = ConstantBuffer::create(Graphics::get_device().Get(), param_data_byte_size, false, BufferUsage::Default, result->_param_data.data());
 
-			for (XMLElement* textureNode = texturesNode->FirstChildElement(); textureNode != nullptr; textureNode = textureNode->NextSiblingElement())
+			#if 1 
+			for (auto it = root["textures"].Begin(); it != root["textures"].End(); it++)
 			{
-				std::string_view texture_path = textureNode->FindAttribute("path")->Value();
-				std::string_view texture_id = textureNode->FindAttribute("id")->Value();
-				u32 slot = textureNode->FindAttribute("slot")->IntValue();
+				Yaml::Node n = (*it).second;
+				std::string texture_path = n["path"].As<std::string>();
+				std::string texture_id = n["id"].As<std::string>();
+				u32 slot = n["slot"].As<u32>();
 
 				result->_textures.resize(slot + 1);
 				result->_texture_slot_mapping[Identifier64(texture_id.data())] = slot;
@@ -217,6 +230,7 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 				}
 
 			}
+			#endif
 
 			return result;
 		}

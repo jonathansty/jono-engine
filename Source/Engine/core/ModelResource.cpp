@@ -60,7 +60,7 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 	std::filesystem::path dir_path = std::filesystem::path(path);
 	dir_path = dir_path.parent_path();
 
-	std::string final_path = IO::get()->resolve_path(path);
+	std::string final_path = IO::get()->ResolvePath(path);
 	auto device = Graphics::get_device();
 	auto ctx = Graphics::get_ctx();
 
@@ -246,7 +246,7 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 	{
 		MaterialInitParameters parameters{};
 		parameters.load_type = MaterialInitParameters::LoadType_FromFile;
-		parameters.name = "Resources/Materials/default.material";
+		parameters.name = IO::get()->ResolvePath("res:/Engine/default.material");
 
 		auto base_material = ResourceLoader::instance()->load<MaterialHandle>(parameters, false, true);
 
