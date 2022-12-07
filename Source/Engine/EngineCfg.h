@@ -30,5 +30,7 @@ struct EngineCfg
 
 	GraphicsSettings m_GraphicsSettings;
 
+	std::vector<u32> m_Values;
+
 };
 

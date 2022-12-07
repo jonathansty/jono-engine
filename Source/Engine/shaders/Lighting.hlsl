@@ -26,7 +26,7 @@ Material CreateMaterial()
 	material.roughness = 0.5;
 	material.metalness = 0.0;
 	material.F0 = float3(0.04, 0.04, 0.04);
-	material.tangentNormal = float3(0.0, 1.0, 0.0);
+	material.tangentNormal = float3(0.0, 0.0, 1.0f);
 	material.ao = 1.0f;
 	return material;
 }
@@ -170,7 +170,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 
 	float3 final_colour = float3(0.0,0.0,0.0);
 
-	uint numDirectionalLights = g_NumDirectionalLights;
+	uint numDirectionalLights = 1;
 	[loop]
 	for (unsigned int i = 0; i < numDirectionalLights; ++i) 
 	{
@@ -183,7 +183,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		// Need to invert the light vector here because we pass in the direction.
 		
 		const float g_shadow_intensity = 0.9f;
-		float4 lightColour = (float4)0.0f;
+		float3 lightColour = (float3)0.0f;
 
 		#if LIGHTING_MODEL == LIGHTING_MODEL_PBR
 			lightColour += LightingModel_BRDF(material, view, light, final_normal) * light_colour;
@@ -196,7 +196,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		#if  LIGHTING_MODEL == LIGHTING_MODEL_BLINN_PHONG
 			lightColour += LightingModel_BlinnPhong(material, view, light,light_colour, final_normal);
 		#endif
-		lightColour += 1.0 - (shadow * g_shadow_intensity); 
+		lightColour *= 1.0 - (shadow * g_shadow_intensity); 
 		final_colour += lightColour;
 
 		// Cubemap reflections, not entirely correct but meh...
@@ -212,7 +212,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 	}
 
 	// Do F+ lighting
-	uint numLights = g_NumLights; 
+	uint numLights = 0; 
 
 #define USE_CULLED_RESULT 1
 

@@ -48,6 +48,9 @@ public:
 		return s_invalid;
 	}
 
+	bool IsValid() const { return _resource.get(); }
+
+
 	bool operator==(TextureHandle const& rhs)
 	{
 		return _resource == rhs._resource;

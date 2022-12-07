@@ -165,4 +165,5 @@ TypeRegistrationHelper<T>::~TypeRegistrationHelper()
 
 #define SERIALIZE_FN(TypeName) void TypeName::Serialize(IFileStream* fileStream)
 #define SERIALIZE_PROPERTY(PropertyName) fileStream->ReadProperty<decltype(this->m_##PropertyName)>(#PropertyName, this->m_##PropertyName)
+#define SERIALIZE_CONTAINER(PropertyName) reinterpret_cast<YamlStream*>(fileStream)->ReadContainer<decltype(this->m_##PropertyName)::value_type> (#PropertyName, this->m_##PropertyName)
 #define SERIALIZE_SUPER() Super::Serialize(fileStream)

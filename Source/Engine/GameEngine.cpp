@@ -496,6 +496,7 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 
 
 			// Run 2D rendering on the app thread, merely populates the 2D drawing data
+			if(m_EngineCfg.m_UseD2D)
 			{
 				RenderD2D();
 			}

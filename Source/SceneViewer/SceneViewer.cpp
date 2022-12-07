@@ -401,21 +401,22 @@ void SceneViewer::debug_ui()
 
 	ImGui::Text("Light: %.2f", _light_tick);
 
-	//const char* items[] = {
-	//	"Default",
-	//	"(Input) Base Color",
-	//	"(Input) Roughness",
-	//	"(Input) Metalness",
-	//	"(Input) Normals",         // 4
-	//	"(Input) AO",              // 5
-	//	"(Input) Normals (World)", // 6
-	//	"(Input) Vertex Colours",  // 7
-	//	"(Input) UV",              // 8
-	//	"Lighting",                // 9
-	//	"ForwardPlusDebug"         // 10
-	//};
+	const char* items[] = {
+		"Default",
+		"(Input) Base Color",
+		"(Input) Roughness",
+		"(Input) Metalness",
+		"(Input) Normals",         // 4
+		"(Input) AO",              // 5
+		"(Input) Normals (World)", // 6
+		"(Input) Vertex Colours",  // 7
+		"(Input) UV",              // 8
+		"Lighting",                // 9
+		"ForwardPlusDebug"         // 10
+	};
 
-	//ImGui::Combo("Debug Mode", &g_DebugMode, items, static_cast<int>(std::size(items)));
+	extern int g_DebugMode;
+	ImGui::Combo("Debug Mode", &g_DebugMode, items, static_cast<int>(std::size(items)));
 
 
 	if(ImGui::CollapsingHeader("Model Info"))

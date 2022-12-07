@@ -7,17 +7,17 @@ info:
   double_sided: false
 defines: 
   - id: LIGHTING_MODEL
-    value: PBR_LIGHTING_MODEL
+    value: LIGHTING_MODEL_PBR
 parameters:
-  - name: Albedo
+  - id: Albedo
     type: float4
     offset: 0
     value: 1,1,1,1
-  - name: Roughness
+  - id: Roughness
     type: float
     offset: 4
     value: 0.5
-  - name: Metalness
+  - id: Metalness
     type: float
     offset: 5
     value: 0

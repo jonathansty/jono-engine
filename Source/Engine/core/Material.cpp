@@ -178,8 +178,6 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 					// Parse float
 					float value = stof(parameter_value);
 					data[offset] = value;
-
-					info.size = 1;
 				}
 				else
 				{
@@ -257,6 +255,10 @@ void Material::get_texture_views(std::vector<ID3D11ShaderResourceView const*>& v
 		{
 			Texture const* texture = *_textures[i];
 			views.push_back(texture->get_srv());
+		}
+		else
+		{
+			views.push_back(nullptr);
 		}
 	}
 }

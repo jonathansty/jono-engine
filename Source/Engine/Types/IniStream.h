@@ -17,6 +17,12 @@ enum class SerializationMode
 	Write
 };
 
+
+template<typename Container> 
+struct is_container : std::false_type { };
+template <typename...Ts> struct is_container<std::vector<Ts...>> : std::true_type{};
+template <typename T, std::size_t N> struct is_container<std::array<T, N>> : std::true_type{};
+
 class IFileStream
 {
 public:
@@ -24,13 +30,25 @@ public:
 	IFileStream(){}; 
 	~IFileStream(){};
 
-	template<typename T, std::enable_if_t<!std::is_enum<T>::value, bool> = true>
+
+	template<typename T, std::enable_if_t<std::is_class<T>::value && !is_container<T>::value, bool> = true>
 	bool ReadProperty(const char* propertyName, T& propertyValue)
 	{
 		TypeMetaData const* meta = T::GetStaticType();
 		return ReadObject(propertyName, meta, reinterpret_cast<void*>(&propertyValue));
 	}
 
+	template<typename T, std::size_t N, std::enable_if_t<is_container<T>::value, bool> = true>
+	bool ReadProperty(const char* propertyName, std::array<T, N>& propertyValue)
+	{
+		return false;
+	}
+
+	template <typename T, std::enable_if_t<is_container<T>::value, bool> = true>
+	bool ReadProperty(const char* propertyName, std::vector<T>& propertyValue)
+	{
+		return false;
+	}
 
 	// Specialization to handle enum classes, they are serialized as u32
 	template <typename T, std::enable_if_t<std::is_enum<T>::value, bool> = true>
@@ -44,6 +62,10 @@ public:
 		}
 		return result;
 	}
+
+	template<typename T, std::enable_if_t<std::is_fundamental<T>::value, bool> = true>
+	bool ReadProperty(const char* propertyName, T& propertyValue);
+
 
 	template <> bool ReadProperty(const char* propertyName, std::string& propertyValue) { this->ReadStringProperty(propertyName, propertyValue); }
 	template <> bool ReadProperty(const char* propertyName, int& propertyValue) { return this->ReadIntProperty(propertyName, propertyValue); }
@@ -74,28 +96,32 @@ class YamlStream : public IFileStream
 
 		virtual ~YamlStream();
 
-		bool ReadObject(const char* propertyName, TypeMetaData const* meta, void* obj) 
-		{
-			ScopedRead scopeRead = ScopedRead(m_Current, propertyName);
-			if (m_Current.IsNone())
-			{
-				return false;
-			}
+		bool ReadObject(const char* propertyName, TypeMetaData const* meta, void* obj);
 
-			bool result = false;
-			if (meta && meta->m_SerializeFn)
-			{
-				meta->m_SerializeFn(this, obj);
-				return true;
-			}
-			return false;
-		}
 		bool ReadStringProperty(const char* propertyName, std::string& outValue) { return ReadInternal<std::string>(propertyName, outValue); }
 		bool ReadIntProperty(const char* propertyName, int& outValue) { return ReadInternal<int>(propertyName, outValue); }
 		bool ReadUIntProperty(const char* propertyName, unsigned int& outValue) { return ReadInternal<unsigned int>(propertyName, outValue); }
 		bool ReadFloatProperty(const char* propertyName, float& outValue) { return ReadInternal<float>(propertyName, outValue); }
 		bool ReadDoubleProperty(const char* propertyName, double& outValue) { return ReadInternal<double>(propertyName, outValue); }
 		bool ReadBoolProperty(const char* propertyName, bool& outValue) { return ReadInternal<bool>(propertyName, outValue); }
+
+		template <typename T>
+		bool ReadContainer(const char* propertyName, std::vector<T>& outContainer)
+		{
+			Yaml::Node n = m_Current[propertyName];
+			if(!n.IsSequence())
+			{
+				return false;
+			}
+
+			for(auto it = n.Begin(); it != n.End(); it++)
+			{
+				Yaml::Node node = (*it).second;
+				T value = node.As<T>();
+				outContainer.push_back(std::move(value));
+			}
+			return true;
+		}
 
 
 	private:

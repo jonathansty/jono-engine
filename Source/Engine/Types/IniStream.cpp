@@ -114,3 +114,20 @@ YamlStream::YamlStream(const char* data, u32 size)
 YamlStream::~YamlStream()
 {
 }
+
+bool YamlStream::ReadObject(const char* propertyName, TypeMetaData const* meta, void* obj)
+{
+	ScopedRead scopeRead = ScopedRead(m_Current, propertyName);
+	if (m_Current.IsNone())
+	{
+		return false;
+	}
+
+	bool result = false;
+	if (meta && meta->m_SerializeFn)
+	{
+		meta->m_SerializeFn(this, obj);
+		return true;
+	}
+	return false;
+}

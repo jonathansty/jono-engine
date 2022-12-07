@@ -33,7 +33,7 @@ void TextureHandle::deinit()
 TextureHandle TextureHandle::black()
 {
 	auto& s_tex = s_default_textures[DefaultTexture::Black];
-	if (s_tex == TextureHandle::invalid())
+	if (!s_tex.IsValid())
 	{
 		s_tex = TextureHandle();
 		std::array<u32, 4 * 4> data{};
@@ -47,7 +47,7 @@ TextureHandle TextureHandle::black()
 TextureHandle TextureHandle::white()
 {
 	auto& s_white = s_default_textures[DefaultTexture::White];
-	if (s_white == TextureHandle::invalid())
+	if (!s_white.IsValid())
 	{
 		s_white = TextureHandle();
 		std::array<u32, 4 * 4> data{};
@@ -60,7 +60,7 @@ TextureHandle TextureHandle::white()
 TextureHandle TextureHandle::default_normal()
 {
 	auto& s_default_normal = s_default_textures[DefaultTexture::Normal];
-	if (s_default_normal == TextureHandle::invalid())
+	if (!s_default_normal.IsValid())
 	{
 		s_default_normal = TextureHandle();
 		std::array<u32, 16> data{};
@@ -73,7 +73,7 @@ TextureHandle TextureHandle::default_normal()
 TextureHandle TextureHandle::default_roughness()
 {
 	auto& s_tex = s_default_textures[DefaultTexture::Roughness];
-	if (s_tex != TextureHandle::invalid())
+	if (!s_tex.IsValid())
 	{
 		s_tex = TextureHandle();
 		std::array<u32, 16> data{};
@@ -94,6 +94,7 @@ void TextureHandle::create_from_memory(uint32_t width, uint32_t height, DXGI_FOR
 {
 	_resource = std::make_shared<Texture>();
 	_resource->create_from_memory(width, height, format, type, data);
+	_status = ResourceStatus::Loaded;
 }
 
 
