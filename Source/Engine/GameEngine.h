@@ -68,6 +68,10 @@ public:
 	static int Run(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iCmdShow, unique_ptr<class AbstractGame>&& game);
 
 public:
+	bool Startup();
+	void Update(f64 dt);
+	void Shutdown();
+
 	// Quits the game
 	void Quit();
 
@@ -316,5 +320,6 @@ private:
 	SharedPtr<Graphics::Renderer> m_Renderer;
 
 	friend class MetricsOverlay;
+	friend class EngineLoop;
 };
 

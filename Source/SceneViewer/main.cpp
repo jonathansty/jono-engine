@@ -6,9 +6,18 @@
 #include "Memory.h"
 
 #include "Graphics/ShaderCompiler.h"
+#include "EngineLoop.h"
+
+#define USE_ENGINE_LOOP
 
 int main(int argcs, char** argvs)
 {
+#ifdef USE_ENGINE_LOOP
+	EngineLoop engine;
+	return engine.Run();
+#else
+
+
 	MemoryTracker::init();
 
 	// Parses the command line for use with the game engine
@@ -39,10 +48,9 @@ int main(int argcs, char** argvs)
 		game_ptr = make_unique<SceneViewer>(scene);
 	}
 
-	GameEngine::Run(NULL, cmd, 1, std::move(game_ptr));
+	int result = GameEngine::Run(NULL, cmd, 1, std::move(game_ptr));
 
 	get_memory_tracker()->DumpLeakInfo();
-
-	return 0;
-
+	return result;
+#endif
 }

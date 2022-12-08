@@ -30,7 +30,6 @@
 #include "Memory.h"
 
 #include "Types/TypeManager.h"
-#include "Types/IniStream.h"
 
 int g_DebugMode = 0;
 
@@ -129,6 +128,7 @@ void GameEngine::set_title(const string& titleRef)
 
 int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 {
+	//Startup();
 	JONO_THREAD("MainThread");
 
 	InitSubSystems();
@@ -596,6 +596,440 @@ int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
 	return 0;
 }
 
+
+bool GameEngine::Startup()
+{
+	JONO_THREAD("MainThread");
+
+	InitSubSystems();
+
+	if (m_Game)
+	{
+		ASSERTMSG(m_Game, "No game has been setup! Make sure to first create a game instance before launching the engine!");
+		if (m_Game)
+		{
+			MEMORY_TAG(MemoryCategory::Game);
+			m_Game->configure_engine(this->m_EngineCfg);
+		}
+	}
+
+	// Validate engine settings
+	ASSERTMSG(!(m_EngineCfg.m_UseD2D && (m_EngineCfg.m_UseD3D && m_EngineCfg.m_D3DMSAA != MSAAMode::Off)), " Currently the engine does not support rendering D2D with MSAA because DrawText does not respond correctly!");
+
+	s_MainThreadID = std::this_thread::get_id();
+
+	// initialize d2d for WIC
+	SUCCEEDED(CoInitializeEx(nullptr, COINITBASE_MULTITHREADED));
+
+	// Setup our default overlays
+	m_OverlayManager = std::make_shared<OverlayManager>();
+	m_MetricsOverlay = new MetricsOverlay(true);
+
+	m_OverlayManager->register_overlay(m_MetricsOverlay);
+	m_OverlayManager->register_overlay(new RTTIDebugOverlay());
+	m_OverlayManager->register_overlay(new ImGuiDemoOverlay());
+	m_OverlayManager->register_overlay(new ImGuiAboutOverlay());
+
+	struct InitTask : enki::IPinnedTask
+	{
+		InitTask(uint32_t threadNum)
+				: IPinnedTask(threadNum) {}
+
+		void Execute() override
+		{
+			LOG_INFO(System, "Initializing Task thread {}.", threadNum - 1);
+
+			std::wstring name = fmt::format(L"TaskThread {}", threadNum - 1);
+			::SetThreadDescription(GetCurrentThread(), name.c_str());
+			SUCCEEDED(::CoInitialize(NULL));
+		}
+	};
+	::SetThreadDescription(GetCurrentThread(), L"MainThread");
+
+	enki::TaskScheduler* taskScheduler = GetGlobalContext()->m_TaskScheduler;
+	std::vector<std::unique_ptr<InitTask>> tasks;
+	for (uint32_t i = 1; i < taskScheduler->GetNumTaskThreads(); ++i)
+	{
+		tasks.push_back(std::make_unique<InitTask>(i));
+		taskScheduler->AddPinnedTask(tasks.back().get());
+	}
+	taskScheduler->RunPinnedTasks();
+	taskScheduler->WaitforAll();
+
+	// Initialize the high precision timers
+	m_FrameTimer = make_unique<PrecisionTimer>();
+	m_FrameTimer->reset();
+
+	m_InputManager = make_unique<InputManager>();
+	m_InputManager->init();
+
+	ASSERT(!GetGlobalContext()->m_InputManager);
+	GetGlobalContext()->m_InputManager = m_InputManager.get();
+
+	// Sound system
+#if FEATURE_XAUDIO
+	m_AudioSystem = make_unique<XAudioSystem>();
+	m_AudioSystem->init();
+#endif
+
+#ifdef _DEBUG
+	// Log out some test messages to make sure our logging is working
+	LOG_VERBOSE(Unknown, "Test verbose message");
+	LOG_INFO(Unknown, "Test info message");
+	LOG_WARNING(Unknown, "Test warning message");
+	LOG_ERROR(Unknown, "Test error message");
+#endif
+
+	// Kick-off the graphics thread
+	m_GraphicsThread.Execute();
+
+	m_Renderer = SharedPtr(new Graphics::Renderer());
+	m_Renderer->Init(m_EngineCfg, m_GameCfg, m_CommandLine);
+
+	// Game Initialization
+	if (m_Game)
+	{
+		MEMORY_TAG(MemoryCategory::Game);
+		m_Game->initialize(m_GameCfg);
+	}
+	apply_settings(m_GameCfg);
+
+	{
+		ImGui::SetAllocatorFunctions(
+				[](size_t size, void*)
+				{
+					return std::malloc(size);
+				},
+				[](void* mem, void*)
+				{
+					return std::free(mem);
+				});
+		ImGui::CreateContext();
+		ImPlot::CreateContext();
+	}
+
+	SDL_Init(SDL_INIT_EVERYTHING);
+
+	if (!this->InitWindow(0))
+	{
+		MessageBoxA(NULL, "Open window failed", "error", MB_OK);
+		return false;
+	}
+
+	m_Renderer->InitForWindow(m_Window);
+	Graphics::init(m_Renderer->get_ctx());
+
+	m_ViewportWidth = m_Renderer->GetDrawableWidth();
+	m_ViewportHeight = m_Renderer->GetDrawableHeight();
+	m_ViewportPos = { 0.0f, 0.0f };
+
+	m_DefaultFont = make_shared<Font>("Consolas", 12.0f);
+
+	TextureHandle::init_default();
+
+	LOG_INFO(System, "Initialising worlds...");
+	{
+		m_World = std::make_shared<framework::World>();
+		m_World->init();
+
+		m_RenderWorld = std::make_shared<RenderWorld>();
+		m_RenderWorld->init();
+	}
+	LOG_INFO(System, "Finished initialising worlds.");
+
+		{
+		// ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+		// ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleFonts;
+		// ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DpiEnableScaleViewports;
+
+		ImGui::GetIO().FontDefault = nullptr;
+		ImGui::GetIO().Fonts->AddFontFromFileTTF("Resources/Fonts/Roboto-Regular.ttf", 16.0f);
+
+		// Set colors
+		{
+			ImVec4* colors = ImGui::GetStyle().Colors;
+			colors[ImGuiCol_Text] = ImVec4(1.00f, 1.00f, 1.00f, 1.00f);
+			colors[ImGuiCol_TextDisabled] = ImVec4(0.50f, 0.50f, 0.50f, 1.00f);
+			colors[ImGuiCol_WindowBg] = ImVec4(0.06f, 0.06f, 0.06f, 0.94f);
+			colors[ImGuiCol_ChildBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+			colors[ImGuiCol_PopupBg] = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
+			colors[ImGuiCol_Border] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+			colors[ImGuiCol_BorderShadow] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+			colors[ImGuiCol_FrameBg] = ImVec4(0.33f, 0.33f, 0.33f, 0.54f);
+			colors[ImGuiCol_FrameBgHovered] = ImVec4(0.98f, 0.57f, 0.26f, 0.40f);
+			colors[ImGuiCol_FrameBgActive] = ImVec4(0.98f, 0.55f, 0.26f, 0.67f);
+			colors[ImGuiCol_TitleBg] = ImVec4(0.04f, 0.04f, 0.04f, 1.00f);
+			colors[ImGuiCol_TitleBgActive] = ImVec4(0.95f, 0.56f, 0.06f, 1.00f);
+			colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.00f, 0.00f, 0.00f, 0.51f);
+			colors[ImGuiCol_MenuBarBg] = ImVec4(0.14f, 0.14f, 0.14f, 1.00f);
+			colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
+			colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.31f, 0.31f, 0.31f, 1.00f);
+			colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.00f);
+			colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.00f);
+			colors[ImGuiCol_CheckMark] = ImVec4(0.98f, 0.58f, 0.26f, 1.00f);
+			colors[ImGuiCol_SliderGrab] = ImVec4(0.88f, 0.56f, 0.24f, 1.00f);
+			colors[ImGuiCol_SliderGrabActive] = ImVec4(0.98f, 0.67f, 0.26f, 1.00f);
+			colors[ImGuiCol_Button] = ImVec4(0.98f, 0.55f, 0.26f, 0.40f);
+			colors[ImGuiCol_ButtonHovered] = ImVec4(0.98f, 0.60f, 0.26f, 1.00f);
+			colors[ImGuiCol_ButtonActive] = ImVec4(0.87f, 0.59f, 0.05f, 1.00f);
+			colors[ImGuiCol_Header] = ImVec4(1.00f, 0.60f, 0.00f, 0.65f);
+			colors[ImGuiCol_HeaderHovered] = ImVec4(0.98f, 0.62f, 0.26f, 0.80f);
+			colors[ImGuiCol_HeaderActive] = ImVec4(0.98f, 0.67f, 0.26f, 1.00f);
+			colors[ImGuiCol_Separator] = ImVec4(0.43f, 0.43f, 0.50f, 0.50f);
+			colors[ImGuiCol_SeparatorHovered] = ImVec4(0.75f, 0.37f, 0.10f, 0.78f);
+			colors[ImGuiCol_SeparatorActive] = ImVec4(0.75f, 0.27f, 0.10f, 1.00f);
+			colors[ImGuiCol_ResizeGrip] = ImVec4(0.98f, 0.57f, 0.26f, 0.20f);
+			colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.98f, 0.55f, 0.26f, 0.67f);
+			colors[ImGuiCol_ResizeGripActive] = ImVec4(0.98f, 0.60f, 0.26f, 0.95f);
+			colors[ImGuiCol_Tab] = ImVec4(0.83f, 0.53f, 0.14f, 0.70f);
+			colors[ImGuiCol_TabHovered] = ImVec4(0.99f, 0.78f, 0.58f, 1.00f);
+			colors[ImGuiCol_TabActive] = ImVec4(1.00f, 0.56f, 0.00f, 0.86f);
+			colors[ImGuiCol_TabUnfocused] = ImVec4(0.34f, 0.27f, 0.21f, 1.00f);
+			colors[ImGuiCol_TabUnfocusedActive] = ImVec4(0.88f, 0.47f, 0.10f, 0.45f);
+			colors[ImGuiCol_DockingPreview] = ImVec4(0.98f, 0.62f, 0.26f, 0.70f);
+			colors[ImGuiCol_DockingEmptyBg] = ImVec4(0.20f, 0.20f, 0.20f, 1.00f);
+			colors[ImGuiCol_PlotLines] = ImVec4(0.61f, 0.61f, 0.61f, 1.00f);
+			colors[ImGuiCol_PlotLinesHovered] = ImVec4(1.00f, 0.43f, 0.35f, 1.00f);
+			colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
+			colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
+			colors[ImGuiCol_TableHeaderBg] = ImVec4(0.19f, 0.19f, 0.20f, 1.00f);
+			colors[ImGuiCol_TableBorderStrong] = ImVec4(0.31f, 0.31f, 0.35f, 1.00f);
+			colors[ImGuiCol_TableBorderLight] = ImVec4(0.23f, 0.23f, 0.25f, 1.00f);
+			colors[ImGuiCol_TableRowBg] = ImVec4(0.00f, 0.00f, 0.00f, 0.00f);
+			colors[ImGuiCol_TableRowBgAlt] = ImVec4(1.00f, 1.00f, 1.00f, 0.06f);
+			colors[ImGuiCol_TextSelectedBg] = ImVec4(0.98f, 0.62f, 0.26f, 0.35f);
+			colors[ImGuiCol_DragDropTarget] = ImVec4(1.00f, 1.00f, 0.00f, 0.90f);
+			colors[ImGuiCol_NavHighlight] = ImVec4(0.98f, 0.65f, 0.26f, 1.00f);
+			colors[ImGuiCol_NavWindowingHighlight] = ImVec4(1.00f, 1.00f, 1.00f, 0.70f);
+			colors[ImGuiCol_NavWindowingDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.20f);
+			colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
+		}
+
+		Graphics::DeviceContext ctx = m_Renderer->get_ctx();
+		ImGui_ImplSDL2_InitForD3D(m_Window);
+		ImGui_ImplDX11_Init(ctx._device.Get(), ctx._ctx.Get());
+	}
+
+#pragma region Box2D
+	// Initialize Box2D
+	// Define the gravity vector.
+	b2Vec2 gravity((float)m_Gravity.x, (float)m_Gravity.y);
+
+	// Construct a world object, which will hold and simulate the rigid bodies.
+	m_Box2DWorld = make_shared<b2World>(gravity);
+	m_Box2DContactFilter = make_shared<b2ContactFilter>();
+
+	m_Box2DWorld->SetContactFilter(m_Box2DContactFilter.get());
+	m_Box2DWorld->SetContactListener(this);
+
+#if FEATURE_D2D
+	m_Box2DDebugRenderer.SetFlags(b2Draw::e_shapeBit);
+	m_Box2DDebugRenderer.AppendFlags(b2Draw::e_centerOfMassBit);
+	m_Box2DDebugRenderer.AppendFlags(b2Draw::e_jointBit);
+	m_Box2DDebugRenderer.AppendFlags(b2Draw::e_pairBit);
+	m_Box2DWorld->SetDebugDraw(&m_Box2DDebugRenderer);
+#endif
+#pragma endregion
+
+	// User defined functions for start of the game
+	if (m_Game)
+	{
+		MEMORY_TAG(MemoryCategory::Game);
+		m_Game->start();
+	}
+
+	// Ensure world has default setup
+	if (!get_render_world()->get_view_camera())
+	{
+		RenderWorldCameraRef camera = get_render_world()->create_camera();
+		ImVec2 size = GameEngine::instance()->GetViewportSize();
+		const float aspect = (float)size.x / (float)size.y;
+		const float near_plane = 5.0f;
+		const float far_plane = 1000.0f;
+
+		// Create Cam 1
+		RenderWorldCamera::CameraSettings settings{};
+		settings.aspect = aspect;
+		settings.far_clip = far_plane;
+		settings.near_clip = near_plane;
+		settings.fov = hlslpp::radians(float1(60.0f));
+		settings.projection_type = RenderWorldCamera::Projection::Perspective;
+		camera->set_settings(settings);
+		camera->set_view(float4x4::translation({ 0.0f, 1.5f, -25.0f }));
+	}
+
+	// Initialize our performance tracking
+	Perf::initialize(m_Renderer->get_raw_device());
+
+	// Initialize our GPU timers
+	for (u32 j = 0; j < std::size(m_GpuTimings); ++j)
+	{
+		m_GpuTimings[j] = Perf::Timer(m_Renderer->get_raw_device());
+	}
+
+	// Wait until graphics stage is initialized
+	m_GraphicsThread.WaitForStage(GraphicsThread::Stage::Running);
+	m_SignalGraphicsToMain.release();
+
+	m_IsRunning = true;
+
+
+	return true;
+}
+
+void GameEngine::Update(f64 dt)
+{
+	{
+		JONO_EVENT("PollInput");
+
+		Timer t{};
+		t.Start();
+		// Process all window messages
+
+		SDL_Event e;
+		while (SDL_PollEvent(&e))
+		{
+			GameEngine::instance()->ProcessEvent(e);
+		}
+
+		MSG msg{};
+		while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+
+		t.Stop();
+		m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::EventHandlingCPU, t.GetTimeInMS());
+	}
+
+	// Running might have been updated by the windows message loop. Handle this here.
+	if (!m_IsRunning)
+	{
+		m_GraphicsThread.Terminate();
+		m_SignalMainToGraphics.release();
+		return;
+	}
+
+	{
+		// Execute the game simulation loop
+		{
+			JONO_EVENT("Simulation");
+			f64 elapsed = dt;
+			m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::FrameTime, (float)(elapsed * 1000.0f));
+
+			f64 time_lag = elapsed;
+
+			Timer t{};
+			t.Start();
+			while (time_lag >= c_FixedPhysicsTimestep)
+			{
+				// Call the Game Tick method
+				if (m_Game)
+				{
+					MEMORY_TAG(MemoryCategory::Game);
+					m_Game->tick(c_FixedPhysicsTimestep);
+				}
+
+				int32 velocityIterations = 6;
+				int32 positionIterations = 2;
+				if (m_PhysicsStepEnabled)
+				{
+					m_Box2DWorld->Step((float)c_FixedPhysicsTimestep, velocityIterations, positionIterations);
+				}
+
+				// Step generates contact lists, pass to Listeners and clear the vector
+				CallListeners();
+				time_lag -= c_FixedPhysicsTimestep;
+
+				// Input manager update takes care of swapping the state
+				m_InputManager->update();
+			}
+			t.Stop();
+			m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
+		}
+
+		// Run 2D rendering on the app thread, merely populates the 2D drawing data
+		if (m_EngineCfg.m_UseD2D)
+		{
+			RenderD2D();
+		}
+
+		// Recreating the game viewport texture needs to happen before running IMGUI and the actual rendering
+		{
+			JONO_EVENT("DebugUI");
+			ImGui_ImplDX11_NewFrame();
+
+			// ImVec2 displaySize = { (float)m_Renderer->GetDrawableWidth(), (float)m_Renderer->GetDrawableHeight() };
+			ImGui_ImplSDL2_NewFrame(nullptr);
+
+			ImGui::NewFrame();
+
+			BuildEditorUI();
+
+			if (m_Game)
+			{
+				MEMORY_TAG(MemoryCategory::Debug);
+				m_Game->debug_ui();
+			}
+			m_OverlayManager->RenderOverlay();
+
+			ImGui::EndFrame();
+			ImGui::UpdatePlatformWindows();
+			ImGui::Render();
+		}
+	}
+
+	ResourceLoader::instance()->update();
+
+	// First sync our game update to the RT
+	m_SignalGraphicsToMain.acquire();
+	Sync();
+	m_SignalMainToGraphics.release();
+}
+
+void GameEngine::Shutdown()
+{
+	m_GraphicsThread.Terminate();
+	m_GraphicsThread.WaitForStage(GraphicsThread::Stage::Terminated);
+	m_GraphicsThread.Join();
+
+	// User defined code for exiting the game
+	if (m_Game)
+	{
+		MEMORY_TAG(MemoryCategory::Game);
+		m_Game->end();
+	}
+	m_Game.reset();
+
+	// Make sure all tasks have finished before shutting down
+	Tasks::get_scheduler()->WaitforAllAndShutdown();
+
+	Perf::shutdown();
+
+	ResourceLoader::instance()->unload_all();
+	ResourceLoader::shutdown();
+
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplSDL2_Shutdown();
+
+	ImGui::DestroyContext();
+
+	SDL_DestroyWindow(m_Window);
+	SDL_Quit();
+
+	// Teardown graphics resources and windows procedures
+	{
+		m_DefaultFont.reset();
+
+		Graphics::deinit();
+		m_Renderer->DeInit();
+		m_Renderer = nullptr;
+
+		::CoUninitialize();
+	}
+}
 
 struct EditorWindowData
 {

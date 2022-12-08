@@ -30,7 +30,4 @@ struct GameCfg final
 	u32		m_WindowHeight;
 	u32 m_WindowFlags;
 	//bool	m_EnableDebugRendering = false;
-
-
-	static void Serialize(IniStream& data, GameCfg* config);
 };

@@ -2,7 +2,7 @@
 #include "GameSettings.h"
 #include "EngineCfg.h"
 
-#include "Types/IniStream.h"
+#include "Types/FileStream.h"
 
 REGISTER_TYPE("/Types/Core/GameCfg", GameCfg)
 

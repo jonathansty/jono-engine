@@ -2,7 +2,7 @@
 #include "EngineCfg.h"
 
 #include "CommandLine.h"
-#include "Types/IniStream.h"
+#include "Types/FileStream.h"
 
 
 REGISTER_TYPE("/Types/Core/EngineCfg", EngineCfg);
