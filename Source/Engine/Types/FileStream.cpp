@@ -1,8 +1,9 @@
 #include "engine.pch.h"
-#include "IniStream.h"
+#include "FileStream.h"
 #include "CommandLine.h"
 #include "Logging.h"
 
+#if 0 
 IniStream::IniStream(const char* data, u32 size)
 		: m_Data(data)
 		, m_Size(size)
@@ -91,6 +92,7 @@ IniStream::IniStream(const char* data, u32 size)
 		}
 	}
 }
+#endif
 
 YamlStream::YamlStream(const char* data, u32 size)
 	: IFileStream()

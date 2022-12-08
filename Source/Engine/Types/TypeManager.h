@@ -2,6 +2,7 @@
 
 #include "Core/Singleton.h"
 
+
 class IniStream;
 
 class TypeMetaData
@@ -145,6 +146,7 @@ TypeRegistrationHelper<T>::~TypeRegistrationHelper()
 	TypeManager::instance()->RemoveType(m_Path);
 }
 
+#include "FileStream.h"
 
 #define ANON_VARIABLE(VarName) _#VarName##__LINE__
 
@@ -154,14 +156,15 @@ TypeRegistrationHelper<T>::~TypeRegistrationHelper()
 	TypeMetaData const* TypeName::GetType() { return TypeName::GetStaticType(); } 
 
 #define CLASS_BASE(ClassName) \
-	static class TypeMetaData const* GetStaticType(); \
-	virtual class TypeMetaData const* GetType();   \
-	static void Serialize(IFileStream* data, ClassName* obj) { obj->Serialize(data); } \
-	void Serialize(IFileStream* data);
+	public:\
+		static class TypeMetaData const* GetStaticType(); \
+		virtual class TypeMetaData const* GetType();   \
+		static void Serialize(class IFileStream* data, ClassName* obj) { obj->Serialize(data); } \
+		void Serialize(class IFileStream* data);\
 
 #define CLASS(ClassName, BaseClass) \
 	using Super = BaseClass;        \
-	CLASS_BASE()
+	CLASS_BASE(ClassName)
 
 #define SERIALIZE_FN(TypeName) void TypeName::Serialize(IFileStream* fileStream)
 #define SERIALIZE_PROPERTY(PropertyName) fileStream->ReadProperty<decltype(this->m_##PropertyName)>(#PropertyName, this->m_##PropertyName)
