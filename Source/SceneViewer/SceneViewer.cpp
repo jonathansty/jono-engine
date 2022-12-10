@@ -43,6 +43,9 @@ struct DebugVisualizeMode
 
 //extern int g_DebugMode;
 
+REGISTER_TYPE("/Types/Games/SceneViewer", SceneViewer);
+SERIALIZE_FN(SceneViewer) {}
+
  SceneViewer::SceneViewer(std::string const& path)
 	:_scene_path(path)
 	,_light_tick(0.0f)
@@ -53,7 +56,16 @@ struct DebugVisualizeMode
 
 }
 
- SceneViewer::~SceneViewer()
+SceneViewer::SceneViewer()
+	: _scene_path("")
+	,_light_tick(0.0f)
+	,_camera(nullptr)
+	,_freecam(nullptr)
+	,_overlay(nullptr)
+{
+}
+
+SceneViewer::~SceneViewer()
 {
 }
 

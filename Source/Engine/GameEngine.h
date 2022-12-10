@@ -299,6 +299,9 @@ private:
 	std::binary_semaphore m_SignalMainToGraphics;
 	std::binary_semaphore m_SignalGraphicsToMain;
 
+	f64 m_TimeAccum;
+	f64 m_TimeT;
+
 	bool m_IsRunning : 1; 
 	bool m_ShouldSleep : 1;
 	bool m_CanPaint2D : 1;

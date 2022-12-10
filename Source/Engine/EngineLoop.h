@@ -16,14 +16,20 @@ class EngineLoop : public IEngineLoop
 	CLASS(EngineLoop, IEngineLoop)
 
 	public:
+		EngineLoop(const char* gameType = nullptr);
+
 		int Run() override;
 
 		void Startup() override;
 		void Update(f64 dt) override;
 		void Shutdown() override;
 
+		EngineLoop& operator=(EngineLoop const&) = delete;
+		EngineLoop(EngineLoop const&) = delete;
+
 	private:
 		class GameEngine* m_Engine;
+		std::string m_GameType;
 
 		bool m_IsRunning = false;
 

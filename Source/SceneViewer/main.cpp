@@ -13,7 +13,7 @@
 int main(int argcs, char** argvs)
 {
 #ifdef USE_ENGINE_LOOP
-	EngineLoop engine;
+	EngineLoop engine("/Types/Games/SceneViewer");
 	return engine.Run();
 #else
 

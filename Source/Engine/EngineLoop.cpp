@@ -1,6 +1,7 @@
 #include "engine.pch.h"
 #include "EngineLoop.h"
 #include "GameEngine.h"
+#include "AbstractGame.h"
 
 REGISTER_TYPE("/Types/EngineLoop", EngineLoop);
 REGISTER_TYPE("/Types/EditorLoop", EditorLoop);
@@ -12,22 +13,53 @@ int EngineLoop::Run()
 {
 	MemoryTracker::init();
 
+	GameEngine::create();
+	m_Engine = GameEngine::instance();
+
+	AbstractGame* rawGame = (AbstractGame*)(GetGlobalContext()->m_TypeManager->CreateObject(m_GameType));
+	m_Engine->m_Game = std::unique_ptr<AbstractGame>(rawGame);
+
 	Startup();
+
+	PrecisionTimer frameTimer{};
+	f64 timeElapsed = 0.0;
+	f64 timePrevious = 0.0;
+	f64 timeLag = 0.0; 
 
 	while (m_Engine->m_IsRunning)
 	{
-		Update(0.033);
+		f64 delta = frameTimer.get_delta_time();
+		frameTimer.start();
+
+		Update(delta);
+
+		// Update CPU only timings
+		{
+			JONO_EVENT("FrameLimiter");
+
+			EngineCfg const& cfg = m_Engine->m_EngineCfg;
+			if (cfg.m_MaxFrametime > 0.0)
+			{
+				f64 targetTimeMs = cfg.m_MaxFrametime;
+
+				// Get the current frame time
+				f64 framet = frameTimer.get_delta_time();
+				f64 time_to_sleep = targetTimeMs - framet;
+
+				Perf::PreciseSleep(time_to_sleep);
+			}
+		}
+
+		frameTimer.stop();
+		timeElapsed += frameTimer.get_delta_time();
 	}
 
 	Shutdown();
-
 	return 0;
 }
 
 void EngineLoop::Startup()
 {
-	GameEngine::create();
-	m_Engine = GameEngine::instance();
 
 	//#TODO: Should we have some kind of base game? Or drive the game modes in a different way with engine features?
 	m_Engine->Startup();
@@ -42,6 +74,13 @@ void EngineLoop::Update(f64 dt)
 void EngineLoop::Shutdown()
 {
 	m_Engine->Shutdown();
+}
+
+ EngineLoop::EngineLoop(const char* gameType /*= nullptr*/)
+	 : m_GameType(gameType)
+	 , m_Engine(nullptr)
+	 , m_IsRunning(false)
+{
 }
 
 void EditorLoop::Update(f64 dt)
