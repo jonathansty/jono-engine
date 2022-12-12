@@ -188,7 +188,7 @@ bool GameEngine::Startup()
 		if (m_Game)
 		{
 			MEMORY_TAG(MemoryCategory::Game);
-			m_Game->configure_engine(this->m_EngineCfg);
+			m_Game->ConfigureEngine(this->m_EngineCfg);
 		}
 	}
 
@@ -269,7 +269,7 @@ bool GameEngine::Startup()
 	if (m_Game)
 	{
 		MEMORY_TAG(MemoryCategory::Game);
-		m_Game->initialize(m_GameCfg);
+		m_Game->ConfigureGame(m_GameCfg);
 	}
 	apply_settings(m_GameCfg);
 
@@ -415,7 +415,7 @@ bool GameEngine::Startup()
 	if (m_Game)
 	{
 		MEMORY_TAG(MemoryCategory::Game);
-		m_Game->start();
+		m_Game->OnStartup();
 	}
 
 	// Ensure world has default setup
@@ -511,7 +511,7 @@ void GameEngine::Update(f64 dt)
 				if (m_Game)
 				{
 					MEMORY_TAG(MemoryCategory::Game);
-					m_Game->tick(c_FixedPhysicsTimestep);
+					m_Game->OnUpdate(c_FixedPhysicsTimestep);
 				}
 
 				int32 velocityIterations = 6;
@@ -554,7 +554,7 @@ void GameEngine::Update(f64 dt)
 			if (m_Game)
 			{
 				MEMORY_TAG(MemoryCategory::Debug);
-				m_Game->debug_ui();
+				m_Game->OnDebugUI();
 			}
 			m_OverlayManager->RenderOverlay();
 
@@ -582,7 +582,7 @@ void GameEngine::Shutdown()
 	if (m_Game)
 	{
 		MEMORY_TAG(MemoryCategory::Game);
-		m_Game->end();
+		m_Game->OnShutdown();
 	}
 	m_Game.reset();
 
@@ -1645,7 +1645,7 @@ void GameEngine::RenderD2D()
 		if (engine->m_Game)
 		{
 			MEMORY_TAG(MemoryCategory::Game);
-			engine->m_Game->paint(context);
+			engine->m_Game->OnPaint2D(context);
 		}
 	}
 

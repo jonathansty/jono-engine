@@ -69,14 +69,14 @@ SceneViewer::~SceneViewer()
 {
 }
 
-void SceneViewer::configure_engine(EngineCfg& engineSettings)
+void SceneViewer::ConfigureEngine(EngineCfg& engineSettings)
 {
-	Super::configure_engine(engineSettings);
+	Super::ConfigureEngine(engineSettings);
 }
 
-void SceneViewer::initialize(GameCfg& gameSettings)
+void SceneViewer::ConfigureGame(GameCfg& gameSettings)
 {
-	Super::initialize(gameSettings);
+	Super::ConfigureGame(gameSettings);
 
 	gameSettings.m_FullscreenMode = GameCfg::FullScreenMode::Windowed;
 	gameSettings.m_WindowWidth = 1920;
@@ -106,9 +106,9 @@ std::string ShowFileDialog(SDL_Window* owner)
 	return {};
 }
 
-void SceneViewer::start()
+void SceneViewer::OnStartup()
 {
-	Super::start();
+	Super::OnStart();
 
 
 	auto ge = GameEngine::instance();
@@ -309,7 +309,7 @@ void SceneViewer::start()
 
 }
 
-void SceneViewer::end()
+void SceneViewer::OnShutdown()
 {
 	Super::end();
 

@@ -19,16 +19,16 @@ public:
 	SceneViewer(std::string const& path);
 	virtual ~SceneViewer();
 
-	virtual void configure_engine(EngineCfg &engineSettings) override;
-	virtual void initialize(GameCfg& gameSettings);
-	virtual void start() override;
-	virtual void end() override;
+	virtual void ConfigureEngine(EngineCfg &engineSettings) override;
+	virtual void ConfigureGame(GameCfg& gameSettings);
+	virtual void OnStartup() override;
+	virtual void OnShutdown() override;
 
 	#if FEATURE_D2D
-	virtual void paint(Graphics::D2DRenderContext& ctx) override;
+	virtual void OnPaint2D(Graphics::D2DRenderContext& ctx) override;
 	#endif
-	virtual void tick(double deltaTime) override;
-	virtual void debug_ui() override;
+	virtual void OnUpdate(double deltaTime) override;
+	virtual void OnDebugUI() override;
 
 private:
 
