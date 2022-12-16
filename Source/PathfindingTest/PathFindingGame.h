@@ -138,29 +138,29 @@ class PathFindingGame : public AbstractGame
 {
 
 public:
-	void configure_engine(EngineCfg&) override;
+	void ConfigureEngine(EngineCfg&) override;
 
-	void initialize(GameCfg& gameSettings) override;
+	void ConfigureGame(GameCfg& gameSettings) override;
 
-	void start(void) override;
+	void OnStartup(void) override;
 
-	void end(void) override;
+	void OnShutdown(void) override;
 
-	void paint(Graphics::D2DRenderContext& ctx) override;
+	void OnPaint2D(Graphics::D2DRenderContext& ctx) override;
 
-	void tick(double deltaTime) override;
+	void OnUpdate(double deltaTime) override;
 
-	void debug_ui() override;
+	void OnDebugUI() override;
 
 private:
-	std::unique_ptr<Bitmap> _bitmap;
+	std::unique_ptr<Bitmap> m_Bitmap;
 
-	float3 _view_translation;
-	f32 _zoom = 1.0f;
+	float3 m_ViewTranslation;
+	f32 m_Zoom = 1.0f;
 
-	uint2 _start;
-	uint2 _end;
+	uint2 m_Start;
+	uint2 m_End;
 
-	NavGrid _grid;
-	NavPathGrid _nav_grid;
+	NavGrid m_Grid;
+	NavPathGrid m_NavGrid;
 };

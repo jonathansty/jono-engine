@@ -2,315 +2,38 @@
 
 #include "singleton.h"
 
-#include <fmt/core.h>
 #include "Logging.h"
 #include "Memory.h"
 
-struct FromFileResourceParameters
-{
-	std::string path;
+#include "CachedResource.h"
+#include "Resource.h"
+#include "ResourceTypes.h"
 
-	std::string const& to_string() const { return path; }
-};
-
-enum class ResourceStatus
-{
-	Error,
-	Loading,
-	Loaded
-};
-
-// template resource class
-class Resource
-{
-public:
-	friend class ResourceLoader;
-	Resource() : _loaded(true), _status(ResourceStatus::Error)
-	{
-	}
-
-	virtual ~Resource()
-	{
-	}
-
-	ResourceStatus get_status() const { return _status; }
-
-	bool is_loaded() 
-	{
-		return _status == ResourceStatus::Loaded;
-	}
-
-	virtual void load(enki::ITaskSet* parent) = 0;
-
-	virtual std::string get_name() const { return ""; }
-
-	virtual void build_load_graph(enki::ITaskSet* parent){}
-
-
-	std::atomic<bool> _loaded;
-	std::atomic<ResourceStatus> _status;
-
-	std::mutex _loaded_mutex;
-	std::condition_variable _loaded_cv;
-
-	friend class ResourceLoader;
-	friend struct CompletionActionMarkLoaded;
-};
-
-struct NoInit {};
-
-template <typename resource_type, typename init_type = NoInit>
-class TCachedResource : public Resource
-{
-public:
-	using init_parameters = init_type;
-
-	static std::list<TCachedResource<resource_type, init_type>*> s_resources;
-
-	TCachedResource(init_type init_options = init_type())
-			: _init(init_options)
-	{
-		s_resources.push_back(this);
-
-	}
-
-	virtual ~TCachedResource() 
-	{
-		auto it = std::find(s_resources.begin(), s_resources.end(), this);
-		if(it != s_resources.end())
-		{
-			s_resources.erase(it);
-		}
-	}
-
-	resource_type* operator->()
-	{
-		return _resource.get();
-	}
-
-	resource_type const* operator*() const
-	{
-		return _resource.get();
-	}
-
-	resource_type* operator*()
-	{
-		return _resource.get();
-	}
-
-
-	resource_type const* get() const
-	{
-		return _resource.get();
-	}
-
-	resource_type* get()
-	{
-		return _resource.get();
-	}
-
-
-	TCachedResource& operator=(TCachedResource const& rhs)
-	{
-		this->_resource = rhs._resource;
-		this->_init = rhs._init;
-		return *this;
-	}
-
-	operator bool() const
-	{
-		return _resource != nullptr;
-	}
-
-	TCachedResource(TCachedResource const& rhs)
-		: _resource(rhs._resource)
-		, _init(rhs._init)
-	{
-	
-	}
-
-public:
-	init_type const& get_init_parameters() const { return _init; }
-
-	virtual std::string get_name() const { return _init.to_string(); }
-
-protected:
-	std::shared_ptr<resource_type> _resource;
-
-private:
-	init_type _init;
-};
-
-template <typename resource_type, typename init_type /*= NoInit*/>
-std::list<TCachedResource<resource_type, init_type>*> TCachedResource<resource_type, init_type>::s_resources;
-
-struct CompletionActionMarkLoaded : enki::ICompletable
-{
-	enki::Dependency _dependency;
-
-	// Resource to mark as loaded
-	std::shared_ptr<Resource> _resource;
-
-	void OnDependenciesComplete(enki::TaskScheduler* pTaskScheduler_, uint32_t threadNum_) override
-	{
-		ICompletable::OnDependenciesComplete(pTaskScheduler_, threadNum_);
-
-		LOG_VERBOSE(IO, "Asset finished loading. (\"{}\")", _resource->get_name());
-
-		_resource->_status = ResourceStatus::Loaded;
-		_resource->_loaded = true;
-		_resource->_loaded_cv.notify_all();
-	}
-};
-
-template<typename T>
-struct LoadResourceTask : public enki::ITaskSet
-{
-	LoadResourceTask(std::shared_ptr<T> resource)
-		: _resource(resource)
-	{
-
-	}
-
-	~LoadResourceTask()
-	{
-
-	}
-
-	std::shared_ptr<T> _resource;
-	std::function<void(std::shared_ptr<T>)> _complete;
-
-	void ExecuteRange(enki::TaskSetPartition range_, uint32_t threadnum_) override
-	{
-		MEMORY_TAG(MemoryCategory::ResourceLoading);
-		_resource->_status = ResourceStatus::Loading;
-		_resource->load(this);
-		_resource->_status = ResourceStatus::Loaded;
-		_resource->_loaded = true;
-		_resource->_loaded_cv.notify_all();
-		if(_complete)
-		{
-			_complete(_resource);
-		}
-
-
-	}
-};
+#include "ResourceTasks.h"
 
 class ResourceLoader final : public TSingleton<ResourceLoader>
 {
 public:
-	using ResourceCache = std::map<std::size_t, std::shared_ptr<Resource>>;
+    using ResourceCache = std::map<std::size_t, std::shared_ptr<Resource>>;
 
-	ResourceLoader() {}
-	~ResourceLoader() {}
+    ResourceLoader();
+    ~ResourceLoader();
 
-	void unload_all();
+    void unload_all();
 
-	void wait_for(shared_ptr<Resource> resource);
+    void wait_for(shared_ptr<Resource> resource);
 
-	void update();
+    void update();
 
-	template <typename T>
-	std::shared_ptr<T> load(typename T::init_parameters parameters,bool dependencyLoad, bool blocking = false);
+    template <typename T>
+    std::shared_ptr<T> load(typename T::init_parameters parameters, bool dependencyLoad, bool blocking = false);
 
-	template<typename T>
-	static LoadResourceTask<T>* create_load_task(std::shared_ptr<T> const& resource)
-	{
-		return new LoadResourceTask<T>(resource);
-	}
 private:
+    std::mutex m_CacheLock;
+    ResourceCache m_Cache;
 
-
-
-	// Returns a lambda that can be used for inline resource loading
-	template <typename T>
-	static std::function<void()> load_fn(std::shared_ptr<T> const& resource)
-	{
-		return [resource]() {
-			resource->load(nullptr);
-			resource->_loaded = true;
-			resource->_status = ResourceStatus::Loaded;
-			resource->_loaded_cv.notify_all();
-			LOG_INFO(IO, "{} finished", resource->get_init_parameters().to_string());
-		};
-	}
-
-
-	std::mutex _cache_lock;
-	ResourceCache _cache;
-
-	std::mutex _tasks_lock;
-	std::list<std::unique_ptr<enki::ITaskSet>> _tasks;
+    std::mutex m_TaskLock;
+    std::list<std::unique_ptr<enki::ITaskSet>> m_Tasks;
 };
 
-namespace std
-{
-	template<>
-	struct hash<FromFileResourceParameters>
-	{
-		std::size_t operator()(FromFileResourceParameters const& obj)
-		{
-			return std::hash<std::string>{}(obj.path);
-		}
-	};
-}
-
-template<typename T>
-std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool dependencyLoad, bool blocking )
-{
-	MEMORY_TAG(MemoryCategory::ResourceLoading);
-
-	LOG_VERBOSE(IO, "Load request {}", params.to_string());
-	std::size_t h = std::hash<typename T::init_parameters>{}(params);
-
-	{
-		std::lock_guard lock{ _cache_lock };
-		if (auto it = _cache.find(h); it != _cache.end())
-		{
-			LOG_VERBOSE(IO, "Returned cached copy for {}", params.to_string());
-
-			if (blocking)
-			{
-				if (!it->second->_loaded)
-				{
-					std::unique_lock<std::mutex> lk{ it->second->_loaded_mutex };
-					it->second->_loaded_cv.wait(lk);
-				}
-			}
-
-			return std::static_pointer_cast<T>(it->second);
-		}
-	}
-
-	std::shared_ptr<T> res = std::make_shared<T>(params);
-	{
-		std::lock_guard lock{ _cache_lock };
-		_cache[h] = res;
-	}
-
-	res->_loaded = false;
-	res->_status = ResourceStatus::Loading;
-
-	if (blocking)
-	{
-		res->_status = ResourceStatus::Loading;
-		res->load(nullptr);
-		res->_status = ResourceStatus::Loaded;
-		res->_loaded = true;
-		res->_loaded_cv.notify_all();
-	}
-	else
-	{
-		std::unique_ptr<enki::ITaskSet> set = std::make_unique<LoadResourceTask<T>>(res);
-		Tasks::get_scheduler()->AddTaskSetToPipe(set.get());
-
-		{
-			std::lock_guard<std::mutex> l{ _tasks_lock };
-			_tasks.push_back(std::move(set));
-		}
-
-	}
-
-	return res;
-}
+#include "ResourceLoader.inl"

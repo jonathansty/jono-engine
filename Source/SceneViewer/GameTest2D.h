@@ -14,16 +14,16 @@ public:
 	GameTest2D() = default;
 	virtual ~GameTest2D() = default;
 
-	void configure_engine(EngineCfg& engineSettings);
-	void initialize(GameCfg& gameSettings) {}
+	void ConfigureEngine(EngineCfg& engineSettings);
+	void ConfigureGame(GameCfg& gameSettings) {}
 
-	void start() override;
+	void OnStartup() override;
 
-	void end() override;
+	void OnShutdown() override;
 
-	void paint(Graphics::D2DRenderContext& ctx) override;
+	void OnPaint2D(Graphics::D2DRenderContext& ctx) override;
 
-	void tick(double deltaTime) override;
+	void OnUpdate(double deltaTime) override;
 
 	private:
 		struct DrawElement {

@@ -89,7 +89,5 @@ public:
 
 	~ModelHandle();
 
-	void build_load_graph(enki::ITaskSet* parent) override;
-
 	void load(enki::ITaskSet* parent) override;
 };

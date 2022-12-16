@@ -45,91 +45,91 @@ NavPathGrid construct_grid_from_pos(NavGrid& grid, u32 x0, u32 y0)
 	return temp;
 }
 
-void PathFindingGame::configure_engine(EngineCfg& settings)
+void PathFindingGame::ConfigureEngine(EngineCfg& settings)
 {
 	settings.m_UseD2D = true;
 	settings.m_UseD2DAA = true;
 }
 
-void PathFindingGame::initialize(GameCfg& settings)
+void PathFindingGame::ConfigureGame(GameCfg& settings)
 {
 	settings.m_WindowWidth = 1280;
 	settings.m_WindowHeight = 720;
 	//settings.m_WindowTitle = "Sample: PathFinding";
 }
 
-void PathFindingGame::start(void)
+void PathFindingGame::OnStartup(void)
 {
 	// Setup the navigation grid
-	_grid._cell_size = 50.0f;
-	_grid._width = 10;
-	_grid._height = 10;
-	_grid._cells.resize(_grid._width * _grid._height);
-	for (u32 i = 0; i < u32(_grid._cells.size()); ++i)
+	m_Grid._cell_size = 50.0f;
+	m_Grid._width = 10;
+	m_Grid._height = 10;
+	m_Grid._cells.resize(m_Grid._width * m_Grid._height);
+	for (u32 i = 0; i < u32(m_Grid._cells.size()); ++i)
 	{
-		int x = i % _grid._width;
-		int y = i / _grid._height; 
+		int x = i % m_Grid._width;
+		int y = i / m_Grid._height; 
 
-		_grid._cells[i].idx = i;
-		_grid._cells[i].centre = (_grid._cell_size / 2.0f) + float2{ x * _grid._cell_size, y * _grid._cell_size };
+		m_Grid._cells[i].idx = i;
+		m_Grid._cells[i].centre = (m_Grid._cell_size / 2.0f) + float2{ x * m_Grid._cell_size, y * m_Grid._cell_size };
 	}
 
 	// Setup the grid
-	get_cell(_grid, 0, 3)->passable = false;
-	get_cell(_grid, 1, 3)->passable = false;
-	get_cell(_grid, 2, 3)->passable = false;
-	get_cell(_grid, 3, 3)->passable = false;
-	get_cell(_grid, 4, 3)->passable = false;
-	get_cell(_grid, 5, 3)->passable = false;
-	get_cell(_grid, 6, 3)->passable = false;
+	get_cell(m_Grid, 0, 3)->passable = false;
+	get_cell(m_Grid, 1, 3)->passable = false;
+	get_cell(m_Grid, 2, 3)->passable = false;
+	get_cell(m_Grid, 3, 3)->passable = false;
+	get_cell(m_Grid, 4, 3)->passable = false;
+	get_cell(m_Grid, 5, 3)->passable = false;
+	get_cell(m_Grid, 6, 3)->passable = false;
 
-	get_cell(_grid, 3, 6)->passable = false;
-	get_cell(_grid, 4, 6)->passable = false;
-	get_cell(_grid, 5, 6)->passable = false;
-	get_cell(_grid, 6, 6)->passable = false;
-	get_cell(_grid, 8, 6)->passable = false;
-	get_cell(_grid, 7, 6)->passable = false;
-	get_cell(_grid, 9, 6)->passable = false;
+	get_cell(m_Grid, 3, 6)->passable = false;
+	get_cell(m_Grid, 4, 6)->passable = false;
+	get_cell(m_Grid, 5, 6)->passable = false;
+	get_cell(m_Grid, 6, 6)->passable = false;
+	get_cell(m_Grid, 8, 6)->passable = false;
+	get_cell(m_Grid, 7, 6)->passable = false;
+	get_cell(m_Grid, 9, 6)->passable = false;
 
-	_nav_grid = construct_grid_from_pos(_grid, _start.x, _start.y);
+	m_NavGrid = construct_grid_from_pos(m_Grid, m_Start.x, m_Start.y);
 
-	_start = float2(0.0);
-	_end = float2(9, 9);
+	m_Start = float2(0.0);
+	m_End = float2(9, 9);
 
-	_view_translation = float3(0.0, 0.0,0.0);
+	m_ViewTranslation = float3(0.0, 0.0,0.0);
 
-	_bitmap = Bitmap::load("Resources/Tests/Bitmaps/character.png");
+	m_Bitmap = Bitmap::load("Resources/Tests/Bitmaps/character.png");
 }
 
-void PathFindingGame::end(void)
+void PathFindingGame::OnShutdown(void)
 {
 }
 
-void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
+void PathFindingGame::OnPaint2D(Graphics::D2DRenderContext& ctx)
 {
 	JONO_EVENT();
 	
-	float4x4 zoom = float4x4::scale(_zoom);
+	float4x4 zoom = float4x4::scale(m_Zoom);
 	auto engine = GameEngine::instance();
-	float4x4 view = hlslpp::mul(float4x4::translation(-_view_translation), zoom);
+	float4x4 view = hlslpp::mul(float4x4::translation(-m_ViewTranslation), zoom);
 	ctx.set_view_matrix(view);
 	ctx.draw_background(MK_COLOR(33, 33, 33, 255));
 
 	ctx.set_color(MK_COLOR(0, 255, 0, 255));
 
-	for (size_t i = 0; i < _grid._cells.size(); ++i)
+	for (size_t i = 0; i < m_Grid._cells.size(); ++i)
 	{
-		NavGridCell const& cell = _grid._cells[i];
-		NavCell const& nav_cell = _nav_grid._cells[i];
+		NavGridCell const& cell = m_Grid._cells[i];
+		NavCell const& nav_cell = m_NavGrid._cells[i];
 
 		ctx.fill_ellipse(cell.centre, 1.0, 1.0);
 		if (cell.passable)
 		{
-			ctx.draw_rect(cell.centre - float2(_grid._cell_size * 0.5f), cell.centre + float2(_grid._cell_size * 0.5f));
+			ctx.draw_rect(cell.centre - float2(m_Grid._cell_size * 0.5f), cell.centre + float2(m_Grid._cell_size * 0.5f));
 		}
 		else
 		{
-			ctx.fill_rect(cell.centre - float2(_grid._cell_size * 0.5f), cell.centre + float2(_grid._cell_size * 0.5f));
+			ctx.fill_rect(cell.centre - float2(m_Grid._cell_size * 0.5f), cell.centre + float2(m_Grid._cell_size * 0.5f));
 		}
 
 		if(nav_cell.previous != nullptr)
@@ -137,8 +137,8 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 			// Point at the previous cell
 			constexpr f32 line_length = 25.0f;
 
-			u32 previous_index = _nav_grid.get_cell_idx(nav_cell.previous);
-			float2 direction = _grid._cells[previous_index].centre - cell.centre;
+			u32 previous_index = m_NavGrid.get_cell_idx(nav_cell.previous);
+			float2 direction = m_Grid._cells[previous_index].centre - cell.centre;
 			direction = hlslpp::normalize(direction);
 			ctx.draw_line(cell.centre, cell.centre + line_length * direction , 1.0f);
 		}
@@ -146,17 +146,17 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 
 	ctx.set_color(MK_COLOR(255, 255, 0, 125));
 
-	NavCell* result = _nav_grid.find_path(_end.x, _end.y);
+	NavCell* result = m_NavGrid.find_path(m_End.x, m_End.y);
 	while(result)
 	{
-		u32 idx = _nav_grid.get_cell_idx(result);
-		NavGridCell const& cell = _grid._cells[idx];
+		u32 idx = m_NavGrid.get_cell_idx(result);
+		NavGridCell const& cell = m_Grid._cells[idx];
 
 		// Draw line
 		if(result->previous)
 		{
-			u32 prev_idx = _nav_grid.get_cell_idx(result->previous);
-			NavGridCell const& prev_cell = _grid._cells[prev_idx];
+			u32 prev_idx = m_NavGrid.get_cell_idx(result->previous);
+			NavGridCell const& prev_cell = m_Grid._cells[prev_idx];
 			ctx.draw_line(cell.centre, prev_cell.centre, 1.0f);
 		}
 
@@ -165,18 +165,18 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 
 
 	ctx.set_color(MK_COLOR(255, 0, 0, 255));
-	if (NavGridCell* cell = get_cell(_grid, _start.x, _start.y); cell)
+	if (NavGridCell* cell = get_cell(m_Grid, m_Start.x, m_Start.y); cell)
 	{
 		ctx.fill_ellipse(cell->centre, 1.0, 1.0);
-		ctx.draw_ellipse(cell->centre, _grid._cell_size * 0.5f, _grid._cell_size * 0.5f);
+		ctx.draw_ellipse(cell->centre, m_Grid._cell_size * 0.5f, m_Grid._cell_size * 0.5f);
 	}
 
 	ctx.set_color(MK_COLOR(0, 0, 255, 125));
 
-	if (NavGridCell* cell = get_cell(_grid, _start.x, _start.y); cell)
+	if (NavGridCell* cell = get_cell(m_Grid, m_Start.x, m_Start.y); cell)
 	{
 		ctx.fill_ellipse(cell->centre, 1.0, 1.0);
-		ctx.draw_ellipse(cell->centre, _grid._cell_size * 0.5f, _grid._cell_size * 0.5f);
+		ctx.draw_ellipse(cell->centre, m_Grid._cell_size * 0.5f, m_Grid._cell_size * 0.5f);
 	}
 
 
@@ -188,7 +188,7 @@ void PathFindingGame::paint(Graphics::D2DRenderContext& ctx)
 
 	re.left = (s_counter) * s_frame_width;
 	re.right = (s_counter+1) * s_frame_width;
-	ctx.draw_bitmap(_bitmap.get(), { 0, 0 }, re);
+	ctx.draw_bitmap(m_Bitmap.get(), { 0, 0 }, re);
 
 	ctx.set_color(MK_COLOR(255, 0, 0, 255));
 	ctx.draw_ellipse(0, 0, 50, 50);
@@ -203,7 +203,7 @@ void rebuild_shaders()
 	ShaderCache::instance()->reload_all();
 }
 
-void PathFindingGame::tick(double deltaTime)
+void PathFindingGame::OnUpdate(double deltaTime)
 {
 	JONO_EVENT();
 
@@ -212,57 +212,57 @@ void PathFindingGame::tick(double deltaTime)
 		auto& input = GameEngine::instance()->get_input();
 
 		float2 pos = GameEngine::instance()->get_mouse_pos_in_viewport();
-		float4x4 view = hlslpp::mul(float4x4::translation(-_view_translation), float4x4::scale(_zoom));
+		float4x4 view = hlslpp::mul(float4x4::translation(-m_ViewTranslation), float4x4::scale(m_Zoom));
 
 		pos = hlslpp::mul(hlslpp::inverse(view), float4(pos, 0.4f, 1.0f)).xy;
 
-		float2 world_pos = _view_translation.xy + pos;
-		float2 grid_pos = world_pos / _grid._cell_size;
-		grid_pos = hlslpp::clamp(grid_pos, float2(0, 0), float2(_grid._width, _grid._height));
+		float2 world_pos = m_ViewTranslation.xy + pos;
+		float2 grid_pos = world_pos / m_Grid._cell_size;
+		grid_pos = hlslpp::clamp(grid_pos, float2(0, 0), float2(m_Grid._width, m_Grid._height));
 
 		if (input->is_key_down(KeyCode::LShift) && input->is_mouse_button_pressed(SDL_BUTTON_LEFT))
 		{
-			_start = uint2(u32(grid_pos.x), u32(grid_pos.y));
-			_nav_grid = construct_grid_from_pos(_grid, _start.x, _start.y);
+			m_Start = uint2(u32(grid_pos.x), u32(grid_pos.y));
+			m_NavGrid = construct_grid_from_pos(m_Grid, m_Start.x, m_Start.y);
 		}
 		else if (input->is_key_down(KeyCode::LControl) && input->is_mouse_button_pressed(SDL_BUTTON_LEFT))
 		{
-			_end = uint2(u32(grid_pos.x), u32(grid_pos.y));
+			m_End = uint2(u32(grid_pos.x), u32(grid_pos.y));
 		}
 		else if (input->is_key_down(KeyCode::LAlt) && input->is_mouse_button_pressed(SDL_BUTTON_LEFT))
 		{
-			if (auto cell = get_cell(_grid, u32(grid_pos.x), u32(grid_pos.y)); cell)
+			if (auto cell = get_cell(m_Grid, u32(grid_pos.x), u32(grid_pos.y)); cell)
 			{
 				cell->passable = !cell->passable;
 			}
-			_nav_grid = construct_grid_from_pos(_grid, _start.x, _start.y);
+			m_NavGrid = construct_grid_from_pos(m_Grid, m_Start.x, m_Start.y);
 		}
 		else if (input->is_mouse_button_down(SDL_BUTTON_LEFT))
 		{
 			int2 delta = input->get_mouse_delta();
-			_view_translation -= float3(delta, 0.0f);
+			m_ViewTranslation -= float3(delta, 0.0f);
 		}
 
 		if (f32 scroll = input->get_scroll_delta(); scroll != 0.0f)
 		{
-			_zoom += scroll * 0.05f;
+			m_Zoom += scroll * 0.05f;
 		}
 
 		if (input->is_key_down(KeyCode::Right))
 		{
-			_view_translation.x += 10.0f;
+			m_ViewTranslation.x += 10.0f;
 		}
 		if (input->is_key_down(KeyCode::Left))
 		{
-			_view_translation.x -= 10.0f;
+			m_ViewTranslation.x -= 10.0f;
 		}
 		if (input->is_key_down(KeyCode::Up))
 		{
-			_view_translation.y -= 10.0f;
+			m_ViewTranslation.y -= 10.0f;
 		}
 		if (input->is_key_down(KeyCode::Down))
 		{
-			_view_translation.y += 10.0f;
+			m_ViewTranslation.y += 10.0f;
 		}
 
 		if (input->is_key_pressed(KeyCode::R) && input->is_key_down(KeyCode::LControl))
@@ -279,21 +279,21 @@ void PathFindingGame::tick(double deltaTime)
 	}
 }
 
-void PathFindingGame::debug_ui()
+void PathFindingGame::OnDebugUI()
 {
 	ImGui::Begin("PathFindingGame");
 
-	u32 tmp[2] = { _start.x, _start.y };
+	u32 tmp[2] = { m_Start.x, m_Start.y };
 	if(ImGui::InputScalarN("Start",ImGuiDataType_U32, &tmp, 2))
 	{
-		_start = { tmp[0], tmp[1] };
+		m_Start = { tmp[0], tmp[1] };
 	}
 
-	tmp[0] = _end.x;
-	tmp[1] = _end.y;
+	tmp[0] = m_End.x;
+	tmp[1] = m_End.y;
 	if(ImGui::InputScalarN("End",ImGuiDataType_U32, &tmp, 2))
 	{
-		_end = { tmp[0], tmp[1] };
+		m_End = { tmp[0], tmp[1] };
 	}
 
 	ImGui::End();

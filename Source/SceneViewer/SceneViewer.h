@@ -32,30 +32,30 @@ public:
 
 private:
 
-	void open_file();
-	void rebuild_shaders();
+	void OpenFile();
+	void RebuildAllShaders();
 
-	bool load_world(const char* path);
-	void save_world(const char* path);
+	bool LoadWorld(const char* path);
+	void SaveWorld(const char* path);
 
-	void swap_model(const char* path);
+	void SwapModel(const char* path);
 
 	// Initial scene path to view 
-	std::string _scene_path;
+	std::string m_ScenePath;
 
 	// World to store our scene data in
-	std::shared_ptr<framework::World> _world;
-	shared_ptr<RenderWorldLight> _light;
-	shared_ptr<RenderWorldInstance> _model;
+	std::shared_ptr<framework::World> m_World;
+	shared_ptr<RenderWorldLight> m_SunLight;
+	shared_ptr<RenderWorldInstance> m_CurrentModel;
 
 	// Orbit camera behaviour
-	s32 _camera_type = 0;
-	OrbitCamera* _camera;
-	FreeCam* _freecam;
+	s32 m_CameraType = 0;
+	OrbitCamera* m_OrbitCamera;
+	FreeCam* m_FreeCamera;
 
-	framework::EntityDebugOverlay* _overlay;
+	framework::EntityDebugOverlay* m_EntityOverlay;
 
-	float _light_tick;
+	float m_LightT;
 };
 
 

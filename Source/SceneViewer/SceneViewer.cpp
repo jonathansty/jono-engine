@@ -47,21 +47,21 @@ REGISTER_TYPE("/Types/Games/SceneViewer", SceneViewer);
 SERIALIZE_FN(SceneViewer) {}
 
  SceneViewer::SceneViewer(std::string const& path)
-	:_scene_path(path)
-	,_light_tick(0.0f)
-	,_camera(nullptr)
-	,_freecam(nullptr)
-	,_overlay(nullptr)
+	:m_ScenePath(path)
+	,m_LightT(0.0f)
+	,m_OrbitCamera(nullptr)
+	,m_FreeCamera(nullptr)
+	,m_EntityOverlay(nullptr)
 {
 
 }
 
 SceneViewer::SceneViewer()
-	: _scene_path("")
-	,_light_tick(0.0f)
-	,_camera(nullptr)
-	,_freecam(nullptr)
-	,_overlay(nullptr)
+	: m_ScenePath("")
+	,m_LightT(0.0f)
+	,m_OrbitCamera(nullptr)
+	,m_FreeCamera(nullptr)
+	,m_EntityOverlay(nullptr)
 {
 }
 
@@ -108,8 +108,7 @@ std::string ShowFileDialog(SDL_Window* owner)
 
 void SceneViewer::OnStartup()
 {
-	Super::OnStart();
-
+	Super::OnStartup();
 
 	auto ge = GameEngine::instance();
 
@@ -121,14 +120,14 @@ void SceneViewer::OnStartup()
 			{
 				if (ImGui::MenuItem("Open"))
 				{
-					open_file();
+					OpenFile();
 				}
 
 				if (ImGui::MenuItem("Rebuild Shaders"))
 				{
 					LOG_INFO(Graphics, "Rebuilding all shaders.");
 
-					this->rebuild_shaders();
+					this->RebuildAllShaders();
 				}
 				ImGui::EndMenu();
 			}
@@ -143,7 +142,7 @@ void SceneViewer::OnStartup()
 
 	// Setup the game world
 	using namespace framework;
-	_world = GameEngine::instance()->get_world();
+	m_World = GameEngine::instance()->get_world();
 
 	const char* path = "res:/Scenes/default.yml";
 	std::string resolvedPath = IO::get()->ResolvePath(path);
@@ -211,9 +210,9 @@ void SceneViewer::OnStartup()
 	settings.far_clip = 500.0f;
 	new_cam->set_settings(settings);
 
-	_camera_type = 0;
-	_camera  = JONO_NEW(OrbitCamera, render_world);
-	_freecam = JONO_NEW(FreeCam, render_world);
+	m_CameraType = 0;
+	m_OrbitCamera  = JONO_NEW(OrbitCamera, render_world);
+	m_FreeCamera = JONO_NEW(FreeCam, render_world);
 
 	auto l = render_world->create_light(RenderWorldLight::LightType::Directional);
 	settings.aspect = 1.0f;
@@ -228,7 +227,7 @@ void SceneViewer::OnStartup()
 	l->set_colour({ 1.0f * c_scale, 1.0f * c_scale, 1.0f * c_scale });
 	l->set_casts_shadow(true);
 	l->set_view(float4x4::look_at({ 10.0, 10.0f, 0.0f }, float3(0.0f,0.0f,0.0f), float3(0.0f,1.0f,0.0f)));
-	_light = l;
+	m_SunLight = l;
 
 	// Disabled for now as this app is not using the entity system
 	//framework::EntityDebugOverlay* overlay = new framework::EntityDebugOverlay(_world.get());
@@ -311,27 +310,27 @@ void SceneViewer::OnStartup()
 
 void SceneViewer::OnShutdown()
 {
-	Super::end();
+	Super::OnShutdown();
 
-	delete _camera;
-	_camera = nullptr;
+	delete m_OrbitCamera;
+	m_OrbitCamera = nullptr;
 
-	delete _freecam;
-	_freecam = nullptr;
+	delete m_FreeCamera;
+	m_FreeCamera = nullptr;
 }
 
 #if FEATURE_D2D
-void SceneViewer::paint(Graphics::D2DRenderContext& ctx)
+void SceneViewer::OnPaint2D(Graphics::D2DRenderContext& ctx)
 {
-	Super::paint(ctx);
+	Super::OnPaint2D(ctx);
 }
 #endif
 
 int* s_data = nullptr;
 
-void SceneViewer::tick(double deltaTime)
+void SceneViewer::OnUpdate(double deltaTime)
 {
-	Super::tick(deltaTime);
+	Super::OnUpdate(deltaTime);
 
 	f32 f32_dt = (f32)deltaTime;
 	auto& input_manager = GameEngine::instance()->get_input();
@@ -339,30 +338,30 @@ void SceneViewer::tick(double deltaTime)
 
 	if (input_manager->is_key_pressed(KeyCode::Up))
 	{
-		_light_tick += 0.5f;
+		m_LightT += 0.5f;
 	}
 	if (input_manager->is_key_pressed(KeyCode::Down))
 	{
-		_light_tick -= 0.5f;
+		m_LightT -= 0.5f;
 	}
 
 	if (input_manager->is_key_pressed(KeyCode::R) && input_manager->is_key_down(KeyCode::LControl))
 	{
-		rebuild_shaders();
+		RebuildAllShaders();
 	}
 
 	if (input_manager->is_key_pressed(KeyCode::O) && input_manager->is_key_down(KeyCode::LControl))
 	{
-		open_file();
+		OpenFile();
 	}
 
-	if(_camera_type == 0)
+	if(m_CameraType == 0)
 	{
-		_camera->tick(deltaTime);
+		m_OrbitCamera->tick(deltaTime);
 	}
 	else
 	{
-		_freecam->tick(deltaTime);
+		m_FreeCamera->tick(deltaTime);
 	}
 
 	bool has_viewport_focus = GameEngine::instance()->is_viewport_focused();
@@ -371,29 +370,29 @@ void SceneViewer::tick(double deltaTime)
 		// rotate light
 		if (input_manager->is_mouse_button_down(2))
 		{
-			_light_tick -= mouse_delta.x * f32_dt * 0.5f;
+			m_LightT -= mouse_delta.x * f32_dt * 0.5f;
 		}
 	}
 
 	RenderWorldRef world = GameEngine::instance()->get_render_world();
 	auto camera = world->get_view_camera();
 
-	if (_light)
+	if (m_SunLight)
 	{
 		constexpr float radius = 10.0f;
 
-		float4x4 m = float4x4::look_at(float3{ radius * sin(_light_tick), 5.0f, radius * cos(_light_tick) }, {0.0f,0.0f,0.0f}, Math::c_up);
-		_light->set_view(m);
+		float4x4 m = float4x4::look_at(float3{ radius * sin(m_LightT), 5.0f, radius * cos(m_LightT) }, {0.0f,0.0f,0.0f}, Math::c_up);
+		m_SunLight->set_view(m);
 	}
 
-	if (_world)
+	if (m_World)
 	{
-		_world->update((float)deltaTime);
+		m_World->update((float)deltaTime);
 	}
 
 }
 
-void SceneViewer::debug_ui()
+void SceneViewer::OnDebugUI()
 {
 	static bool s_open = true;
 
@@ -409,9 +408,9 @@ void SceneViewer::debug_ui()
 		"Orbit",
 		"Free"
 	};
-	ImGui::Combo("Camera", &_camera_type, cameras, int(std::size(cameras)));
+	ImGui::Combo("Camera", &m_CameraType, cameras, int(std::size(cameras)));
 
-	ImGui::Text("Light: %.2f", _light_tick);
+	ImGui::Text("Light: %.2f", m_LightT);
 
 	const char* items[] = {
 		"Default",
@@ -433,9 +432,9 @@ void SceneViewer::debug_ui()
 
 	if(ImGui::CollapsingHeader("Model Info"))
 	{
-		if(_model)
+		if(m_CurrentModel)
 		{
-			MaterialInstance* inst = _model->get_material_instance(0);
+			MaterialInstance* inst = m_CurrentModel->get_material_instance(0);
 			if (inst)
 			{
 				static float col[3] = { 1.0f, 1.0f, 1.0f };
@@ -497,32 +496,32 @@ void SceneViewer::debug_ui()
 
 static const char* s_world_path = "Scenes/test_world.scene";
 
-void SceneViewer::open_file()
+void SceneViewer::OpenFile()
 {
 	LOG_VERBOSE(UI, "Opening file...");
 	std::string file = ShowFileDialog(GameEngine::instance()->GetWindow());
 	if (!file.empty())
 	{
-		this->swap_model(file.c_str());
+		this->SwapModel(file.c_str());
 	}
 }
 
-void SceneViewer::rebuild_shaders()
+void SceneViewer::RebuildAllShaders()
 {
 	using namespace Graphics;
 	auto world = GameEngine::instance()->get_render_world();
 
 	ShaderCache::instance()->reload_all();
 
-	for(auto const& res : MaterialHandle::s_resources)
+	for(auto const& res : MaterialHandle::s_Resources)
 	{
-		res->_status = ResourceStatus::Loading;
+		res->SetStatus(ResourceStatus::Loading);
 		res->load(nullptr);
-		res->_status = ResourceStatus::Loaded;
+		res->SetStatus(ResourceStatus::Loaded);
 	}
 }
 
-bool SceneViewer::load_world(const char* path) {
+bool SceneViewer::LoadWorld(const char* path) {
 	//auto io = IO::get();
 	//if (io->exists(path)) {
 	//	std::shared_ptr<IO::IFile> file = io->open(path, IO::Mode::Read, true);
@@ -581,7 +580,7 @@ bool SceneViewer::load_world(const char* path) {
 }
 
 
-void SceneViewer::save_world(const char* path)
+void SceneViewer::SaveWorld(const char* path)
 {
 	//using namespace serialization;
 
@@ -629,10 +628,10 @@ void SceneViewer::save_world(const char* path)
 	//}
 }
 
-void SceneViewer::swap_model(const char* path)
+void SceneViewer::SwapModel(const char* path)
 {
-	GameEngine::instance()->get_render_world()->remove_instance(_model);
+	GameEngine::instance()->get_render_world()->remove_instance(m_CurrentModel);
 
-	_model = GameEngine::instance()->get_render_world()->create_instance(float4x4::identity(), path);
-	_model->set_dynamic_material(0, std::make_unique<MaterialInstance>());
+	m_CurrentModel = GameEngine::instance()->get_render_world()->create_instance(float4x4::identity(), path);
+	m_CurrentModel->set_dynamic_material(0, std::make_unique<MaterialInstance>());
 }

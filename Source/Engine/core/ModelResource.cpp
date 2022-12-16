@@ -19,10 +19,6 @@ const D3D11_INPUT_ELEMENT_DESC ModelUberVertex::InputElements[InputElementCount]
 	{ "TEXCOORD", 3, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 };
 
-void ModelHandle::build_load_graph(enki::ITaskSet* parent)
-{
-}
-
 void ModelHandle::load(enki::ITaskSet* parent)
 {
 	std::string const& path = get_init_parameters().path;

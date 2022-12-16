@@ -94,7 +94,8 @@ void TextureHandle::create_from_memory(uint32_t width, uint32_t height, DXGI_FOR
 {
 	_resource = std::make_shared<Texture>();
 	_resource->create_from_memory(width, height, format, type, data);
-	_status = ResourceStatus::Loaded;
+	
+	SetStatus(ResourceStatus::Loaded);
 }
 
 

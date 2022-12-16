@@ -6,13 +6,13 @@
 #include "Components.h"
 #include "Overlays.h"
 
-void GameTest2D::configure_engine(EngineCfg& engineSettings)
+void GameTest2D::ConfigureEngine(EngineCfg& engineSettings)
 {
 	engineSettings.m_UseD2D = true;
 	engineSettings.m_UseD2DAA = true;
 }
 
-void GameTest2D::start()
+void GameTest2D::OnStartup()
 {
 	_bitmaps.reserve(100);
 	_bitmaps.push_back({ float4x4::identity(), Bitmap::load("Tests/Bitmaps/coinBronze.png") });
@@ -45,11 +45,11 @@ void GameTest2D::start()
 	}
 }
 
-void GameTest2D::end()
+void GameTest2D::OnShutdown()
 {
 }
 
-void GameTest2D::paint(Graphics::D2DRenderContext& ctx)
+void GameTest2D::OnPaint2D(Graphics::D2DRenderContext& ctx)
 {
 	ctx.draw_background(MK_COLOR(153, 217, 234, 255));
 
@@ -59,7 +59,7 @@ void GameTest2D::paint(Graphics::D2DRenderContext& ctx)
 		ctx.draw_bitmap(el.bmp.get()); });
 }
 
-void GameTest2D::tick(double deltaTime)
+void GameTest2D::OnUpdate(double deltaTime)
 {
 }
 #endif
