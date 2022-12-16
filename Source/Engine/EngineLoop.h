@@ -2,7 +2,7 @@
 
 #include "Types/TypeManager.h"
 
-struct IEngineLoop
+struct ENGINE_API IEngineLoop
 {
 	virtual int Run() = 0;
 
@@ -11,7 +11,7 @@ struct IEngineLoop
 	virtual void Shutdown() = 0;
 };
 
-class EngineLoop : public IEngineLoop
+class ENGINE_API EngineLoop : public IEngineLoop
 {
 	CLASS(EngineLoop, IEngineLoop)
 

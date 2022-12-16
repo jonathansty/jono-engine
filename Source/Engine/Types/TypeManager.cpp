@@ -22,6 +22,42 @@ TypeMetaData* TypeManager::FindType(std::string_view const& name)
 	return nullptr;
 }
 
+void* TypeManager::SerializeObject(std::string_view const& typePath, IFileStream* data)
+{
+    if (TypeMetaData* obj = FindType(typePath); obj)
+    {
+        ASSERT(obj->m_SerializeFn);
+
+        void* typeData = obj->m_ConstructFn(nullptr);
+        obj->m_SerializeFn(data, typeData);
+        return typeData;
+    }
+    return nullptr;
+}
+
+void* TypeManager::SerializeObject(std::string_view const& typePath, void* dst, IFileStream* data)
+{
+    if (TypeMetaData* obj = FindType(typePath); obj)
+    {
+        ASSERT(obj->m_SerializeFn);
+
+        void* typeData = obj->m_ConstructFn(dst);
+        obj->m_SerializeFn(data, typeData);
+        return typeData;
+    }
+    return nullptr;
+}
+
+void* TypeManager::CreateObject(std::string_view const& name)
+{
+    if (TypeMetaData* obj = FindType(name); obj)
+    {
+        ASSERT(obj->m_ConstructFn);
+        return obj->m_ConstructFn(nullptr);
+    }
+    return nullptr;
+}
+
 TypeManager::~TypeManager()
 {
 	GlobalContext* globalContext = GetGlobalContext();

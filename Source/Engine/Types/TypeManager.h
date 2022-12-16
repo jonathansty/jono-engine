@@ -2,10 +2,9 @@
 
 #include "Core/Singleton.h"
 
-
 class IniStream;
 
-class TypeMetaData
+class ENGINE_API TypeMetaData
 {
 public:
 	void* (*m_ConstructFn)(void*);
@@ -42,43 +41,12 @@ public:
 
 	TypeMetaData* FindType(std::string_view const& name);
 
-	void* CreateObject(std::string_view const& name) 
-	{
-		if(TypeMetaData* obj = FindType(name); obj)
-		{
-			ASSERT(obj->m_ConstructFn);
-			return obj->m_ConstructFn(nullptr);
-		}
-		return nullptr;
-	}
 
-	void* SerializeObject(std::string_view const& typePath, IFileStream* data)
-	{
-		if (TypeMetaData* obj = FindType(typePath); obj)
-		{
-			ASSERT(obj->m_SerializeFn);
+	void* SerializeObject(std::string_view const& typePath, IFileStream* data);
 
-			void* typeData = obj->m_ConstructFn(nullptr);
-			obj->m_SerializeFn(data, typeData);
-			return typeData;
-		}
-		return nullptr;
-	}
+	void* SerializeObject(std::string_view const& typePath, void* dst, IFileStream* data);
 
-	void* SerializeObject(std::string_view const& typePath, void* dst, IFileStream* data)
-	{
-		if (TypeMetaData* obj = FindType(typePath); obj)
-		{
-			ASSERT(obj->m_SerializeFn);
-
-			void* typeData = obj->m_ConstructFn(dst);
-			obj->m_SerializeFn(data, typeData);
-			return typeData;
-		}
-		return nullptr;
-	}
-
-
+	void* CreateObject(std::string_view const& name);
 
 	template<typename T>
 	T* CreateObject()
@@ -86,67 +54,15 @@ public:
 		TypeMetaData const* metaData = T::GetStaticType();
 		ASSERT(metaData->m_ConstructFn);
 		return static_cast<T*>(metaData->m_ConstructFn(nullptr));
-	
 	}
 
 private:
 
 	std::unordered_map<std::string, TypeMetaData> m_Types;
-
-
 };
-
-namespace Internal
-{
-
-struct BaseType
-{
-};
-
-} // namespace Internal
-
-template<typename T>
-struct TypeRegistrationHelper 
-{
-public:
-	TypeRegistrationHelper(const char* typePath, const char* typeName);
-
-	~TypeRegistrationHelper();
-
-	TypeMetaData* m_Data;
-	const char* m_Path;
-};
-
-template<typename T>
-TypeRegistrationHelper<T>::TypeRegistrationHelper(const char* typePath, const char* typeName)
-		: m_Path(typePath)
-{
-	m_Data = TypeManager::instance()->AddType(m_Path);
-
-	m_Data->m_Name = typeName;
-	m_Data->m_Path = typePath;
-	m_Data->m_ConstructFn = [](void* dest)->void* 
-	{
-		if(dest)
-		{
-			return new (dest) T();
-		}
-		else
-		{
-			return new T(); 
-		}
-	};
-
-	m_Data->m_SerializeFn = [](IFileStream* iniStream, void* data) { T::Serialize(iniStream, (T*)data); };
-}
-
-template<typename T>
-TypeRegistrationHelper<T>::~TypeRegistrationHelper()
-{
-	TypeManager::instance()->RemoveType(m_Path);
-}
 
 #include "FileStream.h"
+#include "TypeRegistration.h"
 
 #define ANON_VARIABLE(VarName) _#VarName##__LINE__
 
