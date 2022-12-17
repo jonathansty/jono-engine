@@ -257,7 +257,8 @@ public:
 	static constexpr u32 c_camera_reserve = 1;
 
 	// Initializes the render world to reserve space for N amount of data (See constants above)
-	void init();
+	void Init();
+    void Clear();
 
 	// Getters to retrieve all collections
 	InstanceCollection const& get_instances() const { return _instances; }

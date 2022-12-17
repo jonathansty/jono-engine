@@ -3,11 +3,11 @@
 #include "InputManager.h"
 
 OrbitCamera::OrbitCamera(shared_ptr<RenderWorld> const& world)
-		: _timer(0.0f)
-		, _zoom(2.0f)
-		, _up_timer(0.0f)
-		, _center()
-		, _world(world)
+		: m_Timer(0.0f)
+		, m_Zoom(2.0f)
+		, m_UpTimer(0.0f)
+		, m_Center()
+		, m_World(world)
 {
 }
 
@@ -15,22 +15,22 @@ OrbitCamera::~OrbitCamera()
 {
 }
 
-void OrbitCamera::tick(double dt)
+void OrbitCamera::Tick(double dt)
 {
 	f32 f32_dt = (f32)dt;
 	unique_ptr<InputManager> const& input_manager = GameEngine::instance()->get_input();
 
-	shared_ptr<RenderWorldCamera> camera = _world->get_view_camera();
+	shared_ptr<RenderWorldCamera> camera = m_World->get_view_camera();
 
 	// Handle the input
 	{
 		if (input_manager->is_key_pressed(KeyCode::Right))
 		{
-			_timer -= 0.5f;
+			m_Timer -= 0.5f;
 		}
 		if (input_manager->is_key_pressed(KeyCode::Left))
 		{
-			_timer += 0.5f;
+			m_Timer += 0.5f;
 		}
 	}
 
@@ -38,21 +38,21 @@ void OrbitCamera::tick(double dt)
 	if (has_viewport_focus)
 	{
 		f32 scroll_delta = input_manager->get_scroll_delta();
-		f32 zoom_factor = _zoom * 0.05f;
+		f32 zoom_factor = m_Zoom * 0.05f;
 		if (scroll_delta != 0)
 		{
-			_zoom -= scroll_delta * (zoom_factor)*100.0f * f32_dt;
-			_zoom = std::clamp(_zoom, 0.01f, 1000.0f);
+			m_Zoom -= scroll_delta * (zoom_factor)*100.0f * f32_dt;
+			m_Zoom = std::clamp(m_Zoom, 0.01f, 1000.0f);
 		}
 
 		// Rotate camera
 		float2 mouse_delta = float2(input_manager->get_mouse_delta());
 		if (input_manager->is_mouse_button_down(SDL_BUTTON_LEFT))
 		{
-			_timer -= mouse_delta.x * f32_dt * 0.5f;
-			_up_timer += mouse_delta.y * f32_dt * 0.5f;
+			m_Timer -= mouse_delta.x * f32_dt * 0.5f;
+			m_UpTimer += mouse_delta.y * f32_dt * 0.5f;
 		}
-		_up_timer = std::clamp<f32>(_up_timer, -static_cast<f32>(M_PI) + std::numeric_limits<f32>::epsilon(), -std::numeric_limits<f32>::epsilon());
+		m_UpTimer = std::clamp<f32>(m_UpTimer, -static_cast<f32>(M_PI) + std::numeric_limits<f32>::epsilon(), -std::numeric_limits<f32>::epsilon());
 
 
 		// pan
@@ -68,21 +68,21 @@ void OrbitCamera::tick(double dt)
 
 			localPan = (right + up).xyz * zoom_factor;
 		}
-		_center += localPan;
+		m_Center += localPan;
 
 		if (input_manager->is_key_pressed(KeyCode::Z))
 		{
 			LOG_INFO(Input, "Resetting view.");
-			_timer = 0.0f;
-			_up_timer = 0.0f;
-			_center = float3(0.0, 0.0, 0.0);
+			m_Timer = 0.0f;
+			m_UpTimer = 0.0f;
+			m_Center = float3(0.0, 0.0, 0.0);
 		}
 	}
 
 	constexpr float radius = 10.0f;
-	float3 newUnitPos = float3{ cos(_timer) * sin(_up_timer), cos(_up_timer), sin(_timer) * sin(_up_timer) };
+	float3 newUnitPos = float3{ cos(m_Timer) * sin(m_UpTimer), cos(m_UpTimer), sin(m_Timer) * sin(m_UpTimer) };
 
-	float4x4 look = float4x4::look_at(_center + _zoom * newUnitPos, _center, float3(0.0f, 1.0f, 0.0f));
+	float4x4 look = float4x4::look_at(m_Center + m_Zoom * newUnitPos, m_Center, float3(0.0f, 1.0f, 0.0f));
 	auto result = hlslpp::quaternion(float3x3(look.vec0, look.vec1, look.vec2));
 	camera->set_view(look);
 }

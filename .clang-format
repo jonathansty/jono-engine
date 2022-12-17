@@ -63,13 +63,6 @@ FixNamespaceComments: true
 #   - Q_FOREACH
 #   - BOOST_FOREACH
 # IncludeBlocks:   Preserve
-IncludeCategories:
-  - Regex:           '".*"'
-    Priority:        1
-  - Regex:           '^<.*\.h>'
-    Priority:        2
-  - Regex:           '^<.*'
-    Priority:        3
 # IncludeIsMainRegex: '(Test)?$'
 IndentCaseLabels: true
 # IndentPPDirectives: None
@@ -95,7 +88,7 @@ PointerAlignment: Left
 #     Language:        TextProto
 #     BasedOnStyle:    google
 # ReflowComments:  true
-# SortIncludes:    true
+SortIncludes:    false
 # SortUsingDeclarations: true
 # SpaceAfterCStyleCast: false
 # SpaceAfterTemplateKeyword: true

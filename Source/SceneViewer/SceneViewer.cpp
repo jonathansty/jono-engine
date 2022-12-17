@@ -121,10 +121,16 @@ void SceneViewer::OnStartup()
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Open"))
+                if (ImGui::MenuItem("Open", "Ctrl+O"))
 				{
 					OpenFile();
 				}
+
+                if (ImGui::MenuItem("Reload", "Ctrl+P"))
+                {
+                    OpenScene(m_ScenePath.c_str());
+                }
+
 
 				if (ImGui::MenuItem("Rebuild Shaders"))
 				{
@@ -147,88 +153,9 @@ void SceneViewer::OnStartup()
     m_World = GameEngine::instance()->get_world();
 
     const char* path = "res:/Scenes/default.scene";
-    std::string resolvedPath = IO::get()->ResolvePath(path);
-    yaml::Document doc = yaml::Document(resolvedPath.c_str());
+    OpenScene(path);
 
-    auto render_world = GameEngine::instance()->get_render_world();
-
-    Yaml::Node& node = doc.GetRoot();
-    auto data = node["Models"][0]["name"].As<std::string>();
-    for (auto it = node["Models"].Begin(); it != node["Models"].End(); it++)
-    {
-        // LOG_INFO(Unknown, "{}: {}", (*it).first, (*it).second.As<string>());
-        std::string name = (*it).second["name"].As<std::string>();
-        std::string type = (*it).second["type"].As<std::string>();
-        std::string position = (*it).second["position"].As<std::string>();
-        std::string scaleT = (*it).second["scale"].As<std::string>();
-        std::string rotation = (*it).second["rotation"].As<std::string>();
-        std::string mesh = (*it).second["mesh"].As<std::string>();
-
-        float pos[3];
-        float scale[3];
-        float rot[3];
-
-        std::vector<std::string_view> result;
-        Helpers::split_string(position, ",", result);
-
-        pos[0] = (float)atof(result[0].data());
-        pos[1] = (float)atof(result[1].data());
-        pos[2] = (float)atof(result[2].data());
-
-        Helpers::split_string(scaleT, ",", result);
-        scale[0] = (float)atof(result[0].data());
-        scale[1] = (float)atof(result[1].data());
-        scale[2] = (float)atof(result[2].data());
-
-        Helpers::split_string(rotation, ",", result);
-        rot[0] = (float)atof(result[0].data());
-        rot[1] = (float)atof(result[1].data());
-        rot[2] = (float)atof(result[2].data());
-
-        float4x4 transform = float4x4::translation(float3(pos[0], pos[1], pos[2]));
-        render_world->create_instance(transform, mesh);
-    }
-
-    ImVec2 size = GameEngine::instance()->GetViewportSize();
-    const float aspect = (float)size.x / (float)size.y;
-    const float near_plane = 0.5f;
-    const float far_plane = 250.0f;
-
-    // Create Cam 1
-    auto rw_cam = render_world->create_camera();
-    RenderWorldCamera::CameraSettings settings{};
-    settings.aspect = aspect;
-    settings.far_clip = far_plane;
-    settings.near_clip = near_plane;
-    settings.fov = hlslpp::radians(float1(45.0f)); // 45 deg fov
-    settings.projection_type = RenderWorldCamera::Projection::Perspective;
-    rw_cam->set_settings(settings);
-    rw_cam->set_view(float4x4::translation(0.0f, 0.0f, -2.0f));
-
-    // Copy our cam into debug cam
-    auto new_cam = render_world->create_camera();
-    settings.far_clip = 500.0f;
-    new_cam->set_settings(settings);
-
-    m_CameraType = 0;
-    m_OrbitCamera = JONO_NEW(OrbitCamera, render_world);
-    m_FreeCamera = JONO_NEW(FreeCam, render_world);
-
-    auto l = render_world->create_light(RenderWorldLight::LightType::Directional);
-    settings.aspect = 1.0f;
-    settings.near_clip = 0.0f;
-    settings.far_clip = 25.0f;
-    settings.width = 10.0f;
-    settings.height = 20.0f;
-    settings.projection_type = RenderWorldCamera::Projection::Ortographic;
-    l->set_settings(settings);
-
-    constexpr f32 c_scale = 0.5f;
-    l->set_colour({ 1.0f * c_scale, 1.0f * c_scale, 1.0f * c_scale });
-    l->set_casts_shadow(true);
-    l->set_view(float4x4::look_at({ 10.0, 10.0f, 0.0f }, float3(0.0f, 0.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)));
-    m_SunLight = l;
-
+   
     // Disabled for now as this app is not using the entity system
     // framework::EntityDebugOverlay* overlay = new framework::EntityDebugOverlay(_world.get());
     // GameEngine::instance()->get_overlay_manager()->register_overlay(overlay);
@@ -306,6 +233,94 @@ void SceneViewer::OnStartup()
 #endif
 }
 
+void SceneViewer::OpenScene(const char* path)
+{
+    m_ScenePath = path;
+
+    std::string resolvedPath = IO::get()->ResolvePath(path);
+    yaml::Document doc = yaml::Document(resolvedPath.c_str());
+
+    auto render_world = GameEngine::instance()->get_render_world();
+    render_world->Clear();
+
+    Yaml::Node& node = doc.GetRoot();
+    auto data = node["Models"][0]["name"].As<std::string>();
+    for (auto it = node["Models"].Begin(); it != node["Models"].End(); it++)
+    {
+        // LOG_INFO(Unknown, "{}: {}", (*it).first, (*it).second.As<string>());
+        std::string name = (*it).second["name"].As<std::string>();
+        std::string type = (*it).second["type"].As<std::string>();
+        std::string position = (*it).second["position"].As<std::string>();
+        std::string scaleT = (*it).second["scale"].As<std::string>();
+        std::string rotation = (*it).second["rotation"].As<std::string>();
+        std::string mesh = (*it).second["mesh"].As<std::string>();
+
+        float pos[3];
+        float scale[3];
+        float rot[3];
+
+        std::vector<std::string_view> result;
+        Helpers::split_string(position, ",", result);
+
+        pos[0] = (float)atof(result[0].data());
+        pos[1] = (float)atof(result[1].data());
+        pos[2] = (float)atof(result[2].data());
+
+        Helpers::split_string(scaleT, ",", result);
+        scale[0] = (float)atof(result[0].data());
+        scale[1] = (float)atof(result[1].data());
+        scale[2] = (float)atof(result[2].data());
+
+        Helpers::split_string(rotation, ",", result);
+        rot[0] = (float)atof(result[0].data());
+        rot[1] = (float)atof(result[1].data());
+        rot[2] = (float)atof(result[2].data());
+
+        float4x4 transform = float4x4::translation(float3(pos[0], pos[1], pos[2]));
+        render_world->create_instance(transform, mesh);
+    }
+
+    ImVec2 size = GameEngine::instance()->GetViewportSize();
+    const float aspect = (float)size.x / (float)size.y;
+    const float near_plane = 0.5f;
+    const float far_plane = 250.0f;
+
+    // Create Cam 1
+    auto rw_cam = render_world->create_camera();
+    RenderWorldCamera::CameraSettings settings{};
+    settings.aspect = aspect;
+    settings.far_clip = far_plane;
+    settings.near_clip = near_plane;
+    settings.fov = hlslpp::radians(float1(45.0f)); // 45 deg fov
+    settings.projection_type = RenderWorldCamera::Projection::Perspective;
+    rw_cam->set_settings(settings);
+    rw_cam->set_view(float4x4::translation(0.0f, 0.0f, -2.0f));
+
+    // Copy our cam into debug cam
+    auto new_cam = render_world->create_camera();
+    settings.far_clip = 500.0f;
+    new_cam->set_settings(settings);
+
+    m_CameraType = 0;
+    m_OrbitCamera = JONO_NEW(OrbitCamera, render_world);
+    m_FreeCamera = JONO_NEW(FreeCam, render_world);
+
+    auto l = render_world->create_light(RenderWorldLight::LightType::Directional);
+    settings.aspect = 1.0f;
+    settings.near_clip = 0.0f;
+    settings.far_clip = 25.0f;
+    settings.width = 10.0f;
+    settings.height = 20.0f;
+    settings.projection_type = RenderWorldCamera::Projection::Ortographic;
+    l->set_settings(settings);
+
+    constexpr f32 c_scale = 0.5f;
+    l->set_colour({ 1.0f * c_scale, 1.0f * c_scale, 1.0f * c_scale });
+    l->set_casts_shadow(true);
+    l->set_view(float4x4::look_at({ 10.0, 10.0f, 0.0f }, float3(0.0f, 0.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)));
+    m_SunLight = l;
+}
+
 void SceneViewer::OnShutdown()
 {
     Super::OnShutdown();
@@ -352,10 +367,14 @@ void SceneViewer::OnUpdate(double deltaTime)
     {
         OpenFile();
     }
+    if (input_manager->is_key_pressed(KeyCode::P) && input_manager->is_key_down(KeyCode::LControl))
+    {
+        OpenScene(m_ScenePath.c_str());
+    }
 
     if (m_CameraType == 0)
     {
-        m_OrbitCamera->tick(deltaTime);
+        m_OrbitCamera->Tick(deltaTime);
     }
     else
     {
@@ -493,7 +512,7 @@ void SceneViewer::OpenFile()
     std::string file = ShowFileDialog(GameEngine::instance()->GetWindow());
     if (!file.empty())
     {
-        this->SwapModel(file.c_str());
+        this->OpenScene(file.c_str());
     }
 }
 

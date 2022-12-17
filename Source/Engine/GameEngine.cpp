@@ -30,6 +30,7 @@
 #include "Memory.h"
 
 #include "Types/TypeManager.h"
+#include "EngineLoop.h"
 
 int g_DebugMode = 0;
 
@@ -126,56 +127,6 @@ void GameEngine::set_title(const string& titleRef)
 	m_Title = titleRef;
 }
 
-int GameEngine::Run(HINSTANCE hInstance, int iCmdShow)
-{
-	Startup();
-
-	// Timer to track the elapsed time in the game
-	PrecisionTimer full_frame_timer{};
-	f64 time_elapsed = 0.0;
-	f64 time_previous = 0.0;
-	f64 time_lag = 0.0; 
-
-
-	// Wait until graphics stage is initialized
-	m_GraphicsThread.WaitForStage(GraphicsThread::Stage::Running);
-	m_SignalGraphicsToMain.release();
-
-	m_IsRunning = m_Game ? true : false;
-	u64 frame = 0;
-	while (m_IsRunning)
-	{
-		JONO_FRAME("Frame");
-		++frame;
-
-		f64 dt = full_frame_timer.get_delta_time(); 
-		full_frame_timer.start();
-		Update(dt);
-
-		// Update CPU only timings
-		{
-			JONO_EVENT("FrameLimiter");
-			if (m_EngineCfg.m_MaxFrametime > 0.0)
-			{
-				f64 targetTimeMs = m_EngineCfg.m_MaxFrametime;
-
-				// Get the current frame time
-				f64 framet = full_frame_timer.get_delta_time();
-				f64 time_to_sleep = targetTimeMs - framet;
-
-				Perf::PreciseSleep(time_to_sleep);
-			}
-		}
-		full_frame_timer.stop();
-		f64 framet = full_frame_timer.get_delta_time();
-		time_elapsed += framet;
-	}
-
-	Shutdown();
-	return 0;
-}
-
-
 bool GameEngine::Startup()
 {
 	JONO_THREAD("MainThread");
@@ -193,7 +144,7 @@ bool GameEngine::Startup()
 	}
 
 	// Validate engine settings
-	ASSERTMSG(!(m_EngineCfg.m_UseD2D && (m_EngineCfg.m_UseD3D && m_EngineCfg.m_D3DMSAA != MSAAMode::Off)), " Currently the engine does not support rendering D2D with MSAA because DrawText does not respond correctly!");
+	ASSERTMSG(!(m_EngineCfg.m_UseD2D && (m_EngineCfg.m_UseD3D && m_EngineCfg.m_MSAA != MSAAMode::Off)), " Currently the engine does not support rendering D2D with MSAA because DrawText does not respond correctly!");
 
 	s_MainThreadID = std::this_thread::get_id();
 
@@ -312,7 +263,7 @@ bool GameEngine::Startup()
 		m_World->init();
 
 		m_RenderWorld = std::make_shared<RenderWorld>();
-		m_RenderWorld->init();
+		m_RenderWorld->Init();
 	}
 	LOG_INFO(System, "Finished initialising worlds.");
 
@@ -1596,12 +1547,12 @@ int GameEngine::Run(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iC
 #endif
 
 	int result = 0;
-	GameEngine::create();
 
-	GameEngine::instance()->set_command_line(cmdLine);
-	GameEngine::instance()->set_game(std::move(game));
+    EngineLoop loop = EngineLoop(game->GetType()->m_Path);
+    result = loop.Run(cmdLine);
 
-	result = GameEngine::instance()->Run(hInstance, iCmdShow); // run the game engine and return the result
+	// #TODO: Pass command line to engine loop
+	// GameEngine::instance()->set_command_line(cmdLine);
 
 	// Shutdown the game engine to make sure there's no leaks left.
 	GameEngine::shutdown();

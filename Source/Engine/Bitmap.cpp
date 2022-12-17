@@ -1,4 +1,4 @@
-#include "engine.pch.h"    // for compiler
+#include "engine.pch.h" // for compiler
 
 #include "Bitmap.h"
 #include "GameEngine.h"
@@ -11,7 +11,8 @@
 // Bitmap methods
 //---------------------------
 // Load an Bitmap using a filename
-Bitmap::Bitmap() : m_Opacity(1.0)
+Bitmap::Bitmap()
+  : m_Opacity(1.0)
 {
 }
 
@@ -19,17 +20,20 @@ Bitmap::~Bitmap()
 {
 }
 
-unique_ptr<Bitmap> Bitmap::load(string const& filename) {
-	auto bmp = make_unique<Bitmap>();
-	bmp->m_FileName = filename;
+unique_ptr<Bitmap> Bitmap::load(string const& filename)
+{
+    std::string path = GetGlobalContext()->m_PlatformIO->ResolvePath(filename);
 
-	FromFileResourceParameters params{ filename };
-	bmp->_resource = ResourceLoader::instance()->load<TextureHandle>(params, false, true);
+    auto bmp = make_unique<Bitmap>();
+    bmp->m_FileName = path;
 
-	// for now we don't support async bitmap loading and we assume in our rendering that bitmaps are always loaded and ready to render
-	LOG_WARNING(IO, "Bitmap sync load!");
+    FromFileResourceParameters params{ path };
+    bmp->_resource = ResourceLoader::instance()->load<TextureHandle>(params, false, true);
 
-	#if 0
+    // for now we don't support async bitmap loading and we assume in our rendering that bitmaps are always loaded and ready to render
+    LOG_WARNING(IO, "Bitmap sync load!");
+
+#if 0
 	string path = GameEngine::instance()->get_io()->resolve_path(filename);
 	bmp->m_FileName = path;
 	//IWICFormatConverter *convertorPtr=nullptr;
@@ -47,9 +51,9 @@ unique_ptr<Bitmap> Bitmap::load(string const& filename) {
 	}
 
 	return bmp;
-	#else
-	return bmp;
-	#endif
+#else
+    return bmp;
+#endif
 }
 
 #if 0 
@@ -128,32 +132,32 @@ ID2D1Bitmap* Bitmap::GetBitmapPtr() const
 
 ID3D11ShaderResourceView* Bitmap::get_srv() const
 {
-	return _resource->get()->get_srv();
+    return _resource->get()->get_srv();
 }
 
 int Bitmap::get_width() const
 {
-	return _resource->get()->get_width();
+    return _resource->get()->get_width();
 }
 
-int	Bitmap::get_height() const
+int Bitmap::get_height() const
 {
-	return _resource->get()->get_height();
+    return _resource->get()->get_height();
 }
 
 double Bitmap::GetOpacity() const
 {
-	return m_Opacity;
+    return m_Opacity;
 }
 
 void Bitmap::SetOpacity(double opacity)
 {
-	m_Opacity = opacity;
+    m_Opacity = opacity;
 }
 
 void Bitmap::SetTransparencyColor(u32 transparentColor)
 {
-	#if 0 
+#if 0 
 	u32 r = COLOR_R(transparentColor);
 	u32 g = COLOR_G(transparentColor);
 	u32 b = COLOR_B(transparentColor);
@@ -188,9 +192,9 @@ void Bitmap::SetTransparencyColor(u32 transparentColor)
 		renderTargetPtr->CreateBitmapFromWicBitmap(iWICBitmapPtr, &m_BitmapPtr);
 		iWICBitmapPtr->Release();
 	}
-	#else 
-	ASSERTMSG(false, "Not implemented.");
-	#endif
+#else
+    ASSERTMSG(false, "Not implemented.");
+#endif
 }
 string Bitmap::GetFileName()
 {

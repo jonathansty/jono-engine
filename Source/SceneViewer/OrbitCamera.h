@@ -10,13 +10,13 @@ public:
 
 	~OrbitCamera();
 
-	void tick(double deltaTime);
+	void Tick(double deltaTime);
 
 private:
-	shared_ptr<RenderWorld> _world;
+	shared_ptr<RenderWorld> m_World;
 
-	float3 _center;
-	float _zoom;
-	float _timer;
-	float _up_timer;
+	float3 m_Center;
+	float m_Zoom;
+	float m_Timer;
+	float m_UpTimer;
 };

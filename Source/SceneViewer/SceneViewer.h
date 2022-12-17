@@ -22,7 +22,10 @@ public:
 	virtual void ConfigureEngine(EngineCfg &engineSettings) override;
 	virtual void ConfigureGame(GameCfg& gameSettings);
 	virtual void OnStartup() override;
-	virtual void OnShutdown() override;
+
+    void OpenScene(const char* path);
+
+    virtual void OnShutdown() override;
 
 	#if FEATURE_D2D
 	virtual void OnPaint2D(Graphics::D2DRenderContext& ctx) override;

@@ -57,11 +57,18 @@ RenderWorld& RenderWorld::operator=(RenderWorld const& rhs)
 	return *this;
 }
 
-void RenderWorld::init()
+void RenderWorld::Init()
 {
 	_instances.reserve(c_instance_reserve);
 	_cameras.reserve(c_camera_reserve);
 	_lights.reserve(c_light_reserve);
+}
+
+void RenderWorld::Clear()
+{
+    _instances.clear();
+    _cameras.clear();
+    _lights.clear();
 }
 
 std::shared_ptr<RenderWorldInstance> RenderWorld::create_instance(float4x4 transform, std::string const& mesh)

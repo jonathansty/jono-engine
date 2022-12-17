@@ -138,6 +138,8 @@ class PathFindingGame : public AbstractGame
 {
 
 public:
+    CLASS(PathFindingGame, AbstractGame);
+
 	void ConfigureEngine(EngineCfg&) override;
 
 	void ConfigureGame(GameCfg& gameSettings) override;

@@ -51,10 +51,23 @@ public:
 	template<typename T>
 	T* CreateObject()
 	{
-		TypeMetaData const* metaData = T::GetStaticType();
-		ASSERT(metaData->m_ConstructFn);
-		return static_cast<T*>(metaData->m_ConstructFn(nullptr));
+        return CreateObject<T>(T::GetStaticType());
 	}
+
+	template<typename T>
+    T* CreateObject(TypeMetaData const* data)
+    {
+        return reinterpret_cast<T*>(CreateObject(data));
+    }
+
+
+    void* CreateObject(TypeMetaData const* data)
+    {
+        ASSERT(data->m_ConstructFn);
+        return data->m_ConstructFn(nullptr);
+    }
+
+
 
 private:
 

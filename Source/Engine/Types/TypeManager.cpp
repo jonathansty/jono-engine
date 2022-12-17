@@ -52,8 +52,7 @@ void* TypeManager::CreateObject(std::string_view const& name)
 {
     if (TypeMetaData* obj = FindType(name); obj)
     {
-        ASSERT(obj->m_ConstructFn);
-        return obj->m_ConstructFn(nullptr);
+        return CreateObject(obj);
     }
     return nullptr;
 }

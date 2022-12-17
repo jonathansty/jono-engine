@@ -38,7 +38,7 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 
 	_stats = {};
 
-	_msaa = settings.m_D3DMSAA;
+	_msaa = settings.m_MSAA;
 	_engine_settings = settings;
 	_game_settings = game_settings;
 

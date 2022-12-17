@@ -55,32 +55,35 @@ D2DRenderContext::D2DRenderContext()
 
 bool D2DRenderContext::begin_paint(Renderer* renderer, ID2D1Factory* factory, ID2D1RenderTarget* rt, ID2D1SolidColorBrush* brush, Font* font)
 {
-	//m_RenderTarget = rt;
-	//m_Factory = factory;
-	//m_Brush = brush;
-	//m_Font = font;
-	m_Renderer = renderer;
-
-	CD3D11_VIEWPORT viewport = CD3D11_VIEWPORT(m_Renderer->get_raw_output_tex(), m_Renderer->get_raw_output_rtv());
-	D3D11_RECT rect{ (LONG)viewport.TopLeftX, (LONG)viewport.TopLeftY, (LONG)viewport.TopLeftX + (LONG)viewport.Width, (LONG)viewport.TopLeftY + (LONG)viewport.Height };
-	m_ProjectionMatrix = float4x4::orthographic(hlslpp::projection(hlslpp::frustum(viewport.TopLeftX, viewport.TopLeftX + viewport.Width, viewport.TopLeftY + viewport.Height, viewport.TopLeftY, 0.01f, 1.0f), hlslpp::zclip::zero));
-
 	m_TotalVertices = 0;
 	m_TotalIndices = 0;
 	m_DrawCommands.clear();
 	m_DrawCommands.reserve(1024);
 
-	if (m_RenderTarget)
-	{
-		m_RenderTarget->BeginDraw();
-		m_RenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+	//m_RenderTarget = rt;
+	//m_Factory = factory;
+	//m_Brush = brush;
+	//m_Font = font;
+    if (renderer)
+    {
+        m_Renderer = renderer;
 
-	}
-	if(m_Brush)
-	{
-		// set black as initial brush color
-		m_Brush->SetColor(D2D1::ColorF((FLOAT)(0.0), (FLOAT)(0.0), (FLOAT)(0.0), (FLOAT)(1.0)));
-	}
+        CD3D11_VIEWPORT viewport = CD3D11_VIEWPORT(m_Renderer->get_raw_output_tex(), m_Renderer->get_raw_output_rtv());
+        D3D11_RECT rect{ (LONG)viewport.TopLeftX, (LONG)viewport.TopLeftY, (LONG)viewport.TopLeftX + (LONG)viewport.Width, (LONG)viewport.TopLeftY + (LONG)viewport.Height };
+        m_ProjectionMatrix = float4x4::orthographic(hlslpp::projection(hlslpp::frustum(viewport.TopLeftX, viewport.TopLeftX + viewport.Width, viewport.TopLeftY + viewport.Height, viewport.TopLeftY, 0.01f, 1.0f), hlslpp::zclip::zero));
+
+
+        if (m_RenderTarget)
+        {
+            m_RenderTarget->BeginDraw();
+            m_RenderTarget->SetTransform(D2D1::Matrix3x2F::Identity());
+        }
+        if (m_Brush)
+        {
+            // set black as initial brush color
+            m_Brush->SetColor(D2D1::ColorF((FLOAT)(0.0), (FLOAT)(0.0), (FLOAT)(0.0), (FLOAT)(1.0)));
+        }
+    }
 	return true;
 }
 

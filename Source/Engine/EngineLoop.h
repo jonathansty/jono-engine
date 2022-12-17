@@ -1,10 +1,11 @@
 #pragma once
 
 #include "Types/TypeManager.h"
+#include "CLI/CommandLine.h"
 
 struct ENGINE_API IEngineLoop
 {
-	virtual int Run() = 0;
+    virtual int Run(cli::CommandLine cmdLine = {}) = 0;
 
 	virtual void Startup() = 0;
 	virtual void Update(f64 dt) = 0;
@@ -16,9 +17,10 @@ class ENGINE_API EngineLoop : public IEngineLoop
 	CLASS(EngineLoop, IEngineLoop)
 
 	public:
-		EngineLoop(const char* gameType = nullptr);
+		EngineLoop();
+		EngineLoop(const char* gameType);
 
-		int Run() override;
+		int Run(cli::CommandLine cmdLine = {}) override;
 
 		void Startup() override;
 		void Update(f64 dt) override;

@@ -24,7 +24,7 @@ struct EngineCfg
 
 	// Allow 3D rendering
 	bool m_UseD3D = true;
-	MSAAMode m_D3DMSAA = MSAAMode::Off;
+	MSAAMode m_MSAA = MSAAMode::Off;
 
 	f64 m_MaxFrametime;
 

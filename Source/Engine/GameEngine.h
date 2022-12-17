@@ -178,9 +178,6 @@ public:
 	ImGuiID GetPropertyDockID() const { return m_PropertyDockID; }
 
 private:
-	// Internal run function called by GameEngine::run
-	int Run(HINSTANCE hInstance, int iCmdShow);
-
 	// Sets the current game implementation
 	void set_game(unique_ptr<AbstractGame>&& gamePtr);
 

@@ -10,6 +10,8 @@ struct EngineCfg;
 class AbstractGame
 {
 public : 	
+	CLASS_BASE(AbstractGame)
+
 	AbstractGame() 
 	{
 	}
