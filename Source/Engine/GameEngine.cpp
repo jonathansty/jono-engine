@@ -485,7 +485,7 @@ void GameEngine::Update(f64 dt)
 		}
 
 		// Run 2D rendering on the app thread, merely populates the 2D drawing data
-		if (m_EngineCfg.m_UseD2D)
+		if (m_EngineCfg.m_UseD2D && !m_RecreateSwapchainRequested)
 		{
 			RenderD2D();
 		}
