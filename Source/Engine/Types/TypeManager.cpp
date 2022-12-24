@@ -48,14 +48,6 @@ void* TypeManager::SerializeObject(std::string_view const& typePath, void* dst, 
     return nullptr;
 }
 
-void* TypeManager::CreateObject(std::string_view const& name)
-{
-    if (TypeMetaData* obj = FindType(name); obj)
-    {
-        return CreateObject(obj);
-    }
-    return nullptr;
-}
 
 TypeManager::~TypeManager()
 {

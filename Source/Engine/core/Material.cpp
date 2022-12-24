@@ -287,11 +287,11 @@ void Material::apply(Graphics::Renderer* renderer, Graphics::ViewParams const& p
 	auto ctx = renderer->get_ctx()._ctx;
 	if (is_double_sided())
 	{
-		ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullNone).Get());
+		ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullNone).Get());
 	}
 	else
 	{
-		ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullBack).Get());
+		ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
 	}
 
 	Graphics::ShaderConstRef vertex_shader = get_vertex_shader();
@@ -381,11 +381,11 @@ void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams 
 	auto ctx = renderer->get_ctx()._ctx;
 	if (is_double_sided())
 	{
-		renderer->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullNone).Get());
+		renderer->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullNone).Get());
 	}
 	else
 	{
-		renderer->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullBack).Get());
+		renderer->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
 	}
 
 	Graphics::ShaderConstRef vertex_shader = get_vertex_shader();

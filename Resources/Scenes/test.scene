@@ -9,6 +9,21 @@ Models:
     scale: 1,1,1
     rotation: 0,0.5,0
     mesh: res:/Blockout/Cube.glb
+  - name: Cube
+    position: 3.0,0.0,0
+    scale: 1,1,1
+    rotation: 0,0.5,0
+    mesh: res:/Blockout/Cube.glb
+  - name: Cube
+    position: 6.0,0.0,0
+    scale: 1,1,1
+    rotation: 0,0.5,0
+    mesh: res:/Blockout/Cube.glb
+  - name: Cube
+    position: 9.0,0.0,0
+    scale: 1,1,1
+    rotation: 0,0.5,0
+    mesh: res:/Blockout/Cube.glb
 Cameras:
   - name: MainCamera
     type: Free

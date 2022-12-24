@@ -1,7 +1,7 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#define MAX_DIRECTIONAL_LIGHTS 4
+#define MAX_DIRECTIONAL_LIGHTS 1
 #define MAX_CASCADES 4
 
 #define Buffer_Global 0
@@ -20,6 +20,8 @@
 
 #define Sampler_Linear 0
 #define Sampler_Point 1
+#define Sampler_ClampLinear 2
+#define Sampler_ClampPoint 3
 
 #define LIGHT_TYPE_POINT 0x1
 #define LIGHT_TYPE_SPOT 0x2
@@ -34,6 +36,7 @@
 
 // Define type overrides for both C++ and hlsl
 #ifdef __cplusplus
+#include "ShaderTypes.h"
 #define vec3 Shaders::float3
 #define vec4 Shaders::float4
 #define mat4x4 Shaders::float4x4
@@ -54,9 +57,10 @@ struct DirectionalLightInfo
 	vec4 direction;
 	mat4x4 light_space;
 
-	int num_cascades;
 	mat4x4 cascade[MAX_CASCADES];
 	vec4 cascade_distance[MAX_CASCADES];
+
+	int num_cascades;
 };
 
 struct Viewport_t

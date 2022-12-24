@@ -22,14 +22,14 @@ inline void DrawCube(PrimitiveBatch<VertexPositionColor>* batch,
 		float4 color)
 {
 	static const float4 s_verts[8] = {
-		float4{ -1.f, -1.f, -1.f, 0.f },
-		float4{ 1.f, -1.f, -1.f, 0.f },
-		float4{ 1.f, -1.f, 1.f, 0.f },
-		float4{ -1.f, -1.f, 1.f, 0.f },
-		float4{ -1.f, 1.f, -1.f, 0.f },
-		float4{ 1.f, 1.f, -1.f, 0.f },
-		float4{ 1.f, 1.f, 1.f, 0.f },
-		float4{ -1.f, 1.f, 1.f, 0.f }
+		float4{ -1.f, -1.f, -1.f, 1.f },
+		float4{ 1.f, -1.f, -1.f, 1.f },
+		float4{ 1.f, -1.f, 1.f, 1.f },
+		float4{ -1.f, -1.f, 1.f, 1.f },
+		float4{ -1.f, 1.f, -1.f, 1.f },
+		float4{ 1.f, 1.f, -1.f, 1.f },
+		float4{ 1.f, 1.f, 1.f, 1.f },
+		float4{ -1.f, 1.f, 1.f, 1.f }
 	};
 
 	static const u16 s_indices[] = {
@@ -80,7 +80,7 @@ void Draw(PrimitiveBatch<VertexPositionColor>* batch,
 		const BoundingBox& box,
 		float4 color)
 {
-	float4x4 matWorld = float4x4::scale(box.Extents.x, box.Extents.y, box.Extents.z);
+    float4x4 matWorld = float4x4::scale(box.Extents.x, box.Extents.y, box.Extents.z);
 
 	float4 position = {};
 	hlslpp::load(position, (float*)&box.Center);

@@ -29,7 +29,11 @@ void CreateSS(ComPtr<ID3D11Device> const& device, CD3D11_SAMPLER_DESC const& ss_
 void CreateBS(ComPtr<ID3D11Device> const& device, CD3D11_BLEND_DESC const& bs_desc, BlendState state);
 
 
-bool s_EnableShadowRendering = false;
+bool s_EnableShadowRendering = true;
+bool s_EnableCSM0 = true;
+bool s_EnableCSM1 = true;
+bool s_EnableCSM2 = true;
+bool s_EnableCSM3 = true;
 
 void init(DeviceContext const& ctx)
 {
@@ -122,6 +126,19 @@ void init(DeviceContext const& ctx)
 
 		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
 		SUCCEEDED(device->CreateSamplerState(&sampler, s_sampler_states[*SamplerState::MinMagMip_Point].GetAddressOf()));
+
+		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+		sampler.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+		sampler.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+		sampler.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+        sampler.BorderColor[0] = 1.0f;
+        sampler.BorderColor[1] = 1.0f;
+        sampler.BorderColor[2] = 1.0f;
+        sampler.BorderColor[3] = 1.0f;
+		SUCCEEDED(device->CreateSamplerState(&sampler, s_sampler_states[*SamplerState::MinMagMip_LinearClamp].GetAddressOf()));
+
+		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+		SUCCEEDED(device->CreateSamplerState(&sampler, s_sampler_states[*SamplerState::MinMagMip_PointClamp].GetAddressOf()));
 	}
 }
 
@@ -155,22 +172,22 @@ ComPtr<ID3D11DeviceContext> get_ctx()
 	return s_ctx._ctx;
 }
 
-ComPtr<ID3D11BlendState> get_blend_state(BlendState blendState)
+ComPtr<ID3D11BlendState> GetBlendState(BlendState blendState)
 {
 	return s_blend_states[static_cast<u32>(blendState)];
 }
 
-ComPtr<ID3D11RasterizerState> get_rasterizer_state(RasterizerState rasterizerState)
+ComPtr<ID3D11RasterizerState> GetRasterizerState(RasterizerState rasterizerState)
 {
 	return s_raster_states[*rasterizerState];
 }
 
-ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState depthStencilState)
+ComPtr<ID3D11DepthStencilState> GetDepthStencilState(DepthStencilState depthStencilState)
 {
 	return s_depth_stencil_states[*depthStencilState];
 }
 
-ComPtr<ID3D11SamplerState> get_sampler_state(SamplerState samplerState)
+ComPtr<ID3D11SamplerState> GetSamplerState(SamplerState samplerState)
 {
 	return s_sampler_states[*samplerState];
 }

@@ -385,15 +385,15 @@ void GraphicsThread::RenderD2D()
 			ID3D11Buffer* cb = m_GlobalCB->Get();
 			ctx->VSSetConstantBuffers(0, 1, &cb);
 
-			ComPtr<ID3D11RasterizerState> rss = Graphics::get_rasterizer_state(RasterizerState::CullNone);
-			ComPtr<ID3D11BlendState> bss = Graphics::get_blend_state(BlendState::AlphaBlend);
-			ComPtr<ID3D11DepthStencilState> dss = Graphics::get_depth_stencil_state(DepthStencilState::NoDepth);
+			ComPtr<ID3D11RasterizerState> rss = Graphics::GetRasterizerState(RasterizerState::CullNone);
+			ComPtr<ID3D11BlendState> bss = Graphics::GetBlendState(BlendState::AlphaBlend);
+			ComPtr<ID3D11DepthStencilState> dss = Graphics::GetDepthStencilState(DepthStencilState::NoDepth);
 			ctx->RSSetState(rss.Get());
 			ctx->OMSetBlendState(bss.Get(), nullptr, 0xFFFFFF);
 			ctx->OMSetDepthStencilState(dss.Get(), 0);
 
 			ID3D11SamplerState* samplers[] = {
-				Graphics::get_sampler_state(SamplerState::MinMagMip_Linear).Get()
+				Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get()
 			};
 			ctx->PSSetSamplers(0, 1, samplers);
 			for (DrawCmd const& cmd : renderData.m_DrawCommands)

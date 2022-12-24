@@ -1,4 +1,3 @@
-#pragma once
 #ifndef _LIGHTING_H_
 #define _LIGHTING_H_
 
@@ -158,10 +157,12 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 	
 	float4 tangent = normalize(vout.worldTangent);
 	float3 bitangent = normalize(vout.worldBitangent.xyz);
-	float3x3 tbn = float3x3(
-			tangent.xyz,
-			bitangent.xyz,
-			normal.xyz);
+	float3x3 tbn = float3x3
+	(
+		tangent.xyz,
+		bitangent.xyz,
+		normal.xyz
+	);
 
 	float3 final_normal = normalize(mul(material.tangentNormal, tbn));
 
@@ -170,8 +171,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 
 	float3 final_colour = float3(0.0,0.0,0.0);
 
-	uint numDirectionalLights = 1;
-	[loop]
+	unsigned int numDirectionalLights =  g_NumDirectionalLights;
 	for (unsigned int i = 0; i < numDirectionalLights; ++i) 
 	{
 		float3 light = -normalize(g_Lights[i].direction);
@@ -179,6 +179,10 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 
 		float4 proj_pos = mul(WorldViewProjection, vout.worldPosition);
 		float4 shadow = compute_shadow(vout.worldPosition, vout.viewPosition, proj_pos, g_Lights[i], final_normal);
+	#ifdef DEBUG_SHADOW
+		final_colour = shadow;
+		continue;
+	#endif
 
 		// Need to invert the light vector here because we pass in the direction.
 		

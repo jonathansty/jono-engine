@@ -58,6 +58,8 @@ enum class SamplerState : u32
 {
 	MinMagMip_Linear,
 	MinMagMip_Point,
+	MinMagMip_LinearClamp,
+	MinMagMip_PointClamp,
 	Num
 };
 ENUM_UNDERLYING_TYPE(SamplerState);
@@ -69,6 +71,10 @@ namespace Graphics
 	struct ShaderCreateParams;
 
 extern bool s_EnableShadowRendering;
+extern bool s_EnableCSM0;
+extern bool s_EnableCSM1;
+extern bool s_EnableCSM2;
+extern bool s_EnableCSM3;
 
 
 struct DeviceContext;
@@ -82,10 +88,10 @@ void deinit();
 // Public API to retrieve the currently initialized graphics data and common states
 ENGINE_API ComPtr<ID3D11Device> get_device();
 ENGINE_API ComPtr<ID3D11DeviceContext> get_ctx();
-ENGINE_API ComPtr<ID3D11BlendState> get_blend_state(BlendState blendState);
-ENGINE_API ComPtr<ID3D11RasterizerState> get_rasterizer_state(RasterizerState rasterizerState);
-ENGINE_API ComPtr<ID3D11DepthStencilState> get_depth_stencil_state(DepthStencilState blendState);
-ENGINE_API ComPtr<ID3D11SamplerState> get_sampler_state(SamplerState blendState);
+ENGINE_API ComPtr<ID3D11BlendState> GetBlendState(BlendState blendState);
+ENGINE_API ComPtr<ID3D11RasterizerState> GetRasterizerState(RasterizerState rasterizerState);
+ENGINE_API ComPtr<ID3D11DepthStencilState> GetDepthStencilState(DepthStencilState blendState);
+ENGINE_API ComPtr<ID3D11SamplerState> GetSamplerState(SamplerState blendState);
 
 ENGINE_API std::shared_ptr<class Shader> get_error_shader_px();
 ENGINE_API std::shared_ptr<class Shader> get_error_shader_vx();

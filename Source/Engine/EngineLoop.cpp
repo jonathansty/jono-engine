@@ -16,7 +16,9 @@ int EngineLoop::Run(cli::CommandLine cmdLine)
     GameEngine::create();
     m_Engine = GameEngine::instance();
 
-    AbstractGame* rawGame = (AbstractGame*)(GetGlobalContext()->m_TypeManager->CreateObject(m_GameType));
+    GlobalContext* ctx = GetGlobalContext();
+    TypeManager* typeManager = ctx->m_TypeManager;
+    AbstractGame* rawGame = typeManager->CreateObject<AbstractGame>(m_GameType);
     m_Engine->m_Game = std::unique_ptr<AbstractGame>(rawGame);
 
     Startup();

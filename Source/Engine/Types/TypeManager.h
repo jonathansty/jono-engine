@@ -46,7 +46,16 @@ public:
 
 	void* SerializeObject(std::string_view const& typePath, void* dst, IFileStream* data);
 
-	void* CreateObject(std::string_view const& name);
+	template<typename T>
+	T* CreateObject(std::string_view const& name)
+    {
+        if (TypeMetaData* obj = FindType(name); obj)
+        {
+            return CreateObject<T>(obj);
+        }
+        return nullptr;
+    }
+
 
 	template<typename T>
 	T* CreateObject()
@@ -57,6 +66,7 @@ public:
 	template<typename T>
     T* CreateObject(TypeMetaData const* data)
     {
+		// #TODO: Implement check to make sure T is either type or parent
         return reinterpret_cast<T*>(CreateObject(data));
     }
 
@@ -64,7 +74,11 @@ public:
     void* CreateObject(TypeMetaData const* data)
     {
         ASSERT(data->m_ConstructFn);
-        return data->m_ConstructFn(nullptr);
+		if(data->m_ConstructFn)
+        {
+			return data->m_ConstructFn(nullptr);
+		}
+        return nullptr;
     }
 
 

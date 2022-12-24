@@ -38,6 +38,8 @@ cbuffer ModelConstants : CB_SLOT(Buffer_Model)
 // Default Samplers
 SamplerState g_all_linear_sampler : SAMPLER_SLOT(Sampler_Linear);
 SamplerState g_point_sampler : SAMPLER_SLOT(Sampler_Point);
+SamplerState g_SamplerLinearClamp : SAMPLER_SLOT(Sampler_ClampLinear);
+SamplerState g_SamplerPointClamp : SAMPLER_SLOT(Sampler_ClampPoint);
 
 Texture2DArray<float> g_shadow_map : SRV_SLOT(Texture_CSM); 
 Texture2D<float>      g_depth : SRV_SLOT(Texture_Depth);

@@ -14,6 +14,8 @@
 #include "Visibility.h"
 #include "RendererDebug.h"
 
+#include "Shaders/CommonShared.h"
+
 #if FEATURE_D2D
 #include "2DRenderContext.h"
 #endif
@@ -90,23 +92,19 @@ struct ViewParams
 
 
 
-// The max amount of lights available in the shaders
-static constexpr u32 MAX_LIGHTS = 4;
-static constexpr u32 MAX_CASCADES = 4;
-
-__declspec(align(16)) 
-struct DirectionalLightInfo
-{
-	float4 colour;
-	float4 direction;
-	float4x4 light_space;
-
-	u32 num_cascades;
-	f32 padding0[3];
-
-	float4x4 cascades[MAX_CASCADES];
-	float4 cascade_distances[MAX_CASCADES];
-};
+//__declspec(align(16)) 
+//struct DirectionalLightInfo
+//{
+//	float4   colour;
+//	float4   direction;
+//	float4x4 light_space;
+//
+//	float4x4 cascades[MAX_CASCADES];
+//	float4   cascade_distances[MAX_CASCADES];
+//
+//	u32 num_cascades;
+//
+//};
 
 __declspec(align(16)) 
 struct AmbientInfo
@@ -141,7 +139,7 @@ struct GlobalCB
 
 	Viewport vp;
 	AmbientInfo ambient;
-	DirectionalLightInfo lights[MAX_LIGHTS];
+	DirectionalLightInfo lights[MAX_DIRECTIONAL_LIGHTS];
 
 	u32 num_directional_lights;
 	u32 num_lights; // local lights
@@ -181,6 +179,10 @@ struct DeviceContext
 
 class Renderer final
 {
+	friend class RendererDebugTool;	
+
+	static constexpr u32 c_MaxLights = 2048;
+
 public:
 	void Init(EngineCfg const& settings, GameCfg const& game_settings, cli::CommandLine const& cmdline);
 	void InitForWindow(SDL_Window* wnd);
@@ -213,10 +215,10 @@ public:
 
 	void update_viewport(u32 x, u32 y, u32 w, u32 h)
 	{
-		_viewport_pos.x = float(x);
-		_viewport_pos.y = float(y);
-		_viewport_width = w;
-		_viewport_height = h;
+		m_ViewportPos.x = float(x);
+		m_ViewportPos.y = float(y);
+		m_ViewportWidth = w;
+		m_ViewportHeight = h;
 	}
 	// Respond to external swapchain change requests
 	void resize_swapchain(u32 w, u32 h);
@@ -341,7 +343,6 @@ private:
 	ComPtr<ID3D11ShaderResourceView> _shadow_map_srv;
 	ComPtr<ID3D11ShaderResourceView> _debug_shadow_map_srv[MAX_CASCADES];
 
-	static constexpr u32 c_max_lights = 2048;
 	std::unique_ptr<GPUStructuredBuffer> _light_buffer;
 	std::unique_ptr<GPUByteBuffer> _tile_light_index_buffer;
 	std::unique_ptr<GPUByteBuffer> _per_tile_info_buffer;
@@ -363,12 +364,11 @@ private:
 	ComPtr<ID3D11ShaderResourceView> _cubemap_srv;
 
 	std::unique_ptr<class RendererDebugTool> _debug_tool;
-	friend class RendererDebugTool;	
 
 	// Rendering parameters
-	u32 _viewport_width;
-	u32 _viewport_height;
-	float2 _viewport_pos;
+	u32		m_ViewportWidth;
+	u32		m_ViewportHeight;
+	float2  m_ViewportPos;
 
 	u32 m_DrawableAreaWidth;
 	u32 m_DrawableAreaHeight;
@@ -380,10 +380,13 @@ private:
 	std::unique_ptr<class VisibilityManager> _visibility;
 
 	// State tracking
-	shared_ptr<Shader const> _last_vs;
-	shared_ptr<Shader const> _last_ps;
-	ID3D11InputLayout* _last_input_layout;
-	ID3D11RasterizerState* _last_rs;
+	struct 
+	{
+		shared_ptr<Shader const> VS;
+		shared_ptr<Shader const> PS;
+		ID3D11InputLayout* InputLayout;
+		ID3D11RasterizerState* RS;
+	} m_PrevRenderState;
 
 };
 

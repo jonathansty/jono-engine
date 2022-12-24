@@ -55,7 +55,7 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 
 	// Setup Light buffer
 	{
-		_light_buffer = GPUStructuredBuffer::create(_device, sizeof(ProcessedLight), c_max_lights,true, BufferUsage::Dynamic);
+		_light_buffer = GPUStructuredBuffer::create(_device, sizeof(ProcessedLight), c_MaxLights,true, BufferUsage::Dynamic);
 	}
 
 	// Create our cubemap 
@@ -135,11 +135,11 @@ void Renderer::InitForWindow(SDL_Window* window)
 	{
 		// Initially start out with the window as our viewport. This will most likely get
 		// resized when ImGui creates our viewport control
-		_viewport_pos = { 0, 0 };
-		_viewport_width = m_DrawableAreaWidth;
-		_viewport_height = m_DrawableAreaHeight;
+		m_ViewportPos = { 0, 0 };
+		m_ViewportWidth = m_DrawableAreaWidth;
+		m_ViewportHeight = m_DrawableAreaHeight;
 
-		resize_swapchain(_viewport_width, _viewport_height);
+		resize_swapchain(m_ViewportWidth, m_ViewportHeight);
 	}
 
 	if (_d2d_rt)
@@ -514,7 +514,7 @@ void Renderer::pre_render(RenderWorld const& world)
 	for (auto& cam : world.get_cameras())
 	{
 		// Update our view camera to properly match the viewport aspect
-		cam->set_aspect((f32)_viewport_width / (f32)_viewport_height);
+		cam->set_aspect((f32)m_ViewportWidth / (f32)m_ViewportHeight);
 		cam->update();
 	}
 
@@ -613,10 +613,11 @@ void Renderer::pre_render(RenderWorld const& world)
 
 		VisibilityParams params{};
 		params.frustum[VisiblityFrustum_Main] = get_frustum_world(world, 0);
-		params.frustum[VisiblityFrustum_CSM0] = Math::Frustum::from_vp(directional_light->get_cascade(0).vp);
-		params.frustum[VisiblityFrustum_CSM1] = Math::Frustum::from_vp(directional_light->get_cascade(1).vp);
-		params.frustum[VisiblityFrustum_CSM2] = Math::Frustum::from_vp(directional_light->get_cascade(2).vp);
-		params.frustum[VisiblityFrustum_CSM3] = Math::Frustum::from_vp(directional_light->get_cascade(3).vp);
+
+		for (int i = 0; i < MAX_CASCADES; ++i)
+        {
+			params.frustum[VisiblityFrustum_CSM0 + i] = Math::Frustum::from_vp(directional_light->get_cascade(i).vp);
+        }
 		_visibility->run(params);
 	}
 
@@ -778,8 +779,8 @@ void Renderer::render_view(RenderWorld const& world, RenderPass::Value pass)
 	// For the world we always render from the top left corner
 	params.viewport.TopLeftX = 0.0;
 	params.viewport.TopLeftY = 0.0;
-	params.viewport.Width = (f32)_viewport_width;
-	params.viewport.Height = (f32)_viewport_height;
+	params.viewport.Width = (f32)m_ViewportWidth;
+	params.viewport.Height = (f32)m_ViewportHeight;
 
 	render_world(world, params);
 }
@@ -798,15 +799,17 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 			depth_stencil_state = DepthStencilState::LessEqual;
 		}
 
-		ID3D11SamplerState* samplers[2] = {
-			Graphics::get_sampler_state(SamplerState::MinMagMip_Linear).Get(),
-			Graphics::get_sampler_state(SamplerState::MinMagMip_Point).Get()
+		ID3D11SamplerState* samplers[] = {
+			Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get(),
+			Graphics::GetSamplerState(SamplerState::MinMagMip_Point).Get(),
+			Graphics::GetSamplerState(SamplerState::MinMagMip_LinearClamp).Get(),
+			Graphics::GetSamplerState(SamplerState::MinMagMip_PointClamp).Get()
 		};
 		_device_ctx->PSSetSamplers(0, UINT(std::size(samplers)), samplers);
 
-		_device_ctx->OMSetDepthStencilState(Graphics::get_depth_stencil_state(depth_stencil_state).Get(), 0);
-		_device_ctx->RSSetState(Graphics::get_rasterizer_state(RasterizerState::CullBack).Get());
-		_device_ctx->OMSetBlendState(Graphics::get_blend_state(BlendState::Default).Get(), NULL, 0xffffffff);
+		_device_ctx->OMSetDepthStencilState(Graphics::GetDepthStencilState(depth_stencil_state).Get(), 0);
+		_device_ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
+		_device_ctx->OMSetBlendState(Graphics::GetBlendState(BlendState::Default).Get(), NULL, 0xffffffff);
 		_device_ctx->RSSetViewports(1, &params.viewport);
 	}
 
@@ -826,7 +829,7 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 	global->vp.vp_half_width = params.viewport.Width / 2.0f;
 	global->vp.vp_half_height = params.viewport.Height / 2.0f;
 
-	global->num_directional_lights = std::min<u32>(u32(_num_directional_lights), MAX_LIGHTS);
+	global->num_directional_lights = std::min<u32>(u32(_num_directional_lights), MAX_DIRECTIONAL_LIGHTS);
 	global->num_lights = _num_lights;
 	global->num_tiles_x = _num_tiles_x;
 
@@ -855,8 +858,8 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 
 					f32 z0 = n * pow(f / n, f32(j) / f32(MAX_CASCADES));
 					f32 z1 = n * pow(f / n, f32(j + 1) / f32(MAX_CASCADES));
-					info->cascade_distances[j] = z1;
-					info->cascades[j] = l->get_cascade(j).vp;
+					info->cascade_distance[j] = float4(z1);
+					info->cascade[j] = l->get_cascade(j).vp;
 				}
 			}
 			else
@@ -864,8 +867,8 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 				info->num_cascades = 0;
 				for (int j = 0; j < MAX_CASCADES; ++j)
 				{
-					info->cascade_distances[j] = {};
-					info->cascades[j] = {};
+					info->cascade_distance[j] = {};
+					info->cascade[j] = {};
 				}
 			}
 		}
@@ -1052,10 +1055,10 @@ void Renderer::begin_frame()
 
 	// Reset all the state tracking
 	_device_ctx->ClearState();
-	_last_vs = nullptr;
-	_last_ps = nullptr;
-	_last_input_layout = nullptr;
-	_last_rs = nullptr;
+	m_PrevRenderState.VS = nullptr;
+	m_PrevRenderState.PS = nullptr;
+	m_PrevRenderState.InputLayout = nullptr;
+	m_PrevRenderState.RS = nullptr;
 
 
 	GameEngine* engine = GameEngine::instance();
@@ -1094,6 +1097,7 @@ Math::Frustum Renderer::get_cascade_frustum(shared_ptr<RenderWorldCamera> const&
 
 	Math::Frustum frustum = Math::Frustum::from_fov(z0, z1, camera->get_horizontal_fov(), camera->get_vertical_fov());
 
+
 	float4x4 view = camera->get_view();
 	frustum.transform(hlslpp::inverse(view));
 	return frustum;
@@ -1123,7 +1127,7 @@ void Renderer::setup_renderstate(MaterialInstance const* mat_instance, ViewParam
 
 void Renderer::VSSetShader(ShaderConstRef const& vertex_shader)
 {
-	if(_last_vs != vertex_shader)
+	if(m_PrevRenderState.VS != vertex_shader)
 	{
 		if (vertex_shader == nullptr)
 		{
@@ -1134,14 +1138,14 @@ void Renderer::VSSetShader(ShaderConstRef const& vertex_shader)
 			ASSERT(vertex_shader->get_type() == ShaderType::Vertex);
 			_device_ctx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
 		}
-		_last_vs = vertex_shader;
+        m_PrevRenderState.VS = vertex_shader;
 	}
 
 }
 
 void Renderer::PSSetShader(ShaderConstRef const& pixel_shader)
 {
-	if(_last_ps != pixel_shader)
+    if (m_PrevRenderState.PS != pixel_shader)
 	{
 		if(pixel_shader == nullptr)
 		{
@@ -1153,25 +1157,25 @@ void Renderer::PSSetShader(ShaderConstRef const& pixel_shader)
 			_device_ctx->PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);
 		}
 
-		_last_ps = pixel_shader;
+		m_PrevRenderState.PS = pixel_shader;
 	}
 }
 
 void Renderer::IASetInputLayout(ID3D11InputLayout* layout)
 {
-	if(_last_input_layout != layout)
+    if (m_PrevRenderState.InputLayout != layout)
 	{
 		_device_ctx->IASetInputLayout(layout);
-		_last_input_layout = layout;	
+        m_PrevRenderState.InputLayout = layout;	
 	}
 }
 
 void Renderer::RSSetState(ID3D11RasterizerState* state)
 {
-	if(_last_rs != state)
+    if (m_PrevRenderState.RS != state)
 	{
 		_device_ctx->RSSetState(state);
-		_last_rs = state;
+        m_PrevRenderState.RS = state;
 	}
 }
 
@@ -1196,8 +1200,8 @@ void Renderer::render_post_predebug()
 	_device_ctx->PSSetConstantBuffers(0, 1, &buffer);
 
 	ID3D11SamplerState* sampler_states[] = {
-		Graphics::get_sampler_state(SamplerState::MinMagMip_Linear).Get(),
-		Graphics::get_sampler_state(SamplerState::MinMagMip_Point).Get()
+		Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get(),
+		Graphics::GetSamplerState(SamplerState::MinMagMip_Point).Get()
 	};
 	_device_ctx->PSSetSamplers(0, 2, sampler_states);
 	_device_ctx->Draw(3, 0);
@@ -1239,13 +1243,20 @@ void Renderer::render_shadow_pass(RenderWorld const& world)
 		float3 position = world.get_light(0)->get_position().xyz;
 
 		// Render out the cascades shadow map for the directional light
+        bool renderCascade[4] = { s_EnableCSM0, s_EnableCSM1, s_EnableCSM2, s_EnableCSM3 };
 		for (u32 i = 0; i < MAX_CASCADES; ++i)
 		{
+
 			GPU_SCOPED_EVENT(_user_defined_annotation, fmt::format("Cascade {}", i).c_str());
 			CascadeInfo const& info = light->get_cascade(i);
 
 			_device_ctx->OMSetRenderTargets(0, nullptr, _shadow_map_dsv[i].Get());
 			_device_ctx->ClearDepthStencilView(_shadow_map_dsv[i].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+            if (!renderCascade[i])
+            {
+                continue;
+			}
 
 			ViewParams params{};
 #if 0 
@@ -1337,8 +1348,8 @@ void Renderer::render_post(RenderWorld const& world, shared_ptr<OverlayManager> 
 	}
 
 	D3D11_VIEWPORT vp{};
-	vp.Width = static_cast<float>(_viewport_width);
-	vp.Height = static_cast<float>(_viewport_height);
+	vp.Width = static_cast<float>(m_ViewportWidth);
+	vp.Height = static_cast<float>(m_ViewportHeight);
 	vp.TopLeftX = 0.0f;
 	vp.TopLeftY = 0.0f;
 	vp.MinDepth = 0.0f;

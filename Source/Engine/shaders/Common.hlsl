@@ -2,6 +2,7 @@
 #define _COMMON_HLSL_
 #include "CommonShared.h"
 
+
 #define LIGHTING_MODEL_BLINN_PHONG 1
 #define LIGHTING_MODEL_PHONG 2
 #define LIGHTING_MODEL_PBR 3

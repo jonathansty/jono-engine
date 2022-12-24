@@ -33,6 +33,19 @@ void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
 
 	_batch->Begin();
 
+	{
+        auto box = DirectX::BoundingBox({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
+        Debug::Draw(_batch.get(), box, { 1.0f, 1.0f, 1.0f, 1.0f });
+
+        box = DirectX::BoundingBox({ 10.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
+        Debug::Draw(_batch.get(), box, { 1.0f, 1.0f, 1.0f, 1.0f });
+
+        box = DirectX::BoundingBox({ 20.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
+        Debug::Draw(_batch.get(), box, { 1.0f, 1.0f, 1.0f, 1.0f });
+    }
+
+
+
 	Debug::DrawGrid(_batch.get(), float4(100.0, 0.0, 0.0, 0.0), float4(0.0, 0.0, 100.0, 0.0), float4(0.0, 0.0, 0.0, 0.0), 10, 10, float4(1.0f, 1.0f, 1.0f, 0.5f));
 
 	// Draw axis
@@ -98,19 +111,40 @@ void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
 					max = hlslpp::max(frustum._corners[j], max);
 				}
 
-				Shaders::float4 xm_color;
-				hlslpp::store(colors[(i) % colors.size()], (float*)&xm_color);
 
 				// Visualize the bounding box in world space of our cascades
 				float3 center = ((max + min) / 2.0f).xyz;
 				float3 extents = ((max - min) / 2.0f).xyz;
-				Shaders::float3 xm_center;
-				hlslpp::store(center, (float*)&xm_center);
 
-				Shaders::float3 xm_extents;
-				hlslpp::store(extents, (float*)&xm_extents);
+				Shaders::float4 xm_color = colors[(i) % colors.size()];
+				Shaders::float3 xm_center = float3(center.xyz);
+				Shaders::float3 xm_extents = extents;
+                Shaders::float3 up = Shaders::float3({ 0.0f, 1.0f, 0.0f });
+
 				auto box = DirectX::BoundingBox(xm_center, xm_extents);
 				Debug::Draw(_batch.get(), box, xm_color);
+
+
+				{
+                    auto camera = world.get_camera(0);
+                    f32 n = camera->get_near();
+                    f32 f = camera->get_far();
+
+                    f32 z0 = n * pow(f / n, f32(i) / f32(num_cascades));
+                    f32 z1 = n * pow(f / n, f32(i + 1) / f32(num_cascades));
+                    hlslpp::projection p = hlslpp::projection(hlslpp::frustum(1, 1, n, f), hlslpp::zclip::zero);
+					
+                    float4x4 proj = hlslpp::inverse(float4x4::orthographic(p));
+
+					center = float3(0.0f, 0.0f, 0.0f);
+                    center = hlslpp::mul(float4(center, 1.0f), proj).xyz;
+
+                    float4x4 invView = hlslpp::inverse(camera->get_view());
+                    center = hlslpp::mul(float4(center, 1.0f), invView).xyz;
+
+					DirectX::BoundingSphere sphere = DirectX::BoundingSphere(xm_center, 1.0f);
+                    Debug::Draw(_batch.get(), sphere, xm_color);
+                }
 			}
 		}
 
@@ -179,6 +213,11 @@ void RendererDebugTool::render_debug_tool()
 	if (ImGui::Begin("RendererDebug"), _isOpen)
 	{
 		ImGui::Checkbox("Enable Shadow Rendering", &Graphics::s_EnableShadowRendering);
+		ImGui::Checkbox("CSM0", &Graphics::s_EnableCSM0);
+        ImGui::Checkbox("CSM1", &Graphics::s_EnableCSM1);
+        ImGui::Checkbox("CSM2", &Graphics::s_EnableCSM2);
+        ImGui::Checkbox("CSM3", &Graphics::s_EnableCSM3);
+
 		ImGui::Checkbox("Enable Shadow Debug", &_show_shadow_debug);
 		ImGui::Checkbox("Force All Visible", &s_force_all_visible);
 
