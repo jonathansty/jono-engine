@@ -1,6 +1,6 @@
 #pragma once
 
-#define DEBUG_SHADOW
+// #define DEBUG_SHADOW
 
 uint compute_shadow_cascade(float depth, in DirectionalLightInfo info)
 {

@@ -1,30 +1,25 @@
 #pragma once
 
 #include "GPUBuffer.h"
+#include "Graphics/RenderInterface.h"
 
 class ConstantBuffer final : public IGPUBuffer
 {
 public:
-	static std::unique_ptr<ConstantBuffer> create(ID3D11Device* device, u32 size, bool cpu_write = false, BufferUsage usage = BufferUsage::Default, void* initialData = nullptr);
+	static std::unique_ptr<ConstantBuffer> create(RenderInterface* device, u32 size, bool cpu_write = false, BufferUsage usage = BufferUsage::Default, void* initialData = nullptr);
 
 	ConstantBuffer();
 
-	~ConstantBuffer();
+	virtual ~ConstantBuffer();
 
 
-	ID3D11Buffer* Get() { return _buffer.Get(); }
-
-	ID3D11Buffer* get_buffer() override { return _buffer.Get(); }
+	virtual GraphicsResourceHandle get_buffer() { return m_Resource; }
 
 	void* map(ID3D11DeviceContext* ctx) override;
 	void unmap(ID3D11DeviceContext* ctx) override;
 
-
-
-
-
 private:
-	ComPtr<ID3D11Buffer> _buffer;
+    GraphicsResourceHandle m_Resource;
 	u32 _size;
 	bool _cpu_writeable;
 	BufferUsage _usage;

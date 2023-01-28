@@ -29,7 +29,7 @@ std::unique_ptr<Material> Material::create(Graphics::ShaderRef const& vertex_sha
 	obj->_pixel_shader = pixel_shader;
 
 	// For now each material has it's own constant buffer
-	obj->_material_cb = ConstantBuffer::create(Graphics::get_device().Get(), initialDataSize, false, BufferUsage::Default, initialData);
+	obj->_material_cb = ConstantBuffer::create(GetRI(), initialDataSize, false, BufferUsage::Default, initialData);
 
 	return obj;
 }
@@ -187,7 +187,7 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 				result->_parameters[param_hash] = info;
 			}
 
-			result->_material_cb = ConstantBuffer::create(Graphics::get_device().Get(), param_data_byte_size, false, BufferUsage::Default, result->_param_data.data());
+			result->_material_cb = ConstantBuffer::create(GetRI(), param_data_byte_size, false, BufferUsage::Default, result->_param_data.data());
 
 			#if 1 
 			for (auto it = root["textures"].Begin(); it != root["textures"].End(); it++)
@@ -338,7 +338,7 @@ void Material::apply(Graphics::Renderer* renderer, Graphics::ViewParams const& p
 		ASSERTMSG(views.size() <= Texture_MaterialSlotEnd, "Currently we do not support more than 5 textures per material.");
 		ctx->PSSetShaderResources(Texture_MaterialSlotStart, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
 
-		ID3D11Buffer* buffer[1] = { get_cb()->Get() };
+		ID3D11Buffer* buffer[1] = { GetRI()->GetRawBuffer(get_cb()->get_buffer()) };
 		ctx->PSSetConstantBuffers(Buffer_Material, 1, buffer);
 	}
 	else
@@ -432,7 +432,7 @@ void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams 
 		ASSERTMSG(views.size() <= Texture_MaterialSlotEnd, "Currently we do not support more than 5 textures per material.");
 		ctx->PSSetShaderResources(Texture_MaterialSlotStart, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
 
-		ID3D11Buffer* buffer[1] = { get_cb()->Get() };
+		ID3D11Buffer* buffer[1] = { GetRI()->GetRawBuffer(get_cb()->get_buffer()) };
 		ctx->PSSetConstantBuffers(Buffer_Material, 1, buffer);
 	}
 	else
@@ -506,7 +506,7 @@ void MaterialInstance::update()
 		if (m_HasOverriddenParameters)
 		{
 			// update the paramter data
-			m_InstanceCB = ConstantBuffer::create(Graphics::get_device().Get(), u32(m_MaterialData.size()) * sizeof(float), false, BufferUsage::Default, m_MaterialData.data());
+			m_InstanceCB = ConstantBuffer::create(GetRI(), u32(m_MaterialData.size()) * sizeof(float), false, BufferUsage::Default, m_MaterialData.data());
 		}
 
 		m_NeedsFlush = false;

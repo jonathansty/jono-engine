@@ -1,36 +1,37 @@
 #pragma once
 
 #include "GPUBuffer.h"
+#include "Graphics/RenderInterface.h"
 
 class GPUByteBuffer final : public IGPUBuffer
 {
 public:
 	GPUByteBuffer()
 			:_mapped()
-			,_buffer(nullptr)
-			, _srv(nullptr)
-			,_uav(nullptr)
+			,_buffer()
+			, _srv()
+			,_uav()
 			,_size_bytes(0)
 	{};
 	~GPUByteBuffer(){};
 
 
-	static std::unique_ptr<GPUByteBuffer> create(ID3D11Device* device, size_t buffer_size_bytes, bool cpu_write = false, BufferUsage usage = BufferUsage::Default);
+	static std::unique_ptr<GPUByteBuffer> create(RenderInterface* device, size_t buffer_size_bytes, bool cpu_write = false, BufferUsage usage = BufferUsage::Default);
 
-	virtual ID3D11Buffer* get_buffer() { return _buffer.Get(); }
+	virtual GraphicsResourceHandle get_buffer() { return _buffer; }
 
 	virtual void* map(ID3D11DeviceContext* ctx) override;
 	virtual void unmap(ID3D11DeviceContext* ctx) override;
 
-	ComPtr<ID3D11ShaderResourceView> const& get_srv() const override { return _srv; }
-	ComPtr<ID3D11UnorderedAccessView> const& get_uav() const override { return _uav; };
+	GraphicsResourceHandle const& get_srv() const override { return _srv; }
+    GraphicsResourceHandle  const& get_uav() const override { return _uav; };
 
 	private:
 	D3D11_MAPPED_SUBRESOURCE _mapped;
 
-	ComPtr<ID3D11Buffer> _buffer;
-	ComPtr<ID3D11ShaderResourceView> _srv;
-	ComPtr<ID3D11UnorderedAccessView> _uav;
+	GraphicsResourceHandle _buffer;
+	GraphicsResourceHandle _srv;
+	GraphicsResourceHandle _uav;
 
 	size_t _size_bytes;
 };
@@ -42,24 +43,24 @@ public:
 	GPUStructuredBuffer(){};
 	~GPUStructuredBuffer() {}
 
-	static std::unique_ptr<GPUStructuredBuffer> create(ID3D11Device* device, size_t struct_size_bytes, size_t element_count, bool cpu_write = false, BufferUsage usage = BufferUsage::Default);
+	static std::unique_ptr<GPUStructuredBuffer> create(RenderInterface* device, size_t struct_size_bytes, size_t element_count, bool cpu_write = false, BufferUsage usage = BufferUsage::Default);
 
 
-	virtual ID3D11Buffer* get_buffer() { return _buffer.Get(); }
+	virtual GraphicsResourceHandle get_buffer() { return _buffer; }
 
 	virtual void*  map(ID3D11DeviceContext* ctx) override;
 	virtual void unmap(ID3D11DeviceContext* ctx) override;
 
-	ComPtr<ID3D11ShaderResourceView>  const& get_srv() const override { return _srv; }
-	ComPtr<ID3D11UnorderedAccessView> const& get_uav() const override { return _uav; };
+	GraphicsResourceHandle const& get_srv() const override { return _srv; }
+	GraphicsResourceHandle const& get_uav() const override { return _uav; };
 
 
 private:
 	D3D11_MAPPED_SUBRESOURCE _mapped;
 
-	ComPtr<ID3D11Buffer> _buffer;
-	ComPtr<ID3D11ShaderResourceView>  _srv;
-	ComPtr<ID3D11UnorderedAccessView> _uav;
+	GraphicsResourceHandle _buffer;
+	GraphicsResourceHandle _srv;
+	GraphicsResourceHandle _uav;
 
 	size_t _size_bytes;
 	size_t _struct_size_bytes;

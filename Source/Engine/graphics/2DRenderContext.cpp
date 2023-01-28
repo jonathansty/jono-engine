@@ -31,7 +31,7 @@ D2DRenderContext::D2DRenderContext(Renderer* renderer, ID2D1Factory* factory, ID
 	, m_CurrentVertices(0)
 	, m_Colour(1.0f, 1.0f, 1.0f, 1.0f)
 {
-	m_GlobalCB = ConstantBuffer::create(Graphics::get_device().Get(), sizeof(Shaders::float4x4) + sizeof(Shaders::float4), true, BufferUsage::Dynamic);
+	m_GlobalCB = ConstantBuffer::create(GetRI(), sizeof(Shaders::float4x4) + sizeof(Shaders::float4), true, BufferUsage::Dynamic);
 }
 
 D2DRenderContext::D2DRenderContext()

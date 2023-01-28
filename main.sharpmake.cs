@@ -68,6 +68,7 @@ public class EngineModule : Module
         conf.AddPublicDependency<CoreModule>(target);
         conf.AddPublicDependency<DirectXTK>(target);
         conf.AddPublicDependency<SDL2>(target);
+        conf.AddPublicDependency<GraphicsModule>(target);
 
         conf.LibraryFiles.AddRange(new string[] { 
             "dxgi", 
@@ -101,6 +102,47 @@ public class EngineModule : Module
         // CompileHLSL.ClaimAllShaderFiles(this);
     }
 }
+
+[Generate]
+public class GraphicsModule : Module
+{
+    public GraphicsModule()
+         : base()
+    {
+        Name = "Graphics";
+    }
+
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+
+        // Own public libraries
+        conf.AddPublicDependency<CliModule>(target);
+        conf.AddPublicDependency<CoreModule>(target);
+        conf.AddPublicDependency<DirectXTK>(target);
+        conf.AddPublicDependency<SDL2>(target);
+
+        conf.LibraryFiles.AddRange(new string[] {
+            "dxgi",
+            "d2d1",
+            "WindowsCodecs",
+            "dwrite",
+            "d3d11",
+            "d3dcompiler",
+            "Propsys",
+            //"XAudio2", 
+            "mfplat",
+            "mfreadwrite",
+            "mfuuid",
+            "XAudio2",
+            "dxguid",
+            "Winmm" }
+        );
+
+        conf.IncludePaths.Add(@"[project.SourceRootPath]/..");
+    }
+}
+
 
 [Generate]
 public class EngineTestProject : Application

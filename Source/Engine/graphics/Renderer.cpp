@@ -42,20 +42,29 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 	_engine_settings = settings;
 	_game_settings = game_settings;
 
-	create_factories(settings, cmdline);
+
+	// #TODO: Move this out of the renderer. The driver interface should be initialized by the engine
+	m_RI = GetRI();
+    m_RI->Init();
+
+	//create_factories(settings, cmdline);
+    _device = m_RI->m_Device.Get();
+    _device_ctx = m_RI->m_Context.Get();
+    _factory = m_RI->m_Factory.Get();
+    _user_defined_annotation = m_RI->m_UserDefinedAnnotations.Get();
 
 	_debug_tool = std::make_unique<RendererDebugTool>(this);
 	GameEngine::instance()->get_overlay_manager()->register_overlay(_debug_tool.get());
 
-	_cb_global = ConstantBuffer::create(_device, sizeof(GlobalCB), true, BufferUsage::Dynamic, nullptr);
-	_cb_model = ConstantBuffer::create(_device, sizeof(ModelCB), true, BufferUsage::Dynamic, nullptr);
-	_cb_debug = ConstantBuffer::create(_device, sizeof(DebugCB), true, BufferUsage::Dynamic, nullptr);
-	_cb_post = ConstantBuffer::create(_device, sizeof(PostCB), true, BufferUsage::Dynamic, nullptr);
+	_cb_global = ConstantBuffer::create(m_RI, sizeof(GlobalCB), true, BufferUsage::Dynamic, nullptr);
+	_cb_model = ConstantBuffer::create(m_RI, sizeof(ModelCB), true, BufferUsage::Dynamic, nullptr);
+	_cb_debug = ConstantBuffer::create(m_RI, sizeof(DebugCB), true, BufferUsage::Dynamic, nullptr);
+	_cb_post = ConstantBuffer::create(m_RI, sizeof(PostCB), true, BufferUsage::Dynamic, nullptr);
 
 
 	// Setup Light buffer
 	{
-		_light_buffer = GPUStructuredBuffer::create(_device, sizeof(ProcessedLight), c_MaxLights,true, BufferUsage::Dynamic);
+		_light_buffer = GPUStructuredBuffer::create(m_RI, sizeof(ProcessedLight), c_MaxLights,true, BufferUsage::Dynamic);
 	}
 
 	// Create our cubemap 
@@ -692,14 +701,14 @@ void Renderer::pre_render(RenderWorld const& world)
 		// #TODO: Resize buffers to match screen size
 		if(!_per_tile_info_buffer)
 		{
-			_per_tile_info_buffer = GPUByteBuffer::create(_device, tiles_x * tiles_y * sizeof(u32), false, BufferUsage::Default);
-			_tile_light_index_buffer = GPUByteBuffer::create(_device, tiles_x * tiles_y * FPLUS_MAX_NUM_LIGHTS_PER_TILE * sizeof(u32), false, BufferUsage::Default);
+			_per_tile_info_buffer = GPUByteBuffer::create(m_RI, tiles_x * tiles_y * sizeof(u32), false, BufferUsage::Default);
+			_tile_light_index_buffer = GPUByteBuffer::create(m_RI, tiles_x * tiles_y * FPLUS_MAX_NUM_LIGHTS_PER_TILE * sizeof(u32), false, BufferUsage::Default);
 
 			ShaderCreateParams cs_params = ShaderCreateParams::compute_shader("Source/Engine/shaders/ForwardPlus_Cull.hlsl");
 			cs_params.params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
 			_fplus_cull_shader = ShaderCache::instance()->find_or_create(cs_params);
 
-			_fplus_cb = ConstantBuffer::create(_device, sizeof(FPlusCB), true, BufferUsage::Dynamic);
+			_fplus_cb = ConstantBuffer::create(GetRI(), sizeof(FPlusCB), true, BufferUsage::Dynamic);
 		}
 
 
@@ -722,20 +731,20 @@ void Renderer::pre_render(RenderWorld const& world)
 		ctx->OMSetRenderTargets(0, nullptr, nullptr);
 
 		std::array<ID3D11ShaderResourceView*, 2> srvs = {
-			_light_buffer->get_srv().Get(),
+			m_RI->GetRawSRV(_light_buffer->get_srv()),
 			_output_depth_srv
 		};
 		ctx->CSSetShaderResources(0, 2, srvs.data());
 
 		std::array<ID3D11UnorderedAccessView*, 2> uavs = {
-			_tile_light_index_buffer->get_uav().Get(),
-			_per_tile_info_buffer->get_uav().Get()
+			m_RI->GetRawUAV(_tile_light_index_buffer->get_uav()),
+            m_RI->GetRawUAV(_per_tile_info_buffer->get_uav())
 		};
 
 		ctx->CSSetUnorderedAccessViews(0, 2, uavs.data(), nullptr);
 
 		std::array<ID3D11Buffer*, 1> cbs = {
-			_fplus_cb->Get()
+			m_RI->GetRawBuffer(_fplus_cb->get_buffer())
 		};
 		ctx->CSSetConstantBuffers(0, 1, cbs.data());
 		ctx->CSSetShader(_fplus_cull_shader->as<ID3D11ComputeShader>().Get(), nullptr, 0);
@@ -950,8 +959,8 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 	if (g_DebugMode != 0)
 	{
 		ID3D11Buffer* buffers[3] = {
-			_cb_global->Get(),
-			_cb_debug->Get()
+			m_RI->GetRawBuffer(_cb_global->get_buffer()),
+			m_RI->GetRawBuffer(_cb_debug->get_buffer())
 		};
 		ctx->VSSetConstantBuffers(0, 2, buffers);
 		ctx->PSSetConstantBuffers(0, 2, buffers);
@@ -959,7 +968,7 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 	else
 	{
 		ID3D11Buffer* buffers[1] = {
-			_cb_global->Get(),
+            m_RI->GetRawBuffer(_cb_global->get_buffer()),
 		};
 		ctx->VSSetConstantBuffers(0, 1, buffers);
 		ctx->PSSetConstantBuffers(0, 1, buffers);
@@ -994,7 +1003,7 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 
 		ID3D11Buffer* buffers[1] = 
 		{
-			model_cb->Get()
+			m_RI->GetRawBuffer(model_cb->get_buffer())
 		};
 		ctx->VSSetConstantBuffers(2, 1, buffers);
 		ctx->PSSetConstantBuffers(2, 1, buffers);
@@ -1117,9 +1126,9 @@ void Renderer::setup_renderstate(MaterialInstance const* mat_instance, ViewParam
 			s_EnableShadowRendering ? _shadow_map_srv.Get() : nullptr,
 			_output_depth_srv_copy,
 			_cubemap_srv.Get(),
-			_light_buffer->get_srv().Get(),
-			_tile_light_index_buffer->get_srv().Get(),
-			_per_tile_info_buffer->get_srv().Get()
+			m_RI->GetRawSRV(_light_buffer->get_srv()),
+			m_RI->GetRawSRV(_tile_light_index_buffer->get_srv()),
+			m_RI->GetRawSRV(_per_tile_info_buffer->get_srv())
 		};
 		_device_ctx->PSSetShaderResources(Texture_CSM, UINT(std::size(views)), views);
 	}
@@ -1196,7 +1205,7 @@ void Renderer::render_post_predebug()
 	VSSetShader(post_vs_shader);
 	PSSetShader(post_shader);
 	_device_ctx->PSSetShaderResources(0, 1, &_non_msaa_output_srv_copy);
-	ID3D11Buffer* buffer = _cb_post->Get();
+    ID3D11Buffer* buffer = m_RI->GetRawBuffer(_cb_post->get_buffer());
 	_device_ctx->PSSetConstantBuffers(0, 1, &buffer);
 
 	ID3D11SamplerState* sampler_states[] = {

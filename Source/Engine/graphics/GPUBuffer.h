@@ -1,4 +1,7 @@
 #pragma once
+
+#include "Graphics/GraphicsResourceHandle.h"
+
 enum class BufferUsage
 {
 	Default,
@@ -12,19 +15,17 @@ interface IGPUBuffer
 	virtual void* map(ID3D11DeviceContext* ctx) = 0;
 	virtual void unmap(ID3D11DeviceContext* ctx) = 0;
 
-	virtual ID3D11Buffer* get_buffer() = 0;
+	virtual GraphicsResourceHandle get_buffer() = 0;
 
-	virtual ComPtr<ID3D11ShaderResourceView> const& get_srv() const
+	virtual GraphicsResourceHandle const& get_srv() const
 	{
 		FAILMSG("GPU Buffer does not support SRVs");
-		static ComPtr<ID3D11ShaderResourceView> s_null;
-		return s_null;
+        return GraphicsResourceHandle::Invalid();
 	}
 
-	virtual ComPtr<ID3D11UnorderedAccessView> const& get_uav() const 
+	virtual GraphicsResourceHandle const& get_uav() const 
 	{
 		FAILMSG("GPU Buffer does not support UAVs");
-		static ComPtr<ID3D11UnorderedAccessView> s_null;
-		return s_null;
+        return GraphicsResourceHandle::Invalid();
 	}
 };

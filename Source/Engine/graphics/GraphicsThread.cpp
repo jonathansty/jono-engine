@@ -80,7 +80,7 @@ void GraphicsThread::Sync()
 		params = ShaderCreateParams::pixel_shader("Source/Engine/Shaders/default_2d.px.hlsl");
 		m_PixelShader = ShaderCache::instance()->find_or_create(params);
 
-		m_GlobalCB = ConstantBuffer::create(Graphics::get_device().Get(), sizeof(Shaders::float4x4) + sizeof(Shaders::float4), true, BufferUsage::Dynamic);
+		m_GlobalCB = ConstantBuffer::create(GetRI(), sizeof(Shaders::float4x4) + sizeof(Shaders::float4), true, BufferUsage::Dynamic);
 	}
 
 	// Setup the graphics thread parameters
@@ -382,7 +382,7 @@ void GraphicsThread::RenderD2D()
 
 			ctx->PSSetShader(m_PixelShader->as<ID3D11PixelShader>().Get(), nullptr, 0);
 
-			ID3D11Buffer* cb = m_GlobalCB->Get();
+			ID3D11Buffer* cb = GetRI()->GetRawBuffer(m_GlobalCB->get_buffer());
 			ctx->VSSetConstantBuffers(0, 1, &cb);
 
 			ComPtr<ID3D11RasterizerState> rss = Graphics::GetRasterizerState(RasterizerState::CullNone);

@@ -1,7 +1,7 @@
 #include "cli.pch.h"
-
 #include "CommandLine.h"
 
+static cli::CommandLine s_CommandLine;
 
 cli::CommandLine cli::parse(char** argvs, int argc)
 {
@@ -55,6 +55,11 @@ bool cli::has_arg(CommandLine const& cmd_args, std::string const& arg)
 	}
 
 	return false;
+}
+
+CLI_API bool cli::has_arg(std::string const& arg)
+{
+    return has_arg(s_CommandLine, arg);
 }
 
 std::string cli::get_arg(CommandLine const& cmd_args, std::string const& arg)
@@ -116,6 +121,11 @@ bool cli::get_number(CommandLine const& cmd_args, std::string const& arg, int& n
 	}
 
 	return true;
+}
+
+CLI_API void cli::set(std::string cmdLine)
+{
+    s_CommandLine = cli::parse(cmdLine);
 }
 
 bool cli::get_string(CommandLine const& cmd_args, std::string const& arg, std::string& val)

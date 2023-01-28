@@ -30,6 +30,7 @@ CLI_API std::string to_string(CommandLine const& cmd);
 
 // Query API
 CLI_API bool has_arg(CommandLine const& cmd_args, std::string const& arg);
+CLI_API bool has_arg(std::string const& arg);
 
 // Retrieves arguments as string
 CLI_API std::string get_arg(CommandLine const& cmd_args, std::string const& arg);
@@ -37,5 +38,7 @@ CLI_API std::string get_arg(CommandLine const& cmd_args, std::string const& arg)
 CLI_API bool get_string(CommandLine const& cmd_args, std::string const& arg, std::string& val);
 CLI_API bool get_bool(CommandLine const& cmd_args, std::string const& arg, bool& val);
 CLI_API bool get_number(CommandLine const& cmd_args, std::string const& arg, int& number);
+
+CLI_API void set(std::string cmdLine);
 
 } // namespace cli

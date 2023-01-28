@@ -253,7 +253,7 @@ bool GameEngine::Startup()
 	m_ViewportHeight = m_Renderer->GetDrawableHeight();
 	m_ViewportPos = { 0.0f, 0.0f };
 
-	m_DefaultFont = make_shared<Font>("Consolas", 12.0f);
+	//m_DefaultFont = make_shared<Font>("Consolas", 12.0f);
 
 	TextureHandle::init_default();
 

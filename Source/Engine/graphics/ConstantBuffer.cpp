@@ -2,8 +2,9 @@
 #include "ConstantBuffer.h"
 
 #include "Core/Logging.h"
+#include "Graphics/RenderInterface.h"
 
-std::unique_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32 size, bool cpu_write /*= false*/, BufferUsage usage /*= BufferUsage::Default*/, void* initialData /*= nullptr*/)
+std::unique_ptr<ConstantBuffer> ConstantBuffer::create(RenderInterface* ri, u32 size, bool cpu_write /*= false*/, BufferUsage usage /*= BufferUsage::Default*/, void* initialData /*= nullptr*/)
 {
 	std::unique_ptr<ConstantBuffer> result = std::make_unique<ConstantBuffer>();
 
@@ -33,26 +34,14 @@ std::unique_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 	buff.MiscFlags = 0;
 
 
-	ComPtr<ID3D11Buffer> b;
-	HRESULT hr = S_OK;
-	if (initialData)
+	GraphicsResourceHandle bufferHandle = ri->CreateBuffer(buff, initialData);
+	if(!bufferHandle.IsValid())
 	{
-		D3D11_SUBRESOURCE_DATA data{};
-		data.pSysMem = initialData;
-		hr = device->CreateBuffer(&buff, &data, b.GetAddressOf());
-	}
-	else
-	{
-		hr = device->CreateBuffer(&buff, nullptr, b.GetAddressOf());
-	}
-
-	if(FAILED(hr))
-	{
-		LOG_ERROR(Graphics, "Failed to create a buffer with error: {}", hr);
+		LOG_ERROR(Graphics, "Failed to create a buffer ");
 		return nullptr;
 	}
 
-	result->_buffer = b;
+	result->m_Resource = bufferHandle;
 	result->_size = buff.ByteWidth;
 	result->_cpu_writeable = cpu_write;
 	result->_usage = usage;
@@ -61,8 +50,7 @@ std::unique_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 }
 
  ConstantBuffer::ConstantBuffer()
-	: _buffer()
-	, _size(0)
+	:  _size(0)
 	, _cpu_writeable(false)
 {
 }
@@ -73,12 +61,10 @@ std::unique_ptr<ConstantBuffer> ConstantBuffer::create(ID3D11Device* device, u32
 
 void* ConstantBuffer::map(ID3D11DeviceContext* ctx)
 {
-	D3D11_MAPPED_SUBRESOURCE resource{};
-	ctx->Map(_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &resource);
-	return resource.pData;
+	return GetRI()->Map(m_Resource);
 }
 
 void ConstantBuffer::unmap(ID3D11DeviceContext* ctx)
 {
-	ctx->Unmap(_buffer.Get(), 0);
+    GetRI()->Unmap(m_Resource);
 }

@@ -21,6 +21,8 @@
 #endif
 #include <Source/Engine/graphics/2DRenderContext.h>
 
+#include "Graphics/RenderInterface.h"
+
 class RenderWorld;
 class RenderWorldCamera;
 class Material;
@@ -298,6 +300,7 @@ private:
 
 	MSAAMode _msaa;
 	SDL_Window* m_Window;
+	RenderInterface* m_RI;
 
 	DXGI_FORMAT   _swapchain_format;
 	IDXGIFactory* _factory;
