@@ -115,7 +115,7 @@ struct AmbientInfo
 };
 
 __declspec(align(16))
-struct Viewport
+struct ViewportCB
 {
 	float vp_half_width;
 	float vp_half_height;
@@ -139,7 +139,7 @@ struct GlobalCB
 	float4 view_direction;
 	float4 view_pos;
 
-	Viewport vp;
+	ViewportCB vp;
 	AmbientInfo ambient;
 	DirectionalLightInfo lights[MAX_DIRECTIONAL_LIGHTS];
 
@@ -215,7 +215,7 @@ public:
 	DXGI_FORMAT get_swapchain_format() const { return _swapchain_format; }
 
 
-	void update_viewport(u32 x, u32 y, u32 w, u32 h)
+	void UpdateViewport(u32 x, u32 y, u32 w, u32 h)
 	{
 		m_ViewportPos.x = float(x);
 		m_ViewportPos.y = float(y);
@@ -223,43 +223,41 @@ public:
 		m_ViewportHeight = h;
 	}
 	// Respond to external swapchain change requests
-	void resize_swapchain(u32 w, u32 h);
+	void ResizeSwapchain(u32 w, u32 h);
 
-	void pre_render(RenderWorld const& world);
+	void PreRender(RenderContext& ctx, RenderWorld const& world);
 
 	// Rendering passes and commands
-	void render_view(RenderWorld const& world, RenderPass::Value pass);
-	void render_world(RenderWorld const& world, ViewParams const& params);
+    void render_view(RenderContext& ctx, RenderWorld const& world, RenderPass::Value pass);
+    void render_world(RenderContext& ctx, RenderWorld const& world, ViewParams const& params);
 
 
-	void prepare_shadow_pass();
+	void PrepareShadowPass();
 
 	// Call at start of frame to setup default state
-	void begin_frame();
+	void BeginFrame(RenderContext& ctx);
 
 	// Call at end to make sure the required systems are flushed
-	void end_frame();
+	void EndFrame(RenderContext& ctx);
 
 	// Renders the shadow pass for this world. (Currently just CSM)
-	void render_shadow_pass(RenderWorld const& world);
+    void RenderShadowPass(RenderContext& ctx, RenderWorld const& world);
 
 	// Renders a zprepass for the world 
-	void render_zprepass(RenderWorld const& world);
+	void RenderZPrePass(RenderContext& ctx, RenderWorld const& world);
 
 	// Renders the opaque pass 
-	void render_opaque_pass(RenderWorld const& world);
+	void RenderOpaquePass(RenderContext& ctx, RenderWorld const& world);
 
 	// Renders the final post processing pass. For now we also render ImGui and other debug code in here.
-	void render_post(RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui = true);
+    void RenderPostPass(RenderContext& ctx, RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui = true);
 
 	// Copies the last rendered main frustum depth to be used as input during the main pass
-	void copy_depth();
+	void CopyDepth();
  
 	void VSSetShader(ShaderConstRef const& vertex_shader);
 	void PSSetShader(ShaderConstRef const& pixel_hader);
-
 	void IASetInputLayout(ID3D11InputLayout* layout);
-
 	void RSSetState(ID3D11RasterizerState* state);
 
 
@@ -277,7 +275,7 @@ private:
 	Math::Frustum get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const;
 
 	// Helper to setup the render state based on material
-	void setup_renderstate( MaterialInstance const* material, ViewParams const& params);
+    void setup_renderstate(RenderContext& ctx, MaterialInstance const* material, ViewParams const& params);
 
 	// Rendering
 	void render_post_predebug();

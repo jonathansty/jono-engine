@@ -19,7 +19,7 @@ std::shared_ptr<Shader> ShaderCache::find_or_create(ShaderCreateParams const& cr
 	std::vector<u8> bytecode;
 	if (ShaderCompiler::compile(creation_params.path.c_str(), creation_params.params, bytecode))
 	{
-		result = Shader::create(creation_params.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()), creation_params.path.c_str());
+		result = Shader::Create(creation_params.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()), creation_params.path.c_str());
 	}
 	else
 	{
@@ -47,7 +47,7 @@ bool ShaderCache::reload_all()
 		}
 		else
 		{
-			auto tmp = Shader::create(it.first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
+			auto tmp = Shader::Create(it.first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
 			*it.second = *tmp;
 		}
 
@@ -73,7 +73,7 @@ bool ShaderCache::reload(ShaderCreateParams const& params)
 		return false;
 	}
 
-	auto tmp = Shader::create(it->first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
+	auto tmp = Shader::Create(it->first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
 	*it->second = *tmp;
 	return true;
 }

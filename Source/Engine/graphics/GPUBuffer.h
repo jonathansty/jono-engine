@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Graphics/GraphicsResourceHandle.h"
+#include "Graphics/RenderInterface.h"
 
 enum class BufferUsage
 {
@@ -12,8 +13,8 @@ enum class BufferUsage
 
 interface IGPUBuffer
 {
-	virtual void* map(ID3D11DeviceContext* ctx) = 0;
-	virtual void unmap(ID3D11DeviceContext* ctx) = 0;
+	virtual void* map(RenderContext& ctx) = 0;
+    virtual void unmap(RenderContext& ctx) = 0;
 
 	virtual GraphicsResourceHandle get_buffer() = 0;
 

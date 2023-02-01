@@ -148,7 +148,7 @@ void Renderer::InitForWindow(SDL_Window* window)
 		m_ViewportWidth = m_DrawableAreaWidth;
 		m_ViewportHeight = m_DrawableAreaHeight;
 
-		resize_swapchain(m_ViewportWidth, m_ViewportHeight);
+		ResizeSwapchain(m_ViewportWidth, m_ViewportHeight);
 	}
 
 	if (_d2d_rt)
@@ -331,7 +331,7 @@ void Renderer::release_frame_resources()
 	SafeRelease(_output_dsv);
 }
 
-void Renderer::resize_swapchain(u32 w, u32 h)
+void Renderer::ResizeSwapchain(u32 w, u32 h)
 {
 	assert(m_Window);
 
@@ -506,7 +506,7 @@ void Renderer::resize_swapchain(u32 w, u32 h)
 	}
 }
 
-void Renderer::pre_render(RenderWorld const& world)
+void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 {
 	JONO_EVENT();
 	GPU_SCOPED_EVENT(_user_defined_annotation, "PreRender");
@@ -514,9 +514,9 @@ void Renderer::pre_render(RenderWorld const& world)
 	// Update the debug buffers
 	{
 		extern int g_DebugMode;
-		DebugCB* debug_data = (DebugCB*)_cb_debug->map(_device_ctx);
+		DebugCB* debug_data = (DebugCB*)_cb_debug->map(ctx);
 		debug_data->m_VisualizeMode = g_DebugMode;
-		_cb_debug->unmap(_device_ctx);
+        _cb_debug->unmap(ctx);
 	}
 
 	// Update the cameras
@@ -637,7 +637,7 @@ void Renderer::pre_render(RenderWorld const& world)
 	// 1. CPU Frustum culling
 	{
 		// Collect all local lights and update our light buffer
-		ScopedBufferAccess access{ _device_ctx, _light_buffer.get() };
+		ScopedBufferAccess access{ ctx, _light_buffer.get() };
 		ProcessedLight* light_data = static_cast<ProcessedLight*>(access.get_ptr());
 		u32 n_lights = 0;
 		u32 n_directional_lights = 0;
@@ -712,7 +712,7 @@ void Renderer::pre_render(RenderWorld const& world)
 		}
 
 
-		ID3D11DeviceContext* ctx = _device_ctx;
+		ID3D11DeviceContext* dx11Ctx = _device_ctx;
 
 		shared_ptr<RenderWorldCamera> camera = world.get_camera(0);
 
@@ -728,43 +728,43 @@ void Renderer::pre_render(RenderWorld const& world)
 			cb.proj_inv = hlslpp::inverse(camera->get_proj());
 		}
 
-		ctx->OMSetRenderTargets(0, nullptr, nullptr);
+		dx11Ctx->OMSetRenderTargets(0, nullptr, nullptr);
 
 		std::array<ID3D11ShaderResourceView*, 2> srvs = {
 			m_RI->GetRawSRV(_light_buffer->get_srv()),
 			_output_depth_srv
 		};
-		ctx->CSSetShaderResources(0, 2, srvs.data());
+		dx11Ctx->CSSetShaderResources(0, 2, srvs.data());
 
 		std::array<ID3D11UnorderedAccessView*, 2> uavs = {
 			m_RI->GetRawUAV(_tile_light_index_buffer->get_uav()),
             m_RI->GetRawUAV(_per_tile_info_buffer->get_uav())
 		};
 
-		ctx->CSSetUnorderedAccessViews(0, 2, uavs.data(), nullptr);
+		dx11Ctx->CSSetUnorderedAccessViews(0, 2, uavs.data(), nullptr);
 
 		std::array<ID3D11Buffer*, 1> cbs = {
 			m_RI->GetRawBuffer(_fplus_cb->get_buffer())
 		};
-		ctx->CSSetConstantBuffers(0, 1, cbs.data());
-		ctx->CSSetShader(_fplus_cull_shader->as<ID3D11ComputeShader>().Get(), nullptr, 0);
+		dx11Ctx->CSSetConstantBuffers(0, 1, cbs.data());
+		dx11Ctx->CSSetShader(_fplus_cull_shader->as<ID3D11ComputeShader>().Get(), nullptr, 0);
 
 		u32 dispatch_x = tiles_x;
 		u32 dispatch_y = tiles_y;
-		ctx->Dispatch(dispatch_x, dispatch_y, 1);
+		dx11Ctx->Dispatch(dispatch_x, dispatch_y, 1);
 
 		uavs[0] = nullptr;
 		uavs[1] = nullptr;
-		ctx->CSSetUnorderedAccessViews(0, 2, uavs.data(), nullptr);
+		dx11Ctx->CSSetUnorderedAccessViews(0, 2, uavs.data(), nullptr);
 
 		srvs[0] = nullptr;
 		srvs[1] = nullptr;
-		ctx->CSSetShaderResources(0, 2, srvs.data());
+		dx11Ctx->CSSetShaderResources(0, 2, srvs.data());
 	}
 
 }
 
-void Renderer::render_view(RenderWorld const& world, RenderPass::Value pass)
+void Renderer::render_view(RenderContext& ctx, RenderWorld const& world, RenderPass::Value pass)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "Renderer::render_view");
 
@@ -791,10 +791,10 @@ void Renderer::render_view(RenderWorld const& world, RenderPass::Value pass)
 	params.viewport.Width = (f32)m_ViewportWidth;
 	params.viewport.Height = (f32)m_ViewportHeight;
 
-	render_world(world, params);
+	render_world(ctx, world, params);
 }
 
-void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
+void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewParams const& params)
 {
 	std::string passName = RenderPass::ToString(params.pass);
 	GPU_SCOPED_EVENT(_user_defined_annotation, passName.c_str());
@@ -822,7 +822,7 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 		_device_ctx->RSSetViewports(1, &params.viewport);
 	}
 
-	GlobalCB* global = (GlobalCB*)_cb_global->map(_device_ctx);
+	GlobalCB* global = (GlobalCB*)_cb_global->map(ctx);
 	global->ambient.ambient = float4(0.02f, 0.02f, 0.02f, 1.0f);
 
 	global->proj = params.proj;
@@ -882,7 +882,7 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 			}
 		}
 	}
-	_cb_global->unmap(_device_ctx);
+	_cb_global->unmap(ctx);
 
 	float4x4 vp = hlslpp::mul(params.view, params.proj);
 
@@ -951,8 +951,8 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 
 	JONO_EVENT("Submit");
 
-	ID3D11DeviceContext* ctx = _device_ctx;
-	ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	ID3D11DeviceContext* dx11Ctx = _device_ctx;
+    dx11Ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// #TODO: Remove debug handling into a debug lighting system
 	extern int g_DebugMode;
@@ -962,16 +962,16 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 			m_RI->GetRawBuffer(_cb_global->get_buffer()),
 			m_RI->GetRawBuffer(_cb_debug->get_buffer())
 		};
-		ctx->VSSetConstantBuffers(0, 2, buffers);
-		ctx->PSSetConstantBuffers(0, 2, buffers);
+        dx11Ctx->VSSetConstantBuffers(0, 2, buffers);
+        dx11Ctx->PSSetConstantBuffers(0, 2, buffers);
 	}
 	else
 	{
 		ID3D11Buffer* buffers[1] = {
             m_RI->GetRawBuffer(_cb_global->get_buffer()),
 		};
-		ctx->VSSetConstantBuffers(0, 1, buffers);
-		ctx->PSSetConstantBuffers(0, 1, buffers);
+        dx11Ctx->VSSetConstantBuffers(0, 1, buffers);
+        dx11Ctx->PSSetConstantBuffers(0, 1, buffers);
 	}
 
 	ID3D11Buffer* prev_index = nullptr;
@@ -980,7 +980,7 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 	for (DrawCall const& dc : m_DrawCalls) 
 	{
 		ConstantBufferRef const& model_cb = _cb_model;
-		ModelCB* data = (ModelCB*)model_cb->map(_device_ctx);
+		ModelCB* data = (ModelCB*)model_cb->map(ctx);
 		data->world = dc._transform;
 		data->wv = hlslpp::mul(data->world, params.view);
 		data->wvp = hlslpp::mul(data->world, vp);
@@ -988,7 +988,7 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 
 		if(prev_index != dc._index_buffer)
 		{
-			ctx->IASetIndexBuffer(dc._index_buffer, DXGI_FORMAT_R32_UINT, 0);
+            dx11Ctx->IASetIndexBuffer(dc._index_buffer, DXGI_FORMAT_R32_UINT, 0);
 			prev_index = dc._index_buffer;
 		}
 
@@ -996,7 +996,7 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 		{
 			UINT strides = { sizeof(Model::VertexType) };
 			UINT offsets = { 0 };
-			ctx->IASetVertexBuffers(0, 1, &dc._vertex_buffer, &strides, &offsets);
+            dx11Ctx->IASetVertexBuffers(0, 1, &dc._vertex_buffer, &strides, &offsets);
 
 			prev_vertex = dc._vertex_buffer;
 		}
@@ -1005,22 +1005,22 @@ void Renderer::render_world(RenderWorld const& world, ViewParams const& params)
 		{
 			m_RI->GetRawBuffer(model_cb->get_buffer())
 		};
-		ctx->VSSetConstantBuffers(2, 1, buffers);
-		ctx->PSSetConstantBuffers(2, 1, buffers);
+        dx11Ctx->VSSetConstantBuffers(2, 1, buffers);
+        dx11Ctx->PSSetConstantBuffers(2, 1, buffers);
 
 		// Setup the material render state
 		{
-			setup_renderstate(dc._material, params);
+			setup_renderstate(ctx, dc._material, params);
 
 			++_stats.n_draws;
 			_stats.n_primitives += u32(dc._index_count / 3);
-			ctx->DrawIndexed((UINT)dc._index_count, (UINT)dc._first_index, (INT)dc._first_vertex);
+            dx11Ctx->DrawIndexed((UINT)dc._index_count, (UINT)dc._first_index, (INT)dc._first_vertex);
 
 		}
 	}
 }
 
-void Renderer::prepare_shadow_pass()
+void Renderer::PrepareShadowPass()
 {
 	if (!_shadow_map)
 	{
@@ -1056,37 +1056,21 @@ void Renderer::prepare_shadow_pass()
 	}
 }
 
-void Renderer::begin_frame()
+void Renderer::BeginFrame(RenderContext& ctx)
 {
 	JONO_EVENT();
 
 	_stats = {};
 
-	// Reset all the state tracking
-	_device_ctx->ClearState();
-	m_PrevRenderState.VS = nullptr;
-	m_PrevRenderState.PS = nullptr;
-	m_PrevRenderState.InputLayout = nullptr;
-	m_PrevRenderState.RS = nullptr;
-
-
 	GameEngine* engine = GameEngine::instance();
-	D3D11_VIEWPORT vp{};
-	vp.Width = static_cast<float>(engine->GetViewportSize().x);
-	vp.Height = static_cast<float>(engine->GetViewportSize().y);
-	vp.TopLeftX = 0.0f;
-	vp.TopLeftY = 0.0f;
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	_device_ctx->RSSetViewports(1, &vp);
+	Viewport vp = Viewport{ 0.0f, 0.0f, engine->GetViewportSize().x, engine->GetViewportSize().y };
 
-	// Clear the output targets
-	FLOAT color[4] = { 0.1f, 0.1f, 0.1f, 1.0f };
-	_device_ctx->ClearRenderTargetView(_output_rtv, color);
-	_device_ctx->ClearDepthStencilView(_output_dsv, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+    ctx.BeginFrame();
+	ctx.SetViewport(vp);
+    ctx.ClearTargets(_output_rtv, _output_dsv, float4(0.05f, 0.05f, 0.05f, 1.0f), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
-void Renderer::end_frame()
+void Renderer::EndFrame(RenderContext& ctx)
 {
 }
 
@@ -1112,12 +1096,12 @@ Math::Frustum Renderer::get_cascade_frustum(shared_ptr<RenderWorldCamera> const&
 	return frustum;
 }
 
-void Renderer::setup_renderstate(MaterialInstance const* mat_instance, ViewParams const& params)
+void Renderer::setup_renderstate(RenderContext& ctx, MaterialInstance const* mat_instance, ViewParams const& params)
 {
-	auto ctx = _device_ctx;
+	auto dx11Ctx = _device_ctx;
 
 	// Bind anything coming from the material
-	mat_instance->apply(this, params);
+	mat_instance->apply(ctx, this, params);
 
 	// Bind the global textures coming from rendering systems
 	if (params.pass == RenderPass::Opaque)
@@ -1198,9 +1182,10 @@ void Renderer::render_post_predebug()
 	params = ShaderCreateParams::vertex_shader("Source/Engine/Shaders/default_post_vx.hlsl");
 	ShaderRef post_vs_shader = ShaderCache::instance()->find_or_create(params);
 
-	_device_ctx->IASetIndexBuffer(nullptr, DXGI_FORMAT_UNKNOWN,0);
-	_device_ctx->IASetInputLayout(post_vs_shader->get_input_layout().Get());
-	_device_ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	RenderContext& ctx = m_RI->BeginContext();
+	ctx.IASetIndexBuffer(GraphicsResourceHandle::Invalid(), DXGI_FORMAT_UNKNOWN,0);
+    ctx.IASetInputLayout(post_vs_shader->GetInputLayout());
+	ctx.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	VSSetShader(post_vs_shader);
 	PSSetShader(post_shader);
@@ -1224,11 +1209,11 @@ void Renderer::render_post_postdebug()
 
 }
 
-void Renderer::render_shadow_pass(RenderWorld const& world)
+void Renderer::RenderShadowPass(RenderContext& ctx, RenderWorld const& world)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "Shadows");
 
-	prepare_shadow_pass();
+	PrepareShadowPass();
 
 	shared_ptr<RenderWorldLight> light = nullptr;
 
@@ -1279,40 +1264,40 @@ void Renderer::render_shadow_pass(RenderWorld const& world)
 			params.view_direction = direction;
 			params.pass = RenderPass::Value(RenderPass::Shadow_CSM0 + i);
 			params.viewport = CD3D11_VIEWPORT(0.0f, 0.0f, 2048.0f, 2048.0f);
-			render_world(world, params);
+			render_world(ctx, world, params);
 		}
 	}
 }
 
-void Renderer::render_zprepass(RenderWorld const& world)
+void Renderer::RenderZPrePass(RenderContext& ctx, RenderWorld const& world)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "zprepass");
 
 
 	_device_ctx->OMSetRenderTargets(0, NULL, _output_dsv);
 
-	render_view(world, RenderPass::ZPrePass);
+	render_view(ctx, world, RenderPass::ZPrePass);
 }
 
-void Renderer::render_opaque_pass(RenderWorld const& world)
+void Renderer::RenderOpaquePass(RenderContext& ctx, RenderWorld const& world)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "opaque");
 
 	// Do a copy to our dsv tex for sampling during the opaque pass
-	copy_depth();
+	CopyDepth();
 
 	_device_ctx->OMSetRenderTargets(1, &_output_rtv, _output_dsv);
-	render_view(world, Graphics::RenderPass::Opaque);
+	render_view(ctx, world, Graphics::RenderPass::Opaque);
 }
 
-void Renderer::render_post(RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui)
+void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui)
 {
 	GPU_SCOPED_EVENT(_user_defined_annotation, "Post");
 
-	PostCB* data = (PostCB*)_cb_post->map(_device_ctx);
+	PostCB* data = (PostCB*)_cb_post->map(ctx);
 	data->m_ViewportWidth = (f32)(m_DrawableAreaWidth);
 	data->m_ViewportHeight = (f32)(m_DrawableAreaHeight);
-	_cb_post->unmap(_device_ctx);
+    _cb_post->unmap(ctx);
 
 	if (!_states)
 	{
@@ -1395,7 +1380,7 @@ void Renderer::render_post(RenderWorld const& world, shared_ptr<OverlayManager> 
 
 }
 
-void Renderer::copy_depth()
+void Renderer::CopyDepth()
 {
 	_device_ctx->CopyResource(_output_depth_copy, _output_depth);
 }

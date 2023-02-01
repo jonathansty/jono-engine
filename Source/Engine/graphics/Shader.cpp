@@ -4,40 +4,42 @@
 #include "Shader.h"
 #include "Core/ModelResource.h"
 
+#include "Graphics/RenderInterface.h"
+
 namespace Graphics
 {
 
 	
 Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name)
-		: _type(type)
+		: m_Type(type)
 {
 	ComPtr<ID3D11Device> device = Graphics::get_device();
 	switch (type)
 	{
 		case ShaderType::Vertex:
-			ENSURE_HR(device->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)_shader.GetAddressOf()));
+			ENSURE_HR(device->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)m_Shader.GetAddressOf()));
 			break;
 		case ShaderType::Pixel:
-			ENSURE_HR(device->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)_shader.GetAddressOf()));
+			ENSURE_HR(device->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)m_Shader.GetAddressOf()));
 			break;
 		case ShaderType::Compute:
-			ENSURE_HR(device->CreateComputeShader(byte_code, size, nullptr, (ID3D11ComputeShader**)_shader.GetAddressOf()));
+			ENSURE_HR(device->CreateComputeShader(byte_code, size, nullptr, (ID3D11ComputeShader**)m_Shader.GetAddressOf()));
 			break;
 		default:
 			throw new std::exception("ShaderType not supported!");
 	}
 
-	if(_shader)
+	if(m_Shader)
 	{
-		Helpers::SetDebugObjectName(_shader.Get(), debug_name ? debug_name : (__FILE__));
+		Helpers::SetDebugObjectName(m_Shader.Get(), debug_name ? debug_name : (__FILE__));
 	}
 
-	D3DReflect(byte_code, size, IID_ID3D11ShaderReflection, &_reflection);
+	D3DReflect(byte_code, size, IID_ID3D11ShaderReflection, &m_Reflection);
 
 	if(type == ShaderType::Vertex)
 	{
 		D3D11_SHADER_DESC desc{};
-		_reflection->GetDesc(&desc);
+		m_Reflection->GetDesc(&desc);
 
 		UINT params = desc.InputParameters;
 
@@ -46,7 +48,7 @@ Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size, const char* 
 		for(u32 i = 0; i < params; ++i)
 		{
 			D3D11_SIGNATURE_PARAMETER_DESC paramDesc{};
-			_reflection->GetInputParameterDesc(i, &paramDesc);
+			m_Reflection->GetInputParameterDesc(i, &paramDesc);
 			
 			inputs[i].SemanticName = paramDesc.SemanticName;
 			inputs[i].SemanticIndex = paramDesc.SemanticIndex;
@@ -81,8 +83,7 @@ Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size, const char* 
 			}
 		
 		}
-	
-		SUCCEEDED(device->CreateInputLayout(inputs.data(), (UINT)inputs.size(), byte_code, size, _input_layout.GetAddressOf()));
+		m_InputLayout = GetRI()->CreateInputLayout(inputs, (void*)byte_code, size);
 	}
 
 	//D3D11_SHADER_INPUT_BIND_DESC bindDesc;
@@ -93,7 +94,7 @@ Shader::~Shader()
 {
 }
 
-std::unique_ptr<Shader> Shader::create(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name)
+std::unique_ptr<Shader> Shader::Create(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name)
 {
 	return std::make_unique<Shader>(type, byte_code, size, debug_name);
 }

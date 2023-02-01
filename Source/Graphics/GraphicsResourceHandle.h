@@ -7,7 +7,8 @@ enum GraphicsResourceType
     GRT_Texture,
     GRT_Buffer,
     GRT_ShaderResourceView,
-    GRT_UnorderedAccessView
+    GRT_UnorderedAccessView,
+    GRT_InputLayout
 };
 
 struct GraphicsResourceHandle

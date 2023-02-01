@@ -20,8 +20,8 @@ public:
 
 	virtual GraphicsResourceHandle get_buffer() { return _buffer; }
 
-	virtual void* map(ID3D11DeviceContext* ctx) override;
-	virtual void unmap(ID3D11DeviceContext* ctx) override;
+	virtual void* map(RenderContext& ctx) override;
+	virtual void unmap(RenderContext& ctx) override;
 
 	GraphicsResourceHandle const& get_srv() const override { return _srv; }
     GraphicsResourceHandle  const& get_uav() const override { return _uav; };
@@ -48,8 +48,8 @@ public:
 
 	virtual GraphicsResourceHandle get_buffer() { return _buffer; }
 
-	virtual void*  map(ID3D11DeviceContext* ctx) override;
-	virtual void unmap(ID3D11DeviceContext* ctx) override;
+	virtual void* map(RenderContext& ctx) override;
+	virtual void unmap(RenderContext& ctx) override;
 
 	GraphicsResourceHandle const& get_srv() const override { return _srv; }
 	GraphicsResourceHandle const& get_uav() const override { return _uav; };
@@ -70,11 +70,11 @@ private:
 class ScopedBufferAccess final
 {
 public:
-	explicit ScopedBufferAccess(ID3D11DeviceContext* ctx, IGPUBuffer* buffer)
+	explicit ScopedBufferAccess(RenderContext& ctx, IGPUBuffer* buffer)
 		: _buffer(buffer)
 		, _ctx(ctx)
 	{
-		ptr = _buffer->map(_ctx);
+		ptr = _buffer->map(ctx);
 	}
 
 	~ScopedBufferAccess()
@@ -88,6 +88,6 @@ private:
 	void* ptr = nullptr; 
 
 	IGPUBuffer* _buffer;
-	ID3D11DeviceContext* _ctx;
+	RenderContext& _ctx;
 
 };

@@ -561,6 +561,10 @@ void GameEngine::Shutdown()
 		m_Renderer->DeInit();
 		m_Renderer = nullptr;
 
+        GetRI()->Shutdown();
+        delete GetRI();
+
+
 		::CoUninitialize();
 	}
 }
@@ -1404,7 +1408,7 @@ void GameEngine::BuildViewportUI(ImGuiID* dockID)
 			m_ViewportHeight = (u32)s_vp_size.y;
 			m_ViewportPos = float2(s_vp_pos.x, s_vp_pos.y);
 
-			m_Renderer->update_viewport(static_cast<u32>(vMin.x), static_cast<u32>(vMin.y), static_cast<u32>(s_vp_size.x), static_cast<u32>(s_vp_size.y));
+			m_Renderer->UpdateViewport(static_cast<u32>(vMin.x), static_cast<u32>(vMin.y), static_cast<u32>(s_vp_size.x), static_cast<u32>(s_vp_size.y));
 		}
 
 		// Draw the actual scene image

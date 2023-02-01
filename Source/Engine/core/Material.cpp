@@ -242,9 +242,9 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 	return {};
 }
 
-ComPtr<ID3D11InputLayout> Material::get_input_layout() const
+GraphicsResourceHandle Material::get_input_layout() const
 {
-	return _vertex_shader->get_input_layout();
+	return _vertex_shader->GetInputLayout();
 }
 
 void Material::get_texture_views(std::vector<ID3D11ShaderResourceView const*>& views) const
@@ -282,39 +282,39 @@ ParameterInfo const* Material::find_parameter(Identifier64 const& id) const
 	return nullptr;
 }
 
-void Material::apply(Graphics::Renderer* renderer, Graphics::ViewParams const& params) const
+void Material::apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics::ViewParams const& params) const
 {
-	auto ctx = renderer->get_ctx()._ctx;
+	auto dx11Ctx = renderer->get_ctx()._ctx;
 	if (is_double_sided())
 	{
-		ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullNone).Get());
+		dx11Ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullNone).Get());
 	}
 	else
 	{
-		ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
+		dx11Ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
 	}
 
 	Graphics::ShaderConstRef vertex_shader = get_vertex_shader();
 	Graphics::ShaderConstRef pixel_shader = get_pixel_shader();
 	Graphics::ShaderConstRef debug_shader = get_debug_pixel_shader();
-	if (!vertex_shader->is_valid())
+	if (!vertex_shader->IsValid())
 	{
 		vertex_shader = Graphics::get_error_shader_vx();
 	}
 
-	if (!pixel_shader->is_valid())
+	if (!pixel_shader->IsValid())
 	{
 		pixel_shader = Graphics::get_error_shader_px();
 	}
 
-	if (!debug_shader->is_valid())
+	if (!debug_shader->IsValid())
 	{
 		debug_shader = Graphics::get_error_shader_px();
 	}
 
 	// Bind vertex shader
 	renderer->VSSetShader(vertex_shader);
-	ctx->IASetInputLayout(vertex_shader->get_input_layout().Get());
+	ctx.IASetInputLayout(vertex_shader->GetInputLayout());
 
 	// In opaque pass, bind the pixel shader and relevant shader resources from the material
 	if (params.pass == Graphics::RenderPass::Opaque)
@@ -336,14 +336,14 @@ void Material::apply(Graphics::Renderer* renderer, Graphics::ViewParams const& p
 		get_texture_views(views);
 
 		ASSERTMSG(views.size() <= Texture_MaterialSlotEnd, "Currently we do not support more than 5 textures per material.");
-		ctx->PSSetShaderResources(Texture_MaterialSlotStart, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
+		dx11Ctx->PSSetShaderResources(Texture_MaterialSlotStart, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
 
 		ID3D11Buffer* buffer[1] = { GetRI()->GetRawBuffer(get_cb()->get_buffer()) };
-		ctx->PSSetConstantBuffers(Buffer_Material, 1, buffer);
+		dx11Ctx->PSSetConstantBuffers(Buffer_Material, 1, buffer);
 	}
 	else
 	{
-		ctx->PSSetShader(nullptr, nullptr, 0);
+		dx11Ctx->PSSetShader(nullptr, nullptr, 0);
 	}
 }
 
@@ -376,9 +376,9 @@ void MaterialInstance::bind(IMaterialObject const* obj)
 	m_MaterialData = obj->get_param_data();
 }
 
-void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams const& params) const
+void MaterialInstance::apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics::ViewParams const& params) const
 {
-	auto ctx = renderer->get_ctx()._ctx;
+	auto dx11Ctx = renderer->get_ctx()._ctx;
 	if (is_double_sided())
 	{
 		renderer->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullNone).Get());
@@ -391,24 +391,24 @@ void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams 
 	Graphics::ShaderConstRef vertex_shader = get_vertex_shader();
 	Graphics::ShaderConstRef pixel_shader = get_pixel_shader();
 	Graphics::ShaderConstRef debug_shader = get_debug_pixel_shader();
-	if (!vertex_shader->is_valid())
+	if (!vertex_shader->IsValid())
 	{
 		vertex_shader = Graphics::get_error_shader_vx();
 	}
 
-	if (!pixel_shader->is_valid())
+	if (!pixel_shader->IsValid())
 	{
 		pixel_shader = Graphics::get_error_shader_px();
 	}
 
-	if (!debug_shader->is_valid())
+	if (!debug_shader->IsValid())
 	{
 		debug_shader = Graphics::get_error_shader_px();
 	}
 
 	// Bind vertex shader
 	renderer->VSSetShader(vertex_shader);
-	renderer->IASetInputLayout(vertex_shader->get_input_layout().Get());
+	ctx.IASetInputLayout(vertex_shader->GetInputLayout());
 
 	// In opaque pass, bind the pixel shader and relevant shader resources from the material
 	if (params.pass == Graphics::RenderPass::Opaque)
@@ -430,10 +430,10 @@ void MaterialInstance::apply(Graphics::Renderer* renderer, Graphics::ViewParams 
 		get_texture_views(views);
 
 		ASSERTMSG(views.size() <= Texture_MaterialSlotEnd, "Currently we do not support more than 5 textures per material.");
-		ctx->PSSetShaderResources(Texture_MaterialSlotStart, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
+        dx11Ctx->PSSetShaderResources(Texture_MaterialSlotStart, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
 
 		ID3D11Buffer* buffer[1] = { GetRI()->GetRawBuffer(get_cb()->get_buffer()) };
-		ctx->PSSetConstantBuffers(Buffer_Material, 1, buffer);
+        dx11Ctx->PSSetConstantBuffers(Buffer_Material, 1, buffer);
 	}
 	else
 	{

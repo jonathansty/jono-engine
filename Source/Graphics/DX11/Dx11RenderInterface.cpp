@@ -4,8 +4,12 @@
 
 RenderInterface* GetRI()
 {
-    static Dx11RenderInterface ri;
-    return &ri;
+    static Dx11RenderInterface* ri = nullptr;
+    if(ri == nullptr)
+    {
+        ri = new Dx11RenderInterface();
+    }
+    return ri;
 }
 
 namespace Helpers
@@ -81,6 +85,10 @@ void Dx11RenderInterface::Init()
     ENSURE_HR(m_Context->QueryInterface(IID_PPV_ARGS(&m_UserDefinedAnnotations)));
 }
 
+void Dx11RenderInterface::Shutdown()
+{
+}
+
 GraphicsResourceHandle Dx11RenderInterface::CreateBuffer(BufferDesc const& desc, void* initialData)
 {
     ComPtr<ID3D11Buffer> buffer;
@@ -128,17 +136,54 @@ GraphicsResourceHandle Dx11RenderInterface::CreateUnorderedAccessView(GraphicsRe
     return handle;
 }
 
-void* Dx11RenderInterface::Map(GraphicsResourceHandle buffer)
+GraphicsResourceHandle Dx11RenderInterface::CreateInputLayout(InputLayoutDesc inputLayoutElements, void* shaderCode, uint32_t shaderCodeLength)
+{
+
+    ComPtr<ID3D11InputLayout> inputLayout;
+    ENSURE_HR(m_Device->CreateInputLayout(inputLayoutElements.data(), (UINT)inputLayoutElements.size(), shaderCode, (UINT)shaderCodeLength, &inputLayout));
+    auto h = m_InputLayouts.Push(inputLayout);
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_InputLayout, h.gen, h.id);
+    return handle;
+}
+
+void* Dx11RenderContext::Map(GraphicsResourceHandle buffer)
 {
     D3D11_MAPPED_SUBRESOURCE resource{};
 
-    ID3D11Buffer* b = GetRawBuffer(buffer);
+    ID3D11Buffer* b = owner->GetRawBuffer(buffer);
     ENSURE_HR(m_Context->Map(b, 0, D3D11_MAP_WRITE_DISCARD, 0, &resource));
     return resource.pData;
 }
 
-void Dx11RenderInterface::Unmap(GraphicsResourceHandle buffer)
+void Dx11RenderContext::Unmap(GraphicsResourceHandle buffer)
 {
-    ID3D11Buffer* b = GetRawBuffer(buffer);
+    ID3D11Buffer* b = owner->GetRawBuffer(buffer);
     m_Context->Unmap(b, 0);
+}
+
+
+void Dx11RenderContext::ClearTargets(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, float4 color, uint32_t clearFlags, float depth, uint8_t stencil)
+{
+    float col[4] = { color.x, color.y, color.z, color.w };
+    m_Context->ClearRenderTargetView(rtv, col);
+    m_Context->ClearDepthStencilView(dsv, clearFlags, depth, stencil);
+}
+
+void Dx11RenderContext::BeginFrame()
+{
+    m_Context->ClearState();
+
+    m_PrevRenderState.VS = nullptr;
+    m_PrevRenderState.PS = nullptr;
+    m_PrevRenderState.InputLayout = nullptr;
+    m_PrevRenderState.RS = nullptr;
+}
+
+void Dx11RenderContext::EndFrame()
+{
+}
+
+void Dx11RenderContext::Flush()
+{
+    m_Context->Flush();
 }

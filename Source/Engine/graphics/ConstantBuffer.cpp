@@ -59,12 +59,12 @@ std::unique_ptr<ConstantBuffer> ConstantBuffer::create(RenderInterface* ri, u32 
 {
 }
 
-void* ConstantBuffer::map(ID3D11DeviceContext* ctx)
+void* ConstantBuffer::map(RenderContext& ctx)
 {
-	return GetRI()->Map(m_Resource);
+    return ctx.Map(m_Resource);
 }
 
-void ConstantBuffer::unmap(ID3D11DeviceContext* ctx)
+void ConstantBuffer::unmap(RenderContext& ctx)
 {
-    GetRI()->Unmap(m_Resource);
+    return ctx.Unmap(m_Resource);
 }

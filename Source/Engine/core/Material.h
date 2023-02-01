@@ -29,7 +29,7 @@ struct IMaterialObject
 {
 	virtual ~IMaterialObject(){};
 
-	virtual void apply(Graphics::Renderer* renderer, Graphics::ViewParams const& params) const = 0;
+	virtual void apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics::ViewParams const& params) const = 0;
 
 	virtual u32 get_texture_count() const = 0;
 	virtual u32  get_slot(Identifier64 const& slot_id) const = 0;
@@ -67,7 +67,7 @@ public:
 
 	bool is_double_sided() const override { return _double_sided; }
 
-	ComPtr<ID3D11InputLayout> get_input_layout() const;
+	GraphicsResourceHandle get_input_layout() const;
 
 	Graphics::ShaderRef const& get_vertex_shader() const override { return _vertex_shader; }
 	Graphics::ShaderRef const& get_pixel_shader() const override { return _pixel_shader; }
@@ -87,8 +87,8 @@ public:
 
 	ParameterInfo const* find_parameter(Identifier64 const& id) const override;
 
-	void apply(Graphics::Renderer* renderer, Graphics::ViewParams const& params) const override;
-
+	// #TODO: Move apply out of material and only query the material for data needed for rendering
+	void apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics::ViewParams const& params) const override;
 
 private:
 	bool _double_sided;
@@ -119,7 +119,7 @@ class ENGINE_API MaterialInstance final : public IMaterialObject
 
 		void bind(IMaterialObject const* obj);
 
-		virtual void apply(Graphics::Renderer* renderer, Graphics::ViewParams const& params) const;
+		virtual void apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics::ViewParams const& params) const;
 
 
 		u32 get_slot(Identifier64 const& slot_id) const;

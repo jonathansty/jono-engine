@@ -64,13 +64,13 @@ std::unique_ptr<GPUByteBuffer> GPUByteBuffer::create(RenderInterface* device, si
 }
 
 
-void* GPUByteBuffer::map(ID3D11DeviceContext* ctx)
+void* GPUByteBuffer::map(RenderContext& ctx)
 {
 	//ctx->Map(_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &_mapped);
 	return _mapped.pData;
 }
 
-void GPUByteBuffer::unmap(ID3D11DeviceContext* ctx)
+void GPUByteBuffer::unmap(RenderContext& ctx)
 {
 	//ctx->Unmap(_buffer.Get(), 0);
 	_mapped = {};
@@ -135,13 +135,13 @@ std::unique_ptr<GPUStructuredBuffer> GPUStructuredBuffer::create(RenderInterface
 	return result;
 }
 
-void* GPUStructuredBuffer::map(ID3D11DeviceContext* ctx)
+void* GPUStructuredBuffer::map(RenderContext& ctx)
 {
 	//ctx->Map(_buffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &_mapped);
 	return _mapped.pData;
 }
 
-void GPUStructuredBuffer::unmap(ID3D11DeviceContext* ctx)
+void GPUStructuredBuffer::unmap(RenderContext& ctx)
 {
 	//ctx->Unmap(_buffer.Get(), 0);
 	_mapped = {};

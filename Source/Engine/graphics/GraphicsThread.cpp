@@ -136,20 +136,22 @@ void GraphicsThread::DoFrame()
 	Graphics::Renderer* renderer = GetGlobalContext()->m_Engine->m_Renderer.get();
 	RenderWorld& world = m_FrameData.m_RenderWorld;
 
+
 	Perf::begin_frame(renderer->get_raw_device_context());
 
 	if (m_FrameData.m_RecreateSwapchain)
 	{
-		renderer->resize_swapchain(engine->m_WindowWidth, engine->m_WindowHeight);
+		renderer->ResizeSwapchain(engine->m_WindowWidth, engine->m_WindowHeight);
 	}
 
-	this->Render();
-	this->Present();
+	RenderContext& ctx = GetRI()->BeginContext();
+	this->Render(ctx);
+	this->Present(ctx);
 
 	engine->m_SignalGraphicsToMain.release();
 }
 
-void GraphicsThread::Present()
+void GraphicsThread::Present(RenderContext& ctx)
 {
 	GameEngine* engine = GetGlobalContext()->m_Engine;
 	Graphics::Renderer* renderer = GetGlobalContext()->m_Engine->m_Renderer.get();
@@ -187,7 +189,7 @@ void GraphicsThread::Present()
 	engine->m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::PresentCPU, present_timer.get_delta_time() * 1000.0);
 }
 
-void GraphicsThread::Render()
+void GraphicsThread::Render(RenderContext& ctx)
 {
 	// JonS: When recreating swapchain imgui is a bit broken at the moment. Therefore skip imgui rendering till next frame
 	bool doImgui = !m_FrameData.m_RecreateSwapchain;
@@ -229,25 +231,25 @@ void GraphicsThread::Render()
 	auto& timer = engine->m_GpuTimings[idx];
 	timer.begin(renderer->get_raw_device_context());
 
-	renderer->begin_frame();
+	renderer->BeginFrame(ctx);
 
 	// Render 3D before 2D
 	EngineCfg const& cfg = m_FrameData.m_EngineCfg;
 	if (cfg.m_UseD3D)
 	{
-		renderer->pre_render(world);
+		renderer->PreRender(ctx, world);
 
 		GPU_SCOPED_EVENT(d3d_annotation, "Render");
 		// Render the shadows
 		if (Graphics::s_EnableShadowRendering)
 		{
-			renderer->render_shadow_pass(world);
+			renderer->RenderShadowPass(ctx, world);
 		}
 
 		{
 			GPU_SCOPED_EVENT(d3d_annotation, "Main");
-			renderer->render_zprepass(world);
-			renderer->render_opaque_pass(world);
+			renderer->RenderZPrePass(ctx, world);
+			renderer->RenderOpaquePass(ctx, world);
 		}
 	}
 
@@ -255,7 +257,7 @@ void GraphicsThread::Render()
 	if (cfg.m_UseD2D)
 	{
 #if FEATURE_D2D
-		this->RenderD2D();
+		this->RenderD2D(ctx);
 #else
 		LOG_ERROR(System, "Trying to use D2D but the build isn't compiled with D2D enabled!");
 		DebugBreak();
@@ -267,12 +269,12 @@ void GraphicsThread::Render()
 	{
 		overlayManager = engine->m_OverlayManager;
 	}
-	renderer->render_post(world, overlayManager, doImgui);
-	renderer->end_frame();
+	renderer->RenderPostPass(ctx, world, overlayManager, doImgui);
+	renderer->EndFrame(ctx);
 }
 
 #if FEATURE_D2D
-void GraphicsThread::RenderD2D()
+void GraphicsThread::RenderD2D(RenderContext& ctx)
 {
 	//#TODO: Revisit thread safety here. Remove engine->m_DefaultFont
 	GameEngine* engine = GetGlobalContext()->m_Engine;
@@ -359,43 +361,43 @@ void GraphicsThread::RenderD2D()
 		}
 
 		{
-			auto ctx = Graphics::get_ctx();
+			auto dx11Ctx = Graphics::get_ctx();
 
 			CD3D11_VIEWPORT viewport = CD3D11_VIEWPORT(renderer->get_raw_output_tex(), renderer->get_raw_output_rtv());
 			D3D11_RECT rect{ (LONG)viewport.TopLeftX, (LONG)viewport.TopLeftY, (LONG)viewport.TopLeftX + (LONG)viewport.Width, (LONG)viewport.TopLeftY + (LONG)viewport.Height };
-			ctx->RSSetViewports(1, &viewport);
-			ctx->RSSetScissorRects(1, &rect);
+            dx11Ctx->RSSetViewports(1, &viewport);
+            dx11Ctx->RSSetScissorRects(1, &rect);
 
-			ctx->IASetIndexBuffer(renderData.m_IndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+			dx11Ctx->IASetIndexBuffer(renderData.m_IndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 			ID3D11RenderTargetView* rtv = renderer->get_raw_output_rtv();
-			ctx->OMSetRenderTargets(1, &rtv, nullptr);
+            dx11Ctx->OMSetRenderTargets(1, &rtv, nullptr);
 
 			constexpr UINT vertexStride = sizeof(SimpleVertex2D);
 			constexpr UINT vertexOffset = 0;
-			ctx->IASetVertexBuffers(0, 1, renderData.m_VertexBuffer.GetAddressOf(), &vertexStride, &vertexOffset);
+            dx11Ctx->IASetVertexBuffers(0, 1, renderData.m_VertexBuffer.GetAddressOf(), &vertexStride, &vertexOffset);
 
-			ctx->IASetInputLayout(m_VertexShader->get_input_layout().Get());
-			ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+			ctx.IASetInputLayout(m_VertexShader->GetInputLayout());
+            dx11Ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-			ctx->VSSetShader(m_VertexShader->as<ID3D11VertexShader>().Get(), nullptr, 0);
+			dx11Ctx->VSSetShader(m_VertexShader->as<ID3D11VertexShader>().Get(), nullptr, 0);
 
-			ctx->PSSetShader(m_PixelShader->as<ID3D11PixelShader>().Get(), nullptr, 0);
+			dx11Ctx->PSSetShader(m_PixelShader->as<ID3D11PixelShader>().Get(), nullptr, 0);
 
 			ID3D11Buffer* cb = GetRI()->GetRawBuffer(m_GlobalCB->get_buffer());
-			ctx->VSSetConstantBuffers(0, 1, &cb);
+            dx11Ctx->VSSetConstantBuffers(0, 1, &cb);
 
 			ComPtr<ID3D11RasterizerState> rss = Graphics::GetRasterizerState(RasterizerState::CullNone);
 			ComPtr<ID3D11BlendState> bss = Graphics::GetBlendState(BlendState::AlphaBlend);
 			ComPtr<ID3D11DepthStencilState> dss = Graphics::GetDepthStencilState(DepthStencilState::NoDepth);
-			ctx->RSSetState(rss.Get());
-			ctx->OMSetBlendState(bss.Get(), nullptr, 0xFFFFFF);
-			ctx->OMSetDepthStencilState(dss.Get(), 0);
+            dx11Ctx->RSSetState(rss.Get());
+            dx11Ctx->OMSetBlendState(bss.Get(), nullptr, 0xFFFFFF);
+            dx11Ctx->OMSetDepthStencilState(dss.Get(), 0);
 
 			ID3D11SamplerState* samplers[] = {
 				Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get()
 			};
-			ctx->PSSetSamplers(0, 1, samplers);
+            dx11Ctx->PSSetSamplers(0, 1, samplers);
 			for (DrawCmd const& cmd : renderData.m_DrawCommands)
 			{
 				if(cmd.m_Type == DrawCmd::DC_MESH)
@@ -403,7 +405,7 @@ void GraphicsThread::RenderD2D()
 					ID3D11ShaderResourceView* srvs[] = {
 						cmd.m_Texture ? cmd.m_Texture : TextureHandle::white()->get_srv()
 					};
-					ctx->PSSetShaderResources(0, 1, srvs);
+                    dx11Ctx->PSSetShaderResources(0, 1, srvs);
 					float4x4 wv = cmd.m_WorldViewMatrix;
 					float4x4 result = hlslpp::mul(wv, renderData.m_ProjectionMatrix);
 					result._13 = 0.0f;
@@ -418,17 +420,17 @@ void GraphicsThread::RenderD2D()
 						Shaders::float4 colour;
 					};
 
-					DrawData* dst = (DrawData*)m_GlobalCB->map(ctx.Get());
+					DrawData* dst = (DrawData*)m_GlobalCB->map(ctx);
 					dst->mat = Shaders::float4x4(result);
 					dst->colour = cmd.m_Colour;
-					m_GlobalCB->unmap(ctx.Get());
+					m_GlobalCB->unmap(ctx);
 
-					ctx->DrawIndexed((UINT)cmd.m_IdxBuffer.size(), (UINT)cmd.m_IdxOffset, (UINT)cmd.m_VertexOffset);
+					dx11Ctx->DrawIndexed((UINT)cmd.m_IdxBuffer.size(), (UINT)cmd.m_IdxOffset, (UINT)cmd.m_VertexOffset);
 				}
 				else if(cmd.m_Type == DrawCmd::DC_CLEAR)
 				{
 					float const* color = reinterpret_cast<float const*>(&cmd.m_Data[0]);
-					ctx->ClearRenderTargetView(rtv, color);
+                    dx11Ctx->ClearRenderTargetView(rtv, color);
 				}
 			}
 		}

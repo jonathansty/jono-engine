@@ -15,8 +15,8 @@ public:
 
 	virtual GraphicsResourceHandle get_buffer() { return m_Resource; }
 
-	void* map(ID3D11DeviceContext* ctx) override;
-	void unmap(ID3D11DeviceContext* ctx) override;
+	void* map(RenderContext& ctx) override;
+	void unmap(RenderContext& ctx) override;
 
 private:
     GraphicsResourceHandle m_Resource;

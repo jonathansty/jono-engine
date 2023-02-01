@@ -42,10 +42,10 @@ private:
 
 	void DoFrame();
 
-	void Present();
-	void Render();
+	void Present(RenderContext& ctx);
+    void Render(RenderContext& ctx);
 
-	void RenderD2D();
+	void RenderD2D(RenderContext& ctx);
 
 	struct FrameData
 	{
