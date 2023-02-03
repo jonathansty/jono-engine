@@ -194,10 +194,10 @@ public:
 
 	void DeInit();
 
-	DeviceContext get_ctx() const { return DeviceContext{ _device, _device_ctx }; }
+	DeviceContext get_ctx() const { return DeviceContext{ _device, m_DeviceCtx }; }
 
 	ID3D11Device*              get_raw_device() const { return _device; };
-	ID3D11DeviceContext*       get_raw_device_context() const { return _device_ctx; };
+	ID3D11DeviceContext*       get_raw_device_context() const { return m_DeviceCtx; };
 	ID3D11RenderTargetView*    get_raw_output_rtv() const { return _output_rtv; };
 	ID3D11Texture2D*           get_raw_output_tex() const { return _output_tex; };
 	ID3D11Texture2D*           get_raw_output_non_msaa_tex() const { return _non_msaa_output_tex; };
@@ -308,7 +308,7 @@ private:
 	ID3D11ShaderResourceView* _swapchain_srv;
 
 	ID3D11Device*        _device;
-	ID3D11DeviceContext* _device_ctx;
+	ID3D11DeviceContext* m_DeviceCtx;
 
 	ID3DUserDefinedAnnotation* _user_defined_annotation;
 
@@ -323,10 +323,10 @@ private:
 
 	ID3D11RenderTargetView*	  _non_msaa_output_rtv;
 	ID3D11RenderTargetView*   _output_rtv;
-	ID3D11Texture2D*          _output_depth;
-	ID3D11Texture2D*          _output_depth_copy;
-	ID3D11ShaderResourceView* _output_depth_srv;
-	ID3D11ShaderResourceView* _output_depth_srv_copy;
+	GraphicsResourceHandle          _output_depth;
+	GraphicsResourceHandle          _output_depth_copy;
+	GraphicsResourceHandle _output_depth_srv;
+	GraphicsResourceHandle _output_depth_srv_copy;
 	ID3D11DepthStencilView*   _output_dsv;
 
 	// D2D resources to support D2D1 on D3D11
@@ -378,7 +378,7 @@ private:
 	std::unique_ptr<DirectX::BasicEffect> _common_effect = nullptr;
 	ComPtr<ID3D11InputLayout> _layout = nullptr;
 
-	std::unique_ptr<class VisibilityManager> _visibility;
+	std::unique_ptr<class VisibilityManager> m_Visibility;
 
 	// State tracking
 	struct 

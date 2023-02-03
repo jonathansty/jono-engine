@@ -34,7 +34,7 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 {
 	MEMORY_TAG(MemoryCategory::Graphics);
 
-	_visibility = std::make_unique<class VisibilityManager>();
+	m_Visibility = std::make_unique<class VisibilityManager>();
 
 	_stats = {};
 
@@ -49,7 +49,7 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 
 	//create_factories(settings, cmdline);
     _device = m_RI->m_Device.Get();
-    _device_ctx = m_RI->m_Context.Get();
+    m_DeviceCtx = m_RI->m_Context.Get();
     _factory = m_RI->m_Factory.Get();
     _user_defined_annotation = m_RI->m_UserDefinedAnnotations.Get();
 
@@ -168,8 +168,8 @@ void Renderer::DeInit()
 	GameEngine::instance()->get_overlay_manager()->unregister_overlay(_debug_tool.get());
 
 
-	_device_ctx->ClearState();
-	_device_ctx->Flush();
+	m_DeviceCtx->ClearState();
+	m_DeviceCtx->Flush();
 
 	release_frame_resources();
 	release_device_resources();
@@ -199,7 +199,7 @@ void Renderer::create_factories(EngineCfg const& settings, cli::CommandLine cons
 			debug_layer = true;
 		}
 
-		ENSURE_HR(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flag, featureLevels, UINT(std::size(featureLevels)), D3D11_SDK_VERSION, &_device, &featureLevel, &_device_ctx));
+		ENSURE_HR(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flag, featureLevels, UINT(std::size(featureLevels)), D3D11_SDK_VERSION, &_device, &featureLevel, &m_DeviceCtx));
 
 		if (debug_layer)
 		{
@@ -232,7 +232,7 @@ void Renderer::create_factories(EngineCfg const& settings, cli::CommandLine cons
 	create_wic_factory();
 	create_write_factory();
 
-	ENSURE_HR(_device_ctx->QueryInterface(IID_PPV_ARGS(&_user_defined_annotation)));
+	ENSURE_HR(m_DeviceCtx->QueryInterface(IID_PPV_ARGS(&_user_defined_annotation)));
 }
 
 #if FEATURE_D2D
@@ -298,7 +298,7 @@ void Renderer::release_device_resources()
 	SafeRelease(_color_brush);
 	SafeRelease(_user_defined_annotation);
 
-	SafeRelease(_device_ctx);
+	SafeRelease(m_DeviceCtx);
 	SafeRelease(_device);
 	SafeRelease(_dwrite_factory);
 	SafeRelease(_wic_factory);
@@ -324,10 +324,12 @@ void Renderer::release_frame_resources()
 	SafeRelease(_output_tex);
 	SafeRelease(_output_rtv);
 	SafeRelease(_output_srv);
-	SafeRelease(_output_depth);
-	SafeRelease(_output_depth_copy);
-	SafeRelease(_output_depth_srv);
-	SafeRelease(_output_depth_srv_copy);
+
+	m_RI->ReleaseResource(_output_depth);
+	m_RI->ReleaseResource(_output_depth_copy);
+	m_RI->ReleaseResource(_output_depth_srv);
+	m_RI->ReleaseResource(_output_depth_srv_copy);
+
 	SafeRelease(_output_dsv);
 }
 
@@ -407,11 +409,13 @@ void Renderer::ResizeSwapchain(u32 w, u32 h)
 
 	// Create the 3D depth target
 	auto depth_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R16_TYPELESS, w, h, 1, 1, D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
-	ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth));
-	ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth_copy));
+    _output_depth = m_RI->CreateTexture(depth_desc, nullptr, "Main Depth");
+    _output_depth_copy = m_RI->CreateTexture(depth_desc, nullptr, "Main Depth (COPY)");
+	//ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth));
+	//ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth_copy));
 
-	Helpers::SetDebugObjectName(_output_depth, "Renderer::Output Depth");
-	Helpers::SetDebugObjectName(_output_depth_copy, "Renderer::Output Depth (COPY)");
+	//Helpers::SetDebugObjectName(_output_depth, "Renderer::Output Depth");
+	//Helpers::SetDebugObjectName(_output_depth_copy, "Renderer::Output Depth (COPY)");
 
 
 	auto view_dim = D3D11_DSV_DIMENSION_TEXTURE2D;
@@ -421,16 +425,14 @@ void Renderer::ResizeSwapchain(u32 w, u32 h)
 		view_dim = D3D11_DSV_DIMENSION_TEXTURE2DMS;
 		srv_view_dim = D3D11_SRV_DIMENSION_TEXTURE2DMS;
 	}
-	auto dsv_desc = CD3D11_DEPTH_STENCIL_VIEW_DESC(_output_depth, view_dim, DXGI_FORMAT_D16_UNORM);
-	ENSURE_HR(_device->CreateDepthStencilView(_output_depth, &dsv_desc, &_output_dsv));
+    ID3D11Texture2D* depth = m_RI->GetRawTexture2D(_output_depth);
+	auto dsv_desc = CD3D11_DEPTH_STENCIL_VIEW_DESC(depth, view_dim, DXGI_FORMAT_D16_UNORM);
+	ENSURE_HR(_device->CreateDepthStencilView(depth, &dsv_desc, &_output_dsv));
 	Helpers::SetDebugObjectName(_output_dsv, "Renderer::Output Depth");
 
-	auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(_output_depth, srv_view_dim, DXGI_FORMAT_R16_UNORM);
-	ENSURE_HR(_device->CreateShaderResourceView(_output_depth, &srv_desc, &_output_depth_srv));
-	Helpers::SetDebugObjectName(_output_depth_srv, "Renderer::Output Depth");
-
-	ENSURE_HR(_device->CreateShaderResourceView(_output_depth_copy, &srv_desc, &_output_depth_srv_copy));
-	Helpers::SetDebugObjectName(_output_depth_srv_copy, "Renderer::Output Depth (COPY)");
+	auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(depth, srv_view_dim, DXGI_FORMAT_R16_UNORM);
+    _output_depth_srv = m_RI->CreateShaderResourceView(_output_depth, srv_desc, "Renderer::Output Depth");
+    _output_depth_srv_copy = m_RI->CreateShaderResourceView(_output_depth_copy, srv_desc, "Renderer::Output Depth(COPY)");
 
 	// Either create the swapchain or retrieve the existing description
 	DXGI_SWAP_CHAIN_DESC desc{};
@@ -610,13 +612,13 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 	// Register our visible instances and calculate visibilities for main view?
 	{
 		JONO_EVENT("Visibility");
-		_visibility->reset();
+		m_Visibility->reset();
 
 		for (std::shared_ptr<RenderWorldInstance> const& inst : world.get_instances())
 		{
 			if (inst->is_ready())
 			{
-				_visibility->add_instance(inst.get());
+				m_Visibility->add_instance(inst.get());
 			}
 		}
 
@@ -627,7 +629,7 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
         {
 			params.frustum[VisiblityFrustum_CSM0 + i] = Math::Frustum::from_vp(directional_light->get_cascade(i).vp);
         }
-		_visibility->run(params);
+		m_Visibility->run(params);
 	}
 
 	// Light culling step is scheduled here.
@@ -712,7 +714,7 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 		}
 
 
-		ID3D11DeviceContext* dx11Ctx = _device_ctx;
+		ID3D11DeviceContext* dx11Ctx = m_DeviceCtx;
 
 		shared_ptr<RenderWorldCamera> camera = world.get_camera(0);
 
@@ -728,38 +730,25 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 			cb.proj_inv = hlslpp::inverse(camera->get_proj());
 		}
 
+		//ctx.SetRenderTargets(0, nullptr, nullptr);
 		dx11Ctx->OMSetRenderTargets(0, nullptr, nullptr);
 
-		std::array<ID3D11ShaderResourceView*, 2> srvs = {
-			m_RI->GetRawSRV(_light_buffer->get_srv()),
+		ComputeItem item{};
+        item.srvs = {
+			_light_buffer->get_srv(),
 			_output_depth_srv
-		};
-		dx11Ctx->CSSetShaderResources(0, 2, srvs.data());
-
-		std::array<ID3D11UnorderedAccessView*, 2> uavs = {
-			m_RI->GetRawUAV(_tile_light_index_buffer->get_uav()),
-            m_RI->GetRawUAV(_per_tile_info_buffer->get_uav())
-		};
-
-		dx11Ctx->CSSetUnorderedAccessViews(0, 2, uavs.data(), nullptr);
-
-		std::array<ID3D11Buffer*, 1> cbs = {
-			m_RI->GetRawBuffer(_fplus_cb->get_buffer())
-		};
-		dx11Ctx->CSSetConstantBuffers(0, 1, cbs.data());
-		dx11Ctx->CSSetShader(_fplus_cull_shader->as<ID3D11ComputeShader>().Get(), nullptr, 0);
-
-		u32 dispatch_x = tiles_x;
-		u32 dispatch_y = tiles_y;
-		dx11Ctx->Dispatch(dispatch_x, dispatch_y, 1);
-
-		uavs[0] = nullptr;
-		uavs[1] = nullptr;
-		dx11Ctx->CSSetUnorderedAccessViews(0, 2, uavs.data(), nullptr);
-
-		srvs[0] = nullptr;
-		srvs[1] = nullptr;
-		dx11Ctx->CSSetShaderResources(0, 2, srvs.data());
+        };
+        item.uavs = {
+			_tile_light_index_buffer->get_uav(), 
+			_per_tile_info_buffer->get_uav()
+        };
+        item.cbs = {
+			_fplus_cb->get_buffer()
+        };
+        item.shader = _fplus_cull_shader->as<ID3D11ComputeShader>().Get();
+        item.dispatchX = tiles_x;
+        item.dispatchY = tiles_y;
+		ctx.ExecuteComputeItem(item);
 	}
 
 }
@@ -814,12 +803,12 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 			Graphics::GetSamplerState(SamplerState::MinMagMip_LinearClamp).Get(),
 			Graphics::GetSamplerState(SamplerState::MinMagMip_PointClamp).Get()
 		};
-		_device_ctx->PSSetSamplers(0, UINT(std::size(samplers)), samplers);
+		m_DeviceCtx->PSSetSamplers(0, UINT(std::size(samplers)), samplers);
 
-		_device_ctx->OMSetDepthStencilState(Graphics::GetDepthStencilState(depth_stencil_state).Get(), 0);
-		_device_ctx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
-		_device_ctx->OMSetBlendState(Graphics::GetBlendState(BlendState::Default).Get(), NULL, 0xffffffff);
-		_device_ctx->RSSetViewports(1, &params.viewport);
+		m_DeviceCtx->OMSetDepthStencilState(Graphics::GetDepthStencilState(depth_stencil_state).Get(), 0);
+		m_DeviceCtx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
+		m_DeviceCtx->OMSetBlendState(Graphics::GetBlendState(BlendState::Default).Get(), NULL, 0xffffffff);
+		m_DeviceCtx->RSSetViewports(1, &params.viewport);
 	}
 
 	GlobalCB* global = (GlobalCB*)_cb_global->map(ctx);
@@ -922,7 +911,7 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 			frustum = (VisibilityFrustum)(VisiblityFrustum_CSM0 + (params.pass - RenderPass::Shadow_CSM0));
 		}
 
-		std::vector<RenderWorldInstance*> const& instances = _visibility->get_visible_instances(frustum);
+		std::vector<RenderWorldInstance*> const& instances = m_Visibility->get_visible_instances(frustum);
 		m_DrawCalls.reserve(instances.size());
 		m_DrawCalls.clear();
 
@@ -951,7 +940,7 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 
 	JONO_EVENT("Submit");
 
-	ID3D11DeviceContext* dx11Ctx = _device_ctx;
+	ID3D11DeviceContext* dx11Ctx = m_DeviceCtx;
     dx11Ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 		// #TODO: Remove debug handling into a debug lighting system
@@ -1098,7 +1087,7 @@ Math::Frustum Renderer::get_cascade_frustum(shared_ptr<RenderWorldCamera> const&
 
 void Renderer::setup_renderstate(RenderContext& ctx, MaterialInstance const* mat_instance, ViewParams const& params)
 {
-	auto dx11Ctx = _device_ctx;
+	auto dx11Ctx = m_DeviceCtx;
 
 	// Bind anything coming from the material
 	mat_instance->apply(ctx, this, params);
@@ -1108,13 +1097,13 @@ void Renderer::setup_renderstate(RenderContext& ctx, MaterialInstance const* mat
 	{
 		ID3D11ShaderResourceView* views[] = {
 			s_EnableShadowRendering ? _shadow_map_srv.Get() : nullptr,
-			_output_depth_srv_copy,
+			m_RI->GetRawSRV(_output_depth_srv_copy),
 			_cubemap_srv.Get(),
 			m_RI->GetRawSRV(_light_buffer->get_srv()),
 			m_RI->GetRawSRV(_tile_light_index_buffer->get_srv()),
 			m_RI->GetRawSRV(_per_tile_info_buffer->get_srv())
 		};
-		_device_ctx->PSSetShaderResources(Texture_CSM, UINT(std::size(views)), views);
+		m_DeviceCtx->PSSetShaderResources(Texture_CSM, UINT(std::size(views)), views);
 	}
 }
 
@@ -1124,12 +1113,12 @@ void Renderer::VSSetShader(ShaderConstRef const& vertex_shader)
 	{
 		if (vertex_shader == nullptr)
 		{
-			_device_ctx->VSSetShader(nullptr, nullptr, 0);
+			m_DeviceCtx->VSSetShader(nullptr, nullptr, 0);
 		}
 		else
 		{
 			ASSERT(vertex_shader->get_type() == ShaderType::Vertex);
-			_device_ctx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
+			m_DeviceCtx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
 		}
         m_PrevRenderState.VS = vertex_shader;
 	}
@@ -1142,12 +1131,12 @@ void Renderer::PSSetShader(ShaderConstRef const& pixel_shader)
 	{
 		if(pixel_shader == nullptr)
 		{
-			_device_ctx->PSSetShader(nullptr, nullptr, 0);
+			m_DeviceCtx->PSSetShader(nullptr, nullptr, 0);
 		}
 		else
 		{
 			ASSERT(pixel_shader->get_type() == ShaderType::Pixel);
-			_device_ctx->PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);
+			m_DeviceCtx->PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);
 		}
 
 		m_PrevRenderState.PS = pixel_shader;
@@ -1158,7 +1147,7 @@ void Renderer::IASetInputLayout(ID3D11InputLayout* layout)
 {
     if (m_PrevRenderState.InputLayout != layout)
 	{
-		_device_ctx->IASetInputLayout(layout);
+		m_DeviceCtx->IASetInputLayout(layout);
         m_PrevRenderState.InputLayout = layout;	
 	}
 }
@@ -1167,7 +1156,7 @@ void Renderer::RSSetState(ID3D11RasterizerState* state)
 {
     if (m_PrevRenderState.RS != state)
 	{
-		_device_ctx->RSSetState(state);
+		m_DeviceCtx->RSSetState(state);
         m_PrevRenderState.RS = state;
 	}
 }
@@ -1189,16 +1178,16 @@ void Renderer::render_post_predebug()
 
 	VSSetShader(post_vs_shader);
 	PSSetShader(post_shader);
-	_device_ctx->PSSetShaderResources(0, 1, &_non_msaa_output_srv_copy);
+	m_DeviceCtx->PSSetShaderResources(0, 1, &_non_msaa_output_srv_copy);
     ID3D11Buffer* buffer = m_RI->GetRawBuffer(_cb_post->get_buffer());
-	_device_ctx->PSSetConstantBuffers(0, 1, &buffer);
+	m_DeviceCtx->PSSetConstantBuffers(0, 1, &buffer);
 
 	ID3D11SamplerState* sampler_states[] = {
 		Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get(),
 		Graphics::GetSamplerState(SamplerState::MinMagMip_Point).Get()
 	};
-	_device_ctx->PSSetSamplers(0, 2, sampler_states);
-	_device_ctx->Draw(3, 0);
+	m_DeviceCtx->PSSetSamplers(0, 2, sampler_states);
+	m_DeviceCtx->Draw(3, 0);
 
 }
 
@@ -1244,8 +1233,8 @@ void Renderer::RenderShadowPass(RenderContext& ctx, RenderWorld const& world)
 			GPU_SCOPED_EVENT(_user_defined_annotation, fmt::format("Cascade {}", i).c_str());
 			CascadeInfo const& info = light->get_cascade(i);
 
-			_device_ctx->OMSetRenderTargets(0, nullptr, _shadow_map_dsv[i].Get());
-			_device_ctx->ClearDepthStencilView(_shadow_map_dsv[i].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+			m_DeviceCtx->OMSetRenderTargets(0, nullptr, _shadow_map_dsv[i].Get());
+			m_DeviceCtx->ClearDepthStencilView(_shadow_map_dsv[i].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
 
             if (!renderCascade[i])
             {
@@ -1274,7 +1263,7 @@ void Renderer::RenderZPrePass(RenderContext& ctx, RenderWorld const& world)
 	GPU_SCOPED_EVENT(_user_defined_annotation, "zprepass");
 
 
-	_device_ctx->OMSetRenderTargets(0, NULL, _output_dsv);
+	m_DeviceCtx->OMSetRenderTargets(0, NULL, _output_dsv);
 
 	render_view(ctx, world, RenderPass::ZPrePass);
 }
@@ -1286,7 +1275,7 @@ void Renderer::RenderOpaquePass(RenderContext& ctx, RenderWorld const& world)
 	// Do a copy to our dsv tex for sampling during the opaque pass
 	CopyDepth();
 
-	_device_ctx->OMSetRenderTargets(1, &_output_rtv, _output_dsv);
+	m_DeviceCtx->OMSetRenderTargets(1, &_output_rtv, _output_dsv);
 	render_view(ctx, world, Graphics::RenderPass::Opaque);
 }
 
@@ -1312,11 +1301,11 @@ void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shar
 
 	}
 
-	_device_ctx->OMSetBlendState(_states->Opaque(), nullptr, 0xFFFFFFFF);
-	_device_ctx->OMSetDepthStencilState(_states->DepthRead(), 0);
-	_device_ctx->RSSetState(_states->CullNone());
+	m_DeviceCtx->OMSetBlendState(_states->Opaque(), nullptr, 0xFFFFFFFF);
+	m_DeviceCtx->OMSetDepthStencilState(_states->DepthRead(), 0);
+	m_DeviceCtx->RSSetState(_states->CullNone());
 
-	_device_ctx->IASetInputLayout(_layout.Get());
+	m_DeviceCtx->IASetInputLayout(_layout.Get());
 
 	float4x4 view = float4x4::identity();
 	float4x4 proj = float4x4::identity();
@@ -1333,12 +1322,12 @@ void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shar
 	XMMATRIX xm_proj = proj4x4;
 	_common_effect->SetView(xm_view);
 	_common_effect->SetProjection(xm_proj);
-	_common_effect->Apply(_device_ctx);
+	_common_effect->Apply(m_DeviceCtx);
 
 	if(overlays)
 	{
 		GPU_SCOPED_EVENT(_user_defined_annotation, "Post:RenderOverlays");
-		overlays->Render3D(_device_ctx);
+		overlays->Render3D(m_DeviceCtx);
 	}
 
 	D3D11_VIEWPORT vp{};
@@ -1348,14 +1337,14 @@ void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shar
 	vp.TopLeftY = 0.0f;
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
-	_device_ctx->RSSetViewports(1, &vp);
+	m_DeviceCtx->RSSetViewports(1, &vp);
 
 		// Resolve msaa to non msaa for imgui render
-	_device_ctx->ResolveSubresource(_non_msaa_output_tex, 0, _output_tex, 0, _swapchain_format);
+	m_DeviceCtx->ResolveSubresource(_non_msaa_output_tex, 0, _output_tex, 0, _swapchain_format);
 
 	// Copy the non-msaa world render so we can sample from it in the post pass
-	_device_ctx->CopyResource(_non_msaa_output_tex_copy, _non_msaa_output_tex);
-	_device_ctx->OMSetRenderTargets(1, &_non_msaa_output_rtv, nullptr);
+	m_DeviceCtx->CopyResource(_non_msaa_output_tex_copy, _non_msaa_output_tex);
+	m_DeviceCtx->OMSetRenderTargets(1, &_non_msaa_output_rtv, nullptr);
 	render_post_predebug();
 
 	render_post_postdebug();
@@ -1366,14 +1355,14 @@ void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shar
 	vp.TopLeftY = 0.0f;
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
-	_device_ctx->RSSetViewports(1, &vp);
+	m_DeviceCtx->RSSetViewports(1, &vp);
 
 
 	// Render main viewport ImGui
 	if(doImgui)
 	{
 		GPU_SCOPED_EVENT(_user_defined_annotation, "ImGui");
-		_device_ctx->OMSetRenderTargets(1, &_swapchain_rtv, nullptr);
+		m_DeviceCtx->OMSetRenderTargets(1, &_swapchain_rtv, nullptr);
 		ImDrawData* imguiData = &GetGlobalContext()->m_GraphicsThread->m_FrameData.m_DrawData;
 		ImGui_ImplDX11_RenderDrawData(imguiData);
 	}
@@ -1382,7 +1371,7 @@ void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shar
 
 void Renderer::CopyDepth()
 {
-	_device_ctx->CopyResource(_output_depth_copy, _output_depth);
+	m_DeviceCtx->CopyResource(m_RI->GetRawTexture2D(_output_depth_copy), m_RI->GetRawTexture2D(_output_depth));
 }
 
 } // namespace Graphics

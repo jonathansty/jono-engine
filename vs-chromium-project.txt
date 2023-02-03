@@ -8,6 +8,7 @@
 
 
 [SearchableFiles.ignore]
+External/
 Binaries/
 obj/
 Debug/

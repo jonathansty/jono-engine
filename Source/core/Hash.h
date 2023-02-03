@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Span.h"
+
 namespace Hash
 {
 template <class T>
@@ -34,7 +36,7 @@ inline uint32_t fnv1a(T const& data, uint32_t hash = Seed)
 }
 
 template <typename T>
-inline uint32_t fnv1a(std::vector<T> const& data, uint32_t hash = Seed)
+inline uint32_t fnv1a(Span<T> const& data, uint32_t hash = Seed)
 {
 	if (data.empty())
 		return hash;

@@ -27,3 +27,9 @@ void Dx11RenderContext::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology
 {
     m_Context->IASetPrimitiveTopology(topology);
 }
+
+void Dx11RenderContext::ExecuteComputeItem(ComputeItem const& item)
+{
+    std::vector<ComputeItem> i = { item };
+    ExecuteComputeItems(i);
+}

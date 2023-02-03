@@ -14,9 +14,13 @@ RenderInterface* GetRI()
 
 namespace Helpers
 {
-inline void SetDebugObjectName(IDXGIObject* obj, std::string const& name)
+inline void SetDebugObjectName(ID3D11DeviceChild* obj, std::string_view const& name)
 {
-    ENSURE_HR(obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.c_str()));
+    ENSURE_HR(obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.data()));
+}
+inline void SetDebugObjectName(IDXGIObject* obj, std::string_view const& name)
+{
+    ENSURE_HR(obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.data()));
 }
 } // namespace Helpers
 
@@ -106,17 +110,19 @@ GraphicsResourceHandle Dx11RenderInterface::CreateBuffer(BufferDesc const& desc,
 
 
     // #TODO: Find first free slot 
-    auto slotH = m_Buffers.Push(buffer);
+    auto slotH = m_Resources.Push(buffer);
     GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_Buffer, slotH.gen, slotH.id);
     return handle;
 }
 
-GraphicsResourceHandle Dx11RenderInterface::CreateShaderResourceView(GraphicsResourceHandle srcBuffer, SrvDesc const& desc)
+GraphicsResourceHandle Dx11RenderInterface::CreateShaderResourceView(GraphicsResourceHandle srcBuffer, SrvDesc const& desc, std::string_view debugName)
 {
     ComPtr<ID3D11ShaderResourceView> srv;
 
-    ID3D11Buffer* b = GetRawBuffer(srcBuffer);
+    ID3D11Resource* b = GetRawResource(srcBuffer);
     ENSURE_HR(m_Device->CreateShaderResourceView(b, &desc, srv.GetAddressOf()));
+
+    Helpers::SetDebugObjectName(b, debugName);
 
     auto h = m_SRVs.Push(srv);
 
@@ -128,7 +134,7 @@ GraphicsResourceHandle Dx11RenderInterface::CreateShaderResourceView(GraphicsRes
 GraphicsResourceHandle Dx11RenderInterface::CreateUnorderedAccessView(GraphicsResourceHandle srcBuffer, UavDesc const& desc)
 {
     ComPtr<ID3D11UnorderedAccessView> uav;
-    ID3D11Buffer* b = GetRawBuffer(srcBuffer);
+    ID3D11Resource* b = GetRawResource(srcBuffer);
     ENSURE_HR(m_Device->CreateUnorderedAccessView(b, &desc, &uav));
 
     auto h = m_UAVs.Push(uav);
@@ -144,6 +150,93 @@ GraphicsResourceHandle Dx11RenderInterface::CreateInputLayout(InputLayoutDesc in
     auto h = m_InputLayouts.Push(inputLayout);
     GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_InputLayout, h.gen, h.id);
     return handle;
+}
+
+GraphicsResourceHandle Dx11RenderInterface::CreateTexture(Texture1DDesc const& desc, void* initialData, std::string_view name)
+{
+    ComPtr<ID3D11Texture1D> res;
+    if(initialData != nullptr)
+    {
+        D3D11_SUBRESOURCE_DATA data{};
+        data.pSysMem = initialData;
+        ENSURE_HR(m_Device->CreateTexture1D(&desc, &data, &res));
+    }
+    else
+    {
+        ENSURE_HR(m_Device->CreateTexture1D(&desc, nullptr, &res));
+    }
+
+    ComPtr<ID3D11Resource> genRes;
+    res.As<ID3D11Resource>(&genRes);
+    Helpers::SetDebugObjectName(genRes.Get(), name);
+    auto handle = m_Resources.Push(genRes);
+    return GraphicsResourceHandle(GRT_Texture, handle.gen, handle.id);
+}
+
+GraphicsResourceHandle Dx11RenderInterface::CreateTexture(Texture2DDesc const& desc, void* initialData, std::string_view name)
+{
+    ComPtr<ID3D11Texture2D> res;
+    if (initialData != nullptr)
+    {
+        D3D11_SUBRESOURCE_DATA data{};
+        data.pSysMem = initialData;
+        ENSURE_HR(m_Device->CreateTexture2D(&desc, &data, &res));
+    }
+    else
+    {
+        ENSURE_HR(m_Device->CreateTexture2D(&desc, nullptr, &res));
+    }
+
+    ComPtr<ID3D11Resource> genRes;
+    res.As<ID3D11Resource>(&genRes);
+
+    Helpers::SetDebugObjectName(genRes.Get(), name);
+    auto handle = m_Resources.Push(genRes);
+    return GraphicsResourceHandle(GRT_Texture, handle.gen, handle.id);
+}
+
+GraphicsResourceHandle Dx11RenderInterface::CreateTexture(Texture3DDesc const& desc, void* initialData, std::string_view name)
+{
+    ComPtr<ID3D11Texture3D> res;
+    if (initialData != nullptr)
+    {
+        D3D11_SUBRESOURCE_DATA data{};
+        data.pSysMem = initialData;
+        ENSURE_HR(m_Device->CreateTexture3D(&desc, &data, &res));
+    }
+    else
+    {
+        ENSURE_HR(m_Device->CreateTexture3D(&desc, nullptr, &res));
+    }
+
+    ComPtr<ID3D11Resource> genRes;
+    res.As<ID3D11Resource>(&genRes);
+    Helpers::SetDebugObjectName(genRes.Get(), name);
+    auto handle = m_Resources.Push(genRes);
+    return GraphicsResourceHandle(GRT_Texture, handle.gen, handle.id);
+}
+
+void Dx11RenderInterface::ReleaseResource(GraphicsResourceHandle h)
+{
+    switch (h.data.type)
+    {
+        case GRT_ShaderResourceView:
+            m_SRVs.Erase(SlotHandle{ h.data.id, h.data.gen });
+            break;
+        case GRT_UnorderedAccessView:
+            m_UAVs.Erase(SlotHandle{ h.data.id, h.data.gen });
+            break;
+        case GRT_InputLayout:
+            m_InputLayouts.Erase(SlotHandle{ h.data.id, h.data.gen });
+            break;
+        case GRT_Texture:
+        case GRT_Buffer:
+            m_Resources.Erase(SlotHandle{ h.data.id, h.data.gen });
+            break;
+        default:
+            ASSERT("Unsupported type!");
+            break;
+    }
 }
 
 void* Dx11RenderContext::Map(GraphicsResourceHandle buffer)
@@ -186,4 +279,39 @@ void Dx11RenderContext::EndFrame()
 void Dx11RenderContext::Flush()
 {
     m_Context->Flush();
+}
+
+void Dx11RenderContext::ExecuteComputeItems(std::span<ComputeItem> const& items)
+{
+    for(ComputeItem const& item : items)
+    {
+        std::array<ID3D11ShaderResourceView*, 128> srvs = {};
+        std::array<ID3D11UnorderedAccessView*, 128> uavs = {};
+        std::array<ID3D11Buffer*, 128> cbs = {};
+
+        for(size_t i = 0; i < item.srvs.size(); ++i)
+        {
+            srvs[i] = owner->GetRawSRV(item.srvs[i]);
+        }
+
+        for(size_t i = 0; i < item.uavs.size(); ++i)
+        {
+            uavs[i] = owner->GetRawUAV(item.uavs[i]);
+        }
+
+        for(size_t i = 0; i < item.cbs.size(); ++i)
+        {
+            cbs[i] = owner->GetRawBuffer(item.cbs[i]);
+        }
+
+        m_Context->CSSetUnorderedAccessViews(0, (UINT)item.uavs.size(), uavs.data(), nullptr);
+        m_Context->CSSetConstantBuffers(0, (UINT)item.cbs.size(), cbs.data());
+        m_Context->CSSetShaderResources(0, (UINT)item.srvs.size(), srvs.data());
+        m_Context->CSSetShader(item.shader, nullptr, 0);
+        m_Context->Dispatch(item.dispatchX, item.dispatchY, item.dispatchZ);
+    }
+
+    m_Context->CSSetUnorderedAccessViews(0, 0, nullptr, nullptr);
+    m_Context->CSSetShaderResources(0, 0, nullptr);
+    m_Context->CSSetConstantBuffers(0, 0, nullptr);
 }

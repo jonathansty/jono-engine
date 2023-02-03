@@ -7,14 +7,14 @@
 namespace Helpers
 {
 
-inline void SetDebugObjectName(IDXGIObject* obj, std::string const& name)
+inline void SetDebugObjectName(IDXGIObject* obj, std::string_view const& name)
 {
-	ENSURE_HR(obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.c_str()));
+	ENSURE_HR(obj->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.data()));
 }
 
-inline  void SetDebugObjectName(ID3D11DeviceChild* res, std::string const& name)
+inline  void SetDebugObjectName(ID3D11DeviceChild* res, std::string_view const& name)
 {
-	ENSURE_HR(res->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.c_str()));
+	ENSURE_HR(res->SetPrivateData(WKPDID_D3DDebugObjectName, UINT(name.size()), name.data()));
 }
 
 } // namespace Helpers
