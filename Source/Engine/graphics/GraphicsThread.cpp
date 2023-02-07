@@ -402,10 +402,9 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 			{
 				if(cmd.m_Type == DrawCmd::DC_MESH)
 				{
-					ID3D11ShaderResourceView* srvs[] = {
-						cmd.m_Texture ? cmd.m_Texture : TextureHandle::white()->get_srv()
-					};
-                    dx11Ctx->PSSetShaderResources(0, 1, srvs);
+                    GraphicsResourceHandle srv = cmd.m_TextureSRV ? cmd.m_TextureSRV : TextureHandle::white()->GetSRV();
+                    ctx.SetShaderResources(ShaderStage::Pixel, 0, { srv });
+
 					float4x4 wv = cmd.m_WorldViewMatrix;
 					float4x4 result = hlslpp::mul(wv, renderData.m_ProjectionMatrix);
 					result._13 = 0.0f;

@@ -33,7 +33,7 @@ struct IMaterialObject
 
 	virtual u32 get_texture_count() const = 0;
 	virtual u32  get_slot(Identifier64 const& slot_id) const = 0;
-	virtual void get_texture_views(std::vector<ID3D11ShaderResourceView const*>& views) const = 0;
+	virtual void get_texture_views(std::vector<GraphicsResourceHandle>& views) const = 0;
 	virtual ConstantBufferRef const& get_cb() const = 0;
 	virtual std::vector<u8> const& get_param_data() const = 0;
 	virtual bool is_double_sided() const = 0;
@@ -73,7 +73,7 @@ public:
 	Graphics::ShaderRef const& get_pixel_shader() const override { return _pixel_shader; }
 	Graphics::ShaderRef const& get_debug_pixel_shader() const override { return _debug_pixel_shader; }
 
-	void get_texture_views(std::vector<ID3D11ShaderResourceView const*>& views) const;
+	void get_texture_views(std::vector<GraphicsResourceHandle>& views) const;
 
 	ConstantBufferRef const& get_cb() const { return _material_cb; }
 
@@ -132,7 +132,7 @@ class ENGINE_API MaterialInstance final : public IMaterialObject
 
 		void update();
 
-		void get_texture_views(std::vector<ID3D11ShaderResourceView const*>& views) const;
+		void get_texture_views(std::vector<GraphicsResourceHandle>& views) const;
 
 		Graphics::ShaderRef const& get_vertex_shader() const { return GetMaterialObj()->get_vertex_shader(); }
 		Graphics::ShaderRef const& get_pixel_shader() const { return GetMaterialObj()->get_pixel_shader(); }

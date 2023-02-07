@@ -180,6 +180,9 @@ GraphicsResourceHandle Dx11RenderInterface::CreateTexture(Texture2DDesc const& d
     {
         D3D11_SUBRESOURCE_DATA data{};
         data.pSysMem = initialData;
+
+        // #TODO: Detect this from the texture desc?
+        data.SysMemPitch = sizeof(u32) * desc.Width;
         ENSURE_HR(m_Device->CreateTexture2D(&desc, &data, &res));
     }
     else
@@ -254,12 +257,46 @@ void Dx11RenderContext::Unmap(GraphicsResourceHandle buffer)
     m_Context->Unmap(b, 0);
 }
 
-
 void Dx11RenderContext::ClearTargets(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, float4 color, uint32_t clearFlags, float depth, uint8_t stencil)
 {
     float col[4] = { color.x, color.y, color.z, color.w };
     m_Context->ClearRenderTargetView(rtv, col);
     m_Context->ClearDepthStencilView(dsv, clearFlags, depth, stencil);
+}
+
+void Dx11RenderContext::SetShaderResources(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> srvs)
+{
+    ASSERT(srvs.size() < 128);
+    ID3D11ShaderResourceView* views[128];
+    UINT numViews = std::min((UINT)srvs.size(), (UINT)128);
+    for(size_t j = 0; j < numViews; ++j)
+    {
+        views[j] = owner->GetRawSRV(srvs[j]);
+    }
+
+    switch(stage)
+    {
+        case ShaderStage::Vertex:
+            m_Context->VSSetShaderResources(startSlot, numViews, views);
+            break;
+        case ShaderStage::Pixel:
+            m_Context->PSSetShaderResources(startSlot, numViews, views);
+            break;
+        case ShaderStage::Compute:
+            m_Context->CSSetShaderResources(startSlot, numViews, views);
+            break;
+        case ShaderStage::Domain:
+            m_Context->DSSetShaderResources(startSlot, numViews, views);
+            break;
+        case ShaderStage::Geometry:
+            m_Context->GSSetShaderResources(startSlot, numViews, views);
+            break;
+        case ShaderStage::Hull:
+            m_Context->HSSetShaderResources(startSlot, numViews, views);
+            break;
+        default:
+            break;
+    }
 }
 
 void Dx11RenderContext::BeginFrame()
@@ -268,7 +305,7 @@ void Dx11RenderContext::BeginFrame()
 
     m_PrevRenderState.VS = nullptr;
     m_PrevRenderState.PS = nullptr;
-    m_PrevRenderState.InputLayout = nullptr;
+    m_PrevRenderState.InputLayout = GraphicsResourceHandle::Invalid();
     m_PrevRenderState.RS = nullptr;
 }
 
@@ -281,7 +318,7 @@ void Dx11RenderContext::Flush()
     m_Context->Flush();
 }
 
-void Dx11RenderContext::ExecuteComputeItems(std::span<ComputeItem> const& items)
+void Dx11RenderContext::ExecuteComputeItems(Span<ComputeItem> const& items)
 {
     for(ComputeItem const& item : items)
     {

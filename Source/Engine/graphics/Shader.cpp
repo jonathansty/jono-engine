@@ -10,19 +10,19 @@ namespace Graphics
 {
 
 	
-Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name)
+Shader::Shader(ShaderStage type, const u8* byte_code, uint32_t size, const char* debug_name)
 		: m_Type(type)
 {
 	ComPtr<ID3D11Device> device = Graphics::get_device();
 	switch (type)
 	{
-		case ShaderType::Vertex:
+		case ShaderStage::Vertex:
 			ENSURE_HR(device->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)m_Shader.GetAddressOf()));
 			break;
-		case ShaderType::Pixel:
+		case ShaderStage::Pixel:
 			ENSURE_HR(device->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)m_Shader.GetAddressOf()));
 			break;
-		case ShaderType::Compute:
+		case ShaderStage::Compute:
 			ENSURE_HR(device->CreateComputeShader(byte_code, size, nullptr, (ID3D11ComputeShader**)m_Shader.GetAddressOf()));
 			break;
 		default:
@@ -36,7 +36,7 @@ Shader::Shader(ShaderType type, const u8* byte_code, uint32_t size, const char* 
 
 	D3DReflect(byte_code, size, IID_ID3D11ShaderReflection, &m_Reflection);
 
-	if(type == ShaderType::Vertex)
+	if(type == ShaderStage::Vertex)
 	{
 		D3D11_SHADER_DESC desc{};
 		m_Reflection->GetDesc(&desc);
@@ -94,7 +94,7 @@ Shader::~Shader()
 {
 }
 
-std::unique_ptr<Shader> Shader::Create(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name)
+std::unique_ptr<Shader> Shader::Create(ShaderStage type, const u8* byte_code, uint32_t size, const char* debug_name)
 {
 	return std::make_unique<Shader>(type, byte_code, size, debug_name);
 }

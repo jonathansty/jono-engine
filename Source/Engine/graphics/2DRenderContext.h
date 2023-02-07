@@ -51,7 +51,7 @@ struct DrawCmd
 	float4 m_Colour;
 	float4x4 m_WorldViewMatrix;
 
-	ID3D11ShaderResourceView* m_Texture = nullptr;
+	GraphicsResourceHandle m_TextureSRV = GraphicsResourceHandle::Invalid();
 
 	static constexpr u8 c_DrawCmdSize = 48;
 	u8 m_Data[c_DrawCmdSize];

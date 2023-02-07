@@ -1,6 +1,8 @@
 #pragma once
 #include "ResourceLoader.h"
 
+#include "Graphics/GraphicsResourceHandle.h"
+
 enum class TextureType
 {
 	Tex1D,
@@ -14,24 +16,23 @@ public:
 
 	Texture() = default;
 
-	void load(std::string const& path);
-
-	void create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data, const char* debug_name = nullptr);
+	void Load(std::string const& path);
+	void LoadFromMemory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data, const char* debug_name = nullptr);
 
 	// Gets the raw SRV for this texture resource
-	ID3D11ShaderResourceView* get_srv() const { return _srv.Get(); }
+	GraphicsResourceHandle GetSRV() const { return m_SRV; }
 
-	u32 get_width() const { return _width; };
-	u32 get_height() const { return _height; };
+	u32 GetWidth() const { return m_Width; };
+	u32 GetHeight() const { return m_Height; };
 
 private:
-	ComPtr<ID3D11Resource> _resource;
+	GraphicsResourceHandle m_Resource;
 
 	// Should we use texture resource for textures create from code?
 	// ComPtr<ID3D11RenderTargetView> _rtv;
-	ComPtr<ID3D11ShaderResourceView> _srv;
-	u32 _width;
-	u32 _height;
+	GraphicsResourceHandle m_SRV;
+	u32 m_Width;
+	u32 m_Height;
 };
 
 class TextureHandle : public TCachedResource<Texture, FromFileResourceParameters>

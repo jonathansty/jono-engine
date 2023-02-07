@@ -881,7 +881,7 @@ bool D2DRenderContext::draw_bitmap(Bitmap* imagePtr, float2 position, Rect srcRe
 	command.m_WorldViewMatrix = hlslpp::mul(m_WorldMatrix, m_ViewMatrix);
 	command.m_Colour = float4(m_Colour.r, m_Colour.g, m_Colour.b, m_Colour.a);
 	command.m_Colour = float4(1.0f, 1.0f, 1.0f, 1.0f);
-	command.m_Texture = imagePtr->get_srv();
+	command.m_TextureSRV = imagePtr->get_srv();
 
 	// Transform vertices to new
 	m_TotalVertices += 4;

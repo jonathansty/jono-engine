@@ -28,7 +28,7 @@ unique_ptr<Bitmap> Bitmap::load(string const& filename)
     bmp->m_FileName = path;
 
     FromFileResourceParameters params{ path };
-    bmp->_resource = ResourceLoader::instance()->load<TextureHandle>(params, false, true);
+    bmp->m_Resource = ResourceLoader::instance()->load<TextureHandle>(params, false, true);
 
     // for now we don't support async bitmap loading and we assume in our rendering that bitmaps are always loaded and ready to render
     LOG_WARNING(IO, "Bitmap sync load!");
@@ -130,19 +130,19 @@ ID2D1Bitmap* Bitmap::GetBitmapPtr() const
 }
 #endif
 
-ID3D11ShaderResourceView* Bitmap::get_srv() const
+GraphicsResourceHandle Bitmap::get_srv() const
 {
-    return _resource->get()->get_srv();
+    return m_Resource->get()->GetSRV();
 }
 
 int Bitmap::get_width() const
 {
-    return _resource->get()->get_width();
+    return m_Resource->get()->GetWidth();
 }
 
 int Bitmap::get_height() const
 {
-    return _resource->get()->get_height();
+    return m_Resource->get()->GetHeight();
 }
 
 double Bitmap::GetOpacity() const

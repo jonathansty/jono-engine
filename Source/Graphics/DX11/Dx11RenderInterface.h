@@ -1,11 +1,10 @@
 #pragma once
 
-#include "GraphicsResourceHandle.h"
-
 #include "Core/Array.h"
 #include "Core/Containers.h"
-#include <span>
-#include <vector>
+
+#include "GraphicsResourceHandle.h"
+#include "ShaderStage.h"
 
 using BufferDesc = D3D11_BUFFER_DESC;
 using SrvDesc = D3D11_SHADER_RESOURCE_VIEW_DESC;
@@ -15,8 +14,16 @@ using Texture1DDesc = D3D11_TEXTURE1D_DESC;
 using Texture2DDesc = D3D11_TEXTURE2D_DESC;
 using Texture3DDesc = D3D11_TEXTURE3D_DESC;
 
+
 struct Viewport
 {
+    Viewport() = default;
+
+    Viewport(float x, float y, float width, float height)
+        : x(x), y(y), width(width), height(height), minZ(0.0f), maxZ(1.0f)
+    {
+    
+    }
     float x;
     float y;
     float width;
@@ -49,10 +56,20 @@ struct Dx11RenderContext
     inline void IASetIndexBuffer(GraphicsResourceHandle const& buffer, DXGI_FORMAT format, uint32_t offset);
     inline void IASetInputLayout(GraphicsResourceHandle const& inputLayout);
     inline void IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology);
-    
-    // Context clearing
+
+    inline void RSSetState(ID3D11RasterizerState* rs);
+    inline void RSSetViewports(Span<Viewport> vps);
     inline void SetViewport(Viewport const& vp);
+
+    inline void PSSetShader(ID3D11PixelShader* ps);
+    inline void VSSetShader(ID3D11VertexShader* vs);
+
+    inline void OMSetDepthStencilState(ID3D11DepthStencilState* dss, uint32_t stencilRef = 0);
+    inline void OMSetBlendState(ID3D11BlendState* bs, std::array<float, 4> blendFactor = {}, uint32_t sampleMask = 0x0);
+
     void ClearTargets(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, float4 color, uint32_t clearFlags, float depth, uint8_t stencil);
+
+    void SetShaderResources(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> srvs);
 
     void* Map(GraphicsResourceHandle buffer);
     void  Unmap(GraphicsResourceHandle buffer);
@@ -63,17 +80,22 @@ struct Dx11RenderContext
 
     // Compute Shader interface
     inline void ExecuteComputeItem(ComputeItem const& item);
-    void ExecuteComputeItems(std::span<ComputeItem> const& items);
+    void ExecuteComputeItems(Span<ComputeItem> const& items);
 
+
+    // Render interface owner
     class Dx11RenderInterface* owner;
+
+
+    // D3D11 implementation details
     ID3D11DeviceContext* m_Context;
 
-        // State tracking
+    // State tracking
     struct
     {
         ID3D11PixelShader* PS;
         ID3D11VertexShader* VS;
-        ID3D11InputLayout* InputLayout;
+        GraphicsResourceHandle InputLayout;
         ID3D11RasterizerState* RS;
     } m_PrevRenderState;
 };

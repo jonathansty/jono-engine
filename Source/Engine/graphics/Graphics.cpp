@@ -50,14 +50,14 @@ void init(DeviceContext const& ctx)
 		parameters.path = "Source/Engine/Shaders/error_px.hlsl";
 		parameters.params.entry_point = "main";
 		parameters.params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
-		parameters.params.stage = ShaderType::Pixel;
+		parameters.params.stage = ShaderStage::Pixel;
 		parameters.params.defines.push_back({ "LIGHTING_MODEL", "LIGHTING_MODEL_BLINN_PHONG" });
 
 		s_error_pixel_shader = ShaderCache::instance()->find_or_create(parameters);
 		ASSERTMSG(s_error_pixel_shader, "Failed to create error shader (\"{}\")", parameters.path.c_str());
 
 		parameters.path = "Source/Engine/Shaders/error_vx.hlsl";
-		parameters.params.stage = ShaderType::Vertex;
+		parameters.params.stage = ShaderStage::Vertex;
 		s_error_vertex_shader = ShaderCache::instance()->find_or_create(parameters);
 		ASSERTMSG(s_error_vertex_shader, "Failed to create error shader (\"{}\")", parameters.path.c_str());
 

@@ -16,7 +16,7 @@
 #include "CommonStates.h"
 #include "Effects.h"
 #include "ShaderCache.h"
-#include "ShaderType.h"
+#include "Graphics/ShaderStage.h"
 
 #include "Memory.h"
 
@@ -772,13 +772,22 @@ void Renderer::render_view(RenderContext& ctx, RenderWorld const& world, RenderP
 	params.pass = pass;
 
 	// Viewport depends on the actual imgui window
-	params.viewport = CD3D11_VIEWPORT(_output_tex, _output_rtv);
+
+	//CD3D11_VIEWPORT viewport = CD3D11_VIEWPORT(_output_tex, _output_rtv);
+ //   params.viewport.x = viewport.TopLeftX;
+ //   params.viewport.y = viewport.TopLeftY;
+ //   params.viewport.width = viewport.Width;
+ //   params.viewport.height = viewport.Height;
+ //   params.viewport.minZ = viewport.MinDepth;
+ //   params.viewport.maxZ = viewport.MaxDepth;
 
 	// For the world we always render from the top left corner
-	params.viewport.TopLeftX = 0.0;
-	params.viewport.TopLeftY = 0.0;
-	params.viewport.Width = (f32)m_ViewportWidth;
-	params.viewport.Height = (f32)m_ViewportHeight;
+	params.viewport.x = 0.0;
+	params.viewport.y = 0.0;
+	params.viewport.width = (f32)m_ViewportWidth;
+	params.viewport.height = (f32)m_ViewportHeight;
+    params.viewport.minZ = 0.0f;
+    params.viewport.maxZ = 1.0f;
 
 	render_world(ctx, world, params);
 }
@@ -805,10 +814,10 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 		};
 		m_DeviceCtx->PSSetSamplers(0, UINT(std::size(samplers)), samplers);
 
-		m_DeviceCtx->OMSetDepthStencilState(Graphics::GetDepthStencilState(depth_stencil_state).Get(), 0);
-		m_DeviceCtx->RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
-		m_DeviceCtx->OMSetBlendState(Graphics::GetBlendState(BlendState::Default).Get(), NULL, 0xffffffff);
-		m_DeviceCtx->RSSetViewports(1, &params.viewport);
+		ctx.OMSetDepthStencilState(Graphics::GetDepthStencilState(depth_stencil_state).Get(), 0);
+		ctx.RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
+        ctx.OMSetBlendState(Graphics::GetBlendState(BlendState::Default).Get(), {}, 0xffffffff);
+        ctx.RSSetViewports({ params.viewport });
 	}
 
 	GlobalCB* global = (GlobalCB*)_cb_global->map(ctx);
@@ -822,10 +831,10 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 	global->view_direction = float4(params.view_direction.xyz, 0.0f);
 
 	global->view_pos = float4(params.view_position, 1.0f);
-	global->vp.vp_top_x = params.viewport.TopLeftX;
-	global->vp.vp_top_y = params.viewport.TopLeftY;
-	global->vp.vp_half_width = params.viewport.Width / 2.0f;
-	global->vp.vp_half_height = params.viewport.Height / 2.0f;
+	global->vp.vp_top_x = params.viewport.x;
+	global->vp.vp_top_y = params.viewport.y;
+	global->vp.vp_half_width = params.viewport.width / 2.0f;
+	global->vp.vp_half_height = params.viewport.height / 2.0f;
 
 	global->num_directional_lights = std::min<u32>(u32(_num_directional_lights), MAX_DIRECTIONAL_LIGHTS);
 	global->num_lights = _num_lights;
@@ -1117,7 +1126,7 @@ void Renderer::VSSetShader(ShaderConstRef const& vertex_shader)
 		}
 		else
 		{
-			ASSERT(vertex_shader->get_type() == ShaderType::Vertex);
+			ASSERT(vertex_shader->get_type() == ShaderStage::Vertex);
 			m_DeviceCtx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
 		}
         m_PrevRenderState.VS = vertex_shader;
@@ -1135,7 +1144,7 @@ void Renderer::PSSetShader(ShaderConstRef const& pixel_shader)
 		}
 		else
 		{
-			ASSERT(pixel_shader->get_type() == ShaderType::Pixel);
+			ASSERT(pixel_shader->get_type() == ShaderStage::Pixel);
 			m_DeviceCtx->PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);
 		}
 
@@ -1252,7 +1261,7 @@ void Renderer::RenderShadowPass(RenderContext& ctx, RenderWorld const& world)
 			params.view_position = position;
 			params.view_direction = direction;
 			params.pass = RenderPass::Value(RenderPass::Shadow_CSM0 + i);
-			params.viewport = CD3D11_VIEWPORT(0.0f, 0.0f, 2048.0f, 2048.0f);
+			params.viewport = Viewport(0.0f, 0.0f, 2048.0f, 2048.0f);
 			render_world(ctx, world, params);
 		}
 	}

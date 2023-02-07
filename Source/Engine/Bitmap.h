@@ -1,6 +1,8 @@
 #pragma once
 
 #if FEATURE_D2D
+#include "Graphics/GraphicsResourceHandle.h"
+
 struct ID2D1Bitmap;
 class TextureHandle;
 
@@ -22,7 +24,7 @@ public:
 	//-------------------------------------------------
 	// Internal use only. Do not use this method unless you really know what you are doing
 	ID2D1Bitmap*	GetBitmapPtr() const;
-	ID3D11ShaderResourceView* get_srv() const;
+	GraphicsResourceHandle get_srv() const;
 
 	//! Returns the width of this image
 	int	get_width() const;
@@ -52,7 +54,7 @@ private:
 	//-------------------------------------------------
 	// Datamembers								
 	//-------------------------------------------------
-	std::shared_ptr<TextureHandle> _resource;
+	std::shared_ptr<TextureHandle> m_Resource;
 
 	//ComPtr<ID2D1Bitmap>			m_BitmapPtr;
 	//ComPtr<IWICFormatConverter>	m_ConvertorPtr;

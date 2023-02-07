@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ShaderType.h"
-#include "GraphicsResourceHandle.h"
+#include "Graphics/ShaderStage.h"
+#include "Graphics/GraphicsResourceHandle.h"
 
 namespace Graphics
 {
@@ -12,11 +12,11 @@ class Shader
 {
 public:
 	Shader() {}
-	Shader(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name = nullptr);
+	Shader(ShaderStage type, const u8* byte_code, uint32_t size, const char* debug_name = nullptr);
 
 	~Shader();
 
-	static std::unique_ptr<Shader> Create(ShaderType type, const u8* byte_code, uint32_t size, const char* debug_name = nullptr);
+	static std::unique_ptr<Shader> Create(ShaderStage type, const u8* byte_code, uint32_t size, const char* debug_name = nullptr);
 
 	bool IsValid() const
 	{
@@ -36,14 +36,14 @@ public:
 
 	GraphicsResourceHandle GetInputLayout() const
 	{
-		assert(m_Type == ShaderType::Vertex);
+		assert(m_Type == ShaderStage::Vertex);
 		return m_InputLayout;
 	}
 
-	ShaderType get_type() const { return m_Type; }
+	ShaderStage get_type() const { return m_Type; }
 
 private:
-	ShaderType m_Type;
+	ShaderStage m_Type;
 
 	ComPtr<ID3D11ShaderReflection> m_Reflection;
 	ComPtr<ID3D11Resource> m_Shader;

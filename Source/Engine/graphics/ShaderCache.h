@@ -13,7 +13,7 @@ struct ShaderCreateParams
 	std::string path;
 	ShaderCompiler::CompileParameters params;
 
-	static ShaderCreateParams create(std::string const& path, ShaderType stage, std::string const& entry)
+	static ShaderCreateParams create(std::string const& path, ShaderStage stage, std::string const& entry)
 	{
 		ShaderCreateParams parameters{};
 		parameters.params.entry_point = entry;
@@ -24,16 +24,16 @@ struct ShaderCreateParams
 	}
 	static ShaderCreateParams compute_shader(std::string const& path)
 	{
-		return create(path, ShaderType::Compute, "main");
+		return create(path, ShaderStage::Compute, "main");
 	}
 	static ShaderCreateParams pixel_shader(std::string const& path)
 	{
-		return create(path, ShaderType::Pixel, "main");
+		return create(path, ShaderStage::Pixel, "main");
 	
 	}
 	static ShaderCreateParams vertex_shader(std::string const& path)
 	{
-		return create(path, ShaderType::Vertex, "main");
+		return create(path, ShaderStage::Vertex, "main");
 	}
 };
 }

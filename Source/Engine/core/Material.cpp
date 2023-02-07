@@ -7,7 +7,7 @@
 #include "MaterialResource.h"
 
 #include "Shaders/CommonShared.h"
-#include "Graphics/ShaderType.h"
+#include "Graphics/ShaderStage.h"
 #include "Graphics/ShaderCache.h"
 #include "Graphics/Renderer.h"
 
@@ -75,7 +75,7 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 				}
 			}
 			params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
-			params.stage = ShaderType::Pixel;
+			params.stage = ShaderStage::Pixel;
 
 			std::vector<u8> pixel_bytecode;
 			std::vector<u8> vertex_bytecode;
@@ -91,7 +91,7 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 			create_params.path = IO::get()->ResolvePath(debug_pixel_path);
 			auto debug_shader = ShaderCache::instance()->find_or_create(create_params);
 
-			create_params.params.stage = ShaderType::Vertex;
+			create_params.params.stage = ShaderStage::Vertex;
 			create_params.path = IO::get()->ResolvePath(vertex_shader_path);
 			auto vertex_shader = ShaderCache::instance()->find_or_create(create_params);
 
@@ -247,18 +247,18 @@ GraphicsResourceHandle Material::get_input_layout() const
 	return _vertex_shader->GetInputLayout();
 }
 
-void Material::get_texture_views(std::vector<ID3D11ShaderResourceView const*>& views) const
+void Material::get_texture_views(std::vector<GraphicsResourceHandle>& views) const
 {
 	for (std::size_t i = 0; i < _textures.size(); ++i)
 	{
 		if (_textures[i])
 		{
 			Texture const* texture = *_textures[i];
-			views.push_back(texture->get_srv());
+			views.push_back(texture->GetSRV());
 		}
 		else
 		{
-			views.push_back(nullptr);
+			views.push_back(GraphicsResourceHandle::Invalid());
 		}
 	}
 }
@@ -332,7 +332,7 @@ void Material::apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics:
 		}
 
 		// Bind material parameters
-		std::vector<ID3D11ShaderResourceView const*> views{};
+		std::vector<GraphicsResourceHandle> views{};
 		get_texture_views(views);
 
 		ASSERTMSG(views.size() <= Texture_MaterialSlotEnd, "Currently we do not support more than 5 textures per material.");
@@ -426,11 +426,12 @@ void MaterialInstance::apply(RenderContext& ctx, Graphics::Renderer* renderer, G
 		}
 
 		// Bind material parameters
-		std::vector<ID3D11ShaderResourceView const*> views{};
+		std::vector<GraphicsResourceHandle> views{};
 		get_texture_views(views);
 
 		ASSERTMSG(views.size() <= Texture_MaterialSlotEnd, "Currently we do not support more than 5 textures per material.");
-        dx11Ctx->PSSetShaderResources(Texture_MaterialSlotStart, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
+		ctx.SetShaderResources(ShaderStage::Pixel, Texture_MaterialSlotStart, views);
+        //dx11Ctx->PSSetShaderResources(Texture_MaterialSlotStart, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
 
 		ID3D11Buffer* buffer[1] = { GetRI()->GetRawBuffer(get_cb()->get_buffer()) };
         dx11Ctx->PSSetConstantBuffers(Buffer_Material, 1, buffer);
@@ -513,7 +514,7 @@ void MaterialInstance::update()
 	}
 }
 
-void MaterialInstance::get_texture_views(std::vector<ID3D11ShaderResourceView const*>& views) const
+void MaterialInstance::get_texture_views(std::vector<GraphicsResourceHandle>& views) const
 {
 	// Get the base views
 	GetMaterialObj()->get_texture_views(views);
@@ -524,7 +525,7 @@ void MaterialInstance::get_texture_views(std::vector<ID3D11ShaderResourceView co
 		if (m_Textures[i])
 		{
 			Texture const* texture = m_Textures[i]->get();
-			views[i] = texture->get_srv();
+			views[i] = texture->GetSRV();
 		}
 	}
 }

@@ -24,7 +24,7 @@ void MaterialHandle::load(enki::ITaskSet* parent)
 		params.entry_point = "main";
 		params.defines.push_back({ "LIGHTING_MODEL", "LIGHTING_MODEL_PBR" });
 		params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
-		params.stage = ShaderType::Pixel;
+		params.stage = ShaderStage::Pixel;
 
 		std::vector<u8> pixel_bytecode;
 		std::vector<u8> vertex_bytecode;
@@ -41,7 +41,7 @@ void MaterialHandle::load(enki::ITaskSet* parent)
 		create_params.path = "Source/Engine/Shaders/DefaultGGX_Debug.px.hlsl";
 		auto debug_shader = ShaderCache::instance()->find_or_create(create_params);
 
-		create_params.params.stage = ShaderType::Vertex;
+		create_params.params.stage = ShaderStage::Vertex;
 		create_params.path = "Source/Engine/Shaders/DefaultVertex.vx.hlsl";
 		auto vertex_shader = ShaderCache::instance()->find_or_create(create_params);
 

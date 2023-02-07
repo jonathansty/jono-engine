@@ -87,40 +87,54 @@ void TextureHandle::load(enki::ITaskSet* parent)
 {
 	std::string const& path = get_init_parameters().path;
 	_resource = std::make_shared<Texture>();
-	_resource->load(path);
+	_resource->Load(path);
 }
 
 void TextureHandle::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data)
 {
 	_resource = std::make_shared<Texture>();
-	_resource->create_from_memory(width, height, format, type, data);
+	_resource->LoadFromMemory(width, height, format, type, data);
 	
 	SetStatus(ResourceStatus::Loaded);
 }
 
 
-void Texture::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data, const char* debug_name)
+void Texture::LoadFromMemory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data, const char* debug_name)
 {
-	auto device = Graphics::get_device();
-	auto ctx = Graphics::get_ctx();
+	RenderInterface* ri = GetRI();
 
 	auto desc = CD3D11_TEXTURE2D_DESC(format, width, height);
 	desc.MipLevels = desc.ArraySize = 1;
 
-	ComPtr<ID3D11Texture2D> texture;
 	D3D11_SUBRESOURCE_DATA tex_data{};
 	tex_data.pSysMem = data;
 	tex_data.SysMemPitch = sizeof(u32) * width;
-	SUCCEEDED(device->CreateTexture2D(&desc, &tex_data, texture.GetAddressOf()));
-	Helpers::SetDebugObjectName(texture.Get(), debug_name ? debug_name : "Texture::CreateFromMemory");
 
-	auto view_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(texture.Get(), D3D11_SRV_DIMENSION_TEXTURE2D, format);
-	SUCCEEDED(texture.As(&_resource));
-	ENSURE_HR(device->CreateShaderResourceView(_resource.Get(), &view_desc, _srv.GetAddressOf()));
-	Helpers::SetDebugObjectName(_srv.Get(), debug_name ? debug_name : "Texture::CreateFromMemory");
+    m_Resource = ri->CreateTexture(desc, data, debug_name ? debug_name : "Texture::CreateFromMemory");
+    ASSERT(m_Resource.IsValid());
+
+	D3D11_SRV_DIMENSION dim = D3D11_SRV_DIMENSION_UNKNOWN;
+	switch(type)
+    {
+        case TextureType::Tex1D:
+            dim = D3D11_SRV_DIMENSION_TEXTURE1D;
+            break;
+        case TextureType::Tex2D:
+            dim = D3D11_SRV_DIMENSION_TEXTURE2D;
+            break;
+        case TextureType::Tex3D:
+            dim = D3D11_SRV_DIMENSION_TEXTURE3D;
+            break;
+        default:
+            break;
+    
+	}
+
+    CD3D11_SHADER_RESOURCE_VIEW_DESC viewDesc = CD3D11_SHADER_RESOURCE_VIEW_DESC(dim, format);
+    m_SRV = ri->CreateShaderResourceView(m_Resource, viewDesc, debug_name ? debug_name : "Texture::CreateFromMemory");
 }
 
-void Texture::load(std::string const& path)
+void Texture::Load(std::string const& path)
 {
 	ComPtr<ID3D11Device> device = Graphics::get_device();
 	ComPtr<ID3D11DeviceContext> ctx = Graphics::get_ctx();
@@ -129,10 +143,10 @@ void Texture::load(std::string const& path)
 	stbi_uc* data = stbi_load(path.c_str(), &x, &y, &comp, 4);
 	ASSERTMSG(data, "Failed to  load image from {}", path);
 
-	this->_width = u32(x);
-	this->_height = u32(y);
+	this->m_Width = u32(x);
+	this->m_Height = u32(y);
 
-	this->create_from_memory(x, y, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, (void*)data, path.c_str());
+	this->LoadFromMemory(x, y, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, (void*)data, path.c_str());
 	stbi_image_free(data);
 	// SUCCEEDED(DirectX::CreateWICTextureFromFile(device, wpath.c_str(), _resource.GetAddressOf(), _srv.GetAddressOf()));
 }

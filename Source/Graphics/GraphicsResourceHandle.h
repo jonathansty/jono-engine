@@ -38,6 +38,11 @@ struct GraphicsResourceHandle
 
     bool IsValid() const { return *this != Invalid(); }
 
+    operator bool() const
+    {
+        return IsValid();
+    }
+
     bool operator==(GraphicsResourceHandle const& rhs) const { return this->hash == rhs.hash; }
 
     union

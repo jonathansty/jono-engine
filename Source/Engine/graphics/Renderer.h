@@ -87,7 +87,7 @@ struct ViewParams
 	float4x4 proj;
 	float3 view_position;
 	float3 view_direction;
-	D3D11_VIEWPORT viewport;
+	Viewport viewport;
 	RenderPass::Value pass;
 	bool reverse_z = true;
 };

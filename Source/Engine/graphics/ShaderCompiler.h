@@ -1,11 +1,9 @@
 #pragma once
 
-#include "ShaderType.h"
+#include "ShaderStage.h"
 
 namespace ShaderCompiler
 {
-
-using Graphics::ShaderType;
 
 enum class CompilerFlags : u32
 {
@@ -36,7 +34,7 @@ struct CompileParameters
 
 	};
 
-	ShaderType stage;
+	ShaderStage stage;
 	CompilerFlags flags;
 	CompilerEffectFlags effect_flags;
 
