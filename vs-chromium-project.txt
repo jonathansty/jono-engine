@@ -20,6 +20,7 @@ x64/
 *.dll
 *.pdb
 *.user
+build/projects/output
 
 [SearchableFiles.include]
 *
