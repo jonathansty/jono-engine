@@ -2,15 +2,21 @@
 
 #include <stdint.h>
 
-enum GraphicsResourceType
+enum GraphicsResourceType : uint8_t 
 {
     GRT_Texture,
     GRT_Buffer,
     GRT_ShaderResourceView,
     GRT_DepthStencilView,
     GRT_UnorderedAccessView,
-    GRT_InputLayout
+    GRT_InputLayout,
+    GRT_SamplerState,
+    GRT_RasterizerState,
+    GRT_BlendState,
+    GRT_DepthStencilState,
+    GRT_Max 
 };
+static_assert(GraphicsResourceType::GRT_Max < 16);
 
 struct GraphicsResourceHandle
 {
@@ -44,6 +50,8 @@ struct GraphicsResourceHandle
     }
 
     bool operator==(GraphicsResourceHandle const& rhs) const { return this->hash == rhs.hash; }
+
+    GraphicsResourceType GetType() const { return data.type; }
 
     union
     {

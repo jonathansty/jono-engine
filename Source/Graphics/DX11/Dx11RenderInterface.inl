@@ -34,15 +34,15 @@ void Dx11RenderContext::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology
 
 void Dx11RenderContext::ExecuteComputeItem(ComputeItem const& item)
 {
-    std::vector<ComputeItem> i = { item };
-    ExecuteComputeItems(i);
+    ExecuteComputeItems({ item });
 }
 
-void Dx11RenderContext::RSSetState(ID3D11RasterizerState* rs)
+void Dx11RenderContext::RSSetState(GraphicsResourceHandle rs)
 {
+    ASSERT(rs.data.type == GRT_RasterizerState);
     if (m_PrevRenderState.RS != rs)
     {
-        m_Context->RSSetState(rs);
+        m_Context->RSSetState(owner->GetRawResourceAs<ID3D11RasterizerState>(rs));
     }
     m_PrevRenderState.RS = rs;
 }
@@ -65,14 +65,16 @@ void Dx11RenderContext::VSSetShader(ID3D11VertexShader* vs)
     m_PrevRenderState.VS = vs;
 }
 
-inline void Dx11RenderContext::OMSetDepthStencilState(ID3D11DepthStencilState* dss, uint32_t stencilRef)
+inline void Dx11RenderContext::OMSetDepthStencilState(GraphicsResourceHandle dss, uint32_t stencilRef)
 {
-    m_Context->OMSetDepthStencilState(dss, (UINT)stencilRef);
+    ASSERT(dss.GetType() == GRT_DepthStencilState);
+    m_Context->OMSetDepthStencilState(owner->GetRawResourceAs<ID3D11DepthStencilState>(dss), (UINT)stencilRef);
 }
 
-inline void Dx11RenderContext::OMSetBlendState(ID3D11BlendState* bs, std::array<float, 4> blendFactor, uint32_t sampleMask)
+inline void Dx11RenderContext::OMSetBlendState(GraphicsResourceHandle bs, std::array<float, 4> blendFactor, uint32_t sampleMask)
 {
-    m_Context->OMSetBlendState(bs, (FLOAT*)blendFactor.data(), sampleMask);
+    ASSERT(bs.GetType() == GRT_BlendState);
+    m_Context->OMSetBlendState(owner->GetRawResourceAs<ID3D11BlendState>(bs), (FLOAT*)blendFactor.data(), sampleMask);
 }
 
 inline void Dx11RenderContext::RSSetViewports(Span<Viewport> vps)

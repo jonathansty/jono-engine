@@ -387,17 +387,17 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 			ID3D11Buffer* cb = GetRI()->GetRawBuffer(m_GlobalCB->get_buffer());
             dx11Ctx->VSSetConstantBuffers(0, 1, &cb);
 
-			ComPtr<ID3D11RasterizerState> rss = Graphics::GetRasterizerState(RasterizerState::CullNone);
-			ComPtr<ID3D11BlendState> bss = Graphics::GetBlendState(BlendState::AlphaBlend);
-			ComPtr<ID3D11DepthStencilState> dss = Graphics::GetDepthStencilState(DepthStencilState::NoDepth);
+			ComPtr<ID3D11RasterizerState> rss = GetRI()->GetRawResourceAs<ID3D11RasterizerState>(Graphics::GetRasterizerState(RasterizerState::CullNone));
+            ComPtr<ID3D11BlendState> bss = GetRI()->GetRawResourceAs<ID3D11BlendState>(Graphics::GetBlendState(BlendState::AlphaBlend));
+            ComPtr<ID3D11DepthStencilState> dss = GetRI()->GetRawResourceAs<ID3D11DepthStencilState>(Graphics::GetDepthStencilState(DepthStencilState::NoDepth));
             dx11Ctx->RSSetState(rss.Get());
             dx11Ctx->OMSetBlendState(bss.Get(), nullptr, 0xFFFFFF);
             dx11Ctx->OMSetDepthStencilState(dss.Get(), 0);
 
-			ID3D11SamplerState* samplers[] = {
-				Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get()
+			GraphicsResourceHandle samplers = {
+				Graphics::GetSamplerState(SamplerState::MinMagMip_Linear)
 			};
-            dx11Ctx->PSSetSamplers(0, 1, samplers);
+            ctx.SetSamplers(ShaderStage::Pixel, 0, { samplers });
 			for (DrawCmd const& cmd : renderData.m_DrawCommands)
 			{
 				if(cmd.m_Type == DrawCmd::DC_MESH)

@@ -806,17 +806,17 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 			depth_stencil_state = DepthStencilState::LessEqual;
 		}
 
-		ID3D11SamplerState* samplers[] = {
-			Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get(),
-			Graphics::GetSamplerState(SamplerState::MinMagMip_Point).Get(),
-			Graphics::GetSamplerState(SamplerState::MinMagMip_LinearClamp).Get(),
-			Graphics::GetSamplerState(SamplerState::MinMagMip_PointClamp).Get()
+		std::array<GraphicsResourceHandle, 4> samplers = {
+			Graphics::GetSamplerState(SamplerState::MinMagMip_Linear),
+			Graphics::GetSamplerState(SamplerState::MinMagMip_Point),
+			Graphics::GetSamplerState(SamplerState::MinMagMip_LinearClamp),
+			Graphics::GetSamplerState(SamplerState::MinMagMip_PointClamp)
 		};
-		m_DeviceCtx->PSSetSamplers(0, UINT(std::size(samplers)), samplers);
+        ctx.SetSamplers(ShaderStage::Pixel, 0, samplers);
 
-		ctx.OMSetDepthStencilState(Graphics::GetDepthStencilState(depth_stencil_state).Get(), 0);
-		ctx.RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack).Get());
-        ctx.OMSetBlendState(Graphics::GetBlendState(BlendState::Default).Get(), {}, 0xffffffff);
+		ctx.OMSetDepthStencilState(Graphics::GetDepthStencilState(depth_stencil_state), 0);
+		ctx.RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack));
+        ctx.OMSetBlendState(Graphics::GetBlendState(BlendState::Default), {}, 0xffffffff);
         ctx.RSSetViewports({ params.viewport });
 	}
 
@@ -1191,11 +1191,11 @@ void Renderer::render_post_predebug()
     ID3D11Buffer* buffer = m_RI->GetRawBuffer(_cb_post->get_buffer());
 	m_DeviceCtx->PSSetConstantBuffers(0, 1, &buffer);
 
-	ID3D11SamplerState* sampler_states[] = {
-		Graphics::GetSamplerState(SamplerState::MinMagMip_Linear).Get(),
-		Graphics::GetSamplerState(SamplerState::MinMagMip_Point).Get()
+	GraphicsResourceHandle sampler_states[] = {
+		Graphics::GetSamplerState(SamplerState::MinMagMip_Linear),
+		Graphics::GetSamplerState(SamplerState::MinMagMip_Point)
 	};
-	m_DeviceCtx->PSSetSamplers(0, 2, sampler_states);
+	ctx.SetSamplers(ShaderStage::Pixel, 0, sampler_states);
 	m_DeviceCtx->Draw(3, 0);
 
 }

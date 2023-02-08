@@ -93,7 +93,7 @@ void Dx11RenderInterface::Shutdown()
 {
 }
 
-GraphicsResourceHandle Dx11RenderInterface::CreateBuffer(BufferDesc const& desc, void* initialData)
+GraphicsResourceHandle Dx11RenderInterface::CreateBuffer(BufferDesc const& desc, void* initialData, std::string_view debugName)
 {
     ComPtr<ID3D11Buffer> buffer;
     if(initialData)
@@ -107,8 +107,7 @@ GraphicsResourceHandle Dx11RenderInterface::CreateBuffer(BufferDesc const& desc,
 		ENSURE_HR(m_Device->CreateBuffer(&desc, nullptr, buffer.GetAddressOf()));
     }
 
-
-
+    Helpers::SetDebugObjectName(buffer.Get(), debugName);
     // #TODO: Find first free slot 
     auto slotH = m_Resources.Push(buffer);
     GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_Buffer, slotH.gen, slotH.id);
@@ -122,7 +121,7 @@ GraphicsResourceHandle Dx11RenderInterface::CreateShaderResourceView(GraphicsRes
     ID3D11Resource* b = GetRawResource(srcBuffer);
     ENSURE_HR(m_Device->CreateShaderResourceView(b, &desc, srv.GetAddressOf()));
 
-    Helpers::SetDebugObjectName(b, debugName);
+    Helpers::SetDebugObjectName(srv.Get(), debugName);
 
     auto h = m_SRVs.Push(srv);
 
@@ -131,24 +130,83 @@ GraphicsResourceHandle Dx11RenderInterface::CreateShaderResourceView(GraphicsRes
 
 }
 
-GraphicsResourceHandle Dx11RenderInterface::CreateUnorderedAccessView(GraphicsResourceHandle srcBuffer, UavDesc const& desc)
+GraphicsResourceHandle Dx11RenderInterface::CreateUnorderedAccessView(GraphicsResourceHandle srcBuffer, UavDesc const& desc, std::string_view debugName)
 {
     ComPtr<ID3D11UnorderedAccessView> uav;
     ID3D11Resource* b = GetRawResource(srcBuffer);
     ENSURE_HR(m_Device->CreateUnorderedAccessView(b, &desc, &uav));
+
+    Helpers::SetDebugObjectName(uav.Get(), debugName);
 
     auto h = m_UAVs.Push(uav);
     GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_UnorderedAccessView, h.gen, h.id);
     return handle;
 }
 
+GraphicsResourceHandle Dx11RenderInterface::CreateDepthStencilView(GraphicsResourceHandle srcBuffer, DsvDesc const& desc, std::string_view debugName /*= ""*/)
+{
+    ComPtr<ID3D11DepthStencilView> ds;
+    ENSURE_HR(m_Device->CreateDepthStencilView(GetRawResource(srcBuffer), &desc, ds.ReleaseAndGetAddressOf()));
+
+    Helpers::SetDebugObjectName(ds.Get(), debugName);
+
+    auto h = m_DSVs.Push(ds);
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_UnorderedAccessView, h.gen, h.id);
+    return handle;
+
+    return GraphicsResourceHandle::Invalid();
+}
+
 GraphicsResourceHandle Dx11RenderInterface::CreateInputLayout(InputLayoutDesc inputLayoutElements, void* shaderCode, uint32_t shaderCodeLength)
 {
-
     ComPtr<ID3D11InputLayout> inputLayout;
     ENSURE_HR(m_Device->CreateInputLayout(inputLayoutElements.data(), (UINT)inputLayoutElements.size(), shaderCode, (UINT)shaderCodeLength, &inputLayout));
     auto h = m_InputLayouts.Push(inputLayout);
     GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_InputLayout, h.gen, h.id);
+    return handle;
+}
+
+GraphicsResourceHandle Dx11RenderInterface::CreateSamplerState(SamplerStateDesc samplerStateDesc, std::string_view name /*= ""*/)
+{
+    ComPtr<ID3D11SamplerState> ss;
+    ENSURE_HR(m_Device->CreateSamplerState(&samplerStateDesc, ss.ReleaseAndGetAddressOf()));
+    Helpers::SetDebugObjectName(ss.Get(), name);
+
+    auto h = m_SamplerStates.Push(ss);
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_SamplerState, h.gen, h.id);
+    return handle;
+}
+
+GraphicsResourceHandle Dx11RenderInterface::CreateRasterizerState(RasterizerStateDesc desc, std::string_view name /*= ""*/)
+{
+    ComPtr<ID3D11RasterizerState> ss;
+    ENSURE_HR(m_Device->CreateRasterizerState(&desc, ss.ReleaseAndGetAddressOf()));
+    Helpers::SetDebugObjectName(ss.Get(), name);
+
+    auto h = m_RasterizerStates.Push(ss);
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_RasterizerState, h.gen, h.id);
+    return handle;
+}
+
+GraphicsResourceHandle Dx11RenderInterface::CreateBlendState(BlendStateDesc desc, std::string_view name /*= ""*/)
+{
+    ComPtr<ID3D11BlendState> ss;
+    ENSURE_HR(m_Device->CreateBlendState(&desc, ss.ReleaseAndGetAddressOf()));
+    Helpers::SetDebugObjectName(ss.Get(), name);
+
+    auto h = m_BlendStates.Push(ss);
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_BlendState, h.gen, h.id);
+    return handle;
+}
+
+GraphicsResourceHandle Dx11RenderInterface::CreateDepthStencilState(DepthStencilDesc desc, std::string_view name /*= ""*/)
+{
+    ComPtr<ID3D11DepthStencilState> ss;
+    ENSURE_HR(m_Device->CreateDepthStencilState(&desc, ss.ReleaseAndGetAddressOf()));
+    Helpers::SetDebugObjectName(ss.Get(), name);
+
+    auto h = m_DepthStencilStates.Push(ss);
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_DepthStencilState, h.gen, h.id);
     return handle;
 }
 
@@ -180,8 +238,6 @@ GraphicsResourceHandle Dx11RenderInterface::CreateTexture(Texture2DDesc const& d
     {
         D3D11_SUBRESOURCE_DATA data{};
         data.pSysMem = initialData;
-
-        // #TODO: Detect this from the texture desc?
         data.SysMemPitch = sizeof(u32) * desc.Width;
         ENSURE_HR(m_Device->CreateTexture2D(&desc, &data, &res));
     }
@@ -299,6 +355,42 @@ void Dx11RenderContext::SetShaderResources(ShaderStage stage, uint32_t startSlot
     }
 }
 
+void Dx11RenderContext::SetSamplers(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> samplers)
+{
+    ASSERT(samplers.size() < 16);
+    ID3D11SamplerState* rawSamplers[16];
+    UINT numViews = std::min((UINT)samplers.size(), (UINT)16);
+    for(size_t j = 0; j < numViews; ++j)
+    {
+        rawSamplers[j] = owner->GetRawSampler(samplers[j]);
+    }
+
+    switch(stage)
+    {
+        case ShaderStage::Vertex:
+            m_Context->VSSetSamplers(startSlot, numViews, rawSamplers);
+            break;
+        case ShaderStage::Pixel:
+            m_Context->PSSetSamplers(startSlot, numViews, rawSamplers);
+            break;
+        case ShaderStage::Compute:
+            m_Context->CSSetSamplers(startSlot, numViews, rawSamplers);
+            break;
+        case ShaderStage::Domain:
+            m_Context->DSSetSamplers(startSlot, numViews, rawSamplers);
+            break;
+        case ShaderStage::Geometry:
+            m_Context->GSSetSamplers(startSlot, numViews, rawSamplers);
+            break;
+        case ShaderStage::Hull:
+            m_Context->HSSetSamplers(startSlot, numViews, rawSamplers);
+            break;
+        default:
+            break;
+    
+    }
+}
+
 void Dx11RenderContext::BeginFrame()
 {
     m_Context->ClearState();
@@ -306,7 +398,7 @@ void Dx11RenderContext::BeginFrame()
     m_PrevRenderState.VS = nullptr;
     m_PrevRenderState.PS = nullptr;
     m_PrevRenderState.InputLayout = GraphicsResourceHandle::Invalid();
-    m_PrevRenderState.RS = nullptr;
+    m_PrevRenderState.RS = GraphicsResourceHandle::Invalid();
 }
 
 void Dx11RenderContext::EndFrame()

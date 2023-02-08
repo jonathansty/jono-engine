@@ -15,19 +15,18 @@ namespace Graphics
 
 DeviceContext s_ctx;
 
-std::array<ComPtr<ID3D11DepthStencilState>, static_cast<u32>(DepthStencilState::Num)> s_depth_stencil_states;
-std::array<ComPtr<ID3D11BlendState>, static_cast<u32>(BlendState::Num)> s_blend_states;
-std::array<ComPtr<ID3D11RasterizerState>, static_cast<u32>(RasterizerState::Num)> s_raster_states;
-std::array<ComPtr<ID3D11SamplerState>, static_cast<u32>(SamplerState::Num)> s_sampler_states;
+std::array<GraphicsResourceHandle, static_cast<u32>(DepthStencilState::Num)> s_depth_stencil_states;
+std::array<GraphicsResourceHandle, static_cast<u32>(BlendState::Num)> s_blend_states;
+std::array<GraphicsResourceHandle, static_cast<u32>(RasterizerState::Num)> s_raster_states;
+std::array<GraphicsResourceHandle, static_cast<u32>(SamplerState::Num)> s_sampler_states;
 
 std::shared_ptr<Shader> s_error_pixel_shader = nullptr;
 std::shared_ptr<Shader> s_error_vertex_shader = nullptr;
 
-void CreateDSS(ComPtr<ID3D11Device> const& device, CD3D11_DEPTH_STENCIL_DESC const& ds_desc, DepthStencilState state);
-void CreateRSS(ComPtr<ID3D11Device> const& device, CD3D11_RASTERIZER_DESC const& rs_desc, RasterizerState state);
-void CreateSS(ComPtr<ID3D11Device> const& device, CD3D11_SAMPLER_DESC const& ss_desc, SamplerState state);
-void CreateBS(ComPtr<ID3D11Device> const& device, CD3D11_BLEND_DESC const& bs_desc, BlendState state);
-
+void CreateDSS(CD3D11_DEPTH_STENCIL_DESC const& ds_desc, DepthStencilState state);
+void CreateRSS(CD3D11_RASTERIZER_DESC const& rs_desc, RasterizerState state);
+void CreateSS(CD3D11_SAMPLER_DESC const& ss_desc, SamplerState state);
+void CreateBS(CD3D11_BLEND_DESC const& bs_desc, BlendState state);
 
 bool s_EnableShadowRendering = true;
 bool s_EnableCSM0 = true;
@@ -68,24 +67,24 @@ void init(DeviceContext const& ctx)
 	{
 		CD3D11_DEPTH_STENCIL_DESC ds_desc{ CD3D11_DEFAULT() };
 		ds_desc.DepthFunc = D3D11_COMPARISON_GREATER_EQUAL;
-		CreateDSS(device, ds_desc, DepthStencilState::GreaterEqual);
+		CreateDSS(ds_desc, DepthStencilState::GreaterEqual);
 
 		ds_desc.DepthFunc = D3D11_COMPARISON_EQUAL;
-		CreateDSS(device, ds_desc, DepthStencilState::Equal);
+		CreateDSS(ds_desc, DepthStencilState::Equal);
 
 		ds_desc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
-		CreateDSS(device, ds_desc, DepthStencilState::LessEqual);
+		CreateDSS(ds_desc, DepthStencilState::LessEqual);
 
 		ds_desc.DepthFunc = D3D11_COMPARISON_NEVER;
 		ds_desc.DepthEnable = false;
 		ds_desc.StencilEnable = false;
-		CreateDSS(device, ds_desc, DepthStencilState::NoDepth);
+		CreateDSS(ds_desc, DepthStencilState::NoDepth);
 	}
 
 	// Blend states
 	{
 		CD3D11_BLEND_DESC bs_desc{ CD3D11_DEFAULT() };
-		CreateBS(device, bs_desc, BlendState::Default);
+		CreateBS(bs_desc, BlendState::Default);
 
 		bs_desc.IndependentBlendEnable = FALSE;
 		bs_desc.RenderTarget[0].BlendEnable = true;
@@ -95,7 +94,7 @@ void init(DeviceContext const& ctx)
 		bs_desc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
 		bs_desc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ZERO;
 		bs_desc.RenderTarget[0].RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
-		CreateBS(device, bs_desc, BlendState::AlphaBlend);
+		CreateBS(bs_desc, BlendState::AlphaBlend);
 
 	}
 
@@ -104,16 +103,13 @@ void init(DeviceContext const& ctx)
 	{
 		CD3D11_RASTERIZER_DESC rs_desc{ CD3D11_DEFAULT() };
 		rs_desc.CullMode = D3D11_CULL_NONE;
-		SUCCEEDED(device->CreateRasterizerState(&rs_desc, s_raster_states[*RasterizerState::CullNone].GetAddressOf()));
-		Helpers::SetDebugObjectName(s_raster_states[*RasterizerState::CullNone].Get(), "CullNone");
+        CreateRSS(rs_desc, RasterizerState::CullNone);
 
 		rs_desc.CullMode = D3D11_CULL_FRONT;
-		SUCCEEDED(device->CreateRasterizerState(&rs_desc, s_raster_states[*RasterizerState::CullFront].GetAddressOf()));
-		Helpers::SetDebugObjectName(s_raster_states[*RasterizerState::CullFront].Get(), "CullFront");
+        CreateRSS(rs_desc, RasterizerState::CullFront);
 
 		rs_desc.CullMode = D3D11_CULL_BACK;
-		SUCCEEDED(device->CreateRasterizerState(&rs_desc, s_raster_states[*RasterizerState::CullBack].GetAddressOf()));
-		Helpers::SetDebugObjectName(s_raster_states[*RasterizerState::CullBack].Get(), "CullBack");
+        CreateRSS(rs_desc, RasterizerState::CullBack);
 	}
 
 	// Samplers
@@ -122,10 +118,10 @@ void init(DeviceContext const& ctx)
 		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 		sampler.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 		sampler.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-		SUCCEEDED(device->CreateSamplerState(&sampler, s_sampler_states[*SamplerState::MinMagMip_Linear].GetAddressOf()));
+        CreateSS(sampler, SamplerState::MinMagMip_Linear);
 
 		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-		SUCCEEDED(device->CreateSamplerState(&sampler, s_sampler_states[*SamplerState::MinMagMip_Point].GetAddressOf()));
+        CreateSS(sampler, SamplerState::MinMagMip_Point);
 
 		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 		sampler.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
@@ -135,10 +131,11 @@ void init(DeviceContext const& ctx)
         sampler.BorderColor[1] = 1.0f;
         sampler.BorderColor[2] = 1.0f;
         sampler.BorderColor[3] = 1.0f;
-		SUCCEEDED(device->CreateSamplerState(&sampler, s_sampler_states[*SamplerState::MinMagMip_LinearClamp].GetAddressOf()));
+        CreateSS(sampler, SamplerState::MinMagMip_LinearClamp);
 
 		sampler.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
-		SUCCEEDED(device->CreateSamplerState(&sampler, s_sampler_states[*SamplerState::MinMagMip_PointClamp].GetAddressOf()));
+        CreateSS(sampler, SamplerState::MinMagMip_PointClamp);
+
 	}
 }
 
@@ -150,9 +147,9 @@ void deinit()
 	TextureHandle::deinit();
 	ShaderCache::shutdown();
 
-	auto clear_fn = []<typename T>(T& ptr)
+	auto clear_fn = [](GraphicsResourceHandle& ptr)
 	{
-		ptr.Reset();
+        ptr = GraphicsResourceHandle::Invalid();
 	};
 	std::for_each(s_depth_stencil_states.begin(), s_depth_stencil_states.end(), clear_fn);
 	std::for_each(s_blend_states.begin(), s_blend_states.end(), clear_fn);
@@ -172,22 +169,22 @@ ComPtr<ID3D11DeviceContext> get_ctx()
 	return s_ctx._ctx;
 }
 
-ComPtr<ID3D11BlendState> GetBlendState(BlendState blendState)
+GraphicsResourceHandle GetBlendState(BlendState blendState)
 {
 	return s_blend_states[static_cast<u32>(blendState)];
 }
 
-ComPtr<ID3D11RasterizerState> GetRasterizerState(RasterizerState rasterizerState)
+GraphicsResourceHandle GetRasterizerState(RasterizerState rasterizerState)
 {
 	return s_raster_states[*rasterizerState];
 }
 
-ComPtr<ID3D11DepthStencilState> GetDepthStencilState(DepthStencilState depthStencilState)
+GraphicsResourceHandle GetDepthStencilState(DepthStencilState depthStencilState)
 {
 	return s_depth_stencil_states[*depthStencilState];
 }
 
-ComPtr<ID3D11SamplerState> GetSamplerState(SamplerState samplerState)
+GraphicsResourceHandle GetSamplerState(SamplerState samplerState)
 {
 	return s_sampler_states[*samplerState];
 }
@@ -202,28 +199,24 @@ std::shared_ptr<Graphics::Shader> get_error_shader_vx()
 	return s_error_vertex_shader;
 }
 
-void CreateDSS(ComPtr<ID3D11Device> const& device, CD3D11_DEPTH_STENCIL_DESC const& ds_desc, DepthStencilState state)
+void CreateDSS(CD3D11_DEPTH_STENCIL_DESC const& ds_desc, DepthStencilState state)
 {
-	SUCCEEDED(device->CreateDepthStencilState(&ds_desc, s_depth_stencil_states[*state].GetAddressOf()));
-	Helpers::SetDebugObjectName(s_depth_stencil_states[*state].Get(), DepthStencilStateToString(state));
+    s_depth_stencil_states[*state] = GetRI()->CreateDepthStencilState(ds_desc, DepthStencilStateToString(state));
 }
 
-void CreateRSS(ComPtr<ID3D11Device> const& device, CD3D11_RASTERIZER_DESC const& rs_desc, RasterizerState state)
+void CreateRSS(CD3D11_RASTERIZER_DESC const& rs_desc, RasterizerState state)
 {
-	SUCCEEDED(device->CreateRasterizerState(&rs_desc, s_raster_states[*state].GetAddressOf()));
-	Helpers::SetDebugObjectName(s_raster_states[*state].Get(), RasterizerStateToString(state));
+    s_raster_states[*state] = GetRI()->CreateRasterizerState(rs_desc, RasterizerStateToString(state));
 }
 
-void CreateSS(ComPtr<ID3D11Device> const& device, CD3D11_SAMPLER_DESC const& ss_desc, SamplerState state)
+void CreateSS(CD3D11_SAMPLER_DESC const& ss_desc, SamplerState state)
 {
-	SUCCEEDED(device->CreateSamplerState(&ss_desc, s_sampler_states[*state].GetAddressOf()));
-	Helpers::SetDebugObjectName(s_sampler_states[*state].Get(), SamplerStateToString(state));
+    s_sampler_states[*state] = GetRI()->CreateSamplerState(ss_desc, SamplerStateToString(state));
 }
 
-void CreateBS(ComPtr<ID3D11Device> const& device, CD3D11_BLEND_DESC const& bs_desc, BlendState state)
+void CreateBS(CD3D11_BLEND_DESC const& bs_desc, BlendState state)
 {
-	SUCCEEDED(device->CreateBlendState(&bs_desc, s_blend_states[*state].GetAddressOf()));
-	Helpers::SetDebugObjectName(s_blend_states[*state].Get(), BlendStateToString(state));
+    s_blend_states[*state] = GetRI()->CreateBlendState(bs_desc, BlendStateToString(state));
 }
 
 
@@ -268,7 +261,10 @@ const char* SamplerStateToString(SamplerState state)
 {
 	static const char* s_strings[*SamplerState::Num] = {
 		"MinMagMip_Linear",
-		"MinMagMip_Point"
+		"MinMagMip_Point",
+        "MinMagMip_LinearClamp",
+        "MinMagMip_PointClamp"
+
 	};
 	return s_strings[*state];
 

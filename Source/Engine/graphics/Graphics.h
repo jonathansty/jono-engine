@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Graphics/GraphicsResourceHandle.h"
 #include "PrecisionTimer.h"
 #include "ShaderCompiler.h"
 #include "singleton.h"
@@ -88,10 +89,10 @@ void deinit();
 // Public API to retrieve the currently initialized graphics data and common states
 ENGINE_API ComPtr<ID3D11Device> get_device();
 ENGINE_API ComPtr<ID3D11DeviceContext> get_ctx();
-ENGINE_API ComPtr<ID3D11BlendState> GetBlendState(BlendState blendState);
-ENGINE_API ComPtr<ID3D11RasterizerState> GetRasterizerState(RasterizerState rasterizerState);
-ENGINE_API ComPtr<ID3D11DepthStencilState> GetDepthStencilState(DepthStencilState blendState);
-ENGINE_API ComPtr<ID3D11SamplerState> GetSamplerState(SamplerState blendState);
+ENGINE_API GraphicsResourceHandle GetBlendState(BlendState blendState);
+ENGINE_API GraphicsResourceHandle GetRasterizerState(RasterizerState rasterizerState);
+ENGINE_API GraphicsResourceHandle GetDepthStencilState(DepthStencilState blendState);
+ENGINE_API GraphicsResourceHandle GetSamplerState(SamplerState blendState);
 
 ENGINE_API std::shared_ptr<class Shader> get_error_shader_px();
 ENGINE_API std::shared_ptr<class Shader> get_error_shader_vx();
