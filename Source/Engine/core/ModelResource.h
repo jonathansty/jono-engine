@@ -1,6 +1,7 @@
 #pragma once
 #include "ResourceLoader.h"
 
+#include "Graphics/GraphicsResourceHandle.h"
 #include "Graphics/ShaderTypes.h"
 #include "Math.h"
 
@@ -54,8 +55,8 @@ public:
 
 	void load(enki::ITaskSet* parent, std::string const& path);
 
-	ComPtr<ID3D11Buffer> get_vertex_buffer() const { return _vertex_buffer; }
-	ComPtr<ID3D11Buffer> get_index_buffer() const { return _index_buffer; }
+	GraphicsResourceHandle get_vertex_buffer() const { return _vertex_buffer; }
+	GraphicsResourceHandle get_index_buffer() const { return _index_buffer; }
 
 	std::vector<Mesh> const& get_meshes() const { return _meshes; }
 
@@ -76,8 +77,8 @@ private:
 	std::vector<Mesh> _meshes;
 	Math::AABB _aabb;
 
-	ComPtr<ID3D11Buffer> _vertex_buffer;
-	ComPtr<ID3D11Buffer> _index_buffer;
+	GraphicsResourceHandle _vertex_buffer;
+	GraphicsResourceHandle _index_buffer;
 };
 
 // Render Model resource

@@ -46,7 +46,9 @@ ModelHandle::ModelHandle(FromFileResourceParameters params)
 
  Model::~Model()
 {
-}
+    GetRI()->ReleaseResource(_index_buffer);
+    GetRI()->ReleaseResource(_vertex_buffer);
+ }
 
 void Model::load(enki::ITaskSet* parent, std::string const& path)
 {
@@ -228,13 +230,21 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 		data.pSysMem = vertices.data();
 
-		SUCCEEDED(device->CreateBuffer(&bufferDesc, &data, _vertex_buffer.GetAddressOf()));
+
+        char name[512];
+        sprintf_s(name, "%s - Index Buffer", path.c_str());
+
+		_vertex_buffer = GetRI()->CreateBuffer(bufferDesc, &data, name);
+        ASSERT(_vertex_buffer.IsValid());
 
 		bufferDesc.ByteWidth = UINT(indices.size() * sizeof(indices[0]));
 		bufferDesc.StructureByteStride = sizeof(indices[0]);
 		bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 		data.pSysMem = indices.data();
-		SUCCEEDED(device->CreateBuffer(&bufferDesc, &data, _index_buffer.GetAddressOf()));
+
+        sprintf_s(name, "%s - Vertex Buffer", path.c_str());
+        _index_buffer = GetRI()->CreateBuffer(bufferDesc, &data, name);
+        ASSERT(_index_buffer.IsValid());
 		_index_count = indices.size();
 	}
 
@@ -325,12 +335,6 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 		}
 	}
 
-	char name[512];
-	sprintf_s(name, "%s - Index Buffer", path.c_str());
-	Helpers::SetDebugObjectName(_index_buffer.Get(), name);
-
-	sprintf_s(name, "%s - Vertex Buffer", path.c_str());
-	Helpers::SetDebugObjectName(_vertex_buffer.Get(), name);
 
 	timer.Stop();
 	LOG_VERBOSE(IO, "Loading model \"{}\" took {} ", path.c_str(), timer.GetTime());

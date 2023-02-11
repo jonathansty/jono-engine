@@ -134,6 +134,12 @@ void Texture::LoadFromMemory(uint32_t width, uint32_t height, DXGI_FORMAT format
     m_SRV = ri->CreateShaderResourceView(m_Resource, viewDesc, debug_name ? debug_name : "Texture::CreateFromMemory");
 }
 
+ Texture::~Texture()
+{
+    GetRI()->ReleaseResource(m_Resource);
+    GetRI()->ReleaseResource(m_SRV);
+}
+
 void Texture::Load(std::string const& path)
 {
 	ComPtr<ID3D11Device> device = Graphics::get_device();

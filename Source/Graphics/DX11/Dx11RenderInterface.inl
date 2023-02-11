@@ -93,3 +93,24 @@ inline void Dx11RenderContext::RSSetViewports(Span<Viewport> vps)
 
     m_Context->RSSetViewports((UINT)vps.size(), viewports.data());
 }
+
+void Dx11RenderContext::IASetVertexBuffers(uint32_t startSlot, Span<GraphicsResourceHandle const> buffers, Span<UINT const> strides, Span<UINT const> offsets)
+{
+    if(buffers.size() == 0)
+    {
+        m_Context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+    }
+    else
+    {
+        // #TODO: Set as an array rather than each buffer independently
+        uint32_t slot = startSlot;
+        size_t j = 0;
+        for(GraphicsResourceHandle const& handle : buffers)
+        {
+            UINT rawStrides = strides[j];
+            UINT rawOffsets = offsets[j];
+            ID3D11Buffer* b = owner->GetRawBuffer(handle);
+            m_Context->IASetVertexBuffers(slot, 1, &b, &rawStrides, &rawOffsets);
+        }
+    }
+}

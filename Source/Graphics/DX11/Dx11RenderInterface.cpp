@@ -28,6 +28,17 @@ void Dx11RenderInterface::Init()
 {
     MEMORY_TAG(MemoryCategory::Graphics);
 
+    // Reserve some initial sizes
+    m_Resources.Grow(1024);
+    m_SRVs.Grow(2048);
+    m_UAVs.Grow(512);
+    m_DSVs.Grow(512);
+    m_InputLayouts.Grow(128);
+    m_SamplerStates.Grow(64);
+    m_RasterizerStates.Grow(64);
+    m_BlendStates.Grow(64);
+    m_DepthStencilStates.Grow(64);
+
     // Create Direct3D 11 factory
     {
         ENSURE_HR(CreateDXGIFactory(IID_PPV_ARGS(&m_Factory)));
@@ -93,13 +104,12 @@ void Dx11RenderInterface::Shutdown()
 {
 }
 
-GraphicsResourceHandle Dx11RenderInterface::CreateBuffer(BufferDesc const& desc, void* initialData, std::string_view debugName)
+GraphicsResourceHandle Dx11RenderInterface::CreateBuffer(BufferDesc const& desc, SubresourceData const* initialData, std::string_view debugName)
 {
     ComPtr<ID3D11Buffer> buffer;
-    if(initialData)
+    if(initialData && initialData->pSysMem)
     {
-		D3D11_SUBRESOURCE_DATA subresourceData{};
-        subresourceData.pSysMem = initialData;
+		D3D11_SUBRESOURCE_DATA subresourceData = *initialData;
 		ENSURE_HR(m_Device->CreateBuffer(&desc, &subresourceData, buffer.GetAddressOf()));
     }
     else
@@ -108,7 +118,7 @@ GraphicsResourceHandle Dx11RenderInterface::CreateBuffer(BufferDesc const& desc,
     }
 
     Helpers::SetDebugObjectName(buffer.Get(), debugName);
-    // #TODO: Find first free slot 
+
     auto slotH = m_Resources.Push(buffer);
     GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_Buffer, slotH.gen, slotH.id);
     return handle;
@@ -275,7 +285,7 @@ GraphicsResourceHandle Dx11RenderInterface::CreateTexture(Texture3DDesc const& d
     return GraphicsResourceHandle(GRT_Texture, handle.gen, handle.id);
 }
 
-void Dx11RenderInterface::ReleaseResource(GraphicsResourceHandle h)
+void Dx11RenderInterface::ReleaseResource(GraphicsResourceHandle& h)
 {
     switch (h.data.type)
     {
@@ -296,6 +306,7 @@ void Dx11RenderInterface::ReleaseResource(GraphicsResourceHandle h)
             ASSERT("Unsupported type!");
             break;
     }
+    h = GraphicsResourceHandle::Invalid();
 }
 
 void* Dx11RenderContext::Map(GraphicsResourceHandle buffer)
@@ -312,6 +323,7 @@ void Dx11RenderContext::Unmap(GraphicsResourceHandle buffer)
     ID3D11Buffer* b = owner->GetRawBuffer(buffer);
     m_Context->Unmap(b, 0);
 }
+
 
 void Dx11RenderContext::ClearTargets(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, float4 color, uint32_t clearFlags, float depth, uint8_t stencil)
 {

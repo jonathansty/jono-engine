@@ -19,6 +19,15 @@ public:
         return m_Storage[h.id];
     }
 
+    void Grow(size_t size)
+    {
+        if(m_Generations.size() < size)
+        {
+            m_Generations.resize(size);
+            m_Storage.resize(size);
+        }
+    }
+
     SlotHandle Push(T obj)
     {
         size_t id = m_Storage.size();
@@ -36,6 +45,7 @@ public:
         }
         else
         {
+            FAILMSG("Capacity exceeded! Ensure SlotVector is big enough to avoid mem allocs");
             m_Generations.push_back(0);
             m_Storage.push_back(obj);
 

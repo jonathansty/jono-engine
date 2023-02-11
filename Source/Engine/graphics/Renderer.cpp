@@ -296,14 +296,14 @@ void Renderer::create_write_factory()
 void Renderer::release_device_resources()
 {
 	SafeRelease(_color_brush);
-	SafeRelease(_user_defined_annotation);
+	//SafeRelease(_user_defined_annotation);
 
-	SafeRelease(m_DeviceCtx);
-	SafeRelease(_device);
+	//SafeRelease(m_DeviceCtx);
+	//SafeRelease(_device);
 	SafeRelease(_dwrite_factory);
-	SafeRelease(_wic_factory);
+	//SafeRelease(_wic_factory);
 	SafeRelease(_d2d_factory);
-	SafeRelease(_factory);
+	//SafeRelease(_factory);
 }
 
 void Renderer::release_frame_resources()
@@ -890,10 +890,10 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 		float4x4 _transform;
 
 		// Mesh index buffer
-		ID3D11Buffer* _index_buffer;
+		GraphicsResourceHandle _index_buffer;
 
 		// Vertex buffers
-		ID3D11Buffer* _vertex_buffer;
+		GraphicsResourceHandle _vertex_buffer;
 
 			// First vertex offset this mesh starts at in the vertex buffer
 		u64 _first_vertex;
@@ -935,8 +935,8 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 				{
 					DrawCall dc{};
 					dc._transform = inst->_transform;
-					dc._index_buffer = model->get_index_buffer().Get();
-					dc._vertex_buffer = model->get_vertex_buffer().Get();
+                    dc._index_buffer = model->get_index_buffer();
+                    dc._vertex_buffer = model->get_vertex_buffer();
 					dc._material = inst->get_material_instance(mesh.material_index);
 					dc._first_index = mesh.firstIndex;
 					dc._first_vertex = mesh.firstVertex;
@@ -972,8 +972,8 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
         dx11Ctx->PSSetConstantBuffers(0, 1, buffers);
 	}
 
-	ID3D11Buffer* prev_index = nullptr;
-	ID3D11Buffer* prev_vertex = nullptr;
+	GraphicsResourceHandle prev_index = GraphicsResourceHandle::Invalid();
+	GraphicsResourceHandle prev_vertex = GraphicsResourceHandle::Invalid();
 
 	for (DrawCall const& dc : m_DrawCalls) 
 	{
@@ -986,15 +986,13 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 
 		if(prev_index != dc._index_buffer)
 		{
-            dx11Ctx->IASetIndexBuffer(dc._index_buffer, DXGI_FORMAT_R32_UINT, 0);
+            ctx.IASetIndexBuffer(dc._index_buffer, DXGI_FORMAT_R32_UINT, 0);
 			prev_index = dc._index_buffer;
 		}
 
 		if (prev_vertex != dc._vertex_buffer)
 		{
-			UINT strides = { sizeof(Model::VertexType) };
-			UINT offsets = { 0 };
-            dx11Ctx->IASetVertexBuffers(0, 1, &dc._vertex_buffer, &strides, &offsets);
+            ctx.IASetVertexBuffers(0, { dc._vertex_buffer }, { sizeof(Model::VertexType) }, { 0 });
 
 			prev_vertex = dc._vertex_buffer;
 		}

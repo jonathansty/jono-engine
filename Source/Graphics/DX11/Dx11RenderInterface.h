@@ -7,6 +7,7 @@
 #include "ShaderStage.h"
 
 using BufferDesc          = D3D11_BUFFER_DESC;
+using SubresourceData = D3D11_SUBRESOURCE_DATA;
 using SrvDesc             = D3D11_SHADER_RESOURCE_VIEW_DESC;
 using UavDesc             = D3D11_UNORDERED_ACCESS_VIEW_DESC;
 using DsvDesc             = D3D11_DEPTH_STENCIL_VIEW_DESC;
@@ -59,6 +60,7 @@ class Renderer;
 struct Dx11RenderContext 
 {
     inline void IASetIndexBuffer(GraphicsResourceHandle const& buffer, DXGI_FORMAT format, uint32_t offset);
+    inline void IASetVertexBuffers(uint32_t startSlot, Span<GraphicsResourceHandle const> buffers, Span<UINT const> strides, Span<UINT const> offsets);
     inline void IASetInputLayout(GraphicsResourceHandle const& inputLayout);
     inline void IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology);
 
@@ -118,7 +120,7 @@ public:
     void Init();
     void Shutdown();
 
-    GraphicsResourceHandle CreateBuffer(BufferDesc const& desc, void* initialData, std::string_view debugName = "");
+    GraphicsResourceHandle CreateBuffer(BufferDesc const& desc, SubresourceData const* initialData = nullptr, std::string_view debugName = "");
     GraphicsResourceHandle CreateShaderResourceView(GraphicsResourceHandle srcBuffer, SrvDesc const& desc, std::string_view debugName = "");
     GraphicsResourceHandle CreateUnorderedAccessView(GraphicsResourceHandle srcBuffer, UavDesc const& desc, std::string_view debugName = "");
     GraphicsResourceHandle CreateDepthStencilView(GraphicsResourceHandle srcBuffer, DsvDesc const& desc, std::string_view debugName = "");
@@ -132,7 +134,7 @@ public:
     GraphicsResourceHandle CreateTexture(Texture2DDesc const& desc, void* initialData, std::string_view name = "");
     GraphicsResourceHandle CreateTexture(Texture3DDesc const& desc, void* initialData, std::string_view name = "");
 
-    void ReleaseResource(GraphicsResourceHandle h);
+    void ReleaseResource(GraphicsResourceHandle& h);
 
 
     Dx11RenderContext& BeginContext() 

@@ -34,7 +34,11 @@ std::unique_ptr<ConstantBuffer> ConstantBuffer::create(RenderInterface* ri, u32 
 	buff.MiscFlags = 0;
 
 
-	GraphicsResourceHandle bufferHandle = ri->CreateBuffer(buff, initialData);
+	D3D11_SUBRESOURCE_DATA d{};
+    d.pSysMem = initialData;
+    d.SysMemPitch = size;
+
+	GraphicsResourceHandle bufferHandle = ri->CreateBuffer(buff, &d);
 	if(!bufferHandle.IsValid())
 	{
 		LOG_ERROR(Graphics, "Failed to create a buffer ");
