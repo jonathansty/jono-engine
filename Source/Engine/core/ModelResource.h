@@ -53,32 +53,32 @@ public:
 
 	~Model();
 
-	void load(enki::ITaskSet* parent, std::string const& path);
+	void Load(enki::ITaskSet* parent, std::string const& path);
 
-	GraphicsResourceHandle get_vertex_buffer() const { return _vertex_buffer; }
-	GraphicsResourceHandle get_index_buffer() const { return _index_buffer; }
+	GraphicsResourceHandle GetVertexBuffer() const { return m_VertexBuffer; }
+	GraphicsResourceHandle GetIndexBuffer() const { return m_IndexBuffer; }
 
-	std::vector<Mesh> const& get_meshes() const { return _meshes; }
+	std::vector<Mesh> const& GetMeshes() const { return m_Meshes; }
 
-	MaterialInstance* get_material(u32 idx) const 
+	inline MaterialInstance* GetMaterial(u32 idx) const 
 	{ 
-		ASSERTMSG(idx < static_cast<u32>(_materials.size()), "Index out of range.");
-		return _materials[idx].get(); 
+		ASSERTMSG(idx < static_cast<u32>(m_Materials.size()), "Index out of range.");
+		return m_Materials[idx].get(); 
 	}
 
-	u32 get_material_count() const { return (u32)_materials.size(); }
+	u32 get_material_count() const { return (u32)m_Materials.size(); }
 
-	Math::AABB get_bounding_box() const { return _aabb; }
+	Math::AABB get_bounding_box() const { return m_AABB; }
 
 private:
 	u64 _index_count;
 
-	std::vector<std::unique_ptr<MaterialInstance>> _materials;
-	std::vector<Mesh> _meshes;
-	Math::AABB _aabb;
+	std::vector<std::unique_ptr<MaterialInstance>> m_Materials;
+	std::vector<Mesh> m_Meshes;
+	Math::AABB m_AABB;
 
-	GraphicsResourceHandle _vertex_buffer;
-	GraphicsResourceHandle _index_buffer;
+	GraphicsResourceHandle m_VertexBuffer;
+	GraphicsResourceHandle m_IndexBuffer;
 };
 
 // Render Model resource

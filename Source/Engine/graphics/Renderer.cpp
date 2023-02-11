@@ -895,7 +895,7 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 		// Vertex buffers
 		GraphicsResourceHandle _vertex_buffer;
 
-			// First vertex offset this mesh starts at in the vertex buffer
+        // First vertex offset this mesh starts at in the vertex buffer
 		u64 _first_vertex;
 
 		// First index location offset this mesh starts at in the index buffer
@@ -909,6 +909,10 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 	
 	};
 	static std::vector<DrawCall> m_DrawCalls;
+    if (m_DrawCalls.empty())
+    {
+        m_DrawCalls.reserve(2048);
+    }
 
 
 	{
@@ -931,12 +935,12 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 			if (inst->is_ready())
 			{
 				Model const* model = inst->_model->get();
-				for (Mesh const& mesh : model->get_meshes())
+				for (Mesh const& mesh : model->GetMeshes())
 				{
 					DrawCall dc{};
 					dc._transform = inst->_transform;
-                    dc._index_buffer = model->get_index_buffer();
-                    dc._vertex_buffer = model->get_vertex_buffer();
+                    dc._index_buffer = model->GetIndexBuffer();
+                    dc._vertex_buffer = model->GetVertexBuffer();
 					dc._material = inst->get_material_instance(mesh.material_index);
 					dc._first_index = mesh.firstIndex;
 					dc._first_vertex = mesh.firstVertex;

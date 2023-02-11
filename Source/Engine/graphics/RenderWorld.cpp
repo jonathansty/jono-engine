@@ -243,7 +243,7 @@ void RenderWorldInstance::finalise()
 		{
 			if (_material_overrides[i])
 			{
-				_material_overrides[i]->bind(res->get_material(i));
+				_material_overrides[i]->bind(res->GetMaterial(i));
 			}
 		}
 
@@ -275,7 +275,7 @@ MaterialInstance const* RenderWorldInstance::get_material_instance(u32 idx) cons
 		return _material_overrides[idx].get();
 	}
 
-	return _model->get()->get_material(idx);
+	return _model->get()->GetMaterial(idx);
 }
 
 MaterialInstance* RenderWorldInstance::get_material_instance(u32 idx)
@@ -285,5 +285,5 @@ MaterialInstance* RenderWorldInstance::get_material_instance(u32 idx)
 		return _material_overrides[idx].get();
 	}
 
-	return _model->get()->get_material(idx);
+	return _model->get()->GetMaterial(idx);
 }

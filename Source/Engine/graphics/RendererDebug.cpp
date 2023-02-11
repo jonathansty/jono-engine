@@ -33,6 +33,8 @@ void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
 
 	_batch->Begin();
 
+	#if 0 
+	// Debug cube rendering test
 	{
         auto box = DirectX::BoundingBox({ 0.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
         Debug::Draw(_batch.get(), box, { 1.0f, 1.0f, 1.0f, 1.0f });
@@ -43,6 +45,7 @@ void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
         box = DirectX::BoundingBox({ 20.0f, 0.0f, 0.0f }, { 1.0f, 1.0f, 1.0f });
         Debug::Draw(_batch.get(), box, { 1.0f, 1.0f, 1.0f, 1.0f });
     }
+	#endif
 
 
 

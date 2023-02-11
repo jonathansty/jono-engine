@@ -28,7 +28,7 @@ void CreateRSS(CD3D11_RASTERIZER_DESC const& rs_desc, RasterizerState state);
 void CreateSS(CD3D11_SAMPLER_DESC const& ss_desc, SamplerState state);
 void CreateBS(CD3D11_BLEND_DESC const& bs_desc, BlendState state);
 
-bool s_EnableShadowRendering = true;
+bool s_EnableShadowRendering = false; // Disabled for now because it's pretty broken :(
 bool s_EnableCSM0 = true;
 bool s_EnableCSM1 = true;
 bool s_EnableCSM2 = true;

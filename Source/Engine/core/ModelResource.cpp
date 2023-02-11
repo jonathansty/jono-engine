@@ -23,7 +23,7 @@ void ModelHandle::load(enki::ITaskSet* parent)
 {
 	std::string const& path = get_init_parameters().path;
 	_resource = std::make_shared<Model>();
-	_resource->load(parent, path);
+	_resource->Load(parent, path);
 }
 
 ModelHandle::ModelHandle(FromFileResourceParameters params)
@@ -37,20 +37,20 @@ ModelHandle::ModelHandle(FromFileResourceParameters params)
 
  Model::Model()
 		: _index_count(0)
-		, _materials()
-		, _meshes()
-		, _vertex_buffer()
-		, _index_buffer()
+		, m_Materials()
+		, m_Meshes()
+		, m_VertexBuffer()
+		, m_IndexBuffer()
 {
 }
 
  Model::~Model()
 {
-    GetRI()->ReleaseResource(_index_buffer);
-    GetRI()->ReleaseResource(_vertex_buffer);
+    GetRI()->ReleaseResource(m_IndexBuffer);
+    GetRI()->ReleaseResource(m_VertexBuffer);
  }
 
-void Model::load(enki::ITaskSet* parent, std::string const& path)
+void Model::Load(enki::ITaskSet* parent, std::string const& path)
 {
 	Timer timer{}; 
 	timer.Start();
@@ -75,7 +75,7 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 	{
 		std::vector<VertexType> vertices;
 		std::vector<u32> indices;
-		_meshes.clear();
+		m_Meshes.clear();
 
 		std::map<int, aiMatrix4x4> transforms;
 
@@ -101,8 +101,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 		Flattener fn{};
 		fn(aiMatrix4x4(), root, transforms);
 
-		_aabb.min = (float3)(std::numeric_limits<float>::max());
-		_aabb.max = (float3)(- std::numeric_limits<float>::max());
+		m_AABB.min = (float3)(std::numeric_limits<float>::max());
+		m_AABB.max = (float3)(- std::numeric_limits<float>::max());
 		for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
 		{
 			aiMesh const* mesh = scene->mMeshes[i];
@@ -119,7 +119,7 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 			meshlet.firstVertex = vertices.size();
 			meshlet.indexCount = uint32_t(mesh->mNumFaces) * 3;
 			meshlet.material_index = mesh->mMaterialIndex;
-			_meshes.push_back(meshlet);
+			m_Meshes.push_back(meshlet);
 
 			auto positions = mesh->mVertices;
 			auto colors = mesh->mColors;
@@ -140,8 +140,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 				v.position.z = pos.z;
 
 				// Update local AABB
-				_aabb.min = hlslpp::min(v.position, _aabb.min);
-				_aabb.max = hlslpp::max(v.position, _aabb.max);
+				m_AABB.min = hlslpp::min(v.position, m_AABB.min);
+				m_AABB.max = hlslpp::max(v.position, m_AABB.max);
 
 				if (mesh->HasVertexColors(0))
 				{
@@ -234,8 +234,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
         char name[512];
         sprintf_s(name, "%s - Index Buffer", path.c_str());
 
-		_vertex_buffer = GetRI()->CreateBuffer(bufferDesc, &data, name);
-        ASSERT(_vertex_buffer.IsValid());
+		m_VertexBuffer = GetRI()->CreateBuffer(bufferDesc, &data, name);
+        ASSERT(m_VertexBuffer.IsValid());
 
 		bufferDesc.ByteWidth = UINT(indices.size() * sizeof(indices[0]));
 		bufferDesc.StructureByteStride = sizeof(indices[0]);
@@ -243,8 +243,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 		data.pSysMem = indices.data();
 
         sprintf_s(name, "%s - Vertex Buffer", path.c_str());
-        _index_buffer = GetRI()->CreateBuffer(bufferDesc, &data, name);
-        ASSERT(_index_buffer.IsValid());
+        m_IndexBuffer = GetRI()->CreateBuffer(bufferDesc, &data, name);
+        ASSERT(m_IndexBuffer.IsValid());
 		_index_count = indices.size();
 	}
 
@@ -257,8 +257,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 		auto base_material = ResourceLoader::instance()->load<MaterialHandle>(parameters, false, true);
 
 		// Resize our materials and textures 
-		_materials.resize(scene->mNumMaterials);
-		for(u32 j = 0; j < _materials.size(); ++j)
+		m_Materials.resize(scene->mNumMaterials);
+		for(u32 j = 0; j < m_Materials.size(); ++j)
 		{
 			aiMaterial* material = scene->mMaterials[j];
 			aiString name = material->GetName();
@@ -270,7 +270,7 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 				parameters.double_sided = double_sided;
 			}
 
-			_materials[j] = std::make_unique<MaterialInstance>(base_material);
+			m_Materials[j] = std::make_unique<MaterialInstance>(base_material);
 
 			// Load the required textures from the assimp imported file
 			aiString baseColorTexture;
@@ -286,8 +286,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 				FromFileResourceParameters params{ tex_path };
 				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
-				u32 slot = _materials[j]->get_slot("Albedo");
-				_materials[j]->set_texture(slot, texture);
+				u32 slot = m_Materials[j]->get_slot("Albedo");
+				m_Materials[j]->set_texture(slot, texture);
 
 			}
 			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
@@ -296,8 +296,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 				FromFileResourceParameters params{ tex_path };
 				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
-				u32 slot = _materials[j]->get_slot("MetalnessRoughness");
-				_materials[j]->set_texture(slot, texture);
+				u32 slot = m_Materials[j]->get_slot("MetalnessRoughness");
+				m_Materials[j]->set_texture(slot, texture);
 			}
 
 			if (material->GetTexture(aiTextureType_NORMALS, 0, &normalTexture) == aiReturn_SUCCESS)
@@ -306,8 +306,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 				FromFileResourceParameters params{ tex_path };
 				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
-				u32 slot = _materials[j]->get_slot("Normals");
-				_materials[j]->set_texture(slot, texture);
+				u32 slot = m_Materials[j]->get_slot("Normals");
+				m_Materials[j]->set_texture(slot, texture);
 
 			}
 
@@ -317,8 +317,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 				FromFileResourceParameters params{ tex_path };
 				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
-				u32 slot = _materials[j]->get_slot("AO");
-				_materials[j]->set_texture(slot, texture);
+				u32 slot = m_Materials[j]->get_slot("AO");
+				m_Materials[j]->set_texture(slot, texture);
 			}
 
 			if (material->GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTexture) == aiReturn_SUCCESS)
@@ -327,8 +327,8 @@ void Model::load(enki::ITaskSet* parent, std::string const& path)
 
 				FromFileResourceParameters params{ tex_path };
 				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
-				u32 slot = _materials[j]->get_slot("Emissive");
-				_materials[j]->set_texture(slot, texture);
+				u32 slot = m_Materials[j]->get_slot("Emissive");
+				m_Materials[j]->set_texture(slot, texture);
 			}
 
 
