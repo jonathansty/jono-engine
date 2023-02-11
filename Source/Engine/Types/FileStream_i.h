@@ -58,7 +58,7 @@ public:
 	bool ReadProperty(const char* propertyName, T& propertyValue);
 
 
-	template <> bool ReadProperty(const char* propertyName, std::string& propertyValue) { this->ReadStringProperty(propertyName, propertyValue); }
+	template <> bool ReadProperty(const char* propertyName, std::string& propertyValue) { return this->ReadStringProperty(propertyName, propertyValue); }
 	template <> bool ReadProperty(const char* propertyName, int& propertyValue) { return this->ReadIntProperty(propertyName, propertyValue); }
 	template <> bool ReadProperty(const char* propertyName, float& propertyValue) { return this->ReadFloatProperty(propertyName, propertyValue); }
 	template <> bool ReadProperty(const char* propertyName, double& propertyValue) { return this->ReadDoubleProperty(propertyName, propertyValue); }

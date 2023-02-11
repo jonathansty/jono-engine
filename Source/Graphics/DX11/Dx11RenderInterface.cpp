@@ -163,8 +163,6 @@ GraphicsResourceHandle Dx11RenderInterface::CreateDepthStencilView(GraphicsResou
     auto h = m_DSVs.Push(ds);
     GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_UnorderedAccessView, h.gen, h.id);
     return handle;
-
-    return GraphicsResourceHandle::Invalid();
 }
 
 GraphicsResourceHandle Dx11RenderInterface::CreateInputLayout(InputLayoutDesc inputLayoutElements, void* shaderCode, uint32_t shaderCodeLength)
