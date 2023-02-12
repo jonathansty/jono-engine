@@ -9,6 +9,7 @@ enum GraphicsResourceType : uint8_t
     GRT_ShaderResourceView,
     GRT_DepthStencilView,
     GRT_UnorderedAccessView,
+    GRT_RenderTargetView,
     GRT_InputLayout,
     GRT_SamplerState,
     GRT_RasterizerState,

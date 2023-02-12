@@ -55,10 +55,10 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 	_debug_tool = std::make_unique<RendererDebugTool>(this);
 	GameEngine::instance()->get_overlay_manager()->register_overlay(_debug_tool.get());
 
-	_cb_global = ConstantBuffer::create(m_RI, sizeof(GlobalCB), true, BufferUsage::Dynamic, nullptr);
-	_cb_model = ConstantBuffer::create(m_RI, sizeof(ModelCB), true, BufferUsage::Dynamic, nullptr);
-	_cb_debug = ConstantBuffer::create(m_RI, sizeof(DebugCB), true, BufferUsage::Dynamic, nullptr);
-	_cb_post = ConstantBuffer::create(m_RI, sizeof(PostCB), true, BufferUsage::Dynamic, nullptr);
+	m_CBGlobal = ConstantBuffer::create(m_RI, sizeof(GlobalCB), true, BufferUsage::Dynamic, nullptr);
+	m_CBModel = ConstantBuffer::create(m_RI, sizeof(ModelCB), true, BufferUsage::Dynamic, nullptr);
+	m_CBDebug = ConstantBuffer::create(m_RI, sizeof(DebugCB), true, BufferUsage::Dynamic, nullptr);
+	m_CBPost = ConstantBuffer::create(m_RI, sizeof(PostCB), true, BufferUsage::Dynamic, nullptr);
 
 
 	// Setup Light buffer
@@ -306,11 +306,11 @@ void Renderer::release_device_resources()
 void Renderer::release_frame_resources()
 {
 	// Release all the MSAA copies
-	SafeRelease(_non_msaa_output_tex);
-	SafeRelease(_non_msaa_output_tex_copy);
-	SafeRelease(_non_msaa_output_srv);
-	SafeRelease(_non_msaa_output_srv_copy);
-	SafeRelease(_non_msaa_output_rtv);
+	m_RI->ReleaseResource(_non_msaa_output_tex);
+	m_RI->ReleaseResource(_non_msaa_output_tex_copy);
+	m_RI->ReleaseResource(_non_msaa_output_srv);
+	m_RI->ReleaseResource(_non_msaa_output_srv_copy);
+	m_RI->ReleaseResource(_non_msaa_output_rtv);
 
 	SafeRelease(_d2d_rt);
 
@@ -318,16 +318,14 @@ void Renderer::release_frame_resources()
 	SafeRelease(_swapchain_rtv);
 	SafeRelease(_swapchain_srv);
 
-	SafeRelease(_output_tex);
-	SafeRelease(_output_rtv);
-	SafeRelease(_output_srv);
+	m_OutputTexture = {};
 
 	m_RI->ReleaseResource(_output_depth);
 	m_RI->ReleaseResource(_output_depth_copy);
 	m_RI->ReleaseResource(_output_depth_srv);
 	m_RI->ReleaseResource(_output_depth_srv_copy);
 
-	SafeRelease(_output_dsv);
+	m_RI->ReleaseResource(_output_dsv);
 }
 
 void Renderer::ResizeSwapchain(u32 w, u32 h)
@@ -378,42 +376,27 @@ void Renderer::ResizeSwapchain(u32 w, u32 h)
 				1,
 				D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE,
 				D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
-		ENSURE_HR(_device->CreateTexture2D(&output_desc, nullptr, &_output_tex));
-		ENSURE_HR(_device->CreateRenderTargetView(_output_tex, nullptr, &_output_rtv));
-		ENSURE_HR(_device->CreateShaderResourceView(_output_tex, nullptr, &_output_srv));
 
-		Helpers::SetDebugObjectName(_output_tex, "Renderer::Output (MSAA)");
-		Helpers::SetDebugObjectName(_output_rtv, "Renderer::Output (MSAA)");
-		Helpers::SetDebugObjectName(_output_srv, "Renderer::Output (MSAA)");
+        m_OutputTexture.Create(output_desc, true, true, false);
 
 		// This texture is used to output to a image in imgui
 		output_desc.SampleDesc.Count = 1;
 		output_desc.SampleDesc.Quality = 0;
-		ENSURE_HR(_device->CreateTexture2D(&output_desc, nullptr, &_non_msaa_output_tex));
-		ENSURE_HR(_device->CreateTexture2D(&output_desc, nullptr, &_non_msaa_output_tex_copy));
-		ENSURE_HR(_device->CreateShaderResourceView(_non_msaa_output_tex, nullptr, &_non_msaa_output_srv));
-		ENSURE_HR(_device->CreateShaderResourceView(_non_msaa_output_tex_copy, nullptr, &_non_msaa_output_srv_copy));
-		ENSURE_HR(_device->CreateRenderTargetView(_non_msaa_output_tex, nullptr, &_non_msaa_output_rtv));
 
-		Helpers::SetDebugObjectName(_non_msaa_output_tex, "Renderer::Output (MSAA)");
-		Helpers::SetDebugObjectName(_non_msaa_output_srv, "Renderer::Output (MSAA)");
-		Helpers::SetDebugObjectName(_non_msaa_output_rtv, "Renderer::Output (MSAA)");
+        std::string debugName = "non msaa output";
+        _non_msaa_output_tex = m_RI->CreateTexture(output_desc, nullptr, debugName);
+        _non_msaa_output_srv = m_RI->CreateShaderResourceView(_non_msaa_output_tex, debugName);
+		_non_msaa_output_rtv = m_RI->CreateRenderTargetView(_non_msaa_output_tex, debugName);
 
-		Helpers::SetDebugObjectName(_non_msaa_output_tex_copy, "Renderer::Output (MSAA) (COPY)");
-		Helpers::SetDebugObjectName(_non_msaa_output_srv_copy, "Renderer::Output (MSAA) (COPY)");
-
+        debugName = "non msaa output copy";
+        _non_msaa_output_tex_copy = m_RI->CreateTexture(output_desc, nullptr, debugName);
+        _non_msaa_output_srv_copy = m_RI->CreateShaderResourceView(_non_msaa_output_tex_copy, debugName);
 	}
 
 	// Create the 3D depth target
 	auto depth_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R16_TYPELESS, w, h, 1, 1, D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE, D3D11_USAGE_DEFAULT, 0, aa_desc.Count, aa_desc.Quality);
     _output_depth = m_RI->CreateTexture(depth_desc, nullptr, "Main Depth");
     _output_depth_copy = m_RI->CreateTexture(depth_desc, nullptr, "Main Depth (COPY)");
-	//ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth));
-	//ENSURE_HR(_device->CreateTexture2D(&depth_desc, nullptr, &_output_depth_copy));
-
-	//Helpers::SetDebugObjectName(_output_depth, "Renderer::Output Depth");
-	//Helpers::SetDebugObjectName(_output_depth_copy, "Renderer::Output Depth (COPY)");
-
 
 	auto view_dim = D3D11_DSV_DIMENSION_TEXTURE2D;
 	auto srv_view_dim = D3D11_SRV_DIMENSION_TEXTURE2D;
@@ -422,10 +405,10 @@ void Renderer::ResizeSwapchain(u32 w, u32 h)
 		view_dim = D3D11_DSV_DIMENSION_TEXTURE2DMS;
 		srv_view_dim = D3D11_SRV_DIMENSION_TEXTURE2DMS;
 	}
+
     ID3D11Texture2D* depth = m_RI->GetRawTexture2D(_output_depth);
 	auto dsv_desc = CD3D11_DEPTH_STENCIL_VIEW_DESC(depth, view_dim, DXGI_FORMAT_D16_UNORM);
-	ENSURE_HR(_device->CreateDepthStencilView(depth, &dsv_desc, &_output_dsv));
-	Helpers::SetDebugObjectName(_output_dsv, "Renderer::Output Depth");
+    _output_dsv = m_RI->CreateDepthStencilView(_output_depth, dsv_desc, "Renderer::Output Depth");
 
 	auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(depth, srv_view_dim, DXGI_FORMAT_R16_UNORM);
     _output_depth_srv = m_RI->CreateShaderResourceView(_output_depth, srv_desc, "Renderer::Output Depth");
@@ -494,7 +477,7 @@ void Renderer::ResizeSwapchain(u32 w, u32 h)
 	D2D1_RENDER_TARGET_PROPERTIES rtp = D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT, D2D1::PixelFormat(DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, D2D1_ALPHA_MODE_PREMULTIPLIED), (FLOAT)hdpi, (FLOAT)vdpi);
 
 	ComPtr<IDXGISurface> surface;
-	_output_tex->QueryInterface(surface.GetAddressOf());
+	m_RI->GetRawResource(m_OutputTexture.GetResource())->QueryInterface(surface.GetAddressOf());
 
 	if (_d2d_factory)
 	{
@@ -513,9 +496,9 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 	// Update the debug buffers
 	{
 		extern int g_DebugMode;
-		DebugCB* debug_data = (DebugCB*)_cb_debug->map(ctx);
+		DebugCB* debug_data = (DebugCB*)m_CBDebug->map(ctx);
 		debug_data->m_VisualizeMode = g_DebugMode;
-        _cb_debug->unmap(ctx);
+        m_CBDebug->unmap(ctx);
 	}
 
 	// Update the cameras
@@ -758,9 +741,6 @@ void Renderer::render_view(RenderContext& ctx, RenderWorld const& world, RenderP
 	std::shared_ptr<RenderWorldCamera> camera  = world.get_view_camera();
 
 	ViewParams params{};
-	D3D11_TEXTURE2D_DESC desc;
-	_output_tex->GetDesc(&desc);
-
 	params.proj = camera->get_proj();
 	params.view = camera->get_view();
 	params.view_position = camera->get_position();
@@ -817,7 +797,7 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
         ctx.RSSetViewports({ params.viewport });
 	}
 
-	GlobalCB* global = (GlobalCB*)_cb_global->map(ctx);
+	GlobalCB* global = (GlobalCB*)m_CBGlobal->map(ctx);
 	global->ambient.ambient = float4(0.02f, 0.02f, 0.02f, 1.0f);
 
 	global->proj = params.proj;
@@ -877,7 +857,7 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 			}
 		}
 	}
-	_cb_global->unmap(ctx);
+	m_CBGlobal->unmap(ctx);
 
 	float4x4 vp = hlslpp::mul(params.view, params.proj);
 
@@ -958,8 +938,8 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 	if (g_DebugMode != 0)
 	{
 		ID3D11Buffer* buffers[3] = {
-			m_RI->GetRawBuffer(_cb_global->get_buffer()),
-			m_RI->GetRawBuffer(_cb_debug->get_buffer())
+			m_RI->GetRawBuffer(m_CBGlobal->get_buffer()),
+			m_RI->GetRawBuffer(m_CBDebug->get_buffer())
 		};
         dx11Ctx->VSSetConstantBuffers(0, 2, buffers);
         dx11Ctx->PSSetConstantBuffers(0, 2, buffers);
@@ -967,7 +947,7 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 	else
 	{
 		ID3D11Buffer* buffers[1] = {
-            m_RI->GetRawBuffer(_cb_global->get_buffer()),
+            m_RI->GetRawBuffer(m_CBGlobal->get_buffer()),
 		};
         dx11Ctx->VSSetConstantBuffers(0, 1, buffers);
         dx11Ctx->PSSetConstantBuffers(0, 1, buffers);
@@ -978,7 +958,7 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 
 	for (DrawCall const& dc : m_DrawCalls) 
 	{
-		ConstantBufferRef const& model_cb = _cb_model;
+		ConstantBufferRef const& model_cb = m_CBModel;
 		ModelCB* data = (ModelCB*)model_cb->map(ctx);
 		data->world = dc._transform;
 		data->wv = hlslpp::mul(data->world, params.view);
@@ -1064,7 +1044,7 @@ void Renderer::BeginFrame(RenderContext& ctx)
 
     ctx.BeginFrame();
 	ctx.SetViewport(vp);
-    ctx.ClearTargets(_output_rtv, _output_dsv, float4(0.05f, 0.05f, 0.05f, 1.0f), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+    ctx.ClearTargets(m_OutputTexture.GetRTV(), _output_dsv, float4(0.05f, 0.05f, 0.05f, 1.0f), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 }
 
 void Renderer::EndFrame(RenderContext& ctx)
@@ -1185,8 +1165,10 @@ void Renderer::render_post_predebug(RenderContext& ctx)
 
 	VSSetShader(post_vs_shader);
 	PSSetShader(post_shader);
-	m_DeviceCtx->PSSetShaderResources(0, 1, &_non_msaa_output_srv_copy);
-    ID3D11Buffer* buffer = m_RI->GetRawBuffer(_cb_post->get_buffer());
+
+	ctx.SetShaderResources(ShaderStage::Pixel, 0, { _non_msaa_output_srv_copy });
+
+    ID3D11Buffer* buffer = m_RI->GetRawBuffer(m_CBPost->get_buffer());
 	m_DeviceCtx->PSSetConstantBuffers(0, 1, &buffer);
 
 	GraphicsResourceHandle sampler_states[] = {
@@ -1267,8 +1249,7 @@ void Renderer::RenderZPrePass(RenderContext& ctx, RenderWorld const& world)
 {
 	GPU_SCOPED_EVENT(&ctx, "zprepass");
 
-
-	m_DeviceCtx->OMSetRenderTargets(0, NULL, _output_dsv);
+    ctx.SetTarget(GraphicsResourceHandle::Invalid(), _output_dsv);
 
 	render_view(ctx, world, RenderPass::ZPrePass);
 }
@@ -1280,7 +1261,7 @@ void Renderer::RenderOpaquePass(RenderContext& ctx, RenderWorld const& world)
 	// Do a copy to our dsv tex for sampling during the opaque pass
 	CopyDepth();
 
-	m_DeviceCtx->OMSetRenderTargets(1, &_output_rtv, _output_dsv);
+	ctx.SetTarget(m_OutputTexture.GetRTV(), _output_dsv);
 	render_view(ctx, world, Graphics::RenderPass::Opaque);
 }
 
@@ -1288,10 +1269,10 @@ void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shar
 {
 	GPU_SCOPED_EVENT(&ctx, "Post");
 
-	PostCB* data = (PostCB*)_cb_post->map(ctx);
+	PostCB* data = (PostCB*)m_CBPost->map(ctx);
 	data->m_ViewportWidth = (f32)(m_DrawableAreaWidth);
 	data->m_ViewportHeight = (f32)(m_DrawableAreaHeight);
-    _cb_post->unmap(ctx);
+    m_CBPost->unmap(ctx);
 
 	if (!_states)
 	{

@@ -24,6 +24,9 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: true
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '5.0.x'
       - name: Installing msbuild
         uses: microsoft/setup-msbuild@v1.1
       - name: Installing conan
@@ -33,5 +36,5 @@ jobs:
           conan profile new default --detect
           ./Tools/Bootstrap.cmd CI
       - name: Building jono-engine ${{ matrix.config }}
-        run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration="${{ matrix.config }} ${{ matrix.linkage}}"
+        run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration="${{ matrix.config }} ${{ matrix.linkage }}"
 

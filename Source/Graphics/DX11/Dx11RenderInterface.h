@@ -19,6 +19,7 @@ using DepthStencilDesc    = D3D11_DEPTH_STENCIL_DESC;
 using Texture1DDesc       = D3D11_TEXTURE1D_DESC;
 using Texture2DDesc       = D3D11_TEXTURE2D_DESC;
 using Texture3DDesc       = D3D11_TEXTURE3D_DESC;
+using RtvDesc = D3D11_RENDER_TARGET_VIEW_DESC;
 
 
 struct Viewport
@@ -74,7 +75,9 @@ struct Dx11RenderContext
     inline void OMSetDepthStencilState(GraphicsResourceHandle dss, uint32_t stencilRef = 0);
     inline void OMSetBlendState(GraphicsResourceHandle bs, std::array<float, 4> blendFactor = {}, uint32_t sampleMask = 0x0);
 
-    void ClearTargets(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, float4 color, uint32_t clearFlags, float depth, uint8_t stencil);
+    void ClearTargets(GraphicsResourceHandle rtv, GraphicsResourceHandle dsv, float4 color, uint32_t clearFlags, float depth, uint8_t stencil);
+    void SetTarget(GraphicsResourceHandle rtv, GraphicsResourceHandle dsv);
+    void ClearRenderTarget(GraphicsResourceHandle rtv, float4 color);
 
     void SetShaderResources(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> srvs);
     void SetSamplers(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> samplers);
@@ -118,6 +121,7 @@ class Dx11RenderInterface
     friend class MaterialInstance;
     friend class GraphicsThread;
     friend struct Dx11RenderContext;
+    friend class GameEngine;
 
 public:
     void Init();
@@ -125,7 +129,9 @@ public:
 
     GraphicsResourceHandle CreateBuffer(BufferDesc const& desc, SubresourceData const* initialData = nullptr, std::string_view debugName = "");
     GraphicsResourceHandle CreateShaderResourceView(GraphicsResourceHandle srcBuffer, SrvDesc const& desc, std::string_view debugName = "");
+    GraphicsResourceHandle CreateShaderResourceView(GraphicsResourceHandle srcBuffer, std::string_view debugName = "");
     GraphicsResourceHandle CreateUnorderedAccessView(GraphicsResourceHandle srcBuffer, UavDesc const& desc, std::string_view debugName = "");
+    GraphicsResourceHandle CreateUnorderedAccessView(GraphicsResourceHandle srcBuffer, std::string_view debugName = "");
     GraphicsResourceHandle CreateDepthStencilView(GraphicsResourceHandle srcBuffer, DsvDesc const& desc, std::string_view debugName = "");
     GraphicsResourceHandle CreateInputLayout(InputLayoutDesc inputLayoutElements, void* shaderCode, uint32_t shaderCodeLength);
     GraphicsResourceHandle CreateSamplerState(SamplerStateDesc samplerStateDesc, std::string_view name = "");
@@ -136,6 +142,11 @@ public:
     GraphicsResourceHandle CreateTexture(Texture1DDesc const& desc, void* initialData, std::string_view name = "");
     GraphicsResourceHandle CreateTexture(Texture2DDesc const& desc, void* initialData, std::string_view name = "");
     GraphicsResourceHandle CreateTexture(Texture3DDesc const& desc, void* initialData, std::string_view name = "");
+
+    GraphicsResourceHandle CreateRenderTargetView(GraphicsResourceHandle resource, RtvDesc const& desc, std::string_view name = "");
+    GraphicsResourceHandle CreateRenderTargetView(GraphicsResourceHandle resource, std::string_view name = "");
+
+    inline Texture2DDesc GetTexture2DDesc(GraphicsResourceHandle const& resource) const;
 
     void ReleaseResource(GraphicsResourceHandle& h);
 
@@ -179,6 +190,8 @@ public:
                 return reinterpret_cast<T*>(m_BlendStates.Get(slotHandle).Get());
             case GRT_DepthStencilState:
                 return reinterpret_cast<T*>(m_DepthStencilStates.Get(slotHandle).Get());
+            case GRT_RenderTargetView:
+                return reinterpret_cast<T*>(m_RTVs.Get(slotHandle).Get());
             default:
                 ASSERT("Unsupported type.");
                 break;
@@ -188,7 +201,7 @@ public:
 
 private:
 
-    ID3D11Resource* GetRawResource(GraphicsResourceHandle h)
+    ID3D11Resource* GetRawResource(GraphicsResourceHandle h) const
     {
         switch(h.data.type)
         {
@@ -206,37 +219,43 @@ private:
         }
         return nullptr;
     }
-    ID3D11Buffer* GetRawBuffer(GraphicsResourceHandle h) 
+    ID3D11Buffer* GetRawBuffer(GraphicsResourceHandle h) const
     { 
         ASSERT(h.data.type == GRT_Buffer);
         return static_cast<ID3D11Buffer*>(m_Resources.Get({ h.data.id, h.data.gen }).Get());
     }
 
-    ID3D11ShaderResourceView* GetRawSRV(GraphicsResourceHandle h)
+    ID3D11ShaderResourceView* GetRawSRV(GraphicsResourceHandle h) const
     {
         ASSERT(h.data.type == GRT_ShaderResourceView);
         return m_SRVs.Get({ h.data.id, h.data.gen }).Get();
     }
 
-    ID3D11SamplerState* GetRawSampler(GraphicsResourceHandle h)
+    ID3D11SamplerState* GetRawSampler(GraphicsResourceHandle h) const
     {
         ASSERT(h.data.type == GRT_SamplerState);
         return m_SamplerStates.Get({ h.data.id, h.data.gen }).Get();
     }
 
-    ID3D11UnorderedAccessView* GetRawUAV(GraphicsResourceHandle h)
+    ID3D11UnorderedAccessView* GetRawUAV(GraphicsResourceHandle h) const
     {
         ASSERT(h.data.type == GRT_UnorderedAccessView);
         return m_UAVs.Get({ h.data.id, h.data.gen }).Get();
     }
 
-    ID3D11InputLayout* GetRawInputLayout(GraphicsResourceHandle h)
+    ID3D11RenderTargetView* GetRawRTV(GraphicsResourceHandle h) const
+    {
+        ASSERT(h.data.type == GRT_RenderTargetView);
+        return m_RTVs.Get({ h.data.id, h.data.gen }).Get();
+    }
+
+    ID3D11InputLayout* GetRawInputLayout(GraphicsResourceHandle h) const
     {
         ASSERT(h.data.type == GRT_InputLayout);
         return m_InputLayouts.Get({ h.data.id, h.data.gen }).Get();
     }
 
-    ID3D11Texture2D* GetRawTexture2D(GraphicsResourceHandle h)
+    ID3D11Texture2D* GetRawTexture2D(GraphicsResourceHandle h) const
     {
         ASSERT(h.data.type == GRT_Texture);
         return static_cast<ID3D11Texture2D*>(m_Resources.Get({ h.data.id, h.data.gen }).Get());
@@ -255,6 +274,7 @@ private:
     SlotVector<ComPtr<ID3D11ShaderResourceView>> m_SRVs;
     SlotVector<ComPtr<ID3D11UnorderedAccessView>> m_UAVs;
     SlotVector<ComPtr<ID3D11DepthStencilView>> m_DSVs;
+    SlotVector<ComPtr<ID3D11RenderTargetView>> m_RTVs;
     SlotVector<ComPtr<ID3D11InputLayout>> m_InputLayouts;
     SlotVector<ComPtr<ID3D11SamplerState>> m_SamplerStates;
     SlotVector<ComPtr<ID3D11RasterizerState>> m_RasterizerStates;

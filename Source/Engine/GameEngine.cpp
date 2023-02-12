@@ -1417,7 +1417,7 @@ void GameEngine::BuildViewportUI(ImGuiID* dockID)
 		max_uv.y = s_vp_size.y / m_Renderer->GetDrawableHeight();
 
 		m_ViewportPos = float2(ImGui::GetCursorScreenPos().x, ImGui::GetCursorScreenPos().y);
-		ImGui::Image(m_Renderer->get_raw_output_non_msaa_srv(), s_vp_size, ImVec2(0, 0), max_uv);
+		ImGui::Image(GetRI()->GetRawSRV(m_Renderer->get_raw_output_non_msaa_srv()), s_vp_size, ImVec2(0, 0), max_uv);
 
 		//ImGuizmo::SetDrawlist();
 		//ImGuizmo::SetRect(_viewport_pos.x, _viewport_pos.y, float1(_viewport_width), float1(_viewport_height));

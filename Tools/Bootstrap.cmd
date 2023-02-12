@@ -38,8 +38,8 @@ echo Done.
 echo ======================================
 echo (5/6) Building DirectXTK
 echo ======================================
-call %~dp0/Build.cmd ../External/DirectXTK/DirectXTK_Desktop_2022.sln -p:Configuration=Debug -v:m
-call %~dp0/Build.cmd ../External/DirectXTK/DirectXTK_Desktop_2022.sln -p:Configuration=Release -v:m
+REM call %~dp0/Build.cmd ../External/DirectXTK/DirectXTK_Desktop_2022.sln -p:Configuration=Debug -v:m
+REM call %~dp0/Build.cmd ../External/DirectXTK/DirectXTK_Desktop_2022.sln -p:Configuration=Release -v:m
 
 
 popd

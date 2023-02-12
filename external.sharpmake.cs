@@ -235,7 +235,7 @@ public class OpTick : ExternalProject
     }
 }
 
-[Generate]
+[Export]
 public class DirectXTK : ExternalProject
 {
     public DirectXTK() : base()
@@ -243,23 +243,34 @@ public class DirectXTK : ExternalProject
         Name = "DirectXTK";
         SourceRootPath = @"[project.ExternalDir]/DirectXTK/";
 
-        SourceFilesExtensions.Add("inc");
-        SourceFilesExcludeRegex.Add(".*(XBOX|Model(.h|.cpp)).*");
-        SourceFilesFiltersRegex.Add(".*(Src)|(Inc).*");
+        // SourceFilesExtensions.Add("inc");
+        // SourceFilesExcludeRegex.Add(".*(XBOX|Model(.h|.cpp)).*");
+        // SourceFilesFiltersRegex.Add(".*(Src)|(Inc).*");
     }
     override public void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
+        conf.Output = Configuration.OutputType.None;
+        conf.IncludePaths.Add(Path.Combine(ExternalDir, "DirectXTK/Inc/"));
+        if(target.GetOptimization() == Optimization.Debug)
+        {
+            conf.LibraryPaths.Add(Path.Combine(ExternalDir, "DirectXTK/Bin/Desktop_2022/Win32/Debug"));
+        }
+        else
+        {
+            conf.LibraryPaths.Add(Path.Combine(ExternalDir, "DirectXTK/Bin/Desktop_2022/Win32/Release"));
+        }
+        conf.LibraryFiles.Add("DirectXTK.lib");
 
-        conf.PrecompHeader = "pch.h";
-        conf.PrecompSource = "[project.ExternalDir]/DirectXTK/Src/pch.cpp";
+        // conf.PrecompHeader = "pch.h";
+        // conf.PrecompSource = "[project.ExternalDir]/DirectXTK/Src/pch.cpp";
 
-        conf.Output = Configuration.OutputType.Lib;
-        conf.IncludePaths.Add(@"[project.SourceRootPath]/Inc");
-        conf.IncludePaths.Add(@"[project.SourceRootPath]/Src");
-        conf.IncludePaths.Add(@"[project.SourceRootPath]/Src/Shaders/Compiled/");
+        // conf.Output = Configuration.OutputType.Lib;
+        // conf.IncludePaths.Add(@"[project.SourceRootPath]/Inc");
+        // conf.IncludePaths.Add(@"[project.SourceRootPath]/Src");
+        // conf.IncludePaths.Add(@"[project.SourceRootPath]/Src/Shaders/Compiled/");
 
-        conf.IncludeSystemPaths.Add(Path.Combine(ExternalDir, "DirectXTK/Inc/"));
+        // conf.IncludeSystemPaths.Add(Path.Combine(ExternalDir, "DirectXTK/Inc/"));
     }
 }
 

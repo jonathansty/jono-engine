@@ -68,7 +68,13 @@ bool D2DRenderContext::begin_paint(Renderer* renderer, ID2D1Factory* factory, ID
     {
         m_Renderer = renderer;
 
-        CD3D11_VIEWPORT viewport = CD3D11_VIEWPORT(m_Renderer->get_raw_output_tex(), m_Renderer->get_raw_output_rtv());
+        CD3D11_VIEWPORT viewport{};
+        viewport.TopLeftX = 0.0f;
+        viewport.TopLeftY = 0.0f;
+        viewport.Width = (FLOAT)m_Renderer->GetDrawableWidth();
+        viewport.Height = (FLOAT)m_Renderer->GetDrawableHeight();
+        viewport.MinDepth = 0.0f;
+        viewport.MaxDepth = 1.0f;
         D3D11_RECT rect{ (LONG)viewport.TopLeftX, (LONG)viewport.TopLeftY, (LONG)viewport.TopLeftX + (LONG)viewport.Width, (LONG)viewport.TopLeftY + (LONG)viewport.Height };
         m_ProjectionMatrix = float4x4::orthographic(hlslpp::projection(hlslpp::frustum(viewport.TopLeftX, viewport.TopLeftX + viewport.Width, viewport.TopLeftY + viewport.Height, viewport.TopLeftY, 0.01f, 1.0f), hlslpp::zclip::zero));
 

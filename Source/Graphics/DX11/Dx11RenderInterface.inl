@@ -114,3 +114,13 @@ void Dx11RenderContext::IASetVertexBuffers(uint32_t startSlot, Span<GraphicsReso
         }
     }
 }
+
+Texture2DDesc Dx11RenderInterface::GetTexture2DDesc(GraphicsResourceHandle const& resource) const
+{
+    ID3D11Texture2D* tex = GetRawTexture2D(resource);
+
+    Texture2DDesc desc{};
+    tex->GetDesc(&desc);
+
+    return desc;
+}
