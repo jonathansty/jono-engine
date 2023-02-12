@@ -1,18 +1,6 @@
-[submodule "ThirdParty/enkiTS"]
-	path = ThirdParty/enkiTS
-	url = https://github.com/dougbinks/enkiTS.git
-[submodule "ThirdParty/imgui"]
-	path = ThirdParty/imgui
-	url = https://github.com/ocornut/imgui.git
-[submodule "external/hlslpp"]
-	path = external/hlslpp
-	url = https://github.com/redorav/hlslpp.git
-[submodule "external/refl-cpp"]
-	path = external/refl-cpp
+[submodule "External/refl-cpp"]
+	path = External/refl-cpp
 	url = https://github.com/veselink1/refl-cpp.git
-[submodule "external/rttr"]
-	path = external/rttr
-	url = https://github.com/rttrorg/rttr.git
 [submodule "External/hlslpp"]
 	path = External/hlslpp
 	url = https://github.com/redorav/hlslpp.git/
