@@ -454,3 +454,21 @@ void Dx11RenderContext::ExecuteComputeItems(Span<ComputeItem> const& items)
     m_Context->CSSetShaderResources(0, 0, nullptr);
     m_Context->CSSetConstantBuffers(0, 0, nullptr);
 }
+
+thread_local static std::wstring sTmpString = std::wstring();
+void Dx11RenderContext::DebugBeginEvent(std::string_view name)
+{
+    sTmpString = std::wstring(name.begin(), name.end());
+    owner->m_UserDefinedAnnotations->BeginEvent(sTmpString.c_str());
+}
+
+void Dx11RenderContext::DebugEndEvent()
+{
+    owner->m_UserDefinedAnnotations->EndEvent();
+}
+
+void Dx11RenderContext::DebugSetMarker(std::string_view name)
+{
+    sTmpString = std::wstring(name.begin(), name.end());
+    owner->m_UserDefinedAnnotations->SetMarker(sTmpString.c_str());
+}

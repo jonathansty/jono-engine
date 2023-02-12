@@ -2,6 +2,8 @@
 
 #include "PrecisionTimer.h"
 
+#include "Graphics/RenderInterface.h"
+
 namespace Perf
 {
 
@@ -118,31 +120,19 @@ private:
 class scoped_gpu_event final
 {
 public:
-	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::wstring name)
-			: _name(name), _annotation(annotation)
-	{
-		annotation->BeginEvent(name.c_str());
-	}
-	scoped_gpu_event(ID3DUserDefinedAnnotation* annotation, std::string name)
-			: _annotation(annotation)
-	{
-		_name = std::wstring(name.begin(), name.end());
-		annotation->BeginEvent(_name.c_str());
-	}
-	~scoped_gpu_event()
-	{
-		_annotation->EndEvent();
-	}
+	scoped_gpu_event(RenderContext* ctx, std::string_view v);
+
+	~scoped_gpu_event();
 
 private:
-	std::wstring _name;
-	ID3DUserDefinedAnnotation* _annotation;
+	std::string_view m_Name;
+    RenderContext* m_Ctx;
 };
 
 #define COMBINE1(X, Y) X##Y // helper macro
 #define COMBINE(X, Y) COMBINE1(X, Y)
-#define GPU_SCOPED_EVENT(ctx, name) OPTICK_EVENT_DYNAMIC(name); Perf::scoped_gpu_event COMBINE(perfEvent, __LINE__) = Perf::scoped_gpu_event(ctx, name)
-#define GPU_MARKER(ctx, name) ctx->SetMarker(name);
+#define GPU_SCOPED_EVENT(ctx, name) OPTICK_EVENT_DYNAMIC(name); Perf::scoped_gpu_event COMBINE(perfEvent, __LINE__) = Perf::scoped_gpu_event( (ctx), name)
+#define GPU_MARKER(ctx, name) (ctx)->DebugSetMarker(name);
 #else
 #define GPU_SCOPED_EVENT(ctx, name)
 #define GPU_MARKER(ctx, name)

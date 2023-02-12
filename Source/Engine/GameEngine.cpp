@@ -1596,7 +1596,6 @@ void GameEngine::RenderD2D()
 	context.set_world_matrix(float4x4::identity());
 
 	{
-		GPU_SCOPED_EVENT(renderer->get_raw_annotation(), "D2D:Paint");
 		if (engine->m_Game)
 		{
 			MEMORY_TAG(MemoryCategory::Game);

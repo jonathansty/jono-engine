@@ -51,7 +51,6 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
     _device = m_RI->m_Device.Get();
     m_DeviceCtx = m_RI->m_Context.Get();
     _factory = m_RI->m_Factory.Get();
-    _user_defined_annotation = m_RI->m_UserDefinedAnnotations.Get();
 
 	_debug_tool = std::make_unique<RendererDebugTool>(this);
 	GameEngine::instance()->get_overlay_manager()->register_overlay(_debug_tool.get());
@@ -231,8 +230,6 @@ void Renderer::create_factories(EngineCfg const& settings, cli::CommandLine cons
 
 	create_wic_factory();
 	create_write_factory();
-
-	ENSURE_HR(m_DeviceCtx->QueryInterface(IID_PPV_ARGS(&_user_defined_annotation)));
 }
 
 #if FEATURE_D2D
@@ -511,7 +508,7 @@ void Renderer::ResizeSwapchain(u32 w, u32 h)
 void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 {
 	JONO_EVENT();
-	GPU_SCOPED_EVENT(_user_defined_annotation, "PreRender");
+	GPU_SCOPED_EVENT(&ctx, "PreRender");
 
 	// Update the debug buffers
 	{
@@ -755,7 +752,7 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 
 void Renderer::render_view(RenderContext& ctx, RenderWorld const& world, RenderPass::Value pass)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, "Renderer::render_view");
+	GPU_SCOPED_EVENT(&ctx, "Renderer::render_view");
 
 	// Setup global constant buffer
 	std::shared_ptr<RenderWorldCamera> camera  = world.get_view_camera();
@@ -795,7 +792,7 @@ void Renderer::render_view(RenderContext& ctx, RenderWorld const& world, RenderP
 void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewParams const& params)
 {
 	std::string passName = RenderPass::ToString(params.pass);
-	GPU_SCOPED_EVENT(_user_defined_annotation, passName.c_str());
+	GPU_SCOPED_EVENT(&ctx, passName.c_str());
 
 	// Setup some defaults. At the moment these are applied for each pass. However
 	// ideally we would be able to have more detailed logic here to decided based on pass and mesh/material
@@ -1172,9 +1169,9 @@ void Renderer::RSSetState(ID3D11RasterizerState* state)
 	}
 }
 
-void Renderer::render_post_predebug()
+void Renderer::render_post_predebug(RenderContext& ctx)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, "Post:PreDebug");
+	GPU_SCOPED_EVENT(&ctx, "Post:PreDebug");
 
 	ShaderCreateParams params = ShaderCreateParams::pixel_shader("Source/Engine/Shaders/default_post_px.hlsl");
 	ShaderRef post_shader = ShaderCache::instance()->find_or_create(params);
@@ -1182,7 +1179,6 @@ void Renderer::render_post_predebug()
 	params = ShaderCreateParams::vertex_shader("Source/Engine/Shaders/default_post_vx.hlsl");
 	ShaderRef post_vs_shader = ShaderCache::instance()->find_or_create(params);
 
-	RenderContext& ctx = m_RI->BeginContext();
 	ctx.IASetIndexBuffer(GraphicsResourceHandle::Invalid(), DXGI_FORMAT_UNKNOWN,0);
     ctx.IASetInputLayout(post_vs_shader->GetInputLayout());
 	ctx.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -1202,16 +1198,14 @@ void Renderer::render_post_predebug()
 
 }
 
-void Renderer::render_post_postdebug()
+void Renderer::render_post_postdebug(RenderContext& ctx)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, "Post:PostDebug");
-
-
+	GPU_SCOPED_EVENT(&ctx, "Post:PostDebug");
 }
 
 void Renderer::RenderShadowPass(RenderContext& ctx, RenderWorld const& world)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, "Shadows");
+	GPU_SCOPED_EVENT(&ctx, "Shadows");
 
 	PrepareShadowPass();
 
@@ -1241,7 +1235,7 @@ void Renderer::RenderShadowPass(RenderContext& ctx, RenderWorld const& world)
 		for (u32 i = 0; i < MAX_CASCADES; ++i)
 		{
 
-			GPU_SCOPED_EVENT(_user_defined_annotation, fmt::format("Cascade {}", i).c_str());
+			GPU_SCOPED_EVENT(&ctx, fmt::format("Cascade {}", i).c_str());
 			CascadeInfo const& info = light->get_cascade(i);
 
 			m_DeviceCtx->OMSetRenderTargets(0, nullptr, _shadow_map_dsv[i].Get());
@@ -1271,7 +1265,7 @@ void Renderer::RenderShadowPass(RenderContext& ctx, RenderWorld const& world)
 
 void Renderer::RenderZPrePass(RenderContext& ctx, RenderWorld const& world)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, "zprepass");
+	GPU_SCOPED_EVENT(&ctx, "zprepass");
 
 
 	m_DeviceCtx->OMSetRenderTargets(0, NULL, _output_dsv);
@@ -1281,7 +1275,7 @@ void Renderer::RenderZPrePass(RenderContext& ctx, RenderWorld const& world)
 
 void Renderer::RenderOpaquePass(RenderContext& ctx, RenderWorld const& world)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, "opaque");
+	GPU_SCOPED_EVENT(&ctx, "opaque");
 
 	// Do a copy to our dsv tex for sampling during the opaque pass
 	CopyDepth();
@@ -1292,7 +1286,7 @@ void Renderer::RenderOpaquePass(RenderContext& ctx, RenderWorld const& world)
 
 void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui)
 {
-	GPU_SCOPED_EVENT(_user_defined_annotation, "Post");
+	GPU_SCOPED_EVENT(&ctx, "Post");
 
 	PostCB* data = (PostCB*)_cb_post->map(ctx);
 	data->m_ViewportWidth = (f32)(m_DrawableAreaWidth);
@@ -1309,7 +1303,6 @@ void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shar
 		size_t byte_code_length;
 		_common_effect->GetVertexShaderBytecode(&shader_byte_code, &byte_code_length);
 		ENSURE_HR(_device->CreateInputLayout(DirectX::VertexPositionColor::InputElements, DirectX::VertexPositionColor::InputElementCount, shader_byte_code, byte_code_length, _layout.ReleaseAndGetAddressOf()));
-
 	}
 
 	m_DeviceCtx->OMSetBlendState(_states->Opaque(), nullptr, 0xFFFFFFFF);
@@ -1337,42 +1330,42 @@ void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shar
 
 	if(overlays)
 	{
-		GPU_SCOPED_EVENT(_user_defined_annotation, "Post:RenderOverlays");
+		GPU_SCOPED_EVENT(&ctx, "Post:RenderOverlays");
 		overlays->Render3D(m_DeviceCtx);
 	}
 
-	D3D11_VIEWPORT vp{};
-	vp.Width = static_cast<float>(m_ViewportWidth);
-	vp.Height = static_cast<float>(m_ViewportHeight);
-	vp.TopLeftX = 0.0f;
-	vp.TopLeftY = 0.0f;
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	m_DeviceCtx->RSSetViewports(1, &vp);
+	Viewport vp{};
+	vp.width = static_cast<float>(m_ViewportWidth);
+	vp.height = static_cast<float>(m_ViewportHeight);
+	vp.x = 0.0f;
+	vp.y = 0.0f;
+	vp.minZ = 0.0f;
+	vp.maxZ = 1.0f;
+	ctx.SetViewport(vp);
 
-		// Resolve msaa to non msaa for imgui render
-	m_DeviceCtx->ResolveSubresource(_non_msaa_output_tex, 0, _output_tex, 0, _swapchain_format);
+	// Resolve msaa to non msaa for imgui render
+	m_DeviceCtx->ResolveSubresource(GetRI()->GetRawResource(_non_msaa_output_tex), 0, GetRI()->GetRawResource(m_OutputTexture.GetResource()), 0, _swapchain_format);
 
 	// Copy the non-msaa world render so we can sample from it in the post pass
-	m_DeviceCtx->CopyResource(_non_msaa_output_tex_copy, _non_msaa_output_tex);
-	m_DeviceCtx->OMSetRenderTargets(1, &_non_msaa_output_rtv, nullptr);
-	render_post_predebug();
+	m_DeviceCtx->CopyResource(GetRI()->GetRawResource(_non_msaa_output_tex_copy), GetRI()->GetRawResource(_non_msaa_output_tex));
+    ctx.SetTarget(_non_msaa_output_rtv, GraphicsResourceHandle::Invalid());
+	render_post_predebug(ctx);
 
-	render_post_postdebug();
+	render_post_postdebug(ctx);
 
-	vp.Width = static_cast<float>(m_DrawableAreaWidth);
-	vp.Height = static_cast<float>(m_DrawableAreaHeight);
-	vp.TopLeftX = 0.0f;
-	vp.TopLeftY = 0.0f;
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	m_DeviceCtx->RSSetViewports(1, &vp);
+	vp.width = static_cast<float>(m_DrawableAreaWidth);
+	vp.height = static_cast<float>(m_DrawableAreaHeight);
+	vp.x = 0.0f;
+	vp.y = 0.0f;
+	vp.minZ = 0.0f;
+	vp.maxZ = 1.0f;
+    ctx.SetViewport(vp);
 
 
 	// Render main viewport ImGui
 	if(doImgui)
 	{
-		GPU_SCOPED_EVENT(_user_defined_annotation, "ImGui");
+		GPU_SCOPED_EVENT(&ctx, "ImGui");
 		m_DeviceCtx->OMSetRenderTargets(1, &_swapchain_rtv, nullptr);
 		ImDrawData* imguiData = &GetGlobalContext()->m_GraphicsThread->m_FrameData.m_DrawData;
 		ImGui_ImplDX11_RenderDrawData(imguiData);

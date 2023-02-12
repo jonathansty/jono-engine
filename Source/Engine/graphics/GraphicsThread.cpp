@@ -163,13 +163,12 @@ void GraphicsThread::Present(RenderContext& ctx)
 
 	JONO_EVENT();
 	auto d3d_ctx = renderer->get_raw_device_context();
-	auto d3d_annotation = renderer->get_raw_annotation();
 	auto d3d_swapchain = renderer->get_raw_swapchain();
 
 	size_t idx = Perf::get_current_frame_resource_index();
 
 	// Present,
-	GPU_MARKER(d3d_annotation, L"DrawEnd");
+	GPU_MARKER(&ctx, "DrawEnd");
 	u32 flags = 0;
 	if (!m_FrameData.m_VSyncEnabled)
 	{
@@ -199,8 +198,7 @@ void GraphicsThread::Render(RenderContext& ctx)
 	Graphics::Renderer* renderer = engine->m_Renderer.get();
 
 	JONO_EVENT();
-	auto d3d_annotation = renderer->get_raw_annotation();
-	GPU_SCOPED_EVENT(d3d_annotation, "Frame");
+	GPU_SCOPED_EVENT(&ctx, "Frame");
 
 	// Process the previous frame gpu timers here to allow our update thread to run first
 	// #TODO: Move to graphics thread
@@ -239,7 +237,7 @@ void GraphicsThread::Render(RenderContext& ctx)
 	{
 		renderer->PreRender(ctx, world);
 
-		GPU_SCOPED_EVENT(d3d_annotation, "Render");
+		GPU_SCOPED_EVENT(&ctx, "Render");
 		// Render the shadows
 		if (Graphics::s_EnableShadowRendering)
 		{
@@ -247,7 +245,7 @@ void GraphicsThread::Render(RenderContext& ctx)
 		}
 
 		{
-			GPU_SCOPED_EVENT(d3d_annotation, "Main");
+			GPU_SCOPED_EVENT(&ctx, "Main");
 			renderer->RenderZPrePass(ctx, world);
 			renderer->RenderOpaquePass(ctx, world);
 		}
@@ -292,7 +290,7 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 	// Execute all the 2D draw commands 
 	{
 		using namespace Graphics;
-		GPU_SCOPED_EVENT(renderer->get_raw_annotation(), "D2D:Paint");
+		GPU_SCOPED_EVENT(&ctx, "D2D:Paint");
 
 		// First construct the necessary caching
 		{

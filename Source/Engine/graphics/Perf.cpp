@@ -113,4 +113,19 @@ s64 get_previous_frame_resource_index()
 	return s_previous[s_frames - 1];
 }
 
+ scoped_gpu_event::scoped_gpu_event(RenderContext* ctx, std::string_view v)
+	 : m_Name(v)
+{
+    m_Ctx = ctx;
+    m_Ctx->DebugBeginEvent(v.data());
+}
+
+ scoped_gpu_event::~scoped_gpu_event()
+{
+    if (m_Ctx)
+    {
+        m_Ctx->DebugEndEvent();
+    }
+}
+
 } // namespace Perf

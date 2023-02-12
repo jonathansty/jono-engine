@@ -90,6 +90,9 @@ struct Dx11RenderContext
     inline void ExecuteComputeItem(ComputeItem const& item);
     void ExecuteComputeItems(Span<ComputeItem> const& items);
 
+    void DebugBeginEvent(std::string_view name);
+    void DebugEndEvent();
+    void DebugSetMarker(std::string_view name);
 
     // Render interface owner
     class Dx11RenderInterface* owner;

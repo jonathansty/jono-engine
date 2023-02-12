@@ -204,7 +204,6 @@ public:
 	ID3D11ShaderResourceView*  get_raw_output_non_msaa_srv() const { return _non_msaa_output_srv; };
 	IDXGISwapChain3*           get_raw_swapchain() const { return _swapchain; };
 
-	ID3DUserDefinedAnnotation* get_raw_annotation() const { return _user_defined_annotation; };
 	IWICImagingFactory*        get_raw_wic() const { return _wic_factory; };
 #if FEATURE_D2D
 	ID2D1Factory*              get_raw_d2d_factory() const { return _d2d_factory; }
@@ -278,8 +277,8 @@ private:
     void setup_renderstate(RenderContext& ctx, MaterialInstance const* material, ViewParams const& params);
 
 	// Rendering
-	void render_post_predebug();
-	void render_post_postdebug();
+	void render_post_predebug(RenderContext& ctx);
+	void render_post_postdebug(RenderContext& ctx);
 
 	struct PerfStats
 	{
@@ -309,8 +308,6 @@ private:
 
 	ID3D11Device*        _device;
 	ID3D11DeviceContext* m_DeviceCtx;
-
-	ID3DUserDefinedAnnotation* _user_defined_annotation;
 
 	// Intermediate MSAA game output.
 	// these textures get resolved to the swapchain before presenting
