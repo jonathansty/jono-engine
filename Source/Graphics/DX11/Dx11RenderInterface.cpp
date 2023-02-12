@@ -33,6 +33,7 @@ void Dx11RenderInterface::Init()
     m_SRVs.Grow(2048);
     m_UAVs.Grow(512);
     m_DSVs.Grow(512);
+    m_RTVs.Grow(512);
     m_InputLayouts.Grow(128);
     m_SamplerStates.Grow(64);
     m_RasterizerStates.Grow(64);
@@ -140,11 +141,39 @@ GraphicsResourceHandle Dx11RenderInterface::CreateShaderResourceView(GraphicsRes
 
 }
 
+GraphicsResourceHandle Dx11RenderInterface::CreateShaderResourceView(GraphicsResourceHandle srcBuffer, std::string_view debugName /*= ""*/)
+{
+    ComPtr<ID3D11ShaderResourceView> srv;
+
+    ID3D11Resource* b = GetRawResource(srcBuffer);
+    ENSURE_HR(m_Device->CreateShaderResourceView(b, nullptr, srv.GetAddressOf()));
+
+    Helpers::SetDebugObjectName(srv.Get(), debugName);
+
+    auto h = m_SRVs.Push(srv);
+
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_ShaderResourceView, h.gen, h.id);
+    return handle;
+}
+
 GraphicsResourceHandle Dx11RenderInterface::CreateUnorderedAccessView(GraphicsResourceHandle srcBuffer, UavDesc const& desc, std::string_view debugName)
 {
     ComPtr<ID3D11UnorderedAccessView> uav;
     ID3D11Resource* b = GetRawResource(srcBuffer);
     ENSURE_HR(m_Device->CreateUnorderedAccessView(b, &desc, &uav));
+
+    Helpers::SetDebugObjectName(uav.Get(), debugName);
+
+    auto h = m_UAVs.Push(uav);
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_UnorderedAccessView, h.gen, h.id);
+    return handle;
+}
+
+GraphicsResourceHandle Dx11RenderInterface::CreateUnorderedAccessView(GraphicsResourceHandle srcBuffer, std::string_view debugName /*= ""*/)
+{
+    ComPtr<ID3D11UnorderedAccessView> uav;
+    ID3D11Resource* b = GetRawResource(srcBuffer);
+    ENSURE_HR(m_Device->CreateUnorderedAccessView(b, nullptr, &uav));
 
     Helpers::SetDebugObjectName(uav.Get(), debugName);
 
@@ -161,7 +190,7 @@ GraphicsResourceHandle Dx11RenderInterface::CreateDepthStencilView(GraphicsResou
     Helpers::SetDebugObjectName(ds.Get(), debugName);
 
     auto h = m_DSVs.Push(ds);
-    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_UnorderedAccessView, h.gen, h.id);
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_DepthStencilView, h.gen, h.id);
     return handle;
 }
 
@@ -283,6 +312,32 @@ GraphicsResourceHandle Dx11RenderInterface::CreateTexture(Texture3DDesc const& d
     return GraphicsResourceHandle(GRT_Texture, handle.gen, handle.id);
 }
 
+GraphicsResourceHandle Dx11RenderInterface::CreateRenderTargetView(GraphicsResourceHandle resource, RtvDesc const& desc, std::string_view debugName)
+{
+    ID3D11Resource* res = GetRawResource(resource);
+
+    ComPtr<ID3D11RenderTargetView> rtv;
+    ENSURE_HR(m_Device->CreateRenderTargetView(res, &desc, &rtv));
+    Helpers::SetDebugObjectName(rtv.Get(), debugName);
+
+    auto h = m_RTVs.Push(rtv);
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_RenderTargetView, h.gen, h.id);
+    return handle;
+}
+
+GraphicsResourceHandle Dx11RenderInterface::CreateRenderTargetView(GraphicsResourceHandle resource, std::string_view debugName)
+{
+    ID3D11Resource* res = GetRawResource(resource);
+
+    ComPtr<ID3D11RenderTargetView> rtv;
+    ENSURE_HR(m_Device->CreateRenderTargetView(res, nullptr, &rtv));
+    Helpers::SetDebugObjectName(rtv.Get(), debugName);
+
+    auto h = m_RTVs.Push(rtv);
+    GraphicsResourceHandle handle = GraphicsResourceHandle(GRT_RenderTargetView, h.gen, h.id);
+    return handle;
+}
+
 void Dx11RenderInterface::ReleaseResource(GraphicsResourceHandle& h)
 {
     switch (h.data.type)
@@ -296,10 +351,14 @@ void Dx11RenderInterface::ReleaseResource(GraphicsResourceHandle& h)
         case GRT_InputLayout:
             m_InputLayouts.Erase(SlotHandle{ h.data.id, h.data.gen });
             break;
+        case GRT_RenderTargetView:
+            m_RTVs.Erase(SlotHandle{ h.data.id, h.data.gen });
+            break;
         case GRT_Texture:
         case GRT_Buffer:
             m_Resources.Erase(SlotHandle{ h.data.id, h.data.gen });
             break;
+
         default:
             ASSERT("Unsupported type!");
             break;
@@ -323,11 +382,43 @@ void Dx11RenderContext::Unmap(GraphicsResourceHandle buffer)
 }
 
 
-void Dx11RenderContext::ClearTargets(ID3D11RenderTargetView* rtv, ID3D11DepthStencilView* dsv, float4 color, uint32_t clearFlags, float depth, uint8_t stencil)
+void Dx11RenderContext::ClearTargets(GraphicsResourceHandle rtv, GraphicsResourceHandle dsv, float4 color, uint32_t clearFlags, float depth, uint8_t stencil)
 {
     float col[4] = { color.x, color.y, color.z, color.w };
-    m_Context->ClearRenderTargetView(rtv, col);
-    m_Context->ClearDepthStencilView(dsv, clearFlags, depth, stencil);
+    m_Context->ClearRenderTargetView(owner->GetRawResourceAs<ID3D11RenderTargetView>(rtv), col);
+    m_Context->ClearDepthStencilView(owner->GetRawResourceAs<ID3D11DepthStencilView>(dsv), clearFlags, depth, stencil);
+
+}
+
+void Dx11RenderContext::SetTarget(GraphicsResourceHandle rtv, GraphicsResourceHandle dsv)
+{
+    ID3D11RenderTargetView* dx11Rtv = nullptr;
+    UINT numViews = 0;
+    if(rtv)
+    {
+        dx11Rtv = owner->GetRawResourceAs<ID3D11RenderTargetView>(rtv);
+        numViews = 1;
+    }
+
+    ID3D11DepthStencilView* dx11Dsv = nullptr;
+    if(dsv)
+    {
+        dx11Dsv = owner->GetRawResourceAs<ID3D11DepthStencilView>(dsv);
+    }
+    if(numViews != 0)
+    {
+        m_Context->OMSetRenderTargets(numViews, &dx11Rtv, dx11Dsv);
+    }
+    else
+    {
+        m_Context->OMSetRenderTargets(0, nullptr, dx11Dsv);
+    }
+}
+
+void Dx11RenderContext::ClearRenderTarget(GraphicsResourceHandle rtv, float4 color)
+{
+    FLOAT c[4] = { color.r, color.g, color.b, color.a };
+    m_Context->ClearRenderTargetView(owner->GetRawResourceAs<ID3D11RenderTargetView>(rtv), c);
 }
 
 void Dx11RenderContext::SetShaderResources(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> srvs)

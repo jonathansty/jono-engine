@@ -103,14 +103,14 @@ void Texture::LoadFromMemory(uint32_t width, uint32_t height, DXGI_FORMAT format
 {
 	RenderInterface* ri = GetRI();
 
-	auto desc = CD3D11_TEXTURE2D_DESC(format, width, height);
-	desc.MipLevels = desc.ArraySize = 1;
+	m_Desc = CD3D11_TEXTURE2D_DESC(format, width, height);
+    m_Desc.MipLevels = m_Desc.ArraySize = 1;
 
 	D3D11_SUBRESOURCE_DATA tex_data{};
 	tex_data.pSysMem = data;
 	tex_data.SysMemPitch = sizeof(u32) * width;
 
-    m_Resource = ri->CreateTexture(desc, data, debug_name ? debug_name : "Texture::CreateFromMemory");
+    m_Resource = ri->CreateTexture(m_Desc, data, debug_name ? debug_name : "Texture::CreateFromMemory");
     ASSERT(m_Resource.IsValid());
 
 	D3D11_SRV_DIMENSION dim = D3D11_SRV_DIMENSION_UNKNOWN;
@@ -134,10 +134,54 @@ void Texture::LoadFromMemory(uint32_t width, uint32_t height, DXGI_FORMAT format
     m_SRV = ri->CreateShaderResourceView(m_Resource, viewDesc, debug_name ? debug_name : "Texture::CreateFromMemory");
 }
 
- Texture::~Texture()
+void Texture::LoadFromRaw(GraphicsResourceHandle resource, bool createSRV, bool createRTV, bool createUAV, std::string_view debugName)
+{
+    m_Resource = resource;
+	m_Desc = GetRI()->GetTexture2DDesc(m_Resource);
+
+	if(createSRV)
+    {
+        m_SRV = GetRI()->CreateShaderResourceView(m_Resource, debugName);
+    }
+
+	if(createRTV)
+    {
+        m_RTV = GetRI()->CreateRenderTargetView(m_Resource, debugName);
+	}
+
+	if(createUAV)
+    {
+        m_UAV = GetRI()->CreateUnorderedAccessView(m_Resource, debugName);
+	}
+}
+
+void Texture::Create(D3D11_TEXTURE2D_DESC desc, bool createSRV /*= true*/, bool createRTV /*= true*/, bool createUAV /*= true*/, std::string_view debug_name /*= ""*/)
+{
+    m_Resource = GetRI()->CreateTexture(desc, nullptr, debug_name);
+    m_Desc = GetRI()->GetTexture2DDesc(m_Resource);
+
+    if (createSRV)
+    {
+        m_SRV = GetRI()->CreateShaderResourceView(m_Resource, debug_name);
+    }
+
+    if (createRTV)
+    {
+        m_RTV = GetRI()->CreateRenderTargetView(m_Resource, debug_name);
+    }
+
+    if (createUAV)
+    {
+        m_UAV = GetRI()->CreateUnorderedAccessView(m_Resource, debug_name);
+    }
+}
+
+Texture::~Texture()
 {
     GetRI()->ReleaseResource(m_Resource);
     GetRI()->ReleaseResource(m_SRV);
+    GetRI()->ReleaseResource(m_RTV);
+    GetRI()->ReleaseResource(m_UAV);
 }
 
 void Texture::Load(std::string const& path)
@@ -148,9 +192,6 @@ void Texture::Load(std::string const& path)
 	int x, y, comp;
 	stbi_uc* data = stbi_load(path.c_str(), &x, &y, &comp, 4);
 	ASSERTMSG(data, "Failed to  load image from {}", path);
-
-	this->m_Width = u32(x);
-	this->m_Height = u32(y);
 
 	this->LoadFromMemory(x, y, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, (void*)data, path.c_str());
 	stbi_image_free(data);

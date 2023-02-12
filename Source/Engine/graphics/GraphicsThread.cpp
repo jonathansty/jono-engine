@@ -363,15 +363,22 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 		{
 			auto dx11Ctx = Graphics::get_ctx();
 
-			CD3D11_VIEWPORT viewport = CD3D11_VIEWPORT(renderer->get_raw_output_tex(), renderer->get_raw_output_rtv());
+			CD3D11_VIEWPORT viewport{};
+            viewport.TopLeftX = 0.0f;
+            viewport.TopLeftY = 0.0f;
+            viewport.Width = (FLOAT)renderer->GetDrawableWidth();
+            viewport.Height = (FLOAT)renderer->GetDrawableHeight();
+            viewport.MinDepth = 0.0f;
+            viewport.MaxDepth = 1.0f;
+
 			D3D11_RECT rect{ (LONG)viewport.TopLeftX, (LONG)viewport.TopLeftY, (LONG)viewport.TopLeftX + (LONG)viewport.Width, (LONG)viewport.TopLeftY + (LONG)viewport.Height };
             dx11Ctx->RSSetViewports(1, &viewport);
             dx11Ctx->RSSetScissorRects(1, &rect);
 
 			dx11Ctx->IASetIndexBuffer(renderData.m_IndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
 
-			ID3D11RenderTargetView* rtv = renderer->get_raw_output_rtv();
-            dx11Ctx->OMSetRenderTargets(1, &rtv, nullptr);
+			GraphicsResourceHandle rtv = renderer->get_raw_output_rtv();
+            ctx.SetTarget(rtv, GraphicsResourceHandle::Invalid());
 
 			constexpr UINT vertexStride = sizeof(SimpleVertex2D);
 			constexpr UINT vertexOffset = 0;
@@ -429,7 +436,7 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 				else if(cmd.m_Type == DrawCmd::DC_CLEAR)
 				{
 					float const* color = reinterpret_cast<float const*>(&cmd.m_Data[0]);
-                    dx11Ctx->ClearRenderTargetView(rtv, color);
+                    ctx.ClearRenderTarget(rtv, float4(color[0], color[1], color[2], color[3]));
 				}
 			}
 		}

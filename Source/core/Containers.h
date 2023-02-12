@@ -19,6 +19,12 @@ public:
         return m_Storage[h.id];
     }
 
+    T const& Get(SlotHandle const& h) const
+    {
+        ASSERT(m_Generations[h.id] == h.gen);
+        return m_Storage[h.id];
+    }
+
     void Grow(size_t size)
     {
         if(m_Generations.size() < size)

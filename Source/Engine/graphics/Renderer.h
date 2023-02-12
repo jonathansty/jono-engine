@@ -23,6 +23,8 @@
 
 #include "Graphics/RenderInterface.h"
 
+#include "Core/TextureResource.h"
+
 class RenderWorld;
 class RenderWorldCamera;
 class Material;
@@ -198,10 +200,10 @@ public:
 
 	ID3D11Device*              get_raw_device() const { return _device; };
 	ID3D11DeviceContext*       get_raw_device_context() const { return m_DeviceCtx; };
-	ID3D11RenderTargetView*    get_raw_output_rtv() const { return _output_rtv; };
-	ID3D11Texture2D*           get_raw_output_tex() const { return _output_tex; };
-	ID3D11Texture2D*           get_raw_output_non_msaa_tex() const { return _non_msaa_output_tex; };
-	ID3D11ShaderResourceView*  get_raw_output_non_msaa_srv() const { return _non_msaa_output_srv; };
+	GraphicsResourceHandle const& get_raw_output_rtv() const { return m_OutputTexture.GetRTV(); };
+	GraphicsResourceHandle const& get_raw_output_tex() const { return m_OutputTexture.GetResource(); };
+	GraphicsResourceHandle const& get_raw_output_non_msaa_tex() const { return _non_msaa_output_tex; };
+	GraphicsResourceHandle const& get_raw_output_non_msaa_srv() const { return _non_msaa_output_srv; };
 	IDXGISwapChain3*           get_raw_swapchain() const { return _swapchain; };
 
 	ID3DUserDefinedAnnotation* get_raw_annotation() const { return _user_defined_annotation; };
@@ -314,20 +316,18 @@ private:
 
 	// Intermediate MSAA game output.
 	// these textures get resolved to the swapchain before presenting
-	ID3D11Texture2D*          _output_tex;
-	ID3D11ShaderResourceView* _output_srv;
-	ID3D11Texture2D*          _non_msaa_output_tex;
-	ID3D11ShaderResourceView* _non_msaa_output_srv;
-	ID3D11Texture2D*	      _non_msaa_output_tex_copy;
-	ID3D11ShaderResourceView* _non_msaa_output_srv_copy;
+    Texture m_OutputTexture;
+	GraphicsResourceHandle _non_msaa_output_tex;
+	GraphicsResourceHandle _non_msaa_output_srv;
+	GraphicsResourceHandle _non_msaa_output_tex_copy;
+	GraphicsResourceHandle _non_msaa_output_srv_copy;
 
-	ID3D11RenderTargetView*	  _non_msaa_output_rtv;
-	ID3D11RenderTargetView*   _output_rtv;
-	GraphicsResourceHandle          _output_depth;
-	GraphicsResourceHandle          _output_depth_copy;
+	GraphicsResourceHandle _non_msaa_output_rtv;
+	GraphicsResourceHandle _output_depth;
+	GraphicsResourceHandle _output_depth_copy;
 	GraphicsResourceHandle _output_depth_srv;
 	GraphicsResourceHandle _output_depth_srv_copy;
-	ID3D11DepthStencilView*   _output_dsv;
+	GraphicsResourceHandle _output_dsv;
 
 	// D2D resources to support D2D1 on D3D11
 	ID2D1Factory* _d2d_factory;
@@ -351,10 +351,10 @@ private:
 	std::shared_ptr<Shader> _fplus_cull_shader;
 
 	// Constant buffers
-	ConstantBufferRef _cb_global;
-	ConstantBufferRef _cb_model;
-	ConstantBufferRef _cb_debug;
-	ConstantBufferRef _cb_post;
+	ConstantBufferRef m_CBGlobal;
+	ConstantBufferRef m_CBModel;
+	ConstantBufferRef m_CBDebug;
+	ConstantBufferRef m_CBPost;
 
 	u32 _num_lights;
 	u32 _num_directional_lights;

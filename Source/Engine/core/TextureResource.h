@@ -13,27 +13,34 @@ enum class TextureType
 class Texture
 {
 public:
+    Texture() = default;
+    ~Texture();
 
-	Texture() = default;
-	~Texture();
+    void Load(std::string const& path);
+    void LoadFromMemory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data, const char* debug_name = nullptr);
+    void LoadFromRaw(GraphicsResourceHandle resource, bool createSRV = true, bool createRTV = true, bool createUAV = true, std::string_view debug_name = "");
 
-	void Load(std::string const& path);
-	void LoadFromMemory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data, const char* debug_name = nullptr);
+	void Create(D3D11_TEXTURE2D_DESC desc, bool createSRV = true, bool createRTV = true, bool createUAV = true, std::string_view debug_name = "");
 
-	// Gets the raw SRV for this texture resource
-	GraphicsResourceHandle GetSRV() const { return m_SRV; }
+    u32 GetWidth() const { return m_Desc.Width; };
+    u32 GetHeight() const { return m_Desc.Height; };
 
-	u32 GetWidth() const { return m_Width; };
-	u32 GetHeight() const { return m_Height; };
+	// #TODO: Abstract texture descriptors to be cross platform
+	D3D11_TEXTURE2D_DESC GetDesc() const { return m_Desc; }
+
+    GraphicsResourceHandle const& GetRTV() const { return m_RTV; }
+    GraphicsResourceHandle const& GetSRV() const { return m_SRV; }
+    GraphicsResourceHandle const& GetUAV() const { return m_UAV; }
+    GraphicsResourceHandle const& GetResource() const { return m_Resource; }
+
 
 private:
-	GraphicsResourceHandle m_Resource;
+    GraphicsResourceHandle m_Resource;
+    GraphicsResourceHandle m_RTV;
+    GraphicsResourceHandle m_SRV;
+    GraphicsResourceHandle m_UAV;
 
-	// Should we use texture resource for textures create from code?
-	// ComPtr<ID3D11RenderTargetView> _rtv;
-	GraphicsResourceHandle m_SRV;
-	u32 m_Width;
-	u32 m_Height;
+    D3D11_TEXTURE2D_DESC m_Desc;
 };
 
 class TextureHandle : public TCachedResource<Texture, FromFileResourceParameters>
