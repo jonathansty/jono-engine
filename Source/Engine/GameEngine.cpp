@@ -23,7 +23,6 @@
 
 #include "Graphics/ShaderCompiler.h"
 
-#include "CommonStates.h"
 #include "Effects.h"
 #include "Graphics/Perf.h"
 #include "Graphics/ShaderCache.h"

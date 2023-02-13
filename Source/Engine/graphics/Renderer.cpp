@@ -13,8 +13,6 @@
 #include "Debug.h"
 #include "RendererDebug.h"
 
-#include "CommonStates.h"
-#include "Effects.h"
 #include "ShaderCache.h"
 #include "Graphics/ShaderStage.h"
 
@@ -1283,7 +1281,7 @@ void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shar
 		void const* shader_byte_code;
 		size_t byte_code_length;
 		_common_effect->GetVertexShaderBytecode(&shader_byte_code, &byte_code_length);
-		ENSURE_HR(_device->CreateInputLayout(DirectX::VertexPositionColor::InputElements, DirectX::VertexPositionColor::InputElementCount, shader_byte_code, byte_code_length, _layout.ReleaseAndGetAddressOf()));
+		ENSURE_HR(_device->CreateInputLayout(DirectX::DX11::VertexPositionColor::InputElements, DirectX::DX11::VertexPositionColor::InputElementCount, shader_byte_code, byte_code_length, _layout.ReleaseAndGetAddressOf()));
 	}
 
 	m_DeviceCtx->OMSetBlendState(_states->Opaque(), nullptr, 0xFFFFFFFF);

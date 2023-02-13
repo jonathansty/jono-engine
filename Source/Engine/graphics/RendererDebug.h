@@ -1,5 +1,7 @@
 #pragma once
 #include "Debug/OverlayManager.h"
+#include  <DirectXTK/PrimitiveBatch.h>
+#include  <DirectXTK/VertexTypes.h>
 
 struct ID3D11DeviceContext;
 
@@ -27,7 +29,7 @@ private:
 
 	bool _show_shadow_debug;
 
-	std::shared_ptr<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>> _batch;
+	std::shared_ptr<DirectX::DX11::PrimitiveBatch<DirectX::VertexPositionColor>> _batch;
 };
 
 

@@ -228,10 +228,9 @@ const char* DepthStencilStateToString(DepthStencilState state)
 {
 	static const char* s_strings[*DepthStencilState::Num] = 
 	{
-		"Default",
 		"GreaterEqual",
 		"Equal",
-		"LessEqual"
+		"LessEqual",
 		"NoDepth"
 	};
 

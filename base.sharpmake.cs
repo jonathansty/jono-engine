@@ -74,14 +74,35 @@ public abstract class Module : Project
 
         conf.Output = target.OutputType == OutputType.Lib ? Configuration.OutputType.Lib : Configuration.OutputType.Dll;
 
-        if (conf.Output == Configuration.OutputType.Dll)
+        if(conf.Output == Configuration.OutputType.Lib)
+        {
+            if(target.GetOptimization() == Optimization.Debug)
+            {
+                conf.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDebug);
+            }
+            else
+            {
+                conf.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreaded);
+            }
+        }
+        else if (conf.Output == Configuration.OutputType.Dll)
         {
             string capitalisedName = conf.Project.Name.ToUpper();
             conf.Defines.Add($"{capitalisedName}_DLL");
             conf.Defines.Add($"{capitalisedName}_EXPORTS");
 
             conf.ExportDefines.Add($"{capitalisedName}_DLL");
+
+            if (target.GetOptimization() == Optimization.Debug)
+            {
+                conf.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDebugDLL);
+            }
+            else
+            {
+                conf.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDLL);
+            }
         }
+
 
         conf.PrecompHeader = "[project.Name].pch.h";
         conf.PrecompSource = "[project.Name].pch.cpp";
@@ -188,6 +209,7 @@ public abstract class Application : Project
 
         // Handle all conan packages
         conf.AddPublicDependency<ConanDependencies>(target);
+        conf.AddPublicDependency<DirectXTK>(target);
     }
 
     [Configure(Blob.Blob)]

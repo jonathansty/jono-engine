@@ -2,6 +2,8 @@
 #include "FreeCam.h"
 #include "InputManager.h"
 
+#include <DirectXTK/Effects.h>
+
 FreeCam::FreeCam(shared_ptr<RenderWorld> const& world)
 		: _world(world)
 		, _position(0.0f,0.0f,0.0f)

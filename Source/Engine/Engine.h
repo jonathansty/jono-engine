@@ -32,12 +32,6 @@ using namespace D2D1;
 
 #include <optick.h>
 
-// XTK helpers
-#include <Effects.h>
-#include <Model.h>
-#include <PrimitiveBatch.h>
-#include <VertexTypes.h>
-
 //#pragma GCC diagnostic ignored "-Wpragma-pack"
 #include <assimp/GltfMaterial.h>
 #include <assimp/material.h>

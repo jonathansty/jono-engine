@@ -1,6 +1,9 @@
 #pragma once
 
 #include "DirectXColors.h"
+#include <DirectXTK/VertexTypes.h>
+#include <DirectXTK/SimpleMath.h>
+#include <DirectXTK/PrimitiveBatch.h>
 
 namespace Graphics
 {

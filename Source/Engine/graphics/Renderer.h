@@ -6,6 +6,10 @@
 #include "EngineCfg.h"
 #include "GameSettings.h"
 
+#include "DirectXTK/CommonStates.h"
+#include "DirectXTK/Effects.h"
+#include "DirectXTK/VertexTypes.h"
+
 #include "Debug/OverlayManager.h"
 #include "Core/Math.h"
 #include <DirectXColors.h>
@@ -371,8 +375,8 @@ private:
 	u32 m_DrawableAreaWidth;
 	u32 m_DrawableAreaHeight;
 
-	std::unique_ptr<DirectX::CommonStates> _states = nullptr;
-	std::unique_ptr<DirectX::BasicEffect> _common_effect = nullptr;
+	std::unique_ptr<DirectX::DX11::CommonStates> _states = nullptr;
+	std::unique_ptr<DirectX::DX11::BasicEffect> _common_effect = nullptr;
 	ComPtr<ID3D11InputLayout> _layout = nullptr;
 
 	std::unique_ptr<class VisibilityManager> m_Visibility;
