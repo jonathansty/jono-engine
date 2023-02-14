@@ -36,5 +36,5 @@ jobs:
           conan profile new default --detect
           ./Tools/Bootstrap.cmd CI
       - name: Building jono-engine ${{ matrix.config }}
-        run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration="${{ matrix.config }} ${{ matrix.linkage }}"
+        run: msbuild build/jono-engine_vs2022.sln -t:rebuild -property:Configuration="${{ matrix.config }} ${{ matrix.linkage }}" -verbosity:minimal
 
