@@ -184,6 +184,31 @@ struct DeviceContext
 	ComPtr<ID3D11DeviceContext> _ctx;
 };
 
+	// information that is needed to represent 1 draw call
+struct DrawCall
+{
+    float4x4 _transform;
+
+    // Mesh index buffer
+    GraphicsResourceHandle _index_buffer;
+
+    // Vertex buffers
+    GraphicsResourceHandle _vertex_buffer;
+
+    // First vertex offset this mesh starts at in the vertex buffer
+    u64 _first_vertex;
+
+    // First index location offset this mesh starts at in the index buffer
+    u64 _first_index;
+
+    // The amount of indices associated with this mesh
+    u64 _index_count;
+
+    // Material (e.g. shaders, textures, constant buffer, input layouts)
+    MaterialInstance const* _material;
+};
+
+
 
 class Renderer final
 {
@@ -233,9 +258,8 @@ public:
 	void PreRender(RenderContext& ctx, RenderWorld const& world);
 
 	// Rendering passes and commands
-    void render_view(RenderContext& ctx, RenderWorld const& world, RenderPass::Value pass);
-    void render_world(RenderContext& ctx, RenderWorld const& world, ViewParams const& params);
-
+    void DrawView(RenderContext& ctx, RenderWorld const& world, RenderPass::Value pass);
+    void DrawWorld(RenderContext& ctx, RenderWorld const& world, ViewParams const& params);
 
 	void PrepareShadowPass();
 
@@ -246,16 +270,16 @@ public:
 	void EndFrame(RenderContext& ctx);
 
 	// Renders the shadow pass for this world. (Currently just CSM)
-    void RenderShadowPass(RenderContext& ctx, RenderWorld const& world);
+    void DrawShadowPass(RenderContext& ctx, RenderWorld const& world);
 
 	// Renders a zprepass for the world 
-	void RenderZPrePass(RenderContext& ctx, RenderWorld const& world);
+	void DrawZPrePass(RenderContext& ctx, RenderWorld const& world);
 
 	// Renders the opaque pass 
-	void RenderOpaquePass(RenderContext& ctx, RenderWorld const& world);
+	void DrawOpaquePass(RenderContext& ctx, RenderWorld const& world);
 
 	// Renders the final post processing pass. For now we also render ImGui and other debug code in here.
-    void RenderPostPass(RenderContext& ctx, RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui = true);
+    void DrawPost(RenderContext& ctx, RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui = true);
 
 	// Copies the last rendered main frustum depth to be used as input during the main pass
 	void CopyDepth();
@@ -380,6 +404,8 @@ private:
 	ComPtr<ID3D11InputLayout> _layout = nullptr;
 
 	std::unique_ptr<class VisibilityManager> m_Visibility;
+
+	std::vector<DrawCall> m_DrawCalls;
 
 	// State tracking
 	struct 

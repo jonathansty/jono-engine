@@ -731,7 +731,7 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 
 }
 
-void Renderer::render_view(RenderContext& ctx, RenderWorld const& world, RenderPass::Value pass)
+void Renderer::DrawView(RenderContext& ctx, RenderWorld const& world, RenderPass::Value pass)
 {
 	GPU_SCOPED_EVENT(&ctx, "Renderer::render_view");
 
@@ -764,10 +764,10 @@ void Renderer::render_view(RenderContext& ctx, RenderWorld const& world, RenderP
     params.viewport.minZ = 0.0f;
     params.viewport.maxZ = 1.0f;
 
-	render_world(ctx, world, params);
+	DrawWorld(ctx, world, params);
 }
 
-void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewParams const& params)
+void Renderer::DrawWorld(RenderContext& ctx, RenderWorld const& world, ViewParams const& params)
 {
 	std::string passName = RenderPass::ToString(params.pass);
 	GPU_SCOPED_EVENT(&ctx, passName.c_str());
@@ -859,37 +859,6 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 
 	float4x4 vp = hlslpp::mul(params.view, params.proj);
 
-	// information that is needed to represent 1 draw call
-	struct DrawCall
-	{
-		float4x4 _transform;
-
-		// Mesh index buffer
-		GraphicsResourceHandle _index_buffer;
-
-		// Vertex buffers
-		GraphicsResourceHandle _vertex_buffer;
-
-        // First vertex offset this mesh starts at in the vertex buffer
-		u64 _first_vertex;
-
-		// First index location offset this mesh starts at in the index buffer
-		u64 _first_index;
-
-		// The amount of indices associated with this mesh
-		u64 _index_count;
-
-		// Material (e.g. shaders, textures, constant buffer, input layouts)
-		MaterialInstance const* _material;
-	
-	};
-	static std::vector<DrawCall> m_DrawCalls;
-    if (m_DrawCalls.empty())
-    {
-        m_DrawCalls.reserve(2048);
-    }
-
-
 	{
 		JONO_EVENT("GenerateDrawCalls");
 
@@ -935,20 +904,19 @@ void Renderer::render_world(RenderContext& ctx, RenderWorld const& world, ViewPa
 	extern int g_DebugMode;
 	if (g_DebugMode != 0)
 	{
-		ID3D11Buffer* buffers[3] = {
-			m_RI->GetRawBuffer(m_CBGlobal->get_buffer()),
-			m_RI->GetRawBuffer(m_CBDebug->get_buffer())
+		GraphicsResourceHandle buffers[3] = {
+			m_CBGlobal->get_buffer(),
+			m_CBDebug->get_buffer()
 		};
-        dx11Ctx->VSSetConstantBuffers(0, 2, buffers);
-        dx11Ctx->PSSetConstantBuffers(0, 2, buffers);
+        ctx.SetConstantBuffers(ShaderStage::Vertex | ShaderStage::Pixel, 0, buffers);
 	}
 	else
 	{
-		ID3D11Buffer* buffers[1] = {
-            m_RI->GetRawBuffer(m_CBGlobal->get_buffer()),
+		GraphicsResourceHandle buffers[1] = {
+            m_CBGlobal->get_buffer(),
 		};
-        dx11Ctx->VSSetConstantBuffers(0, 1, buffers);
-        dx11Ctx->PSSetConstantBuffers(0, 1, buffers);
+		ShaderStage s = ShaderStage::Vertex | ShaderStage::Pixel;
+        ctx.SetConstantBuffers(s, 0, buffers);
 	}
 
 	GraphicsResourceHandle prev_index = GraphicsResourceHandle::Invalid();
@@ -1183,7 +1151,7 @@ void Renderer::render_post_postdebug(RenderContext& ctx)
 	GPU_SCOPED_EVENT(&ctx, "Post:PostDebug");
 }
 
-void Renderer::RenderShadowPass(RenderContext& ctx, RenderWorld const& world)
+void Renderer::DrawShadowPass(RenderContext& ctx, RenderWorld const& world)
 {
 	GPU_SCOPED_EVENT(&ctx, "Shadows");
 
@@ -1238,21 +1206,21 @@ void Renderer::RenderShadowPass(RenderContext& ctx, RenderWorld const& world)
 			params.view_direction = direction;
 			params.pass = RenderPass::Value(RenderPass::Shadow_CSM0 + i);
 			params.viewport = Viewport(0.0f, 0.0f, 2048.0f, 2048.0f);
-			render_world(ctx, world, params);
+			DrawWorld(ctx, world, params);
 		}
 	}
 }
 
-void Renderer::RenderZPrePass(RenderContext& ctx, RenderWorld const& world)
+void Renderer::DrawZPrePass(RenderContext& ctx, RenderWorld const& world)
 {
 	GPU_SCOPED_EVENT(&ctx, "zprepass");
 
     ctx.SetTarget(GraphicsResourceHandle::Invalid(), _output_dsv);
 
-	render_view(ctx, world, RenderPass::ZPrePass);
+	DrawView(ctx, world, RenderPass::ZPrePass);
 }
 
-void Renderer::RenderOpaquePass(RenderContext& ctx, RenderWorld const& world)
+void Renderer::DrawOpaquePass(RenderContext& ctx, RenderWorld const& world)
 {
 	GPU_SCOPED_EVENT(&ctx, "opaque");
 
@@ -1260,10 +1228,10 @@ void Renderer::RenderOpaquePass(RenderContext& ctx, RenderWorld const& world)
 	CopyDepth();
 
 	ctx.SetTarget(m_OutputTexture.GetRTV(), _output_dsv);
-	render_view(ctx, world, Graphics::RenderPass::Opaque);
+	DrawView(ctx, world, Graphics::RenderPass::Opaque);
 }
 
-void Renderer::RenderPostPass(RenderContext& ctx, RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui)
+void Renderer::DrawPost(RenderContext& ctx, RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui)
 {
 	GPU_SCOPED_EVENT(&ctx, "Post");
 

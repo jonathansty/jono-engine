@@ -426,34 +426,23 @@ void Dx11RenderContext::SetShaderResources(ShaderStage stage, uint32_t startSlot
     ASSERT(srvs.size() < 128);
     ID3D11ShaderResourceView* views[128];
     UINT numViews = std::min((UINT)srvs.size(), (UINT)128);
-    for(size_t j = 0; j < numViews; ++j)
+    for (size_t j = 0; j < numViews; ++j)
     {
         views[j] = owner->GetRawSRV(srvs[j]);
     }
 
-    switch(stage)
-    {
-        case ShaderStage::Vertex:
-            m_Context->VSSetShaderResources(startSlot, numViews, views);
-            break;
-        case ShaderStage::Pixel:
-            m_Context->PSSetShaderResources(startSlot, numViews, views);
-            break;
-        case ShaderStage::Compute:
-            m_Context->CSSetShaderResources(startSlot, numViews, views);
-            break;
-        case ShaderStage::Domain:
-            m_Context->DSSetShaderResources(startSlot, numViews, views);
-            break;
-        case ShaderStage::Geometry:
-            m_Context->GSSetShaderResources(startSlot, numViews, views);
-            break;
-        case ShaderStage::Hull:
-            m_Context->HSSetShaderResources(startSlot, numViews, views);
-            break;
-        default:
-            break;
-    }
+    if ((stage & ShaderStage::Vertex) == ShaderStage::Vertex)
+        m_Context->VSSetShaderResources(startSlot, numViews, views);
+    if ((stage & ShaderStage::Pixel) == ShaderStage::Pixel)
+        m_Context->PSSetShaderResources(startSlot, numViews, views);
+    if ((stage & ShaderStage::Compute) == ShaderStage::Compute)
+        m_Context->CSSetShaderResources(startSlot, numViews, views);
+    if ((stage & ShaderStage::Domain) == ShaderStage::Domain)
+        m_Context->DSSetShaderResources(startSlot, numViews, views);
+    if ((stage & ShaderStage::Geometry) == ShaderStage::Geometry)
+        m_Context->GSSetShaderResources(startSlot, numViews, views);
+    if ((stage & ShaderStage::Hull) == ShaderStage::Hull)
+        m_Context->HSSetShaderResources(startSlot, numViews, views);
 }
 
 void Dx11RenderContext::SetSamplers(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> samplers)
@@ -461,35 +450,48 @@ void Dx11RenderContext::SetSamplers(ShaderStage stage, uint32_t startSlot, Span<
     ASSERT(samplers.size() < 16);
     ID3D11SamplerState* rawSamplers[16];
     UINT numViews = std::min((UINT)samplers.size(), (UINT)16);
-    for(size_t j = 0; j < numViews; ++j)
+    for (size_t j = 0; j < numViews; ++j)
     {
         rawSamplers[j] = owner->GetRawSampler(samplers[j]);
     }
 
-    switch(stage)
+    if ((stage & ShaderStage::Vertex) == ShaderStage::Vertex)
+        m_Context->VSSetSamplers(startSlot, numViews, rawSamplers);
+    if ((stage & ShaderStage::Pixel) == ShaderStage::Pixel)
+        m_Context->VSSetSamplers(startSlot, numViews, rawSamplers);
+    if ((stage & ShaderStage::Compute) == ShaderStage::Compute)
+        m_Context->CSSetSamplers(startSlot, numViews, rawSamplers);
+    if ((stage & ShaderStage::Domain) == ShaderStage::Domain)
+        m_Context->DSSetSamplers(startSlot, numViews, rawSamplers);
+    if ((stage & ShaderStage::Geometry) == ShaderStage::Geometry)
+        m_Context->GSSetSamplers(startSlot, numViews, rawSamplers);
+    if ((stage & ShaderStage::Hull) == ShaderStage::Hull)
+        m_Context->HSSetSamplers(startSlot, numViews, rawSamplers);
+}
+
+void Dx11RenderContext::SetConstantBuffers(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> buffers)
+{
+    // #TODO: Find max number of buffers
+    ASSERT(buffers.size() < 16);
+    ID3D11Buffer* rawBuffers[16];
+    UINT numViews = std::min((UINT)buffers.size(), (UINT)16);
+    for (size_t j = 0; j < numViews; ++j)
     {
-        case ShaderStage::Vertex:
-            m_Context->VSSetSamplers(startSlot, numViews, rawSamplers);
-            break;
-        case ShaderStage::Pixel:
-            m_Context->PSSetSamplers(startSlot, numViews, rawSamplers);
-            break;
-        case ShaderStage::Compute:
-            m_Context->CSSetSamplers(startSlot, numViews, rawSamplers);
-            break;
-        case ShaderStage::Domain:
-            m_Context->DSSetSamplers(startSlot, numViews, rawSamplers);
-            break;
-        case ShaderStage::Geometry:
-            m_Context->GSSetSamplers(startSlot, numViews, rawSamplers);
-            break;
-        case ShaderStage::Hull:
-            m_Context->HSSetSamplers(startSlot, numViews, rawSamplers);
-            break;
-        default:
-            break;
-    
+        rawBuffers[j] = owner->GetRawBuffer(buffers[j]);
     }
+
+    if ((stage & ShaderStage::Vertex) == ShaderStage::Vertex)
+        m_Context->VSSetConstantBuffers(startSlot, numViews, rawBuffers);
+    if ((stage & ShaderStage::Pixel) == ShaderStage::Pixel)
+        m_Context->PSSetConstantBuffers(startSlot, numViews, rawBuffers);
+    if ((stage & ShaderStage::Compute) == ShaderStage::Compute)
+        m_Context->CSSetConstantBuffers(startSlot, numViews, rawBuffers);
+    if ((stage & ShaderStage::Domain) == ShaderStage::Domain)
+        m_Context->DSSetConstantBuffers(startSlot, numViews, rawBuffers);
+    if ((stage & ShaderStage::Geometry) == ShaderStage::Geometry)
+        m_Context->GSSetConstantBuffers(startSlot, numViews, rawBuffers);
+    if ((stage & ShaderStage::Hull) == ShaderStage::Hull)
+        m_Context->HSSetConstantBuffers(startSlot, numViews, rawBuffers);
 }
 
 void Dx11RenderContext::BeginFrame()

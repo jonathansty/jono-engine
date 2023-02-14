@@ -241,13 +241,13 @@ void GraphicsThread::Render(RenderContext& ctx)
 		// Render the shadows
 		if (Graphics::s_EnableShadowRendering)
 		{
-			renderer->RenderShadowPass(ctx, world);
+			renderer->DrawShadowPass(ctx, world);
 		}
 
 		{
 			GPU_SCOPED_EVENT(&ctx, "Main");
-			renderer->RenderZPrePass(ctx, world);
-			renderer->RenderOpaquePass(ctx, world);
+			renderer->DrawZPrePass(ctx, world);
+			renderer->DrawOpaquePass(ctx, world);
 		}
 	}
 
@@ -267,7 +267,7 @@ void GraphicsThread::Render(RenderContext& ctx)
 	{
 		overlayManager = engine->m_OverlayManager;
 	}
-	renderer->RenderPostPass(ctx, world, overlayManager, doImgui);
+	renderer->DrawPost(ctx, world, overlayManager, doImgui);
 	renderer->EndFrame(ctx);
 }
 
@@ -328,7 +328,7 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 				initial_data.pSysMem = vertices.data();
 				ENSURE_HR(Graphics::get_device()->CreateBuffer(&desc, &initial_data, renderData.m_VertexBuffer.GetAddressOf()));
 			}
-			else
+			else if(renderData.m_TotalVertices > 0)
 			{
 				D3D11_MAPPED_SUBRESOURCE mapped_resource{};
 				Graphics::get_ctx()->Map(renderData.m_VertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
@@ -348,7 +348,7 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 				initial_data.pSysMem = indices.data();
 				ENSURE_HR(Graphics::get_device()->CreateBuffer(&desc, &initial_data, renderData.m_IndexBuffer.GetAddressOf()));
 			}
-			else
+			else if(renderData.m_TotalIndices > 0)
 			{
 				D3D11_MAPPED_SUBRESOURCE mapped_resource{};
 				Graphics::get_ctx()->Map(renderData.m_IndexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);

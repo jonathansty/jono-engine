@@ -193,11 +193,11 @@ void SafeRelease(T*& obj)
 #define ENUM_BITFLAGS(enum_type)                                           \
 	inline enum_type operator&(enum_type const& lhs, enum_type const& rhs) \
 	{                                                                      \
-		return static_cast<enum_type>((u32)lhs & (u32)rhs);                \
+		return static_cast<enum_type>((uint32_t)(lhs) & (uint32_t)(rhs));                \
 	}                                                                      \
 	inline enum_type operator|(enum_type const& lhs, enum_type const& rhs) \
 	{                                                                      \
-		return static_cast<enum_type>((u32)lhs | (u32)rhs);                \
+		return static_cast<enum_type>((uint32_t)lhs | (uint32_t)rhs);                \
 	}                                                                      \
 	ENUM_UNDERLYING_TYPE(enum_type)	
 

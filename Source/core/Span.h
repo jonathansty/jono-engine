@@ -12,6 +12,7 @@ public:
     
     }
 
+    // Array conversions
     template<size_t N>
     Span(std::array<T, N>& v)
       : m_Data(v.data())
@@ -21,22 +22,16 @@ public:
 
     template<size_t N>
     Span(T (&obj)[N])
-        : m_Data(obj)
-        , m_Length(N)
+      : m_Data(obj)
+      , m_Length(N)
     {
+    }
     
 
-    }
 
     Span(std::vector<T>& v)
         : m_Data(v.data())
         , m_Length(v.size())
-    {
-    
-    }
-    Span(std::vector<T> const& v)
-      : m_Data(v.data())
-      , m_Length(v.size())
     {
     
     }

@@ -81,6 +81,7 @@ struct Dx11RenderContext
 
     void SetShaderResources(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> srvs);
     void SetSamplers(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> samplers);
+    void SetConstantBuffers(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> buffers);
 
     void* Map(GraphicsResourceHandle buffer);
     void  Unmap(GraphicsResourceHandle buffer);
