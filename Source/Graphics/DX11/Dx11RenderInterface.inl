@@ -26,10 +26,27 @@ void Dx11RenderContext::SetViewport(Viewport const& vp)
     D3D11_VIEWPORT dx11VP = { vp.x, vp.y, vp.width, vp.height, vp.minZ, vp.maxZ };
     m_Context->RSSetViewports(1, &dx11VP);
 }
-
-void Dx11RenderContext::IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology)
+void Dx11RenderContext::SetScissorRects(Span<Rect> rects)
 {
-    m_Context->IASetPrimitiveTopology(topology);
+    D3D11_RECT dx11r[16];
+    size_t numRects = std::min<size_t>(16, rects.size());
+    for (size_t i =0; i < numRects; ++i)
+    {
+        Rect const& r = rects[i];
+        dx11r[i] = D3D11_RECT{ 
+            (LONG)r.topLeftX,
+            (LONG)r.topLeftY,
+            (LONG)r.bottomRightX,
+            (LONG)r.bottomRightY 
+        };
+    }
+    m_Context->RSSetScissorRects((UINT)numRects, dx11r);
+}
+
+
+void Dx11RenderContext::IASetPrimitiveTopology(PrimitiveTopology topology)
+{
+    m_Context->IASetPrimitiveTopology(Dx11GetPrimitiveTopology(topology));
 }
 
 void Dx11RenderContext::ExecuteComputeItem(ComputeItem const& item)
@@ -77,7 +94,7 @@ inline void Dx11RenderContext::OMSetBlendState(GraphicsResourceHandle bs, std::a
     m_Context->OMSetBlendState(owner->GetRawResourceAs<ID3D11BlendState>(bs), (FLOAT*)blendFactor.data(), sampleMask);
 }
 
-inline void Dx11RenderContext::RSSetViewports(Span<Viewport> vps)
+inline void Dx11RenderContext::SetViewports(Span<Viewport> vps)
 {
     std::array<D3D11_VIEWPORT, 16> viewports;
     ASSERT(vps.size() < viewports.size());
@@ -123,4 +140,9 @@ Texture2DDesc Dx11RenderInterface::GetTexture2DDesc(GraphicsResourceHandle const
     tex->GetDesc(&desc);
 
     return desc;
+}
+
+void Dx11RenderContext::DrawIndexed(uint32_t indexCount, uint32_t indexOffset, uint32_t vertexOffset)
+{
+    m_Context->DrawIndexed((UINT)indexCount, (UINT)indexOffset, (UINT)vertexOffset);
 }

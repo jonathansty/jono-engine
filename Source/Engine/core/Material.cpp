@@ -284,7 +284,6 @@ ParameterInfo const* Material::find_parameter(Identifier64 const& id) const
 
 void Material::apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics::ViewParams const& params) const
 {
-	auto dx11Ctx = renderer->get_ctx()._ctx;
 	if (is_double_sided())
 	{
 		ctx.RSSetState(Graphics::GetRasterizerState(RasterizerState::CullNone));
@@ -313,7 +312,7 @@ void Material::apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics:
 	}
 
 	// Bind vertex shader
-	renderer->VSSetShader(vertex_shader);
+	ctx.VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get());
 	ctx.IASetInputLayout(vertex_shader->GetInputLayout());
 
 	// In opaque pass, bind the pixel shader and relevant shader resources from the material
@@ -324,11 +323,11 @@ void Material::apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics:
 		extern int g_DebugMode;
 		if (g_DebugMode)
 		{
-			renderer->PSSetShader(debug_shader);
+			ctx.PSSetShader(debug_shader->as<ID3D11PixelShader>().Get());
 		}
 		else
 		{
-			renderer->PSSetShader(pixel_shader);
+            ctx.PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get());
 		}
 
 		// Bind material parameters
@@ -336,14 +335,14 @@ void Material::apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics:
 		get_texture_views(views);
 
 		ASSERTMSG(views.size() <= Texture_MaterialSlotEnd, "Currently we do not support more than 5 textures per material.");
-		dx11Ctx->PSSetShaderResources(Texture_MaterialSlotStart, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
+		ctx.SetShaderResources(ShaderStage::Pixel, Texture_MaterialSlotStart, views);
 
-		ID3D11Buffer* buffer[1] = { GetRI()->GetRawBuffer(get_cb()->get_buffer()) };
-		dx11Ctx->PSSetConstantBuffers(Buffer_Material, 1, buffer);
+		GraphicsResourceHandle buffer[1] = { get_cb()->get_buffer() };
+		ctx.SetShaderResources(ShaderStage::Pixel, Buffer_Material, buffer);
 	}
 	else
 	{
-		dx11Ctx->PSSetShader(nullptr, nullptr, 0);
+        ctx.PSSetShader(nullptr);
 	}
 }
 
@@ -378,7 +377,6 @@ void MaterialInstance::bind(IMaterialObject const* obj)
 
 void MaterialInstance::apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics::ViewParams const& params) const
 {
-	auto dx11Ctx = renderer->get_ctx()._ctx;
 	if (is_double_sided())
 	{
 		ctx.RSSetState(Graphics::GetRasterizerState(RasterizerState::CullNone));
@@ -407,7 +405,7 @@ void MaterialInstance::apply(RenderContext& ctx, Graphics::Renderer* renderer, G
 	}
 
 	// Bind vertex shader
-	renderer->VSSetShader(vertex_shader);
+	ctx.VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get());
 	ctx.IASetInputLayout(vertex_shader->GetInputLayout());
 
 	// In opaque pass, bind the pixel shader and relevant shader resources from the material
@@ -418,11 +416,11 @@ void MaterialInstance::apply(RenderContext& ctx, Graphics::Renderer* renderer, G
 		extern int g_DebugMode;
 		if (g_DebugMode)
 		{
-			renderer->PSSetShader(debug_shader);
+			ctx.PSSetShader(debug_shader->as<ID3D11PixelShader>().Get());
 		}
 		else
 		{
-			renderer->PSSetShader(pixel_shader);
+			ctx.PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get());
 		}
 
 		// Bind material parameters
@@ -431,14 +429,13 @@ void MaterialInstance::apply(RenderContext& ctx, Graphics::Renderer* renderer, G
 
 		ASSERTMSG(views.size() <= Texture_MaterialSlotEnd, "Currently we do not support more than 5 textures per material.");
 		ctx.SetShaderResources(ShaderStage::Pixel, Texture_MaterialSlotStart, views);
-        //dx11Ctx->PSSetShaderResources(Texture_MaterialSlotStart, (UINT)views.size(), (ID3D11ShaderResourceView**)views.data());
 
-		ID3D11Buffer* buffer[1] = { GetRI()->GetRawBuffer(get_cb()->get_buffer()) };
-        dx11Ctx->PSSetConstantBuffers(Buffer_Material, 1, buffer);
+		GraphicsResourceHandle buffer[1] = { get_cb()->get_buffer() };
+        ctx.SetConstantBuffers(ShaderStage::Pixel, Buffer_Material, buffer);
 	}
 	else
 	{
-		renderer->PSSetShader(nullptr);
+		ctx.PSSetShader(nullptr);
 	}
 }
 

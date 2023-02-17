@@ -34,7 +34,7 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 
 	m_Visibility = std::make_unique<class VisibilityManager>();
 
-	_stats = {};
+	m_FrameStats = {};
 
 	_msaa = settings.m_MSAA;
 	_engine_settings = settings;
@@ -792,7 +792,7 @@ void Renderer::DrawWorld(RenderContext& ctx, RenderWorld const& world, ViewParam
 		ctx.OMSetDepthStencilState(Graphics::GetDepthStencilState(depth_stencil_state), 0);
 		ctx.RSSetState(Graphics::GetRasterizerState(RasterizerState::CullBack));
         ctx.OMSetBlendState(Graphics::GetBlendState(BlendState::Default), {}, 0xffffffff);
-        ctx.RSSetViewports({ params.viewport });
+        ctx.SetViewports({ params.viewport });
 	}
 
 	GlobalCB* global = (GlobalCB*)m_CBGlobal->map(ctx);
@@ -897,10 +897,9 @@ void Renderer::DrawWorld(RenderContext& ctx, RenderWorld const& world, ViewParam
 
 	JONO_EVENT("Submit");
 
-	ID3D11DeviceContext* dx11Ctx = m_DeviceCtx;
-    dx11Ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    ctx.IASetPrimitiveTopology(PrimitiveTopology::TriangleList);
 
-		// #TODO: Remove debug handling into a debug lighting system
+    // #TODO: Remove debug handling into a debug lighting system
 	extern int g_DebugMode;
 	if (g_DebugMode != 0)
 	{
@@ -944,21 +943,19 @@ void Renderer::DrawWorld(RenderContext& ctx, RenderWorld const& world, ViewParam
 			prev_vertex = dc._vertex_buffer;
 		}
 
-		ID3D11Buffer* buffers[1] = 
+		GraphicsResourceHandle buffers[1] = 
 		{
-			m_RI->GetRawBuffer(model_cb->get_buffer())
+			model_cb->get_buffer()
 		};
-        dx11Ctx->VSSetConstantBuffers(2, 1, buffers);
-        dx11Ctx->PSSetConstantBuffers(2, 1, buffers);
+        ctx.SetConstantBuffers(ShaderStage::Vertex | ShaderStage::Pixel, 2, { model_cb->get_buffer() });
 
 		// Setup the material render state
 		{
 			setup_renderstate(ctx, dc._material, params);
 
-			++_stats.n_draws;
-			_stats.n_primitives += u32(dc._index_count / 3);
-            dx11Ctx->DrawIndexed((UINT)dc._index_count, (UINT)dc._first_index, (INT)dc._first_vertex);
-
+			++m_FrameStats.n_draws;
+			m_FrameStats.n_primitives += u32(dc._index_count / 3);
+            ctx.DrawIndexed((u32)dc._index_count, (u32)dc._first_index, (u32)dc._first_vertex);
 		}
 	}
 }
@@ -1003,7 +1000,7 @@ void Renderer::BeginFrame(RenderContext& ctx)
 {
 	JONO_EVENT();
 
-	_stats = {};
+	m_FrameStats = {};
 
 	GameEngine* engine = GameEngine::instance();
 	Viewport vp = Viewport{ 0.0f, 0.0f, engine->GetViewportSize().x, engine->GetViewportSize().y };
@@ -1061,60 +1058,6 @@ void Renderer::setup_renderstate(RenderContext& ctx, MaterialInstance const* mat
 	}
 }
 
-void Renderer::VSSetShader(ShaderConstRef const& vertex_shader)
-{
-	if(m_PrevRenderState.VS != vertex_shader)
-	{
-		if (vertex_shader == nullptr)
-		{
-			m_DeviceCtx->VSSetShader(nullptr, nullptr, 0);
-		}
-		else
-		{
-			ASSERT(vertex_shader->get_type() == ShaderStage::Vertex);
-			m_DeviceCtx->VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get(), nullptr, 0);
-		}
-        m_PrevRenderState.VS = vertex_shader;
-	}
-
-}
-
-void Renderer::PSSetShader(ShaderConstRef const& pixel_shader)
-{
-    if (m_PrevRenderState.PS != pixel_shader)
-	{
-		if(pixel_shader == nullptr)
-		{
-			m_DeviceCtx->PSSetShader(nullptr, nullptr, 0);
-		}
-		else
-		{
-			ASSERT(pixel_shader->get_type() == ShaderStage::Pixel);
-			m_DeviceCtx->PSSetShader(pixel_shader->as<ID3D11PixelShader>().Get(), nullptr, 0);
-		}
-
-		m_PrevRenderState.PS = pixel_shader;
-	}
-}
-
-void Renderer::IASetInputLayout(ID3D11InputLayout* layout)
-{
-    if (m_PrevRenderState.InputLayout != layout)
-	{
-		m_DeviceCtx->IASetInputLayout(layout);
-        m_PrevRenderState.InputLayout = layout;	
-	}
-}
-
-void Renderer::RSSetState(ID3D11RasterizerState* state)
-{
-    if (m_PrevRenderState.RS != state)
-	{
-		m_DeviceCtx->RSSetState(state);
-        m_PrevRenderState.RS = state;
-	}
-}
-
 void Renderer::render_post_predebug(RenderContext& ctx)
 {
 	GPU_SCOPED_EVENT(&ctx, "Post:PreDebug");
@@ -1127,10 +1070,10 @@ void Renderer::render_post_predebug(RenderContext& ctx)
 
 	ctx.IASetIndexBuffer(GraphicsResourceHandle::Invalid(), DXGI_FORMAT_UNKNOWN,0);
     ctx.IASetInputLayout(post_vs_shader->GetInputLayout());
-	ctx.IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	ctx.IASetPrimitiveTopology(PrimitiveTopology::TriangleList);
 
-	VSSetShader(post_vs_shader);
-	PSSetShader(post_shader);
+	ctx.VSSetShader(post_vs_shader->as<ID3D11VertexShader>().Get());
+	ctx.PSSetShader(post_shader->as<ID3D11PixelShader>().Get());
 
 	ctx.SetShaderResources(ShaderStage::Pixel, 0, { _non_msaa_output_srv_copy });
 

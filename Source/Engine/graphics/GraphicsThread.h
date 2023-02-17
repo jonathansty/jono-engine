@@ -70,8 +70,8 @@ private:
 			u32 m_CurrentVertices = 0;
 			u32 m_CurrentIndices = 0;
 
-			ComPtr<ID3D11Buffer> m_VertexBuffer;
-			ComPtr<ID3D11Buffer> m_IndexBuffer;
+			GraphicsResourceHandle m_VertexBuffer;
+			GraphicsResourceHandle m_IndexBuffer;
 			ComPtr<ID3D11InputLayout> m_InputLayout;
 
 			ConstantBufferRef m_GlobalCB;

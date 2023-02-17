@@ -59,8 +59,6 @@ void Model::Load(enki::ITaskSet* parent, std::string const& path)
 	dir_path = dir_path.parent_path();
 
 	std::string final_path = IO::get()->ResolvePath(path);
-	auto device = Graphics::get_device();
-	auto ctx = Graphics::get_ctx();
 
 	using namespace Assimp;
 	Importer importer = Importer();

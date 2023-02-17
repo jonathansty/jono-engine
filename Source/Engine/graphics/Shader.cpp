@@ -13,17 +13,20 @@ namespace Graphics
 Shader::Shader(ShaderStage type, const u8* byte_code, uint32_t size, const char* debug_name)
 		: m_Type(type)
 {
-	ComPtr<ID3D11Device> device = Graphics::get_device();
+	// #TODO: Replace with RI
+	// Think about dx12 and pipeline based APIs, these require shaders to be specified as part of the PSO
+    //RenderInterface* ri = GetRI();
+    ComPtr<ID3D11Device> ri = GetRI()->Dx11GetDevice();
 	switch (type)
 	{
 		case ShaderStage::Vertex:
-			ENSURE_HR(device->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)m_Shader.GetAddressOf()));
+			ENSURE_HR(ri->CreateVertexShader(byte_code, size, nullptr, (ID3D11VertexShader**)m_Shader.GetAddressOf()));
 			break;
 		case ShaderStage::Pixel:
-			ENSURE_HR(device->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)m_Shader.GetAddressOf()));
+			ENSURE_HR(ri->CreatePixelShader(byte_code, size, nullptr, (ID3D11PixelShader**)m_Shader.GetAddressOf()));
 			break;
 		case ShaderStage::Compute:
-			ENSURE_HR(device->CreateComputeShader(byte_code, size, nullptr, (ID3D11ComputeShader**)m_Shader.GetAddressOf()));
+			ENSURE_HR(ri->CreateComputeShader(byte_code, size, nullptr, (ID3D11ComputeShader**)m_Shader.GetAddressOf()));
 			break;
 		default:
 			throw new std::exception("ShaderType not supported!");

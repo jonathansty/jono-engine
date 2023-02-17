@@ -81,14 +81,12 @@ extern bool s_EnableCSM3;
 struct DeviceContext;
 
 // Entry point for the graphics. Initializes default D3D11 objects for usage later
-void init(DeviceContext const& ctx);
+void init();
 
 // On shutdown the application should call this to release all handles to the device, context and the common states.
 void deinit();
 
 // Public API to retrieve the currently initialized graphics data and common states
-ENGINE_API ComPtr<ID3D11Device> get_device();
-ENGINE_API ComPtr<ID3D11DeviceContext> get_ctx();
 ENGINE_API GraphicsResourceHandle GetBlendState(BlendState blendState);
 ENGINE_API GraphicsResourceHandle GetRasterizerState(RasterizerState rasterizerState);
 ENGINE_API GraphicsResourceHandle GetDepthStencilState(DepthStencilState blendState);

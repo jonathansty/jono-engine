@@ -39,6 +39,18 @@ struct Viewport
     float maxZ;
 };
 
+template<typename T>
+struct TRect
+{
+    T topLeftX;
+    T topLeftY;
+    T bottomRightX;
+    T bottomRightY;
+};
+
+using Rect = TRect<u32>;
+using RectF32 = TRect<f32>;
+
 struct ComputeItem
 {
     Array<GraphicsResourceHandle> srvs;
@@ -58,22 +70,54 @@ namespace Graphics
 class Renderer;
 };
 
+enum class PrimitiveTopology
+{
+    TriangleList,
+    TriangleStrip,
+    LineList,
+    LineStrip
+};
+
+inline D3D11_PRIMITIVE_TOPOLOGY Dx11GetPrimitiveTopology(PrimitiveTopology topology)
+{
+    switch(topology)
+    {
+        case PrimitiveTopology::TriangleList:
+            return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+        case PrimitiveTopology::TriangleStrip:
+            return D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP;
+        case PrimitiveTopology::LineList:
+            return D3D11_PRIMITIVE_TOPOLOGY_LINELIST;
+        case PrimitiveTopology::LineStrip:
+            return D3D11_PRIMITIVE_TOPOLOGY_LINESTRIP;
+        default:
+            FAILMSG("Unsupported primitive topology. ");
+            break;
+    }
+
+    return D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
+}
+
 struct Dx11RenderContext 
 {
     inline void IASetIndexBuffer(GraphicsResourceHandle const& buffer, DXGI_FORMAT format, uint32_t offset);
     inline void IASetVertexBuffers(uint32_t startSlot, Span<GraphicsResourceHandle const> buffers, Span<UINT const> strides, Span<UINT const> offsets);
     inline void IASetInputLayout(GraphicsResourceHandle const& inputLayout);
-    inline void IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY topology);
+    inline void IASetPrimitiveTopology(PrimitiveTopology topology);
 
     inline void RSSetState(GraphicsResourceHandle rs);
-    inline void RSSetViewports(Span<Viewport> vps);
+
+    inline void SetViewports(Span<Viewport> vps);
     inline void SetViewport(Viewport const& vp);
+    inline void SetScissorRects(Span<Rect> r);
 
     inline void PSSetShader(ID3D11PixelShader* ps);
     inline void VSSetShader(ID3D11VertexShader* vs);
 
     inline void OMSetDepthStencilState(GraphicsResourceHandle dss, uint32_t stencilRef = 0);
     inline void OMSetBlendState(GraphicsResourceHandle bs, std::array<float, 4> blendFactor = {}, uint32_t sampleMask = 0x0);
+
+    inline void DrawIndexed(uint32_t indexCount, uint32_t indexOffset, uint32_t vertexOffset);  
 
     void ClearTargets(GraphicsResourceHandle rtv, GraphicsResourceHandle dsv, float4 color, uint32_t clearFlags, float depth, uint8_t stencil);
     void SetTarget(GraphicsResourceHandle rtv, GraphicsResourceHandle dsv);
@@ -151,7 +195,6 @@ public:
 
     void ReleaseResource(GraphicsResourceHandle& h);
 
-
     Dx11RenderContext& BeginContext() 
     {
         m_ActiveRenderContext.owner = this;
@@ -198,6 +241,17 @@ public:
                 break;
         }
         return nullptr;
+    }
+
+    ID3D11Device* Dx11GetDevice()
+    {
+        return m_Device.Get();
+    }
+
+    bool ImGui_Init() 
+    {
+        extern bool ImGui_ImplDX11_Init(ID3D11Device * device, ID3D11DeviceContext * device_context);
+        return ImGui_ImplDX11_Init(m_Device.Get(), m_Context.Get());
     }
 
 private:
@@ -261,6 +315,7 @@ private:
         ASSERT(h.data.type == GRT_Texture);
         return static_cast<ID3D11Texture2D*>(m_Resources.Get({ h.data.id, h.data.gen }).Get());
     }
+
 
 private:
 

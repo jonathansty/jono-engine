@@ -142,9 +142,6 @@ void SceneViewer::OnStartup()
 			}
 		} });
 
-    auto device = Graphics::get_device();
-    auto ctx = Graphics::get_ctx();
-
     // Capture the mouse in the window
     GetGlobalContext()->m_InputManager->set_cursor_visible(false);
 

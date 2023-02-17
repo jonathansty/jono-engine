@@ -20,7 +20,7 @@
 
 #include <wrl.h>
 using Microsoft::WRL::ComPtr;
-using namespace D2D1;
+//using namespace D2D1;
 
 // libs used for Direct2D
 #pragma comment(lib, "dxgi.lib")

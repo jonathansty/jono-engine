@@ -246,7 +246,7 @@ bool GameEngine::Startup()
 	}
 
 	m_Renderer->InitForWindow(m_Window);
-	Graphics::init(m_Renderer->get_ctx());
+	Graphics::init();
 
 	m_ViewportWidth = m_Renderer->GetDrawableWidth();
 	m_ViewportHeight = m_Renderer->GetDrawableHeight();
@@ -335,9 +335,10 @@ bool GameEngine::Startup()
 			colors[ImGuiCol_ModalWindowDimBg] = ImVec4(0.80f, 0.80f, 0.80f, 0.35f);
 		}
 
-		Graphics::DeviceContext ctx = m_Renderer->get_ctx();
 		ImGui_ImplSDL2_InitForD3D(m_Window);
-		ImGui_ImplDX11_Init(ctx._device.Get(), ctx._ctx.Get());
+
+		// #TODO: Build ImGui on top of the RI abstraction instead
+        GetRI()->ImGui_Init();
 	}
 
 #pragma region Box2D

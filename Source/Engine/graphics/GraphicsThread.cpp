@@ -319,85 +319,86 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 
 			if (renderData.m_TotalVertices > renderData.m_CurrentVertices)
 			{
-				renderData.m_VertexBuffer.Reset();
-
+				if(renderData.m_VertexBuffer.IsValid())
+                {
+                    GetRI()->ReleaseResource(renderData.m_VertexBuffer);
+				}
 				renderData.m_CurrentVertices = renderData.m_TotalVertices;
 
 				CD3D11_BUFFER_DESC desc = CD3D11_BUFFER_DESC(renderData.m_CurrentVertices * sizeof(SimpleVertex2D), D3D11_BIND_VERTEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE, 0, sizeof(SimpleVertex2D));
 				D3D11_SUBRESOURCE_DATA initial_data{};
 				initial_data.pSysMem = vertices.data();
-				ENSURE_HR(Graphics::get_device()->CreateBuffer(&desc, &initial_data, renderData.m_VertexBuffer.GetAddressOf()));
+                renderData.m_VertexBuffer = GetRI()->CreateBuffer(desc, &initial_data, "2D Dynamic Vertex Buffer");
 			}
 			else if(renderData.m_TotalVertices > 0)
 			{
 				D3D11_MAPPED_SUBRESOURCE mapped_resource{};
-				Graphics::get_ctx()->Map(renderData.m_VertexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+                ctx.Map(renderData.m_VertexBuffer);
 
 				SimpleVertex2D* data = (SimpleVertex2D*)mapped_resource.pData;
 				memcpy(data, vertices.data(), vertices.size() * sizeof(SimpleVertex2D));
-				Graphics::get_ctx()->Unmap(renderData.m_VertexBuffer.Get(), 0);
+                ctx.Unmap(renderData.m_VertexBuffer);
 			}
 
 			if (renderData.m_TotalIndices > renderData.m_CurrentIndices)
 			{
-				renderData.m_IndexBuffer.Reset();
+				if(renderData.m_IndexBuffer.IsValid())
+                {
+                    GetRI()->ReleaseResource(renderData.m_IndexBuffer);
+				}
 				renderData.m_CurrentIndices = renderData.m_TotalIndices;
 
 				CD3D11_BUFFER_DESC desc = CD3D11_BUFFER_DESC(renderData.m_CurrentIndices * sizeof(u32), D3D11_BIND_INDEX_BUFFER, D3D11_USAGE_DYNAMIC, D3D11_CPU_ACCESS_WRITE, 0, 0);
 				D3D11_SUBRESOURCE_DATA initial_data{};
 				initial_data.pSysMem = indices.data();
-				ENSURE_HR(Graphics::get_device()->CreateBuffer(&desc, &initial_data, renderData.m_IndexBuffer.GetAddressOf()));
+                renderData.m_IndexBuffer = GetRI()->CreateBuffer(desc, &initial_data);
 			}
 			else if(renderData.m_TotalIndices > 0)
 			{
 				D3D11_MAPPED_SUBRESOURCE mapped_resource{};
-				Graphics::get_ctx()->Map(renderData.m_IndexBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+                ctx.Map(renderData.m_IndexBuffer);
 				u32* data = (u32*)mapped_resource.pData;
 				memcpy(data, indices.data(), indices.size() * sizeof(u32));
-				Graphics::get_ctx()->Unmap(renderData.m_IndexBuffer.Get(), 0);
+                ctx.Unmap(renderData.m_IndexBuffer);
 			}
 		}
 
 		{
-			auto dx11Ctx = Graphics::get_ctx();
+			Viewport viewport{};
+            viewport.x = 0.0f;
+            viewport.y = 0.0f;
+            viewport.width = (FLOAT)renderer->GetDrawableWidth();
+            viewport.height = (FLOAT)renderer->GetDrawableHeight();
+            viewport.minZ = 0.0f;
+            viewport.maxZ = 1.0f;
 
-			CD3D11_VIEWPORT viewport{};
-            viewport.TopLeftX = 0.0f;
-            viewport.TopLeftY = 0.0f;
-            viewport.Width = (FLOAT)renderer->GetDrawableWidth();
-            viewport.Height = (FLOAT)renderer->GetDrawableHeight();
-            viewport.MinDepth = 0.0f;
-            viewport.MaxDepth = 1.0f;
+			TRect<u32> rect = TRect<u32>{ (u32)viewport.x, (u32)viewport.y, (u32)viewport.x + (u32)viewport.width, (u32)viewport.y + (u32)viewport.height };
+            ctx.SetViewports({ viewport });
+            ctx.SetScissorRects({ rect });
 
-			D3D11_RECT rect{ (LONG)viewport.TopLeftX, (LONG)viewport.TopLeftY, (LONG)viewport.TopLeftX + (LONG)viewport.Width, (LONG)viewport.TopLeftY + (LONG)viewport.Height };
-            dx11Ctx->RSSetViewports(1, &viewport);
-            dx11Ctx->RSSetScissorRects(1, &rect);
-
-			dx11Ctx->IASetIndexBuffer(renderData.m_IndexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);
+			ctx.IASetIndexBuffer(renderData.m_IndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 
 			GraphicsResourceHandle rtv = renderer->get_raw_output_rtv();
             ctx.SetTarget(rtv, GraphicsResourceHandle::Invalid());
 
 			constexpr UINT vertexStride = sizeof(SimpleVertex2D);
 			constexpr UINT vertexOffset = 0;
-            dx11Ctx->IASetVertexBuffers(0, 1, renderData.m_VertexBuffer.GetAddressOf(), &vertexStride, &vertexOffset);
+            ctx.IASetVertexBuffers(0, { renderData.m_VertexBuffer }, { sizeof(SimpleVertex2D) }, { 0 });
 
 			ctx.IASetInputLayout(m_VertexShader->GetInputLayout());
-            dx11Ctx->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            ctx.IASetPrimitiveTopology(PrimitiveTopology::TriangleList);
 
-			dx11Ctx->VSSetShader(m_VertexShader->as<ID3D11VertexShader>().Get(), nullptr, 0);
+			ctx.VSSetShader(m_VertexShader->as<ID3D11VertexShader>().Get());
+			ctx.PSSetShader(m_PixelShader->as<ID3D11PixelShader>().Get());
 
-			dx11Ctx->PSSetShader(m_PixelShader->as<ID3D11PixelShader>().Get(), nullptr, 0);
+            ctx.SetConstantBuffers(ShaderStage::Vertex, 0, { m_GlobalCB->get_buffer() });
 
-			ID3D11Buffer* cb = GetRI()->GetRawBuffer(m_GlobalCB->get_buffer());
-            dx11Ctx->VSSetConstantBuffers(0, 1, &cb);
-
-			ComPtr<ID3D11RasterizerState> rss = GetRI()->GetRawResourceAs<ID3D11RasterizerState>(Graphics::GetRasterizerState(RasterizerState::CullNone));
-            ComPtr<ID3D11BlendState> bss = GetRI()->GetRawResourceAs<ID3D11BlendState>(Graphics::GetBlendState(BlendState::AlphaBlend));
-            ComPtr<ID3D11DepthStencilState> dss = GetRI()->GetRawResourceAs<ID3D11DepthStencilState>(Graphics::GetDepthStencilState(DepthStencilState::NoDepth));
-            dx11Ctx->RSSetState(rss.Get());
-            dx11Ctx->OMSetBlendState(bss.Get(), nullptr, 0xFFFFFF);
-            dx11Ctx->OMSetDepthStencilState(dss.Get(), 0);
+			GraphicsResourceHandle rss = Graphics::GetRasterizerState(RasterizerState::CullNone);
+            GraphicsResourceHandle bss = (Graphics::GetBlendState(BlendState::AlphaBlend));
+            GraphicsResourceHandle dss = (Graphics::GetDepthStencilState(DepthStencilState::NoDepth));
+            ctx.RSSetState(rss);
+            ctx.OMSetBlendState(bss, {}, 0xFFFFFF);
+            ctx.OMSetDepthStencilState(dss, 0);
 
 			GraphicsResourceHandle samplers = {
 				Graphics::GetSamplerState(SamplerState::MinMagMip_Linear)
@@ -429,7 +430,7 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 					dst->colour = cmd.m_Colour;
 					m_GlobalCB->unmap(ctx);
 
-					dx11Ctx->DrawIndexed((UINT)cmd.m_IdxBuffer.size(), (UINT)cmd.m_IdxOffset, (UINT)cmd.m_VertexOffset);
+					ctx.DrawIndexed((UINT)cmd.m_IdxBuffer.size(), (UINT)cmd.m_IdxOffset, (UINT)cmd.m_VertexOffset);
 				}
 				else if(cmd.m_Type == DrawCmd::DC_CLEAR)
 				{

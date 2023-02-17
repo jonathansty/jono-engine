@@ -178,13 +178,7 @@ struct ModelCB
 };
 
 
-struct DeviceContext
-{
-	ComPtr<ID3D11Device> _device;
-	ComPtr<ID3D11DeviceContext> _ctx;
-};
-
-	// information that is needed to represent 1 draw call
+// information that is needed to represent 1 draw call
 struct DrawCall
 {
     float4x4 _transform;
@@ -224,8 +218,6 @@ public:
 	u32 GetDrawableHeight() const { return m_DrawableAreaHeight; };
 
 	void DeInit();
-
-	DeviceContext get_ctx() const { return DeviceContext{ _device, m_DeviceCtx }; }
 
 	ID3D11Device*              get_raw_device() const { return _device; };
 	ID3D11DeviceContext*       get_raw_device_context() const { return m_DeviceCtx; };
@@ -283,12 +275,6 @@ public:
 
 	// Copies the last rendered main frustum depth to be used as input during the main pass
 	void CopyDepth();
- 
-	void VSSetShader(ShaderConstRef const& vertex_shader);
-	void PSSetShader(ShaderConstRef const& pixel_hader);
-	void IASetInputLayout(ID3D11InputLayout* layout);
-	void RSSetState(ID3D11RasterizerState* state);
-
 
 private:
 	void create_factories(EngineCfg const& settings, cli::CommandLine const& cmdline);
@@ -315,10 +301,10 @@ private:
 		u32 n_draws;
 		u32 n_primitives;
 	};
-	PerfStats const& get_stats() const { return _stats; }
+	PerfStats const& get_stats() const { return m_FrameStats; }
 
 private:
-	PerfStats _stats;
+	PerfStats m_FrameStats;
 
 	// 0: Game camera | 1: Debug camera
 	u32 _active_cam = 0;

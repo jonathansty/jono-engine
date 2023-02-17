@@ -186,9 +186,6 @@ Texture::~Texture()
 
 void Texture::Load(std::string const& path)
 {
-	ComPtr<ID3D11Device> device = Graphics::get_device();
-	ComPtr<ID3D11DeviceContext> ctx = Graphics::get_ctx();
-
 	int x, y, comp;
 	stbi_uc* data = stbi_load(path.c_str(), &x, &y, &comp, 4);
 	ASSERTMSG(data, "Failed to  load image from {}", path);

@@ -13,15 +13,15 @@
 namespace Graphics
 {
 
-DeviceContext s_ctx;
+ID3D11Device* s_Device;
 
-std::array<GraphicsResourceHandle, static_cast<u32>(DepthStencilState::Num)> s_depth_stencil_states;
-std::array<GraphicsResourceHandle, static_cast<u32>(BlendState::Num)> s_blend_states;
-std::array<GraphicsResourceHandle, static_cast<u32>(RasterizerState::Num)> s_raster_states;
-std::array<GraphicsResourceHandle, static_cast<u32>(SamplerState::Num)> s_sampler_states;
+std::array<GraphicsResourceHandle, static_cast<u32>(DepthStencilState::Num)> s_DepthStencilStates;
+std::array<GraphicsResourceHandle, static_cast<u32>(BlendState::Num)> s_BlendStates;
+std::array<GraphicsResourceHandle, static_cast<u32>(RasterizerState::Num)> s_RasterStates;
+std::array<GraphicsResourceHandle, static_cast<u32>(SamplerState::Num)> s_SamplerStates;
 
-std::shared_ptr<Shader> s_error_pixel_shader = nullptr;
-std::shared_ptr<Shader> s_error_vertex_shader = nullptr;
+std::shared_ptr<Shader> s_ErrorPS = nullptr;
+std::shared_ptr<Shader> s_ErrorVS = nullptr;
 
 void CreateDSS(CD3D11_DEPTH_STENCIL_DESC const& ds_desc, DepthStencilState state);
 void CreateRSS(CD3D11_RASTERIZER_DESC const& rs_desc, RasterizerState state);
@@ -34,13 +34,8 @@ bool s_EnableCSM1 = true;
 bool s_EnableCSM2 = true;
 bool s_EnableCSM3 = true;
 
-void init(DeviceContext const& ctx)
+void init()
 {
-	assert(ctx._device.Get() && ctx._ctx.Get());
-	s_ctx = ctx;
-
-	auto device = s_ctx._device;
-
 	ShaderCache::create();
 
 	// Create error shaders
@@ -52,13 +47,13 @@ void init(DeviceContext const& ctx)
 		parameters.params.stage = ShaderStage::Pixel;
 		parameters.params.defines.push_back({ "LIGHTING_MODEL", "LIGHTING_MODEL_BLINN_PHONG" });
 
-		s_error_pixel_shader = ShaderCache::instance()->find_or_create(parameters);
-		ASSERTMSG(s_error_pixel_shader, "Failed to create error shader (\"{}\")", parameters.path.c_str());
+		s_ErrorPS = ShaderCache::instance()->find_or_create(parameters);
+		ASSERTMSG(s_ErrorPS, "Failed to create error shader (\"{}\")", parameters.path.c_str());
 
 		parameters.path = "Source/Engine/Shaders/error_vx.hlsl";
 		parameters.params.stage = ShaderStage::Vertex;
-		s_error_vertex_shader = ShaderCache::instance()->find_or_create(parameters);
-		ASSERTMSG(s_error_vertex_shader, "Failed to create error shader (\"{}\")", parameters.path.c_str());
+		s_ErrorVS = ShaderCache::instance()->find_or_create(parameters);
+		ASSERTMSG(s_ErrorVS, "Failed to create error shader (\"{}\")", parameters.path.c_str());
 
 
 	}
@@ -141,8 +136,8 @@ void init(DeviceContext const& ctx)
 
 void deinit()
 {
-	s_error_pixel_shader.reset();
-	s_error_vertex_shader.reset();
+	s_ErrorPS.reset();
+	s_ErrorVS.reset();
 
 	TextureHandle::deinit();
 	ShaderCache::shutdown();
@@ -151,72 +146,61 @@ void deinit()
 	{
         ptr = GraphicsResourceHandle::Invalid();
 	};
-	std::for_each(s_depth_stencil_states.begin(), s_depth_stencil_states.end(), clear_fn);
-	std::for_each(s_blend_states.begin(), s_blend_states.end(), clear_fn);
-	std::for_each(s_raster_states.begin(), s_raster_states.end(), clear_fn);
-	std::for_each(s_sampler_states.begin(), s_sampler_states.end(), clear_fn);
+	std::for_each(s_DepthStencilStates.begin(), s_DepthStencilStates.end(), clear_fn);
+	std::for_each(s_BlendStates.begin(), s_BlendStates.end(), clear_fn);
+	std::for_each(s_RasterStates.begin(), s_RasterStates.end(), clear_fn);
+	std::for_each(s_SamplerStates.begin(), s_SamplerStates.end(), clear_fn);
 
-	s_ctx = {};
-}
-
-ComPtr<ID3D11Device> get_device()
-{
-	return s_ctx._device;
-}
-
-ComPtr<ID3D11DeviceContext> get_ctx()
-{
-	return s_ctx._ctx;
 }
 
 GraphicsResourceHandle GetBlendState(BlendState blendState)
 {
-	return s_blend_states[static_cast<u32>(blendState)];
+	return s_BlendStates[static_cast<u32>(blendState)];
 }
 
 GraphicsResourceHandle GetRasterizerState(RasterizerState rasterizerState)
 {
-	return s_raster_states[*rasterizerState];
+	return s_RasterStates[*rasterizerState];
 }
 
 GraphicsResourceHandle GetDepthStencilState(DepthStencilState depthStencilState)
 {
-	return s_depth_stencil_states[*depthStencilState];
+	return s_DepthStencilStates[*depthStencilState];
 }
 
 GraphicsResourceHandle GetSamplerState(SamplerState samplerState)
 {
-	return s_sampler_states[*samplerState];
+	return s_SamplerStates[*samplerState];
 }
 
 std::shared_ptr<Graphics::Shader> get_error_shader_px()
 {
-	return s_error_pixel_shader;
+	return s_ErrorPS;
 }
 
 std::shared_ptr<Graphics::Shader> get_error_shader_vx()
 {
-	return s_error_vertex_shader;
+	return s_ErrorVS;
 }
 
 void CreateDSS(CD3D11_DEPTH_STENCIL_DESC const& ds_desc, DepthStencilState state)
 {
-    s_depth_stencil_states[*state] = GetRI()->CreateDepthStencilState(ds_desc, DepthStencilStateToString(state));
+    s_DepthStencilStates[*state] = GetRI()->CreateDepthStencilState(ds_desc, DepthStencilStateToString(state));
 }
 
 void CreateRSS(CD3D11_RASTERIZER_DESC const& rs_desc, RasterizerState state)
 {
-    s_raster_states[*state] = GetRI()->CreateRasterizerState(rs_desc, RasterizerStateToString(state));
+    s_RasterStates[*state] = GetRI()->CreateRasterizerState(rs_desc, RasterizerStateToString(state));
 }
 
 void CreateSS(CD3D11_SAMPLER_DESC const& ss_desc, SamplerState state)
 {
-    s_sampler_states[*state] = GetRI()->CreateSamplerState(ss_desc, SamplerStateToString(state));
+    s_SamplerStates[*state] = GetRI()->CreateSamplerState(ss_desc, SamplerStateToString(state));
 }
 
 void CreateBS(CD3D11_BLEND_DESC const& bs_desc, BlendState state)
 {
-    s_blend_states[*state] = GetRI()->CreateBlendState(bs_desc, BlendStateToString(state));
+    s_BlendStates[*state] = GetRI()->CreateBlendState(bs_desc, BlendStateToString(state));
 }
 
 
