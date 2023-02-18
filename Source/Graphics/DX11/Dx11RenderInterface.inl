@@ -146,3 +146,9 @@ void Dx11RenderContext::DrawIndexed(uint32_t indexCount, uint32_t indexOffset, u
 {
     m_Context->DrawIndexed((UINT)indexCount, (UINT)indexOffset, (UINT)vertexOffset);
 }
+
+void Dx11RenderContext::Draw(uint32_t vertexCount, uint32_t vertexStartLocation)
+{
+    m_Context->Draw(vertexCount, vertexStartLocation);
+}
+

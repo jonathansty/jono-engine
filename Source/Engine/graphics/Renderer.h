@@ -220,7 +220,7 @@ public:
 	void DeInit();
 
 	ID3D11Device*              get_raw_device() const { return _device; };
-	ID3D11DeviceContext*       get_raw_device_context() const { return m_DeviceCtx; };
+	//ID3D11DeviceContext*       get_raw_device_context() const { return m_DeviceCtx; };
 	GraphicsResourceHandle const& get_raw_output_rtv() const { return m_OutputTexture.GetRTV(); };
 	GraphicsResourceHandle const& get_raw_output_tex() const { return m_OutputTexture.GetResource(); };
 	GraphicsResourceHandle const& get_raw_output_non_msaa_tex() const { return _non_msaa_output_tex; };
@@ -274,14 +274,9 @@ public:
     void DrawPost(RenderContext& ctx, RenderWorld const& world, shared_ptr<OverlayManager> const& overlays, bool doImgui = true);
 
 	// Copies the last rendered main frustum depth to be used as input during the main pass
-	void CopyDepth();
+	void CopyDepth(RenderContext& ctx);
 
 private:
-	void create_factories(EngineCfg const& settings, cli::CommandLine const& cmdline);
-	void create_d2d_factory(EngineCfg const& settings);
-	void create_wic_factory();
-	void create_write_factory();
-
 	void release_frame_resources();
 	void release_device_resources();
 
@@ -323,7 +318,7 @@ private:
 	ID3D11ShaderResourceView* _swapchain_srv;
 
 	ID3D11Device*        _device;
-	ID3D11DeviceContext* m_DeviceCtx;
+	//ID3D11DeviceContext* m_DeviceCtx;
 
 	// Intermediate MSAA game output.
 	// these textures get resolved to the swapchain before presenting
@@ -350,10 +345,10 @@ private:
 	D2D1_ANTIALIAS_MODE _d2d_aa_mode;
 
 	// Shadow mapping
-	ComPtr<ID3D11Texture2D> _shadow_map;
-	ComPtr<ID3D11DepthStencilView> _shadow_map_dsv[MAX_CASCADES];
-	ComPtr<ID3D11ShaderResourceView> _shadow_map_srv;
-	ComPtr<ID3D11ShaderResourceView> _debug_shadow_map_srv[MAX_CASCADES];
+	GraphicsResourceHandle _shadow_map;
+	GraphicsResourceHandle _shadow_map_dsv[MAX_CASCADES];
+	GraphicsResourceHandle _shadow_map_srv;
+	GraphicsResourceHandle _debug_shadow_map_srv[MAX_CASCADES];
 
 	std::unique_ptr<GPUStructuredBuffer> _light_buffer;
 	std::unique_ptr<GPUByteBuffer> _tile_light_index_buffer;
@@ -373,7 +368,7 @@ private:
 
 	// Cubemap
 	ComPtr<ID3D11Texture2D> _cubemap;
-	ComPtr<ID3D11ShaderResourceView> _cubemap_srv;
+	GraphicsResourceHandle _cubemap_srv;
 
 	std::unique_ptr<class RendererDebugTool> _debug_tool;
 

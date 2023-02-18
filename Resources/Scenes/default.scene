@@ -4,11 +4,31 @@ Models:
     scale: 1,1,1
     rotation: 0,0,0
     mesh: res:/Blockout/plane100x100.glb
-  - name: Sphere
-    position: 0,1.0,0
+  - name: Box
+    position: 0.0,0.5,0
     scale: 1,1,1
-    rotation: 0,0.5,0
-    mesh: res:/Blockout/Sphere.glb
+    rotation: 0,0.0,0.0
+    mesh: res:/gltf-samples/Box/glTF/Box.gltf
+  - name: BoxTextured
+    position: 2.0,0.5,0
+    scale: 1,1,1
+    rotation: 0,0.0,0.0
+    mesh: res:/gltf-samples/BoxTextured/glTF/BoxTextured.gltf
+  - name: BoxSemantics
+    position: 4.0,0.5,0
+    scale: 1,1,1
+    rotation: 0,0.0,0.0
+    mesh: res:/gltf-samples/BoxSemantics/glTF/BoxSemantics.gltf
+  - name: BoxWithoutIndices
+    position: 6.0,0.5,0
+    scale: 1,1,1
+    rotation: 0,0.0,0.0
+    mesh: res:/gltf-samples/BoxWithoutIndices/glTF/BoxWithoutIndices.gltf
+  - name: Avocado
+    position: 0.0,0.5,-4.0
+    scale: 1,1,1
+    rotation: 0,0.0,0.0
+    mesh: res:/gltf-samples/Avocado/glTF/Avocado.gltf
 Cameras:
   - name: MainCamera
     type: Free

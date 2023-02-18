@@ -1,6 +1,10 @@
 #pragma once
 #include "singleton.h"
 
+// #TODO: Make common render context interface to avoid having to do this
+struct Dx11RenderContext;
+using RenderContext = Dx11RenderContext;
+
 struct ENGINE_API IOverlay
 {
 	virtual ~IOverlay() = default;
@@ -11,7 +15,7 @@ struct ENGINE_API IOverlay
 	// Render function called when rendering the ImGui viewport
 	virtual void RenderViewport() {}
 
-	virtual void Render3D(ID3D11DeviceContext* ctx) {}
+	virtual void Render3D(RenderContext& ctx) {}
 };
 
 class ENGINE_API DebugOverlay : public IOverlay
@@ -42,7 +46,7 @@ public:
 
 	void RenderOverlay() override;
 	void RenderViewport() override;
-	void Render3D(ID3D11DeviceContext* ctx) override;
+	void Render3D(RenderContext& ctx) override;
 
 	void register_overlay(DebugOverlay* overlay);
 	void unregister_overlay(DebugOverlay* overlay);

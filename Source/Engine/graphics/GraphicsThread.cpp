@@ -137,14 +137,14 @@ void GraphicsThread::DoFrame()
 	RenderWorld& world = m_FrameData.m_RenderWorld;
 
 
-	Perf::begin_frame(renderer->get_raw_device_context());
+	RenderContext& ctx = GetRI()->BeginContext();
+    Perf::begin_frame(ctx);
 
 	if (m_FrameData.m_RecreateSwapchain)
 	{
 		renderer->ResizeSwapchain(engine->m_WindowWidth, engine->m_WindowHeight);
 	}
 
-	RenderContext& ctx = GetRI()->BeginContext();
 	this->Render(ctx);
 	this->Present(ctx);
 
@@ -162,7 +162,6 @@ void GraphicsThread::Present(RenderContext& ctx)
 	present_timer.start();
 
 	JONO_EVENT();
-	auto d3d_ctx = renderer->get_raw_device_context();
 	auto d3d_swapchain = renderer->get_raw_swapchain();
 
 	size_t idx = Perf::get_current_frame_resource_index();
@@ -174,12 +173,12 @@ void GraphicsThread::Present(RenderContext& ctx)
 	{
 		flags |= DXGI_PRESENT_ALLOW_TEARING;
 	}
-	d3d_ctx->OMSetRenderTargets(0, nullptr, nullptr);
+    ctx.SetTarget(GraphicsResourceHandle::Invalid(), GraphicsResourceHandle::Invalid());
 	d3d_swapchain->Present(m_FrameData.m_VSyncEnabled ? 1 : 0, flags);
 
 	auto& timer = engine->m_GpuTimings[idx];
-	timer.end(d3d_ctx);
-	Perf::end_frame(d3d_ctx);
+	timer.end(ctx);
+	Perf::end_frame(ctx);
 
 	// Render all other imgui windows
 	ImGui::RenderPlatformWindowsDefault();
@@ -211,11 +210,11 @@ void GraphicsThread::Render(RenderContext& ctx)
 		UINT64 start;
 		UINT64 end;
 
-		if (Perf::collect_disjoint(renderer->get_raw_device_context(), timestampDisjoint))
+		if (Perf::collect_disjoint(GetRI()->Dx11GetDeviceContext(), timestampDisjoint))
 		{
 			auto& timing_data = engine->m_GpuTimings[current];
 			f64 cpuTime;
-			timing_data.flush(renderer->get_raw_device_context(), start, end, cpuTime);
+			timing_data.flush(GetRI()->Dx11GetDeviceContext(), start, end, cpuTime);
 
 			double diff = (double)(end - start) / (double)timestampDisjoint.Frequency;
 			engine->m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::RenderGPU, (float)(diff * 1000.0));
@@ -227,7 +226,7 @@ void GraphicsThread::Render(RenderContext& ctx)
 
 	// Begin frame gpu timer
 	auto& timer = engine->m_GpuTimings[idx];
-	timer.begin(renderer->get_raw_device_context());
+    timer.begin(ctx);
 
 	renderer->BeginFrame(ctx);
 

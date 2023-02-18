@@ -421,6 +421,13 @@ void Dx11RenderContext::ClearRenderTarget(GraphicsResourceHandle rtv, float4 col
     m_Context->ClearRenderTargetView(owner->GetRawResourceAs<ID3D11RenderTargetView>(rtv), c);
 }
 
+void Dx11RenderContext::ClearDepthStencil(GraphicsResourceHandle dsv, uint32_t clearFlags, float depth, uint8_t stencil)
+{
+    ID3D11DepthStencilView* dx11View = owner->GetRawResourceAs<ID3D11DepthStencilView>(dsv);
+    ASSERT(dx11View);
+    m_Context->ClearDepthStencilView(dx11View, clearFlags, depth, stencil);
+}
+
 void Dx11RenderContext::SetShaderResources(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> srvs)
 {
     ASSERT(srvs.size() < 128);

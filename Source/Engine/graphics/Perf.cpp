@@ -14,7 +14,7 @@ ComPtr<ID3D11Query> s_disjoint_query[s_frames];
 s64 s_frame = 0;
 s64 s_previous[s_frames] = {};
 
-void Timer::begin(ComPtr<ID3D11DeviceContext> const& ctx)
+void Timer::begin(RenderContext const& ctx)
 {
 	// When the timer is not flushed this means we haven't retrieved the data. This is not valid behaviour.
 	assert(_flushed);
@@ -23,14 +23,14 @@ void Timer::begin(ComPtr<ID3D11DeviceContext> const& ctx)
 	_timer.reset();
 	_timer.start();
 
-	ctx->End(_begin.Get());
+	ctx.m_Context->End(_begin.Get());
 }
 
-void Timer::end(ComPtr<ID3D11DeviceContext> const& ctx)
+void Timer::end(RenderContext const& ctx)
 {
 	_timer.stop();
 
-	ctx->End(_end.Get());
+	ctx.m_Context->End(_end.Get());
 }
 
 void Timer::flush(ComPtr<ID3D11DeviceContext> const& ctx, UINT64& start, UINT64& end, f64& cpuTime)
@@ -61,14 +61,16 @@ void shutdown()
 	}
 }
 
-void begin_frame(ComPtr<ID3D11DeviceContext> const& ctx)
+void begin_frame(RenderContext& ctx)
 {
-	ctx->Begin(s_disjoint_query[get_current_frame_resource_index()].Get());
+	// #TODO: Remove raw D3D11 usage for queries
+    ctx.m_Context->Begin(s_disjoint_query[get_current_frame_resource_index()].Get());
 }
 
-void end_frame(ComPtr<ID3D11DeviceContext> const& ctx)
+void end_frame(RenderContext& ctx)
 {
-	ctx->End(s_disjoint_query[get_current_frame_resource_index()].Get());
+	// #TODO: Remove raw D3D11 usage for queries
+	ctx.m_Context->End(s_disjoint_query[get_current_frame_resource_index()].Get());
 
 	// Update our frame state
 	for (int i = 0; i < s_frames - 1; ++i)

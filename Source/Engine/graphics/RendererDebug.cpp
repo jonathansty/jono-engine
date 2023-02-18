@@ -24,11 +24,11 @@ void RendererDebugTool::RenderOverlay()
 	render_shader_tool();
 }
 
-void RendererDebugTool::Render3D(ID3D11DeviceContext* ctx)
+void RendererDebugTool::Render3D(RenderContext& ctx)
 {
 	if (!_batch)
 	{
-		_batch = std::make_shared<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>(ctx);
+		_batch = std::make_shared<DirectX::PrimitiveBatch<DirectX::VertexPositionColor>>(ctx.m_Context);
 	}
 
 	_batch->Begin();

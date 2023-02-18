@@ -75,7 +75,7 @@ void OverlayManager::RenderViewport()
 	}
 }
 
-void OverlayManager::Render3D(ID3D11DeviceContext* ctx)
+void OverlayManager::Render3D(RenderContext& ctx)
 {
 	for (auto& overlay : _overlays)
 	{

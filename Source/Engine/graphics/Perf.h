@@ -54,10 +54,10 @@ void initialize(ComPtr<ID3D11Device> const& device);
 void shutdown();
 
 // inserts a begin call for our disjoint query
-void begin_frame(ComPtr<ID3D11DeviceContext> const& ctx);
+void begin_frame(RenderContext& ctx);
 
 // inserts a end call for our disjoint query
-void end_frame(ComPtr<ID3D11DeviceContext> const& ctx);
+void end_frame(RenderContext& ctx);
 
 // Waits and collects the disjoint data
 bool collect_disjoint(ComPtr<ID3D11DeviceContext> const& ctx, D3D11_QUERY_DATA_TIMESTAMP_DISJOINT& disjoint);
@@ -97,8 +97,8 @@ public:
 
 	~Timer() {}
 
-	void begin(ComPtr<ID3D11DeviceContext> const& ctx);
-	void end(ComPtr<ID3D11DeviceContext> const& ctx);
+	void begin(RenderContext const& ctx);
+    void end(RenderContext const& ctx);
 
 	void flush(ComPtr<ID3D11DeviceContext> const& ctx, UINT64& begin, UINT64& end, f64& cpuTime);
 

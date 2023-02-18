@@ -20,7 +20,7 @@ public:
 
 	void RenderOverlay() override;
 
-	void Render3D(ID3D11DeviceContext* ctx) override;
+	void Render3D(RenderContext& ctx) override;
 
 private:
 	void render_shader_tool();

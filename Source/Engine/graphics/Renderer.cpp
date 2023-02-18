@@ -45,9 +45,7 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 	m_RI = GetRI();
     m_RI->Init();
 
-	//create_factories(settings, cmdline);
     _device = m_RI->m_Device.Get();
-    m_DeviceCtx = m_RI->m_Context.Get();
     _factory = m_RI->m_Factory.Get();
 
 	_debug_tool = std::make_unique<RendererDebugTool>(this);
@@ -164,146 +162,23 @@ void Renderer::DeInit()
 
 	GameEngine::instance()->get_overlay_manager()->unregister_overlay(_debug_tool.get());
 
-
-	m_DeviceCtx->ClearState();
-	m_DeviceCtx->Flush();
+	GetRI()->Flush();
 
 	release_frame_resources();
 	release_device_resources();
 }
 
-void Renderer::create_factories(EngineCfg const& settings, cli::CommandLine const& cmdline)
-{
-	MEMORY_TAG(MemoryCategory::Graphics);
-
-	// Create Direct3D 11 factory
-	{
-		ENSURE_HR(CreateDXGIFactory(IID_PPV_ARGS(&_factory)));
-		Helpers::SetDebugObjectName(_factory, "Main DXGI Factory");
-
-		// Define the ordering of feature levels that Direct3D attempts to create.
-		D3D_FEATURE_LEVEL featureLevels[] = {
-			D3D_FEATURE_LEVEL_11_1,
-		};
-		D3D_FEATURE_LEVEL featureLevel;
-
-		uint32_t creation_flag = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
-
-		bool debug_layer = cli::has_arg(cmdline, "-enable-d3d-debug");
-		if (debug_layer)
-		{
-			creation_flag |= D3D11_CREATE_DEVICE_DEBUG;
-			debug_layer = true;
-		}
-
-		ENSURE_HR(D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, creation_flag, featureLevels, UINT(std::size(featureLevels)), D3D11_SDK_VERSION, &_device, &featureLevel, &m_DeviceCtx));
-
-		if (debug_layer)
-		{
-			bool do_breaks = cli::has_arg(cmdline, "-d3d-break");
-			ComPtr<ID3D11InfoQueue> info_queue;
-			_device->QueryInterface(IID_PPV_ARGS(&info_queue));
-			if (info_queue)
-			{
-				if (do_breaks)
-				{
-					info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_ERROR, TRUE);
-					info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
-				}
-
-				// D3D11_INFO_QUEUE_FILTER f{};
-				// f.DenyList.NumSeverities = 1;
-				// D3D11_MESSAGE_SEVERITY severities[1] = {
-				//	D3D11_MESSAGE_SEVERITY_WARNING
-				// };
-				// f.DenyList.pSeverityList = severities;
-				// info_queue->AddStorageFilterEntries(&f);
-			}
-		}
-	}
-
-#if FEATURE_D2D
-	create_d2d_factory(settings);
-#endif
-
-	create_wic_factory();
-	create_write_factory();
-}
-
-#if FEATURE_D2D
-void Renderer::create_d2d_factory(EngineCfg const& settings)
-{
-	if (settings.m_UseD2D)
-	{
-		HRESULT hr;
-		// Create a Direct2D factory.
-		ID2D1Factory* localD2DFactoryPtr = nullptr;
-		if (!_d2d_factory)
-		{
-			D2D1_FACTORY_OPTIONS options;
-			options.debugLevel = D2D1_DEBUG_LEVEL_INFORMATION;
-			hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_MULTI_THREADED, options, &localD2DFactoryPtr);
-			if (FAILED(hr))
-			{
-				FAILMSG("Create D2D Factory Failed");
-				exit(-1);
-			}
-			_d2d_factory = localD2DFactoryPtr;
-		}
-	}
-}
-#endif
-
-void Renderer::create_wic_factory()
-{
-	HRESULT hr;
-	// Create a WIC factory if it does not exists
-	IWICImagingFactory* localWICFactoryPtr = nullptr;
-	if (!_wic_factory)
-	{
-		hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&localWICFactoryPtr));
-		if (FAILED(hr))
-		{
-			FAILMSG("Create WIC Factory Failed");
-			exit(-1);
-		}
-		_wic_factory = localWICFactoryPtr;
-	}
-}
-
-void Renderer::create_write_factory()
-{
-	HRESULT hr;
-	// Create a DirectWrite factory.
-	IDWriteFactory* localDWriteFactoryPtr = nullptr;
-	if (!_dwrite_factory)
-	{
-		hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(localDWriteFactoryPtr), reinterpret_cast<IUnknown**>(&localDWriteFactoryPtr));
-		if (FAILED(hr))
-		{
-			FAILMSG("Create WRITE Factory Failed");
-			exit(-1);
-		}
-		_dwrite_factory = localDWriteFactoryPtr;
-	}
-}
-
 void Renderer::release_device_resources()
 {
 	SafeRelease(_color_brush);
-	//SafeRelease(_user_defined_annotation);
-
-	//SafeRelease(m_DeviceCtx);
-	//SafeRelease(_device);
 	SafeRelease(_dwrite_factory);
-	//SafeRelease(_wic_factory);
 	SafeRelease(_d2d_factory);
-	//SafeRelease(_factory);
 }
 
 void Renderer::release_frame_resources()
 {
 	// Release all the MSAA copies
+	// #TODO: Release all resources created in renderer using RI
 	m_RI->ReleaseResource(_non_msaa_output_tex);
 	m_RI->ReleaseResource(_non_msaa_output_tex_copy);
 	m_RI->ReleaseResource(_non_msaa_output_srv);
@@ -692,8 +567,6 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 		}
 
 
-		ID3D11DeviceContext* dx11Ctx = m_DeviceCtx;
-
 		shared_ptr<RenderWorldCamera> camera = world.get_camera(0);
 
 		// Update CB
@@ -708,8 +581,7 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 			cb.proj_inv = hlslpp::inverse(camera->get_proj());
 		}
 
-		//ctx.SetRenderTargets(0, nullptr, nullptr);
-		dx11Ctx->OMSetRenderTargets(0, nullptr, nullptr);
+        ctx.SetTarget(GraphicsResourceHandle::Invalid(), GraphicsResourceHandle::Invalid());
 
 		ComputeItem item{};
         item.srvs = {
@@ -968,28 +840,32 @@ void Renderer::PrepareShadowPass()
 		auto res_desc = CD3D11_TEXTURE2D_DESC(DXGI_FORMAT_R32_TYPELESS, 2048, 2048, num_cascades);
 		res_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
 		res_desc.MipLevels = 1;
-		if (FAILED(_device->CreateTexture2D(&res_desc, NULL, _shadow_map.ReleaseAndGetAddressOf())))
+        _shadow_map = GetRI()->CreateTexture(res_desc, nullptr, "ShadowMap");
+		if(!_shadow_map)
 		{
 			ASSERTMSG(false, "Failed to create the shadowmap texture");
 		}
 
 		for (u32 i = 0; i < num_cascades; ++i)
 		{
-			auto view_desc = CD3D11_DEPTH_STENCIL_VIEW_DESC(_shadow_map.Get(), D3D11_DSV_DIMENSION_TEXTURE2DARRAY, DXGI_FORMAT_D32_FLOAT, 0, i);
-			if (FAILED(_device->CreateDepthStencilView(_shadow_map.Get(), &view_desc, _shadow_map_dsv[i].ReleaseAndGetAddressOf())))
+            auto view_desc = CD3D11_DEPTH_STENCIL_VIEW_DESC(GetRI()->GetRawTexture2D(_shadow_map), D3D11_DSV_DIMENSION_TEXTURE2DARRAY, DXGI_FORMAT_D32_FLOAT, 0, i);
+            _shadow_map_dsv[i] = GetRI()->CreateDepthStencilView(_shadow_map, view_desc);
+            if (!_shadow_map_dsv)
 			{
 				ASSERTMSG(false, "Failed to create the shadowmap DSV");
 			}
 
-			auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(_shadow_map.Get(), D3D11_SRV_DIMENSION_TEXTURE2DARRAY, DXGI_FORMAT_R32_FLOAT, 0, UINT(-1), i, 1);
-			if (FAILED(_device->CreateShaderResourceView(_shadow_map.Get(), &srv_desc, _debug_shadow_map_srv[i].ReleaseAndGetAddressOf())))
+			auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(GetRI()->GetRawTexture2D(_shadow_map), D3D11_SRV_DIMENSION_TEXTURE2DARRAY, DXGI_FORMAT_R32_FLOAT, 0, UINT(-1), i, 1);
+            _debug_shadow_map_srv[i] = GetRI()->CreateShaderResourceView(_shadow_map, srv_desc);
+            if (!_debug_shadow_map_srv[i])
 			{
 				ASSERTMSG(false, "Failed to create the shadowmap SRV");
 			}
 		}
 
-		auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(_shadow_map.Get(), D3D11_SRV_DIMENSION_TEXTURE2DARRAY, DXGI_FORMAT_R32_FLOAT);
-		if (FAILED(_device->CreateShaderResourceView(_shadow_map.Get(), &srv_desc, _shadow_map_srv.ReleaseAndGetAddressOf())))
+		auto srv_desc = CD3D11_SHADER_RESOURCE_VIEW_DESC(GetRI()->GetRawTexture2D(_shadow_map), D3D11_SRV_DIMENSION_TEXTURE2DARRAY, DXGI_FORMAT_R32_FLOAT);
+		_shadow_map_srv = GetRI()->CreateShaderResourceView(_shadow_map, srv_desc, "ShadowMap SRV");
+		if(!_shadow_map_srv)
 		{
 			ASSERTMSG(false, "Failed to create the shadowmap SRV");
 		}
@@ -1038,23 +914,21 @@ Math::Frustum Renderer::get_cascade_frustum(shared_ptr<RenderWorldCamera> const&
 
 void Renderer::setup_renderstate(RenderContext& ctx, MaterialInstance const* mat_instance, ViewParams const& params)
 {
-	auto dx11Ctx = m_DeviceCtx;
-
 	// Bind anything coming from the material
 	mat_instance->apply(ctx, this, params);
 
 	// Bind the global textures coming from rendering systems
 	if (params.pass == RenderPass::Opaque)
 	{
-		ID3D11ShaderResourceView* views[] = {
-			s_EnableShadowRendering ? _shadow_map_srv.Get() : nullptr,
-			m_RI->GetRawSRV(_output_depth_srv_copy),
-			_cubemap_srv.Get(),
-			m_RI->GetRawSRV(_light_buffer->get_srv()),
-			m_RI->GetRawSRV(_tile_light_index_buffer->get_srv()),
-			m_RI->GetRawSRV(_per_tile_info_buffer->get_srv())
+		GraphicsResourceHandle views[] = {
+			s_EnableShadowRendering ? _shadow_map_srv : GraphicsResourceHandle::Invalid(),
+			_output_depth_srv_copy,
+			_cubemap_srv,
+			_light_buffer->get_srv(),
+			_tile_light_index_buffer->get_srv(),
+			_per_tile_info_buffer->get_srv()
 		};
-		m_DeviceCtx->PSSetShaderResources(Texture_CSM, UINT(std::size(views)), views);
+        ctx.SetShaderResources(ShaderStage::Pixel, Texture_CSM, views);
 	}
 }
 
@@ -1077,15 +951,15 @@ void Renderer::render_post_predebug(RenderContext& ctx)
 
 	ctx.SetShaderResources(ShaderStage::Pixel, 0, { _non_msaa_output_srv_copy });
 
-    ID3D11Buffer* buffer = m_RI->GetRawBuffer(m_CBPost->get_buffer());
-	m_DeviceCtx->PSSetConstantBuffers(0, 1, &buffer);
+    GraphicsResourceHandle buffer[] = { m_CBPost->get_buffer() };
+    ctx.SetConstantBuffers(ShaderStage::Pixel, 0, buffer);
 
 	GraphicsResourceHandle sampler_states[] = {
 		Graphics::GetSamplerState(SamplerState::MinMagMip_Linear),
 		Graphics::GetSamplerState(SamplerState::MinMagMip_Point)
 	};
 	ctx.SetSamplers(ShaderStage::Pixel, 0, sampler_states);
-	m_DeviceCtx->Draw(3, 0);
+	ctx.Draw(3, 0);
 
 }
 
@@ -1129,8 +1003,8 @@ void Renderer::DrawShadowPass(RenderContext& ctx, RenderWorld const& world)
 			GPU_SCOPED_EVENT(&ctx, fmt::format("Cascade {}", i).c_str());
 			CascadeInfo const& info = light->get_cascade(i);
 
-			m_DeviceCtx->OMSetRenderTargets(0, nullptr, _shadow_map_dsv[i].Get());
-			m_DeviceCtx->ClearDepthStencilView(_shadow_map_dsv[i].Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
+			ctx.SetTarget(GraphicsResourceHandle::Invalid(), _shadow_map_dsv[i]);
+			ctx.ClearDepthStencil(_shadow_map_dsv[i], D3D11_CLEAR_DEPTH, 1.0f, 0);
 
             if (!renderCascade[i])
             {
@@ -1168,7 +1042,7 @@ void Renderer::DrawOpaquePass(RenderContext& ctx, RenderWorld const& world)
 	GPU_SCOPED_EVENT(&ctx, "opaque");
 
 	// Do a copy to our dsv tex for sampling during the opaque pass
-	CopyDepth();
+	CopyDepth(ctx);
 
 	ctx.SetTarget(m_OutputTexture.GetRTV(), _output_dsv);
 	DrawView(ctx, world, Graphics::RenderPass::Opaque);
@@ -1195,11 +1069,13 @@ void Renderer::DrawPost(RenderContext& ctx, RenderWorld const& world, shared_ptr
 		ENSURE_HR(_device->CreateInputLayout(DirectX::DX11::VertexPositionColor::InputElements, DirectX::DX11::VertexPositionColor::InputElementCount, shader_byte_code, byte_code_length, _layout.ReleaseAndGetAddressOf()));
 	}
 
-	m_DeviceCtx->OMSetBlendState(_states->Opaque(), nullptr, 0xFFFFFFFF);
-	m_DeviceCtx->OMSetDepthStencilState(_states->DepthRead(), 0);
-	m_DeviceCtx->RSSetState(_states->CullNone());
+	// #TODO: Remove DirectXTK common states 
+	auto deviceCtx = GetRI()->Dx11GetDeviceContext();
+	deviceCtx->OMSetBlendState(_states->Opaque(), nullptr, 0xFFFFFFFF);
+	deviceCtx->OMSetDepthStencilState(_states->DepthRead(), 0);
+	deviceCtx->RSSetState(_states->CullNone());
 
-	m_DeviceCtx->IASetInputLayout(_layout.Get());
+	deviceCtx->IASetInputLayout(_layout.Get());
 
 	float4x4 view = float4x4::identity();
 	float4x4 proj = float4x4::identity();
@@ -1216,12 +1092,12 @@ void Renderer::DrawPost(RenderContext& ctx, RenderWorld const& world, shared_ptr
 	XMMATRIX xm_proj = proj4x4;
 	_common_effect->SetView(xm_view);
 	_common_effect->SetProjection(xm_proj);
-	_common_effect->Apply(m_DeviceCtx);
+    _common_effect->Apply(deviceCtx);
 
 	if(overlays)
 	{
 		GPU_SCOPED_EVENT(&ctx, "Post:RenderOverlays");
-		overlays->Render3D(m_DeviceCtx);
+        overlays->Render3D(ctx);
 	}
 
 	Viewport vp{};
@@ -1234,10 +1110,10 @@ void Renderer::DrawPost(RenderContext& ctx, RenderWorld const& world, shared_ptr
 	ctx.SetViewport(vp);
 
 	// Resolve msaa to non msaa for imgui render
-	m_DeviceCtx->ResolveSubresource(GetRI()->GetRawResource(_non_msaa_output_tex), 0, GetRI()->GetRawResource(m_OutputTexture.GetResource()), 0, _swapchain_format);
+    deviceCtx->ResolveSubresource(GetRI()->GetRawResource(_non_msaa_output_tex), 0, GetRI()->GetRawResource(m_OutputTexture.GetResource()), 0, _swapchain_format);
 
 	// Copy the non-msaa world render so we can sample from it in the post pass
-	m_DeviceCtx->CopyResource(GetRI()->GetRawResource(_non_msaa_output_tex_copy), GetRI()->GetRawResource(_non_msaa_output_tex));
+    deviceCtx->CopyResource(GetRI()->GetRawResource(_non_msaa_output_tex_copy), GetRI()->GetRawResource(_non_msaa_output_tex));
     ctx.SetTarget(_non_msaa_output_rtv, GraphicsResourceHandle::Invalid());
 	render_post_predebug(ctx);
 
@@ -1256,16 +1132,19 @@ void Renderer::DrawPost(RenderContext& ctx, RenderWorld const& world, shared_ptr
 	if(doImgui)
 	{
 		GPU_SCOPED_EVENT(&ctx, "ImGui");
-		m_DeviceCtx->OMSetRenderTargets(1, &_swapchain_rtv, nullptr);
+
+		// #TODO: Update swapchain to get graphics resource handle for rtv 
+		ctx.m_Context->OMSetRenderTargets(1, &_swapchain_rtv, nullptr);
 		ImDrawData* imguiData = &GetGlobalContext()->m_GraphicsThread->m_FrameData.m_DrawData;
 		ImGui_ImplDX11_RenderDrawData(imguiData);
 	}
 
 }
 
-void Renderer::CopyDepth()
+void Renderer::CopyDepth(RenderContext& ctx)
 {
-	m_DeviceCtx->CopyResource(m_RI->GetRawTexture2D(_output_depth_copy), m_RI->GetRawTexture2D(_output_depth));
+	// #TODO: Implement CopyDepth function
+	ctx.m_Context->CopyResource(m_RI->GetRawTexture2D(_output_depth_copy), m_RI->GetRawTexture2D(_output_depth));
 }
 
 } // namespace Graphics

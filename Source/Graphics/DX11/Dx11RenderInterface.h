@@ -118,10 +118,12 @@ struct Dx11RenderContext
     inline void OMSetBlendState(GraphicsResourceHandle bs, std::array<float, 4> blendFactor = {}, uint32_t sampleMask = 0x0);
 
     inline void DrawIndexed(uint32_t indexCount, uint32_t indexOffset, uint32_t vertexOffset);  
+    inline void Draw(uint32_t vertexCount, uint32_t vertexStartLocation);
 
     void ClearTargets(GraphicsResourceHandle rtv, GraphicsResourceHandle dsv, float4 color, uint32_t clearFlags, float depth, uint8_t stencil);
     void SetTarget(GraphicsResourceHandle rtv, GraphicsResourceHandle dsv);
     void ClearRenderTarget(GraphicsResourceHandle rtv, float4 color);
+    void ClearDepthStencil(GraphicsResourceHandle dsv, uint32_t clearFlags, float depth, uint8_t stencil);
 
     void SetShaderResources(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> srvs);
     void SetSamplers(ShaderStage stage, uint32_t startSlot, Span<GraphicsResourceHandle> samplers);
@@ -208,8 +210,18 @@ public:
         ctx.Flush();
     }
 
+    void Flush()
+    {
+        m_Context->ClearState();
+        m_Context->Flush();
+    }
+
+
     template<typename T> T* GetRawResourceAs(GraphicsResourceHandle h)
     {
+        if (h.Invalid())
+            return nullptr;
+
         SlotHandle slotHandle = {
             h.data.id, h.data.gen
         };
@@ -243,9 +255,13 @@ public:
         return nullptr;
     }
 
-    ID3D11Device* Dx11GetDevice()
+    ID3D11Device* Dx11GetDevice() const
     {
         return m_Device.Get();
+    }
+    ID3D11DeviceContext* Dx11GetDeviceContext() const
+    {
+        return m_Context.Get();
     }
 
     bool ImGui_Init() 
@@ -258,6 +274,9 @@ private:
 
     ID3D11Resource* GetRawResource(GraphicsResourceHandle h) const
     {
+        if (!h)
+            return nullptr;
+
         switch(h.data.type)
         {
             case GRT_Texture:
@@ -276,42 +295,63 @@ private:
     }
     ID3D11Buffer* GetRawBuffer(GraphicsResourceHandle h) const
     { 
+        if (!h)
+            return nullptr;
+
         ASSERT(h.data.type == GRT_Buffer);
         return static_cast<ID3D11Buffer*>(m_Resources.Get({ h.data.id, h.data.gen }).Get());
     }
 
     ID3D11ShaderResourceView* GetRawSRV(GraphicsResourceHandle h) const
     {
+        if (!h)
+            return nullptr;
+
         ASSERT(h.data.type == GRT_ShaderResourceView);
         return m_SRVs.Get({ h.data.id, h.data.gen }).Get();
     }
 
     ID3D11SamplerState* GetRawSampler(GraphicsResourceHandle h) const
     {
+        if (!h)
+            return nullptr;
+
         ASSERT(h.data.type == GRT_SamplerState);
         return m_SamplerStates.Get({ h.data.id, h.data.gen }).Get();
     }
 
     ID3D11UnorderedAccessView* GetRawUAV(GraphicsResourceHandle h) const
     {
+        if (!h)
+            return nullptr;
+
         ASSERT(h.data.type == GRT_UnorderedAccessView);
         return m_UAVs.Get({ h.data.id, h.data.gen }).Get();
     }
 
     ID3D11RenderTargetView* GetRawRTV(GraphicsResourceHandle h) const
     {
+        if (!h)
+            return nullptr;
+
         ASSERT(h.data.type == GRT_RenderTargetView);
         return m_RTVs.Get({ h.data.id, h.data.gen }).Get();
     }
 
     ID3D11InputLayout* GetRawInputLayout(GraphicsResourceHandle h) const
     {
+        if (!h)
+            return nullptr;
+
         ASSERT(h.data.type == GRT_InputLayout);
         return m_InputLayouts.Get({ h.data.id, h.data.gen }).Get();
     }
 
     ID3D11Texture2D* GetRawTexture2D(GraphicsResourceHandle h) const
     {
+        if (!h)
+            return nullptr;
+
         ASSERT(h.data.type == GRT_Texture);
         return static_cast<ID3D11Texture2D*>(m_Resources.Get({ h.data.id, h.data.gen }).Get());
     }
