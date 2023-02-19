@@ -39,6 +39,7 @@ void Dx11RenderInterface::Init()
     m_RasterizerStates.Grow(64);
     m_BlendStates.Grow(64);
     m_DepthStencilStates.Grow(64);
+    m_SwapChains.Grow(1);
 
     // Create Direct3D 11 factory
     {
@@ -54,7 +55,7 @@ void Dx11RenderInterface::Init()
         uint32_t creation_flag = D3D11_CREATE_DEVICE_BGRA_SUPPORT;
 
         // #todo
-        bool debug_layer = cli::has_arg("-enable-d3d-debug");
+        bool debug_layer = cli::has_arg("-d3d-debug");
         if (debug_layer)
         {
             creation_flag |= D3D11_CREATE_DEVICE_DEBUG;
@@ -76,13 +77,15 @@ void Dx11RenderInterface::Init()
                     info_queue->SetBreakOnSeverity(D3D11_MESSAGE_SEVERITY_WARNING, TRUE);
                 }
 
-                // D3D11_INFO_QUEUE_FILTER f{};
-                // f.DenyList.NumSeverities = 1;
-                // D3D11_MESSAGE_SEVERITY severities[1] = {
-                //	D3D11_MESSAGE_SEVERITY_WARNING
-                // };
-                // f.DenyList.pSeverityList = severities;
-                // info_queue->AddStorageFilterEntries(&f);
+#if 1 // Filter the warnings out
+                 D3D11_INFO_QUEUE_FILTER f{};
+                 f.DenyList.NumSeverities = 1;
+                 D3D11_MESSAGE_SEVERITY severities[1] = {
+                	D3D11_MESSAGE_SEVERITY_WARNING
+                 };
+                 f.DenyList.pSeverityList = severities;
+                 info_queue->AddStorageFilterEntries(&f);
+#endif
             }
         }
     }
@@ -103,6 +106,8 @@ void Dx11RenderInterface::Init()
 
 void Dx11RenderInterface::Shutdown()
 {
+    m_Resources.Clear();
+    m_SwapChains.Clear();
 }
 
 GraphicsResourceHandle Dx11RenderInterface::CreateBuffer(BufferDesc const& desc, SubresourceData const* initialData, std::string_view debugName)
@@ -338,27 +343,81 @@ GraphicsResourceHandle Dx11RenderInterface::CreateRenderTargetView(GraphicsResou
     return handle;
 }
 
+SwapchainHandle Dx11RenderInterface::CreateSwapchain(SwapChainDesc const& desc, std::string_view debugName /*= ""*/)
+{
+    ComPtr<IDXGISwapChain> swapchain;
+    ENSURE_HR(m_Factory->CreateSwapChain(m_Device.Get(), const_cast<SwapChainDesc*>(&desc), &swapchain));
+    Helpers::SetDebugObjectName(swapchain.Get(), debugName);
+
+    auto h = m_SwapChains.Push(swapchain);
+    SwapchainHandle handle = SwapchainHandle(h.gen, h.id);
+    return handle;
+}
+
+void Dx11RenderInterface::ReleaseSwapchain(SwapchainHandle h)
+{
+    auto slotHandle = SlotHandle(h.data.id, h.data.gen);
+    m_SwapChains.Erase(slotHandle);
+}
+
+void Dx11RenderInterface::Present(SwapchainHandle swapchainHandle, uint32_t syncInterval, uint32_t flags)
+{
+    auto slotHandle = SlotHandle(swapchainHandle.data.id, swapchainHandle.data.gen);
+    ComPtr<IDXGISwapChain> swapchain = m_SwapChains.Get(slotHandle);
+
+    swapchain->Present(syncInterval, flags);
+}
+
+void Dx11RenderInterface::ResizeSwapchain(SwapchainHandle swapchainHandle, uint32_t w, uint32_t h)
+{
+    auto slotHandle = SlotHandle(swapchainHandle.data.id, swapchainHandle.data.gen);
+    ComPtr<IDXGISwapChain> swapchain = m_SwapChains.Get(slotHandle);
+
+    DXGI_SWAP_CHAIN_DESC desc{};
+    swapchain->GetDesc(&desc);
+    swapchain->ResizeBuffers(desc.BufferCount, w, h, desc.BufferDesc.Format, desc.Flags);
+}
+
+GraphicsResourceHandle Dx11RenderInterface::GetSwapchainBuffer(SwapchainHandle h, uint32_t buffer)
+{
+    auto slotHandle = SlotHandle(h.data.id, h.data.gen);
+    ComPtr<IDXGISwapChain> swapchain = m_SwapChains.Get(slotHandle);
+    ASSERT(swapchain);
+
+    ComPtr<IDXGISwapChain3> sc;
+    ENSURE_HR(swapchain->QueryInterface<IDXGISwapChain3>(&sc));
+
+    ComPtr<ID3D11Texture2D> tex;
+    HRESULT hr = sc->GetBuffer(buffer, IID_PPV_ARGS(&tex));
+    ENSURE_HR(hr);
+
+    SlotHandle bufferHandle = m_Resources.Push(tex);
+    return GraphicsResourceHandle(GRT_Texture, bufferHandle.gen, bufferHandle.id);
+}
+
 void Dx11RenderInterface::ReleaseResource(GraphicsResourceHandle& h)
 {
+    auto slotHandle = SlotHandle{
+        h.data.id, h.data.gen
+    };
     switch (h.data.type)
     {
         case GRT_ShaderResourceView:
-            m_SRVs.Erase(SlotHandle{ h.data.id, h.data.gen });
+            m_SRVs.Erase(slotHandle);
             break;
         case GRT_UnorderedAccessView:
-            m_UAVs.Erase(SlotHandle{ h.data.id, h.data.gen });
+            m_UAVs.Erase(slotHandle);
             break;
         case GRT_InputLayout:
-            m_InputLayouts.Erase(SlotHandle{ h.data.id, h.data.gen });
+            m_InputLayouts.Erase(slotHandle);
             break;
         case GRT_RenderTargetView:
-            m_RTVs.Erase(SlotHandle{ h.data.id, h.data.gen });
+            m_RTVs.Erase(slotHandle);
             break;
         case GRT_Texture:
         case GRT_Buffer:
-            m_Resources.Erase(SlotHandle{ h.data.id, h.data.gen });
+            m_Resources.Erase(slotHandle);
             break;
-
         default:
             ASSERT("Unsupported type!");
             break;

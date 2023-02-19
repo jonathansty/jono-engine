@@ -123,9 +123,9 @@ bool cli::get_number(CommandLine const& cmd_args, std::string const& arg, int& n
 	return true;
 }
 
-CLI_API void cli::set(std::string cmdLine)
+CLI_API void cli::set(CommandLine const& cmdLine)
 {
-    s_CommandLine = cli::parse(cmdLine);
+    s_CommandLine = cmdLine;
 }
 
 bool cli::get_string(CommandLine const& cmd_args, std::string const& arg, std::string& val)

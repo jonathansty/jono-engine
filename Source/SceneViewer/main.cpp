@@ -14,7 +14,9 @@ int main(int argcs, char** argvs)
 {
 #ifdef USE_ENGINE_LOOP
 	EngineLoop engine("/Types/Games/SceneViewer");
-	return engine.Run();
+
+    cli::CommandLine cmd = cli::parse(argvs, argcs);
+	return engine.Run(cmd);
 #else
 
 

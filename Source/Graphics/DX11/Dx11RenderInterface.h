@@ -20,6 +20,7 @@ using Texture1DDesc       = D3D11_TEXTURE1D_DESC;
 using Texture2DDesc       = D3D11_TEXTURE2D_DESC;
 using Texture3DDesc       = D3D11_TEXTURE3D_DESC;
 using RtvDesc = D3D11_RENDER_TARGET_VIEW_DESC;
+using SwapChainDesc = DXGI_SWAP_CHAIN_DESC;
 
 
 struct Viewport
@@ -171,6 +172,15 @@ class Dx11RenderInterface
     friend class GameEngine;
 
 public:
+    Dx11RenderInterface()
+    {
+    
+    }
+
+    ~Dx11RenderInterface() 
+    {
+    
+    }
     void Init();
     void Shutdown();
 
@@ -192,6 +202,13 @@ public:
 
     GraphicsResourceHandle CreateRenderTargetView(GraphicsResourceHandle resource, RtvDesc const& desc, std::string_view name = "");
     GraphicsResourceHandle CreateRenderTargetView(GraphicsResourceHandle resource, std::string_view name = "");
+
+    SwapchainHandle CreateSwapchain(SwapChainDesc const& desc, std::string_view debugName = "");
+    void ReleaseSwapchain(SwapchainHandle h);
+    void Present(SwapchainHandle swapchainHandle, uint32_t syncInterval = 0, uint32_t flags = 0);
+    void ResizeSwapchain(SwapchainHandle swapchainHandle, uint32_t w, uint32_t h);
+
+    GraphicsResourceHandle GetSwapchainBuffer(SwapchainHandle swapchain, uint32_t buffer);
 
     inline Texture2DDesc GetTexture2DDesc(GraphicsResourceHandle const& resource) const;
 
@@ -376,6 +393,7 @@ private:
     SlotVector<ComPtr<ID3D11RasterizerState>> m_RasterizerStates;
     SlotVector<ComPtr<ID3D11BlendState>> m_BlendStates;
     SlotVector<ComPtr<ID3D11DepthStencilState>> m_DepthStencilStates;
+    SlotVector<ComPtr<IDXGISwapChain>> m_SwapChains;
 
     Dx11RenderContext m_ActiveRenderContext;
 

@@ -65,3 +65,49 @@ struct GraphicsResourceHandle
         } data;
     };
 };
+
+struct SwapchainHandle : public GraphicsResourceHandle
+{
+    SwapchainHandle(uint64_t hash)
+      : hash(hash)
+    {
+    }
+    SwapchainHandle(uint16_t gen, uint64_t id)
+    {
+        data.gen = gen;
+        data.id = id;
+    }
+
+    SwapchainHandle()
+      : hash(static_cast<uint64_t>(-1))
+    {
+    }
+
+    static SwapchainHandle const& Invalid()
+    {
+        static SwapchainHandle s_Invalid = SwapchainHandle();
+        return s_Invalid;
+    }
+
+    bool IsValid() const { return *this != Invalid(); }
+
+    operator bool() const
+    {
+        return IsValid();
+    }
+
+    bool operator==(SwapchainHandle const& rhs) const { return this->hash == rhs.hash; }
+
+    union
+    {
+        uint64_t hash;
+        struct
+        {
+            uint32_t gen : 32;
+            uint32_t id : 32;
+        } data;
+    };
+};
+
+
+

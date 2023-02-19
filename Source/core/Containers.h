@@ -34,6 +34,12 @@ public:
         }
     }
 
+    void Clear()
+    {
+        m_Storage.clear();
+        m_Generations.clear();
+    }
+
     SlotHandle Push(T obj)
     {
         size_t id = m_Storage.size();

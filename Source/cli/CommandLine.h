@@ -39,6 +39,6 @@ CLI_API bool get_string(CommandLine const& cmd_args, std::string const& arg, std
 CLI_API bool get_bool(CommandLine const& cmd_args, std::string const& arg, bool& val);
 CLI_API bool get_number(CommandLine const& cmd_args, std::string const& arg, int& number);
 
-CLI_API void set(std::string cmdLine);
+CLI_API void set(CommandLine const& cmdLine);
 
 } // namespace cli

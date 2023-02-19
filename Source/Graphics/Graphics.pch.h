@@ -15,6 +15,7 @@
 #include <wrl.h>
 using Microsoft::WRL::ComPtr;
 #include <d3d11_1.h>
+#include <d3d11_4.h>
 #include <wincodec.h>
 #endif
 

@@ -225,7 +225,8 @@ public:
 	GraphicsResourceHandle const& get_raw_output_tex() const { return m_OutputTexture.GetResource(); };
 	GraphicsResourceHandle const& get_raw_output_non_msaa_tex() const { return _non_msaa_output_tex; };
 	GraphicsResourceHandle const& get_raw_output_non_msaa_srv() const { return _non_msaa_output_srv; };
-	IDXGISwapChain3*           get_raw_swapchain() const { return _swapchain; };
+
+	SwapchainHandle				  get_raw_swapchain() const { return _swapchain; };
 
 	IWICImagingFactory*        get_raw_wic() const { return _wic_factory; };
 #if FEATURE_D2D
@@ -313,9 +314,9 @@ private:
 	DXGI_FORMAT   _swapchain_format;
 	IDXGIFactory* _factory;
 
-	IDXGISwapChain3*          _swapchain;
-	ID3D11RenderTargetView*   _swapchain_rtv;
-	ID3D11ShaderResourceView* _swapchain_srv;
+	SwapchainHandle          _swapchain;
+	GraphicsResourceHandle   _swapchain_rtv;
+	GraphicsResourceHandle   _swapchain_srv;
 
 	ID3D11Device*        _device;
 	//ID3D11DeviceContext* m_DeviceCtx;

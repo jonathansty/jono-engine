@@ -187,9 +187,9 @@ void Renderer::release_frame_resources()
 
 	SafeRelease(_d2d_rt);
 
-	SafeRelease(_swapchain);
-	SafeRelease(_swapchain_rtv);
-	SafeRelease(_swapchain_srv);
+	m_RI->ReleaseResource(_swapchain);
+	m_RI->ReleaseResource(_swapchain_rtv);
+	m_RI->ReleaseResource(_swapchain_srv);
 
 	m_OutputTexture = {};
 
@@ -291,8 +291,7 @@ void Renderer::ResizeSwapchain(u32 w, u32 h)
 	DXGI_SWAP_CHAIN_DESC desc{};
 	if (_swapchain)
 	{
-		_swapchain->GetDesc(&desc);
-		_swapchain->ResizeBuffers(desc.BufferCount, w, h, desc.BufferDesc.Format, desc.Flags);
+        GetRI()->ResizeSwapchain(_swapchain, w, h);
 	}
 	else
 	{
@@ -325,21 +324,20 @@ void Renderer::ResizeSwapchain(u32 w, u32 h)
 		desc.BufferCount = 2;
 		desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
 		desc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING;
-		ComPtr<IDXGISwapChain> swapchain;
-		SUCCEEDED(_factory->CreateSwapChain(_device, &desc, &swapchain));
-		swapchain->QueryInterface(IID_PPV_ARGS(&_swapchain));
-
-		set_debug_name(_swapchain, "DXGISwapchain");
-		set_debug_name(_factory, "DXGIFactory");
+        _swapchain = GetRI()->CreateSwapchain(desc, "Swapchain");
 	}
 
 	// Recreate the views
-	ComPtr<ID3D11Texture2D> backBuffer;
-	_swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+    GraphicsResourceHandle backBuffer = GetRI()->GetSwapchainBuffer(_swapchain, 0);
 	assert(backBuffer);
-	SUCCEEDED(_device->CreateRenderTargetView(backBuffer.Get(), NULL, &_swapchain_rtv));
-	SUCCEEDED(_device->CreateShaderResourceView(backBuffer.Get(), NULL, &_swapchain_srv));
-	set_debug_name(backBuffer.Get(), "Swapchain::Output");
+    _swapchain_rtv = GetRI()->CreateRenderTargetView(backBuffer,   "Swapchain RTV");
+    _swapchain_srv = GetRI()->CreateShaderResourceView(backBuffer, "Swapchain SRV");
+
+	////ComPtr<ID3D11Texture2D> backBuffer;
+	////_swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));
+	//SUCCEEDED(_device->CreateRenderTargetView(backBuffer.Get(), NULL, &_swapchain_rtv));
+	//SUCCEEDED(_device->CreateShaderResourceView(backBuffer.Get(), NULL, &_swapchain_srv));
+	//set_debug_name(backBuffer.Get(), "Swapchain::Output");
 
 	// Create the D2D target for 2D rendering
 	int display = SDL_GetWindowDisplayIndex(m_Window);
@@ -1133,8 +1131,7 @@ void Renderer::DrawPost(RenderContext& ctx, RenderWorld const& world, shared_ptr
 	{
 		GPU_SCOPED_EVENT(&ctx, "ImGui");
 
-		// #TODO: Update swapchain to get graphics resource handle for rtv 
-		ctx.m_Context->OMSetRenderTargets(1, &_swapchain_rtv, nullptr);
+		ctx.SetTarget(_swapchain_rtv, GraphicsResourceHandle::Invalid());
 		ImDrawData* imguiData = &GetGlobalContext()->m_GraphicsThread->m_FrameData.m_DrawData;
 		ImGui_ImplDX11_RenderDrawData(imguiData);
 	}

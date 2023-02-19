@@ -11,6 +11,8 @@ SERIALIZE_FN(EditorLoop) {}
 
 int EngineLoop::Run(cli::CommandLine cmdLine)
 {
+    cli::set(cmdLine);
+
     MemoryTracker::init();
 
     GameEngine::create();
@@ -20,6 +22,7 @@ int EngineLoop::Run(cli::CommandLine cmdLine)
     TypeManager* typeManager = ctx->m_TypeManager;
     AbstractGame* rawGame = typeManager->CreateObject<AbstractGame>(m_GameType);
     m_Engine->m_Game = std::unique_ptr<AbstractGame>(rawGame);
+    m_Engine->m_CommandLine = cmdLine;
 
     Startup();
 

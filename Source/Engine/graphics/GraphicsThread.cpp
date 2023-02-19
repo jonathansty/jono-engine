@@ -153,6 +153,7 @@ void GraphicsThread::DoFrame()
 
 void GraphicsThread::Present(RenderContext& ctx)
 {
+    RenderInterface* ri = GetRI();
 	GameEngine* engine = GetGlobalContext()->m_Engine;
 	Graphics::Renderer* renderer = GetGlobalContext()->m_Engine->m_Renderer.get();
 	RenderWorld& world = m_FrameData.m_RenderWorld;
@@ -174,7 +175,8 @@ void GraphicsThread::Present(RenderContext& ctx)
 		flags |= DXGI_PRESENT_ALLOW_TEARING;
 	}
     ctx.SetTarget(GraphicsResourceHandle::Invalid(), GraphicsResourceHandle::Invalid());
-	d3d_swapchain->Present(m_FrameData.m_VSyncEnabled ? 1 : 0, flags);
+
+	ri->Present(d3d_swapchain, m_FrameData.m_VSyncEnabled ? 1 : 0, flags);
 
 	auto& timer = engine->m_GpuTimings[idx];
 	timer.end(ctx);
