@@ -23,17 +23,17 @@ struct VS_IN
 	float3 position : SV_Position;
 	float3 normal : NORMAL0;
 
+#ifdef _USE_TANGENTS
+	float4 tangent : TANGENT0;
+	float4 bitangent : TANGENT1;
+#endif
+
 #ifdef _USE_UV0
 	float2 uv0 : TEXCOORD0;
 #endif
 
 #ifdef _USE_UV1
 	float2 uv1 : TEXCOORD1;
-#endif
-
-#ifdef _USE_TANGENTS
-	float4 tangent : TANGENT0;
-	float4 bitangent : TANGENT1;
 #endif
 
 #ifdef _USE_COLOUR
@@ -80,6 +80,30 @@ float4 GetColour0(VS_OUT vsOut)
 	return vsOut.colour;
 #else
 	return (float4)0.0f;
+#endif
+}
+
+float4 GetWorldNormal(VS_OUT vsOut)
+{
+	return vsOut.worldNormal;
+}
+
+float4 GetWorldTangent(VS_OUT vsOut)
+{
+#ifdef _USE_TANGENTS
+	return vsOut.worldTangent;
+#else
+	return float4(0.0f,0.0f,0.0f,0.0f);
+#endif
+}
+
+
+float4 GetWorldBitangent(VS_OUT vsOut)
+{
+#ifdef _USE_TANGENTS
+	return vsOut.worldBitangent;
+#else
+	return float4(0.0f,0.0f,0.0f,0.0f);
 #endif
 }
 

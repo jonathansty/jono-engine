@@ -117,7 +117,10 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 		m_AABB.max = (float3)(- std::numeric_limits<float>::max());
 		for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
 		{
+
 			aiMesh const* mesh = scene->mMeshes[i];
+            ASSERT(mesh->HasPositions() && mesh->HasNormals());
+
 			aiMatrix4x4 const& transform = transforms[i];
 
 			aiMatrix3x3 normalTransform = aiMatrix3x3{

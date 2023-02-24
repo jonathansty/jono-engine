@@ -18,15 +18,13 @@ VS_OUT main(VS_IN vin)
 	vout.worldPosition  = mul(World, float4(vin.position, 1.0));
 	vout.viewPosition   = mul(WorldView, float4(vin.position, 1.0));
 
-#ifdef _USE_NORMAL0
-	vout.normal = float4(vin.normal, 1.0);
+	vout.normal 		= float4(vin.normal, 1.0);
 	vout.viewNormal     = mul(WorldView, float4(vin.normal, 0.0));
 	vout.worldNormal    = mul(World, float4(vin.normal, 0.0));
-#endif
 
 #ifdef _USE_TANGENTS
-	vout.worldTangent   = mul(World, vin.tangent);
-	vout.worldBitangent = mul(World, vin.bitangent);
+	vout.worldTangent   = mul(World, float4(vin.tangent.xyz, 0.0f));
+	vout.worldBitangent = mul(World, float4(vin.bitangent.xyz, 0.0f));
 #endif
 
 	return vout;

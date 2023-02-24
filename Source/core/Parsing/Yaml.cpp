@@ -1,10 +1,9 @@
-#include "engine.pch.h"
+#include "core.pch.h"
 #include "Yaml.h"
 
-
-#include "Core/PlatformIO.h"
-#include "Core/Logging.h"
-#include "GlobalContext.h"
+#include "GlobalContext.h"	
+#include "PlatformIO.h"
+#include "Logging.h"
 
 #include "mini-yaml/MiniYaml.hpp"
 

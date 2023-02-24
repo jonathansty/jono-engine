@@ -45,20 +45,20 @@ float4 main(VS_OUT vout) : SV_Target
 	else if (g_VisualizeMode == VisualizeMode_WorldNormal)
 	{
 		// Transform our tangent normal into world space
-		float3 normal = normalize(vout.worldNormal).xyz;
+		float3 normal = normalize(GetWorldNormal(vout)).xyz;
 #ifdef _USE_TANGENTS
-		float4 tangent = normalize(vout.worldTangent);
-		float3 bitangent = normalize(vout.worldBitangent.xyz);
+		float3 tangent = normalize(GetWorldTangent(vout));
+		float3 bitangent = normalize(GetWorldBitangent(vout));
 		float3x3 TBN = float3x3(
 			tangent.xyz,
 			bitangent.xyz,
 			normal.xyz
-			);
+		);
 
 		normal = mul(float4(material.tangentNormal, 0.0f), TBN).xyz;
 #endif
-
 		output = (normal *0.5f) + 0.5f;
+		output = normal;
 	}
 	else if (g_VisualizeMode == VisualizeMode_AO)
 	{

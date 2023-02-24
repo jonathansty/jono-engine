@@ -161,8 +161,10 @@ struct Dx11RenderContext
     } m_PrevRenderState;
 };
 
-class Dx11RenderInterface
+class Dx11RenderInterface : public IRenderInterface
 {
+    CLASS(Dx11RenderInterface, IRenderInterface);
+
     // #TODO: Remove all friend classes
     friend class Graphics::Renderer;
     friend class Material;

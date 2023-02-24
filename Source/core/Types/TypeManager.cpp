@@ -1,14 +1,9 @@
-#include "engine.pch.h"
-
-#include "CLI/CommandLine.h"
+#include "core.pch.h"
 
 #include "TypeManager.h"
-#include "GlobalContext.h"
 
 TypeManager::TypeManager()
 {
-	GlobalContext* globalContext = GetGlobalContext();
-	globalContext->m_TypeManager = this;
 }
 
 TypeMetaData* TypeManager::FindType(std::string_view const& name)
@@ -51,8 +46,4 @@ void* TypeManager::SerializeObject(std::string_view const& typePath, void* dst, 
 
 TypeManager::~TypeManager()
 {
-	GlobalContext* globalContext = GetGlobalContext();
-	globalContext->m_TypeManager = nullptr;
 }
-
-

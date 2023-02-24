@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Types/TypeManager.h"
+
 #include "Parsing/mini-yaml/MiniYaml.hpp"
 
 enum class SerializationMode

@@ -42,11 +42,12 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
 
 
 	// #TODO: Move this out of the renderer. The driver interface should be initialized by the engine
+
+	GetGlobalContext()->m_RenderInterface = GetGlobalContext()->m_TypeManager->CreateObject<IRenderInterface>("/Types/Dx11RenderInterface");
 	m_RI = GetRI();
     m_RI->Init();
 
     _device = m_RI->m_Device.Get();
-    _factory = m_RI->m_Factory.Get();
 
 	_debug_tool = std::make_unique<RendererDebugTool>(this);
 	GameEngine::instance()->get_overlay_manager()->register_overlay(_debug_tool.get());

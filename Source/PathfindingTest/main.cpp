@@ -3,7 +3,6 @@
 // Different Games
 #include "PathFindingGame.h"
 #include "GlobalContext.h"
-#include "Types/TypeManager.h"
 
 int main(int argcs, char** argvs)
 {

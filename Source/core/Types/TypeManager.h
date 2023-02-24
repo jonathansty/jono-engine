@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Core/Singleton.h"
+#include "Singleton.h"
 
 class IniStream;
 
-class ENGINE_API TypeMetaData
+class CORE_API TypeMetaData
 {
 public:
 	void* (*m_ConstructFn)(void*);
@@ -17,7 +17,7 @@ public:
 	u32 m_Size;
 };
 
-class ENGINE_API TypeManager final : public TSingleton<TypeManager, true>
+class CORE_API TypeManager final : public TSingleton<TypeManager, true>
 {
 public:
 	TypeManager();

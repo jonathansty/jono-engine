@@ -33,6 +33,7 @@ public class CoreModule : Module
     {
         base.ConfigureAll(conf, target);
 
+        conf.AddPrivateDependency<CliModule>(target);
         conf.AddPublicDependency<OpTick>(target);
         conf.AddPublicDependency<Rttr>(target);
         conf.AddPublicDependency<Hlslpp>(target);

@@ -1,15 +1,14 @@
 #include "Graphics.pch.h"
+#include "GlobalContext.h"
 #include "RenderInterface.h"
 
 
+REGISTER_TYPE("/Types/Dx11RenderInterface", Dx11RenderInterface);
+SERIALIZE_FN(Dx11RenderInterface) {}
+
 RenderInterface* GetRI()
 {
-    static Dx11RenderInterface* ri = nullptr;
-    if(ri == nullptr)
-    {
-        ri = new Dx11RenderInterface();
-    }
-    return ri;
+    return reinterpret_cast<RenderInterface*>(GetGlobalContext()->m_RenderInterface);
 }
 
 namespace Helpers

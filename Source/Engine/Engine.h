@@ -69,4 +69,4 @@ using Microsoft::WRL::ComPtr;
 #define ENGINE_API
 #endif
 
-#include "Types/TypeManager.h"
+#include "Core/Types/TypeManager.h"

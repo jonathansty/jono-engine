@@ -19,5 +19,6 @@ struct GlobalContext
 	class AbstractGame*   m_Game;
 	class GraphicsThread* m_GraphicsThread;
 	class TypeManager*    m_TypeManager;
+	class IRenderInterface* m_RenderInterface;
 };
-extern ENGINE_API GlobalContext* GetGlobalContext();
+extern CORE_API GlobalContext* GetGlobalContext();

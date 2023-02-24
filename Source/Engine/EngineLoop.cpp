@@ -15,12 +15,17 @@ int EngineLoop::Run(cli::CommandLine cmdLine)
 
     MemoryTracker::init();
 
+    // Create global singletons
     GameEngine::create();
+
     m_Engine = GameEngine::instance();
 
+    // Bind singletons to our global context
     GlobalContext* ctx = GetGlobalContext();
-    TypeManager* typeManager = ctx->m_TypeManager;
-    AbstractGame* rawGame = typeManager->CreateObject<AbstractGame>(m_GameType);
+    ctx->m_TypeManager = TypeManager::instance();
+
+    // Construct the game from type 
+    AbstractGame* rawGame = ctx->m_TypeManager->CreateObject<AbstractGame>(m_GameType);
     m_Engine->m_Game = std::unique_ptr<AbstractGame>(rawGame);
     m_Engine->m_CommandLine = cmdLine;
 

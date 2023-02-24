@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Types/TypeManager.h"
 #include "CLI/CommandLine.h"
 
 struct ENGINE_API IEngineLoop

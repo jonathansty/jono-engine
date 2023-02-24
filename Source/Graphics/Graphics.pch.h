@@ -6,6 +6,8 @@
 #include "Core/Memory.h"
 #include "Core/Array.h"
 #include "Core/Containers.h"
+#include "Core/Types/TypeManager.h"
+
 #include "CLI/CLI.h"
 #include "CLI/CommandLine.h"
 

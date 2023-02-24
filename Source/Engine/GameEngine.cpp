@@ -28,7 +28,6 @@
 #include "Graphics/ShaderCache.h"
 #include "Memory.h"
 
-#include "Types/TypeManager.h"
 #include "EngineLoop.h"
 
 int g_DebugMode = 0;

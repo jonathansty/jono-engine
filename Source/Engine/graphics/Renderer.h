@@ -320,7 +320,6 @@ private:
 	RenderInterface* m_RI;
 
 	DXGI_FORMAT   _swapchain_format;
-	IDXGIFactory* _factory;
 
 	SwapchainHandle          _swapchain;
 	GraphicsResourceHandle   _swapchain_rtv;
