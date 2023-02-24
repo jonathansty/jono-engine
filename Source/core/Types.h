@@ -190,15 +190,27 @@ void SafeRelease(T*& obj)
 // Enum related implementation macros
 
 // Implements basic enum bitflag operators and the underlying operator* overload
-#define ENUM_BITFLAGS(enum_type)                                           \
-	inline enum_type operator&(enum_type const& lhs, enum_type const& rhs) \
-	{                                                                      \
-		return static_cast<enum_type>((uint32_t)(lhs) & (uint32_t)(rhs));                \
-	}                                                                      \
-	inline enum_type operator|(enum_type const& lhs, enum_type const& rhs) \
-	{                                                                      \
-		return static_cast<enum_type>((uint32_t)lhs | (uint32_t)rhs);                \
-	}                                                                      \
+#define ENUM_BITFLAGS(enum_type)                                            \
+    inline enum_type operator&(enum_type const& lhs, enum_type const& rhs)  \
+    {                                                                       \
+        return static_cast<enum_type>((uint32_t)(lhs) & (uint32_t)(rhs));   \
+    }                                                                       \
+    inline enum_type operator|(enum_type const& lhs, enum_type const& rhs)  \
+    {                                                                       \
+        return static_cast<enum_type>((uint32_t)lhs | (uint32_t)rhs);       \
+    }                                                                       \
+    inline enum_type& operator|=(enum_type& lhs, enum_type const& rhs)      \
+    {                                                                       \
+        return lhs = static_cast<enum_type>((uint32_t)lhs | (uint32_t)rhs); \
+    }                                                                       \
+    inline enum_type operator<<(enum_type lhs, uint32_t rhs)                \
+    {                                                                       \
+        return static_cast<enum_type>((uint32_t)lhs << (uint32_t)rhs);      \
+    }                                                                       \
+    inline bool any(enum_type lhs)                                          \
+    {                                                                       \
+        return lhs != (enum_type)0;                                         \
+    }																		\
 	ENUM_UNDERLYING_TYPE(enum_type)	
 
 // Implement operator* to convert the enum to it's underlying type

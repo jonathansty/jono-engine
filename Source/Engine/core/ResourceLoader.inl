@@ -32,7 +32,12 @@ std::shared_ptr<T> ResourceLoader::load(typename T::init_parameters params, bool
 
     if (blocking)
     {
-        res->load(nullptr);
+        bool result = res->load(nullptr);
+        if(!result)
+        {
+            res->SetStatus(ResourceStatus::Error);
+            return nullptr;
+        }
         res->SetStatus(ResourceStatus::Loaded);
     }
     else

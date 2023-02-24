@@ -67,6 +67,15 @@ public:
         return h;
     }
 
+    bool Has(SlotHandle h) const
+    {
+        if (m_Generations.at(h.id) == h.gen)
+        {
+            return m_Storage.at(h.id) != nullptr;
+        }
+        return false;
+    
+    }
     bool Erase(SlotHandle h)
     {
         if (m_Generations[h.id] == h.gen)

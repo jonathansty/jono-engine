@@ -23,7 +23,7 @@ std::shared_ptr<Shader> ShaderCache::find_or_create(ShaderCreateParams const& cr
 	}
 	else
 	{
-		result = std::make_shared<Shader>();
+        return nullptr;
 	}
 
 	// Always populate the cache and return a shader object so we can check if the shader is valid when trying to bind it to allow hot reloading.
@@ -47,8 +47,8 @@ bool ShaderCache::reload_all()
 		}
 		else
 		{
-			auto tmp = Shader::Create(it.first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
-			*it.second = *tmp;
+            it.second = nullptr;
+            it.second = std::move(Shader::Create(it.first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()))); 
 		}
 
 	}
@@ -76,6 +76,11 @@ bool ShaderCache::reload(ShaderCreateParams const& params)
 	auto tmp = Shader::Create(it->first.params.stage, bytecode.data(), static_cast<u32>(bytecode.size()));
 	*it->second = *tmp;
 	return true;
+}
+
+void ShaderCache::clear()
+{
+    _shaders.clear();
 }
 
 }

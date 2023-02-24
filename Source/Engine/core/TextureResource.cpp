@@ -83,11 +83,11 @@ TextureHandle TextureHandle::default_roughness()
 	return s_tex;
 }
 
-void TextureHandle::load(enki::ITaskSet* parent)
+bool TextureHandle::load(enki::ITaskSet* parent)
 {
 	std::string const& path = get_init_parameters().path;
 	_resource = std::make_shared<Texture>();
-	_resource->Load(path);
+	return _resource->Load(path);
 }
 
 void TextureHandle::create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data)
@@ -184,7 +184,7 @@ Texture::~Texture()
     GetRI()->ReleaseResource(m_UAV);
 }
 
-void Texture::Load(std::string const& path)
+bool Texture::Load(std::string const& path)
 {
 	int x, y, comp;
 	stbi_uc* data = stbi_load(path.c_str(), &x, &y, &comp, 4);
@@ -193,4 +193,6 @@ void Texture::Load(std::string const& path)
 	this->LoadFromMemory(x, y, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, (void*)data, path.c_str());
 	stbi_image_free(data);
 	// SUCCEEDED(DirectX::CreateWICTextureFromFile(device, wpath.c_str(), _resource.GetAddressOf(), _srv.GetAddressOf()));
+
+    return true;
 }

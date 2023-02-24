@@ -41,7 +41,7 @@ void init()
 	// Create error shaders
 	{
 		ShaderCreateParams parameters{};
-		parameters.path = "Source/Engine/Shaders/error_px.hlsl";
+		parameters.path = "Source/Engine/Shaders/Error.hlsl";
 		parameters.params.entry_point = "main";
 		parameters.params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
 		parameters.params.stage = ShaderStage::Pixel;
@@ -50,7 +50,7 @@ void init()
 		s_ErrorPS = ShaderCache::instance()->find_or_create(parameters);
 		ASSERTMSG(s_ErrorPS, "Failed to create error shader (\"{}\")", parameters.path.c_str());
 
-		parameters.path = "Source/Engine/Shaders/error_vx.hlsl";
+		parameters.path = "Source/Engine/Shaders/Error.hlsl";
 		parameters.params.stage = ShaderStage::Vertex;
 		s_ErrorVS = ShaderCache::instance()->find_or_create(parameters);
 		ASSERTMSG(s_ErrorVS, "Failed to create error shader (\"{}\")", parameters.path.c_str());

@@ -26,9 +26,10 @@ public:
 
 	void set_dynamic_material(u32 idx, shared_ptr<MaterialInstance> instance);
 
-	MaterialInstance const* get_material_instance(u32 idx) const;
-	MaterialInstance* get_material_instance(u32 idx);
+	MaterialInstance const* GetMaterialInstance(u32 idx) const;
+	MaterialInstance* GetMaterialInstance(u32 idx);
 
+	VertexLayoutFlags GetElementUsages(u32 idx) const;
 
 	bool _finalised = false;
 	float4x4 _transform;

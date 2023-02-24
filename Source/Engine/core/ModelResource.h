@@ -3,6 +3,7 @@
 
 #include "Graphics/GraphicsResourceHandle.h"
 #include "Graphics/ShaderTypes.h"
+#include "Graphics/VertexLayout.h"
 #include "Math.h"
 
 class TextureHandle;
@@ -43,6 +44,12 @@ struct Mesh
 	u32 material_index;
 };
 
+struct InputLayout
+{
+    VertexLayoutFlags      m_Usages;
+	GraphicsResourceHandle m_Resource;
+};
+
 class Model
 {
 public:
@@ -53,7 +60,7 @@ public:
 
 	~Model();
 
-	void Load(enki::ITaskSet* parent, std::string const& path);
+	bool Load(enki::ITaskSet* parent, std::string const& path);
 
 	GraphicsResourceHandle GetVertexBuffer() const { return m_VertexBuffer; }
 	GraphicsResourceHandle GetIndexBuffer() const { return m_IndexBuffer; }
@@ -66,6 +73,13 @@ public:
 		return m_Materials[idx].get(); 
 	}
 
+    inline VertexLayoutFlags GetElementUsages(u32 idx) const
+    {
+        ASSERTMSG(idx < static_cast<u32>(m_VertexLayoutFlags.size()), "Index out of range.");
+        return m_VertexLayoutFlags[idx];
+    }
+
+
 	u32 get_material_count() const { return (u32)m_Materials.size(); }
 
 	Math::AABB get_bounding_box() const { return m_AABB; }
@@ -75,8 +89,9 @@ private:
 
 	std::vector<std::unique_ptr<MaterialInstance>> m_Materials;
 	std::vector<Mesh> m_Meshes;
-	Math::AABB m_AABB;
+    std::vector<VertexLayoutFlags> m_VertexLayoutFlags;
 
+	Math::AABB m_AABB;
 	GraphicsResourceHandle m_VertexBuffer;
 	GraphicsResourceHandle m_IndexBuffer;
 };
@@ -90,5 +105,5 @@ public:
 
 	~ModelHandle();
 
-	void load(enki::ITaskSet* parent) override;
+	bool load(enki::ITaskSet* parent) override;
 };

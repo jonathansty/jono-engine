@@ -282,7 +282,7 @@ ParameterInfo const* Material::find_parameter(Identifier64 const& id) const
 	return nullptr;
 }
 
-void Material::apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics::ViewParams const& params) const
+void Material::apply(RenderContext& ctx, VertexLayoutFlags flags, Graphics::ViewParams const& params) const
 {
 	if (is_double_sided())
 	{
@@ -352,8 +352,10 @@ MaterialInstance::MaterialInstance(std::shared_ptr<MaterialHandle const> const& 
 		, m_NeedsFlush(false)
 		 , m_Obj(nullptr)
 {
+
 	// Construct a copy of the original buffer + overrides
-	m_Textures.resize(GetMaterialObj()->get_texture_count());
+    IMaterialObject const* obj = GetMaterialObj();
+    m_Textures.resize(obj->get_texture_count());
 }
 
  MaterialInstance::MaterialInstance()
@@ -375,7 +377,7 @@ void MaterialInstance::bind(IMaterialObject const* obj)
 	m_MaterialData = obj->get_param_data();
 }
 
-void MaterialInstance::apply(RenderContext& ctx, Graphics::Renderer* renderer, Graphics::ViewParams const& params) const
+void MaterialInstance::apply(RenderContext& ctx, VertexLayoutFlags flags, Graphics::ViewParams const& params) const
 {
 	if (is_double_sided())
 	{
@@ -403,6 +405,17 @@ void MaterialInstance::apply(RenderContext& ctx, Graphics::Renderer* renderer, G
 	{
 		debug_shader = Graphics::get_error_shader_px();
 	}
+
+    VertexLayoutFlags shaderFlags = vertex_shader->GetUsageFlags();
+    bool elementsMatch = VertexLayoutCompatable(flags, shaderFlags);
+    if (!elementsMatch)
+    {
+        vertex_shader = Graphics::get_error_shader_vx();
+        pixel_shader = Graphics::get_error_shader_px();
+    }
+
+
+	// Check if vertex layouts match
 
 	// Bind vertex shader
 	ctx.VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get());

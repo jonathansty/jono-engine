@@ -446,7 +446,7 @@ void SceneViewer::OnDebugUI()
     {
         if (m_CurrentModel)
         {
-            MaterialInstance* inst = m_CurrentModel->get_material_instance(0);
+            MaterialInstance* inst = m_CurrentModel->GetMaterialInstance(0);
             if (inst)
             {
                 static float col[3] = { 1.0f, 1.0f, 1.0f };
@@ -518,12 +518,16 @@ void SceneViewer::RebuildAllShaders()
     using namespace Graphics;
     auto world = GameEngine::instance()->get_render_world();
 
-    ShaderCache::instance()->reload_all();
+    ShaderCache::instance()->clear();
 
     for (auto const& res : MaterialHandle::s_Resources)
     {
         res->SetStatus(ResourceStatus::Loading);
-        res->load(nullptr);
+        if(!res->load(nullptr))
+        {
+            res->SetStatus(ResourceStatus::Error);
+            continue;
+        }
         res->SetStatus(ResourceStatus::Loaded);
     }
 }

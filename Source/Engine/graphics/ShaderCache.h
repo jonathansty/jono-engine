@@ -79,6 +79,8 @@ public:
 
 	bool reload(ShaderCreateParams const& params);
 
+	void clear();
+
 private:
 	std::unordered_map<ShaderCreateParams, std::shared_ptr<Shader>> _shaders;
 	friend class RendererDebugTool;

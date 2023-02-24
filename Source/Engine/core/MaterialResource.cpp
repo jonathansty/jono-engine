@@ -10,7 +10,7 @@
 
 #include "Graphics/ShaderCompiler.h"
 
-void MaterialHandle::load(enki::ITaskSet* parent)
+bool MaterialHandle::load(enki::ITaskSet* parent)
 {
 	using namespace Graphics;
 
@@ -63,6 +63,12 @@ void MaterialHandle::load(enki::ITaskSet* parent)
 			LOG_ERROR(Graphics, "Failed to find base debug shader. Using error shader.");
 		}
 
+		if(!pixel_shader || !vertex_shader || !debug_shader)
+        {
+            LOG_FATAL(Graphics, "Error shaders did not compile. Check log.");
+			return false;
+		}
+
 		Material::ConstantBufferData initialData{};
 		initialData.albedo = float3(1.0);
 		initialData.metalness = 1.0f;
@@ -101,6 +107,8 @@ void MaterialHandle::load(enki::ITaskSet* parent)
 			}
 		}
 	}
+
+    return _resource != nullptr;
 }
 
 std::string MaterialInitParameters::to_string() const

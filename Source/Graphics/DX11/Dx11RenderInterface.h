@@ -358,7 +358,15 @@ private:
     ID3D11InputLayout* GetRawInputLayout(GraphicsResourceHandle h) const
     {
         if (!h)
+        {
             return nullptr;
+        }
+
+        SlotHandle handle = { h.data.id, h.data.gen };
+        if (!m_InputLayouts.Has(handle))
+        {
+            return nullptr;
+        }
 
         ASSERT(h.data.type == GRT_InputLayout);
         return m_InputLayouts.Get({ h.data.id, h.data.gen }).Get();

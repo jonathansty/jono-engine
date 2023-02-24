@@ -22,7 +22,7 @@ cbuffer GlobalMaterialData : register(b3)
 
 Material EvaluateMaterial(VS_OUT vout)
 {
-	float2 uv = vout.uv;
+	float2 uv = GetUV0(vout);
 
 	Material material = CreateMaterial();
 

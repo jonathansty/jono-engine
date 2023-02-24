@@ -2,7 +2,6 @@
 #define _COMMON_HLSL_
 #include "CommonShared.h"
 
-
 #define LIGHTING_MODEL_BLINN_PHONG 1
 #define LIGHTING_MODEL_PHONG 2
 #define LIGHTING_MODEL_PBR 3
@@ -23,28 +22,66 @@ struct VS_IN
 {
 	float3 position : SV_Position;
 	float3 normal : NORMAL0;
+
+#ifdef _USE_UV0
+	float2 uv0 : TEXCOORD0;
+#endif
+
+#ifdef _USE_UV1
+	float2 uv1 : TEXCOORD1;
+#endif
+
+#ifdef _USE_TANGENTS
 	float4 tangent : TANGENT0;
 	float4 bitangent : TANGENT1;
+#endif
+
+#ifdef _USE_COLOUR
 	float4 colour : COLOR0;
-	float2 uv : TEXCOORD0;
+#endif
 };
 
 struct VS_OUT
 {
 	float4 position : SV_Position;
-
-	float4 normal : NORMAL0;
-	float4 colour : COLOR0;
-	float2 uv : TEXCOORD0;
+	float4 normal   : NORMAL0;
 
 	float4 viewPosition : POSITION0;
 	float4 worldPosition : POSITION1;
 	float4 worldNormal : NORMAL1;
 	float4 viewNormal : NORMAL2;
+
+ #ifdef _USE_COLOUR
+	float4 colour : COLOR0;
+#endif
+
+#ifdef _USE_UV0
+	float2 uv0 : TEXCOORD0;
+#endif
+
+#ifdef _USE_TANGENTS
 	float4 worldTangent : TANGENT0;
 	float4 worldBitangent : TANGENT1;
+#endif
 };
 
+float2 GetUV0(VS_OUT vsOut)
+{
+#ifdef _USE_UV0
+return vsOut.uv0;
+#else
+return float2(0.0f,0.0f);
+#endif
+}
+
+float4 GetColour0(VS_OUT vsOut)
+{
+#ifdef _USE_COLOUR
+	return vsOut.colour;
+#else
+	return (float4)0.0f;
+#endif
+}
 
 float4 ConvertProjToView(in float4x4 projInv, in float4 p)
 {

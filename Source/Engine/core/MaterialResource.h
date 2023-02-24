@@ -64,7 +64,7 @@ public:
 	}
 	~MaterialHandle() { }
 
-	void load(enki::ITaskSet* parent) override;
+	bool load(enki::ITaskSet* parent) override;
 
 };
 

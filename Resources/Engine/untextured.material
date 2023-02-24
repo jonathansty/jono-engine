@@ -3,16 +3,12 @@ shaders:
   opaque: Source/Engine/Shaders/DefaultGGX_Opaque.px.hlsl
   debug: Source/Engine/Shaders/DefaultGGX_Debug.px.hlsl
 info:
-  name: "BaseMaterial"
+  name: "Untextured"
   double_sided: false
 defines: 
   - id: LIGHTING_MODEL
     value: LIGHTING_MODEL_PBR
-  - id: _USE_NORMAL0
-    value: 1
-  - id: _USE_UV0
-    value: 1
-  - id: _USE_TANGENTS
+  - id: HACK_UNTEX
     value: 1
 parameters:
   - id: Albedo

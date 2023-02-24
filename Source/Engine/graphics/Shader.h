@@ -1,7 +1,10 @@
 #pragma once
 
+#include "Graphics/VertexLayout.h"
 #include "Graphics/ShaderStage.h"
 #include "Graphics/GraphicsResourceHandle.h"
+
+class Model;
 
 namespace Graphics
 {
@@ -28,7 +31,7 @@ public:
 	{
 		ComPtr<T> result;
 		m_Shader->QueryInterface(__uuidof(T), (void**)result.GetAddressOf());
-		assert(result);
+        ASSERT(result);
 		return result;
 	}
 
@@ -36,9 +39,11 @@ public:
 
 	GraphicsResourceHandle GetInputLayout() const
 	{
-		assert(m_Type == ShaderStage::Vertex);
+        ASSERT(m_Type == ShaderStage::Vertex);
+        ASSERT(m_InputLayout.IsValid());
 		return m_InputLayout;
 	}
+    VertexLayoutFlags GetUsageFlags() const { return m_Flags; }
 
 	ShaderStage get_type() const { return m_Type; }
 
@@ -48,6 +53,11 @@ private:
 	ComPtr<ID3D11ShaderReflection> m_Reflection;
 	ComPtr<ID3D11Resource> m_Shader;
 	GraphicsResourceHandle m_InputLayout;
+    VertexLayoutFlags m_Flags;
+
+	void* m_ByteCode;
+    size_t m_ByteCodeLength;
+    friend class Model;
 };
 
 } // namespace Graphics

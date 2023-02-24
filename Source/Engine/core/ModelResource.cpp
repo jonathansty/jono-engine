@@ -8,22 +8,28 @@
 #include "GameEngine.h"
 
 const D3D11_INPUT_ELEMENT_DESC ModelUberVertex::InputElements[InputElementCount] = {
-	{ "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "TANGENT", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "TEXCOORD", 2, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	{ "TEXCOORD", 3, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+    { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TANGENT", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 1, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 2, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+    { "TEXCOORD", 3, DXGI_FORMAT_R32G32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 };
 
-void ModelHandle::load(enki::ITaskSet* parent)
+bool ModelHandle::load(enki::ITaskSet* parent)
 {
 	std::string const& path = get_init_parameters().path;
 	_resource = std::make_shared<Model>();
-	_resource->Load(parent, path);
+	if(!_resource->Load(parent, path))
+    {
+        LOG_ERROR(IO, "Failed to load {}", path);
+        return false;
+	}
+
+	return true;
 }
 
 ModelHandle::ModelHandle(FromFileResourceParameters params)
@@ -50,7 +56,7 @@ ModelHandle::ModelHandle(FromFileResourceParameters params)
     GetRI()->ReleaseResource(m_VertexBuffer);
  }
 
-void Model::Load(enki::ITaskSet* parent, std::string const& path)
+bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 {
 	Timer timer{}; 
 	timer.Start();
@@ -60,13 +66,21 @@ void Model::Load(enki::ITaskSet* parent, std::string const& path)
 
 	std::string final_path = IO::get()->ResolvePath(path);
 
+	// #TODO: Loading vertices breaks due to expecting a specific vertex layout. This is an issue when meshes do not have UVs and can't generate tangents in assimp.
+	// The mesh loading pipeline needs to be re-written to allow more flexibility and detecting input layouts per model and pick the most appropriate vertex format (no hardcoded types) 
+
 	using namespace Assimp;
 	Importer importer = Importer();
-	aiScene const* scene = importer.ReadFile(final_path.c_str(), aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast);
+    aiScene const* scene = importer.ReadFile(final_path.c_str(), 0);
+    scene = importer.ApplyPostProcessing(aiProcess_Triangulate);
+    scene = importer.ApplyPostProcessing(aiProcess_GenNormals);
+    scene = importer.ApplyPostProcessing(aiProcess_GenUVCoords);
+    scene = importer.ApplyPostProcessing(aiProcess_CalcTangentSpace);
+    scene = importer.ApplyPostProcessing(aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast);
 	if (!scene)
 	{
 		LOG_ERROR(IO, importer.GetErrorString());
-		return;
+		return false;
 	}
 
 	if (scene->HasMeshes())
@@ -118,6 +132,8 @@ void Model::Load(enki::ITaskSet* parent, std::string const& path)
 			meshlet.indexCount = uint32_t(mesh->mNumFaces) * 3;
 			meshlet.material_index = mesh->mMaterialIndex;
 			m_Meshes.push_back(meshlet);
+
+		
 
 			auto positions = mesh->mVertices;
 			auto colors = mesh->mColors;
@@ -217,8 +233,8 @@ void Model::Load(enki::ITaskSet* parent, std::string const& path)
 		}
 
 		// Create our buffers
-		D3D11_BUFFER_DESC bufferDesc{};
-		D3D11_SUBRESOURCE_DATA data{};
+		BufferDesc bufferDesc{};
+		SubresourceData data{};
 
 		bufferDesc.ByteWidth = UINT(vertices.size() * sizeof(vertices[0]));
 		bufferDesc.StructureByteStride = UINT(sizeof(vertices[0]));
@@ -252,7 +268,19 @@ void Model::Load(enki::ITaskSet* parent, std::string const& path)
 		parameters.load_type = MaterialInitParameters::LoadType_FromFile;
 		parameters.name = IO::get()->ResolvePath("res:/Engine/default.material");
 
-		auto base_material = ResourceLoader::instance()->load<MaterialHandle>(parameters, false, true);
+		// #TODO: Data-drive from the model meta information
+        if (strstr(path.c_str(), "Box.gltf") || strstr(path.c_str(), "BoxWithoutIndices.gltf"))
+        {
+            parameters.name = IO::get()->ResolvePath("res:/Engine/untextured.material");
+		}
+
+		std::shared_ptr<MaterialHandle> base_material = ResourceLoader::instance()->load<MaterialHandle>(parameters, false, true);
+
+		if(!base_material)
+        {
+            LOG_ERROR(IO, "Failed to load mesh material");
+            return false;
+		}
 
 		// Resize our materials and textures 
 		m_Materials.resize(scene->mNumMaterials);
@@ -329,11 +357,49 @@ void Model::Load(enki::ITaskSet* parent, std::string const& path)
 				m_Materials[j]->set_texture(slot, texture);
 			}
 
-
 		}
 	}
+
+	for(uint32_t i = 0;i< m_Meshes.size(); ++i)
+    {
+		// #TODO: Create input layouts based on the mesh information
+		// #TODO: Store input layout information for the shader (for compatibility)
+
+		aiMesh* m = scene->mMeshes[i];
+
+		// Construct the vertex layout flags to track compatibility with material/shaders 
+		VertexLayoutFlags flags = (VertexLayoutFlags)0;
+        ASSERT(m->HasPositions() && m->HasNormals());
+        flags |= VertexLayoutFlags::Position;
+        flags |= VertexLayoutFlags::Normal;
+
+		for(unsigned int j = 0; j < m->GetNumUVChannels(); ++j)
+        {
+            if(m->HasTextureCoords(j))
+            {
+                flags |= (VertexLayoutFlags::UV0 << j);
+			}
+
+            if(m->HasTangentsAndBitangents())
+            {
+                flags |= (VertexLayoutFlags::Tangent0 << (i *2));
+                flags |= (VertexLayoutFlags::Tangent0 << (i*2+1));
+			}
+		}
+
+		for(unsigned int j = 0; j < m->GetNumColorChannels(); ++j)
+        {
+			if(m->HasVertexColors(j))
+            {
+                flags |= (VertexLayoutFlags::Colour0 << j);
+			}
+		}
+
+        m_VertexLayoutFlags.push_back(flags);
+    }
 
 
 	timer.Stop();
 	LOG_VERBOSE(IO, "Loading model \"{}\" took {} ", path.c_str(), timer.GetTime());
+    return true;
 }

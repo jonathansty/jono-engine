@@ -26,8 +26,10 @@
 #include <Source/Engine/graphics/2DRenderContext.h>
 
 #include "Graphics/RenderInterface.h"
+#include "Graphics/VertexLayout.h"
 
 #include "Core/TextureResource.h"
+#include "Core/ModelResource.h"
 
 class RenderWorld;
 class RenderWorldCamera;
@@ -189,6 +191,8 @@ struct DrawCall
     // Vertex buffers
     GraphicsResourceHandle _vertex_buffer;
 
+    VertexLayoutFlags _input_layout_flags;
+
     // First vertex offset this mesh starts at in the vertex buffer
     u64 _first_vertex;
 
@@ -200,6 +204,10 @@ struct DrawCall
 
     // Material (e.g. shaders, textures, constant buffer, input layouts)
     MaterialInstance const* _material;
+
+	#ifdef _DEBUG
+    Model const* _model;
+	#endif
 };
 
 
@@ -286,7 +294,7 @@ private:
 	Math::Frustum get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const;
 
 	// Helper to setup the render state based on material
-    void setup_renderstate(RenderContext& ctx, MaterialInstance const* material, ViewParams const& params);
+    void setup_renderstate(RenderContext& ctx, VertexLayoutFlags flags, MaterialInstance const* material, ViewParams const& params);
 
 	// Rendering
 	void render_post_predebug(RenderContext& ctx);

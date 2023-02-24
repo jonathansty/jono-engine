@@ -16,7 +16,7 @@ public:
     Texture() = default;
     ~Texture();
 
-    void Load(std::string const& path);
+    bool Load(std::string const& path);
     void LoadFromMemory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data, const char* debug_name = nullptr);
     void LoadFromRaw(GraphicsResourceHandle resource, bool createSRV = true, bool createRTV = true, bool createUAV = true, std::string_view debug_name = "");
 
@@ -74,7 +74,7 @@ public:
 	static TextureHandle default_normal();
 	static TextureHandle default_roughness();
 
-	virtual void load(enki::ITaskSet* parent) override;
+	bool load(enki::ITaskSet* parent) override;
 
 	void create_from_memory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data);
 

@@ -5,6 +5,7 @@
 #include "Core/ModelResource.h"
 
 #include "Graphics/RenderInterface.h"
+#include "Graphics/VertexLayout.h"
 
 namespace Graphics
 {
@@ -12,10 +13,10 @@ namespace Graphics
 	
 Shader::Shader(ShaderStage type, const u8* byte_code, uint32_t size, const char* debug_name)
 		: m_Type(type)
+	, m_ByteCode(nullptr)
 {
 	// #TODO: Replace with RI
 	// Think about dx12 and pipeline based APIs, these require shaders to be specified as part of the PSO
-    //RenderInterface* ri = GetRI();
     ComPtr<ID3D11Device> ri = GetRI()->Dx11GetDevice();
 	switch (type)
 	{
@@ -39,12 +40,14 @@ Shader::Shader(ShaderStage type, const u8* byte_code, uint32_t size, const char*
 
 	D3DReflect(byte_code, size, IID_ID3D11ShaderReflection, &m_Reflection);
 
-	if(type == ShaderStage::Vertex)
+	if((type & ShaderStage::Vertex) == ShaderStage::Vertex)
 	{
 		D3D11_SHADER_DESC desc{};
 		m_Reflection->GetDesc(&desc);
 
 		UINT params = desc.InputParameters;
+
+		VertexLayoutFlags flags = VertexLayoutFlags(0);
 
 		std::vector<D3D11_INPUT_ELEMENT_DESC> inputs{};
 		inputs.resize(params);
@@ -59,6 +62,31 @@ Shader::Shader(ShaderStage type, const u8* byte_code, uint32_t size, const char*
 			inputs[i].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
 			inputs[i].InstanceDataStepRate = 0;
 
+			// Determine the right vertex layout flags for this shader
+			if(strstr(paramDesc.SemanticName, "SV_Position"))
+            {
+                flags |= VertexLayoutFlags::Position;
+			}
+            else if (strstr(paramDesc.SemanticName, "NORMAL"))
+            {
+                flags |= VertexLayoutFlags::Normal;
+			}
+            else if (strstr(paramDesc.SemanticName, "TANGENT"))
+            {
+                flags |= VertexLayoutFlags::Tangent0 << paramDesc.SemanticIndex;
+            
+			}
+            else if (strstr(paramDesc.SemanticName, "COLOR"))
+            {
+                flags |= VertexLayoutFlags::Colour0 << paramDesc.SemanticIndex;
+            
+			}
+            else if (strstr(paramDesc.SemanticName, "UV"))
+            {
+                flags |= VertexLayoutFlags::UV0 << paramDesc.SemanticIndex;
+			}
+
+			// Determine the required format 
 			if(paramDesc.ComponentType == D3D_REGISTER_COMPONENT_FLOAT32)
 			{
 				if(paramDesc.Mask == 0b1111)
@@ -82,19 +110,30 @@ Shader::Shader(ShaderStage type, const u8* byte_code, uint32_t size, const char*
 				{
 					inputs[i].Format = DXGI_FORMAT_R32_UINT;
 				}
-			
+			}
+            else
+            {
+                LOG_WARNING(Graphics, "Shader provides semantics that are not properly supported.");
 			}
 		
 		}
 		m_InputLayout = GetRI()->CreateInputLayout(inputs, (void*)byte_code, size);
+        m_Flags = flags;
 	}
-
-	//D3D11_SHADER_INPUT_BIND_DESC bindDesc;
-	//_reflection->GetResourceBindingDescByName("g_Albedo", &bindDesc);
+    m_ByteCode = malloc(size);
+    memcpy(m_ByteCode, byte_code, size);
+    m_ByteCodeLength = size;
 }
 
 Shader::~Shader()
 {
+    GetRI()->ReleaseResource(m_InputLayout);
+
+	if(m_ByteCode)
+    {
+        free(m_ByteCode);
+        m_ByteCode = nullptr;
+    }
 }
 
 std::unique_ptr<Shader> Shader::Create(ShaderStage type, const u8* byte_code, uint32_t size, const char* debug_name)

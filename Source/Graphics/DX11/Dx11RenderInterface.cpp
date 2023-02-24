@@ -106,6 +106,7 @@ void Dx11RenderInterface::Init()
 
 void Dx11RenderInterface::Shutdown()
 {
+    // #TODO: Implement warning for leaks
     m_Resources.Clear();
     m_SwapChains.Clear();
 }

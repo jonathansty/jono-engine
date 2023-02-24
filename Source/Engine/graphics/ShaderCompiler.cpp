@@ -40,6 +40,23 @@ bool compile(const char* shader, CompileParameters const& parameters, std::vecto
 				return macro; 
 			}
 		);
+
+		if(any(parameters.stage & ShaderStage::Vertex))
+        {
+            D3D_SHADER_MACRO macro;
+            macro.Definition = "1";
+            macro.Name = "_VERTEX";
+            macros.push_back(macro);
+		}
+
+        if(any(parameters.stage & ShaderStage::Pixel))
+        {
+            D3D_SHADER_MACRO macro;
+            macro.Definition = "1";
+            macro.Name = "_PIXEL";
+            macros.push_back(macro);
+		}
+
 		macros.push_back({});
 
 		std::string entry_point = parameters.entry_point;

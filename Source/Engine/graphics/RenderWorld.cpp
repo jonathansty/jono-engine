@@ -258,7 +258,7 @@ void RenderWorldInstance::update()
 	Model const* res = _model->get();
 	for (u32 i = 0; i < res->get_material_count(); ++i)
 	{
-		get_material_instance(i)->update();
+		GetMaterialInstance(i)->update();
 	}
 }
 
@@ -268,7 +268,7 @@ void RenderWorldInstance::set_dynamic_material(u32 idx, shared_ptr<MaterialInsta
 	_material_overrides[idx] = instance;
 }
 
-MaterialInstance const* RenderWorldInstance::get_material_instance(u32 idx) const
+MaterialInstance const* RenderWorldInstance::GetMaterialInstance(u32 idx) const
 {
 	if (_material_overrides[idx])
 	{
@@ -278,7 +278,7 @@ MaterialInstance const* RenderWorldInstance::get_material_instance(u32 idx) cons
 	return _model->get()->GetMaterial(idx);
 }
 
-MaterialInstance* RenderWorldInstance::get_material_instance(u32 idx)
+MaterialInstance* RenderWorldInstance::GetMaterialInstance(u32 idx)
 {
 	if (idx < _material_overrides.size() && _material_overrides[idx])
 	{
@@ -286,4 +286,10 @@ MaterialInstance* RenderWorldInstance::get_material_instance(u32 idx)
 	}
 
 	return _model->get()->GetMaterial(idx);
+}
+
+VertexLayoutFlags RenderWorldInstance::GetElementUsages(u32 idx) const
+{
+
+	return _model->get()->GetElementUsages(idx);
 }

@@ -17,14 +17,14 @@ float4 main(VS_OUT vout) : SV_Target
 {
 	SetupGlobals(vout);
 
-	float2 uv = vout.uv;
+	float2 uv = GetUV0(vout);
 
 	Material material = EvaluateMaterial(vout);
 	float3 output = (float3)0.0;
 
 	if (g_VisualizeMode == VisualizeMode_VertexColour) 
 	{
-		output = vout.colour.rgb;
+		output = GetColour0(vout).rgb;
 	}
 	else if (g_VisualizeMode == VisualizeMode_Albedo)
 	{
@@ -45,7 +45,8 @@ float4 main(VS_OUT vout) : SV_Target
 	else if (g_VisualizeMode == VisualizeMode_WorldNormal)
 	{
 		// Transform our tangent normal into world space
-		float4 normal = normalize(vout.worldNormal);
+		float3 normal = normalize(vout.worldNormal).xyz;
+#ifdef _USE_TANGENTS
 		float4 tangent = normalize(vout.worldTangent);
 		float3 bitangent = normalize(vout.worldBitangent.xyz);
 		float3x3 TBN = float3x3(
@@ -54,9 +55,10 @@ float4 main(VS_OUT vout) : SV_Target
 			normal.xyz
 			);
 
-		float3 final_normal = mul(material.tangentNormal, TBN);
+		normal = mul(float4(material.tangentNormal, 0.0f), TBN).xyz;
+#endif
 
-		output = (final_normal *0.5f) + 0.5f;
+		output = (normal *0.5f) + 0.5f;
 	}
 	else if (g_VisualizeMode == VisualizeMode_AO)
 	{

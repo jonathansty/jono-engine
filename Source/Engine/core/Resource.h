@@ -18,7 +18,7 @@ public:
 		return m_Status == ResourceStatus::Loaded;
 	}
 
-	virtual void load(enki::ITaskSet* parent) = 0;
+	virtual bool load(enki::ITaskSet* parent) = 0;
 
 	virtual std::string get_name() const { return ""; }
 

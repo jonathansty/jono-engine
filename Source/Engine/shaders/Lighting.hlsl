@@ -5,7 +5,6 @@
 #include "Shadows.hlsl"
 
 
-
 static const float PI = 3.14159265f;
 
 struct Material
@@ -153,9 +152,11 @@ float3 LightingModel_BlinnPhong(Material material, float3 view, float3 light, fl
 float4 EvaluateLighting(Material material, VS_OUT vout)
 {
 	// Transform our tangent normal into world space
-	float4 normal = normalize(vout.worldNormal);
+	float3 normal = normalize(vout.worldNormal.xyz);
 	
-	float4 tangent = normalize(vout.worldTangent);
+// Only calculate the final normal if tangents are available
+#ifdef _USE_TANGENTS
+	float3 tangent = normalize(vout.worldTangent.xyz);
 	float3 bitangent = normalize(vout.worldBitangent.xyz);
 	float3x3 tbn = float3x3
 	(
@@ -164,7 +165,10 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		normal.xyz
 	);
 
-	float3 final_normal = normalize(mul(material.tangentNormal, tbn));
+	normal = normalize(mul(float4(material.tangentNormal,0.0f), tbn)).xyz;
+#endif
+
+	float3 final_normal = normal;
 
 	// View vector is different dependent on the pixel that is being processed!
 	float3 view = normalize(g_ViewPosition - vout.worldPosition);
@@ -189,6 +193,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		const float g_shadow_intensity = 0.9f;
 		float3 lightColour = (float3)0.0f;
 
+
 		#if LIGHTING_MODEL == LIGHTING_MODEL_PBR
 			lightColour += LightingModel_BRDF(material, view, light, final_normal) * light_colour;
 		#endif
@@ -202,6 +207,8 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		#endif
 		lightColour *= 1.0 - (shadow * g_shadow_intensity); 
 		final_colour += lightColour;
+
+
 
 		// Cubemap reflections, not entirely correct but meh...
 		// float3 ReflectedView = reflect(-view, final_normal);
@@ -275,7 +282,6 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 			final_colour += (attenuation * LightingModel_BRDF(material, view, l, final_normal) * light.color);
 		}
 	}
-
 
 	return float4((final_colour), 1.0);
 }
