@@ -207,6 +207,10 @@ void SafeRelease(T*& obj)
     {                                                                       \
         return static_cast<enum_type>((uint32_t)lhs << (uint32_t)rhs);      \
     }                                                                       \
+    inline enum_type operator>>(enum_type lhs, uint32_t rhs)                \
+    {                                                                       \
+        return static_cast<enum_type>((uint32_t)lhs >> (uint32_t)rhs);      \
+    }                                                                       \
     inline bool any(enum_type lhs)                                          \
     {                                                                       \
         return lhs != (enum_type)0;                                         \

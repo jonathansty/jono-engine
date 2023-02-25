@@ -116,6 +116,8 @@ public:
 		return *m_Ptr;
 	}
 
+	size_t use_count() const { return m_Counter->GetRefCount(); }
+
 
 private:
 	ObjectType* m_Ptr;
