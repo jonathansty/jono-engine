@@ -757,6 +757,7 @@ void Renderer::DrawWorld(RenderContext& ctx, RenderWorld const& world, ViewParam
                     dc._index_buffer = model->GetIndexBuffer();
                     dc._vertex_buffer = model->GetVertexBuffer();
                     dc._input_layout_flags = model->GetElementUsages(mesh.material_index);
+                    dc._input_layout = model->GetVertexLayout(mesh.material_index);
 					dc._material = inst->GetMaterialInstance(mesh.material_index);
 					dc._first_index = mesh.firstIndex;
 					dc._first_vertex = mesh.firstVertex;
@@ -826,7 +827,7 @@ void Renderer::DrawWorld(RenderContext& ctx, RenderWorld const& world, ViewParam
 
 		// Setup the material render state
 		{
-			setup_renderstate(ctx,dc._input_layout_flags, dc._material, params);
+			setup_renderstate(ctx,dc._input_layout, dc._input_layout_flags, dc._material, params);
 
 			++m_FrameStats.n_draws;
 			m_FrameStats.n_primitives += u32(dc._index_count / 3);
@@ -915,10 +916,10 @@ Math::Frustum Renderer::get_cascade_frustum(shared_ptr<RenderWorldCamera> const&
 	return frustum;
 }
 
-void Renderer::setup_renderstate(RenderContext& ctx,VertexLayoutFlags flags, MaterialInstance const* mat_instance, ViewParams const& params)
+void Renderer::setup_renderstate(RenderContext& ctx,GraphicsResourceHandle vertexLayout, VertexLayoutFlags flags, MaterialInstance const* mat_instance, ViewParams const& params)
 {
 	// Bind anything coming from the material
-	mat_instance->apply(ctx, flags, params);
+	mat_instance->apply(ctx, vertexLayout, flags, params);
 
 	// Bind the global textures coming from rendering systems
 	if (params.pass == RenderPass::Opaque)

@@ -187,7 +187,9 @@ Texture::~Texture()
 bool Texture::Load(std::string const& path)
 {
 	int x, y, comp;
-	stbi_uc* data = stbi_load(path.c_str(), &x, &y, &comp, 4);
+
+	std::string p = GetGlobalContext()->m_PlatformIO->ResolvePath(path);
+	stbi_uc* data = stbi_load(p.c_str(), &x, &y, &comp, 4);
 	ASSERTMSG(data, "Failed to  load image from {}", path);
 
 	this->LoadFromMemory(x, y, DXGI_FORMAT_R8G8B8A8_UNORM, TextureType::Tex2D, (void*)data, path.c_str());

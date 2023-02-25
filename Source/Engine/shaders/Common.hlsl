@@ -21,11 +21,11 @@
 struct VS_IN
 {
 	float3 position : SV_Position;
-	float3 normal : NORMAL0;
+	float3 normal   : NORMAL0;
 
 #ifdef _USE_TANGENTS
-	float4 tangent : TANGENT0;
-	float4 bitangent : TANGENT1;
+	float3 tangent : TANGENT0;
+	float3 bitangent : TANGENT1;
 #endif
 
 #ifdef _USE_UV0

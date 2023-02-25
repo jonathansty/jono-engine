@@ -30,7 +30,7 @@ struct IMaterialObject
 {
 	virtual ~IMaterialObject(){};
 
-	virtual void apply(RenderContext& ctx, VertexLayoutFlags flags, Graphics::ViewParams const& params) const = 0;
+	virtual void apply(RenderContext& ctx, GraphicsResourceHandle vertexLayout, VertexLayoutFlags flags, Graphics::ViewParams const& params) const = 0;
 
 	virtual u32 get_texture_count() const = 0;
 	virtual u32  get_slot(Identifier64 const& slot_id) const = 0;
@@ -89,7 +89,7 @@ public:
 	ParameterInfo const* find_parameter(Identifier64 const& id) const override;
 
 	// #TODO: Move apply out of material and only query the material for data needed for rendering
-	void apply(RenderContext& ctx, VertexLayoutFlags flags, Graphics::ViewParams const& params) const override;
+	void apply(RenderContext& ctx, GraphicsResourceHandle vertexLayout, VertexLayoutFlags flags, Graphics::ViewParams const& params) const override;
 
 private:
 	bool _double_sided;
@@ -120,7 +120,7 @@ class ENGINE_API MaterialInstance final : public IMaterialObject
 
 		void bind(IMaterialObject const* obj);
 
-		virtual void apply(RenderContext& ctx, VertexLayoutFlags flags, Graphics::ViewParams const& params) const;
+		virtual void apply(RenderContext& ctx, GraphicsResourceHandle vertexLayout, VertexLayoutFlags flags, Graphics::ViewParams const& params) const;
 
 
 		u32 get_slot(Identifier64 const& slot_id) const;

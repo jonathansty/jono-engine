@@ -192,6 +192,7 @@ struct DrawCall
     GraphicsResourceHandle _vertex_buffer;
 
     VertexLayoutFlags _input_layout_flags;
+    GraphicsResourceHandle _input_layout;
 
     // First vertex offset this mesh starts at in the vertex buffer
     u64 _first_vertex;
@@ -294,7 +295,7 @@ private:
 	Math::Frustum get_cascade_frustum(shared_ptr<RenderWorldCamera> const& camera, u32 cascade, u32 num_cascades) const;
 
 	// Helper to setup the render state based on material
-    void setup_renderstate(RenderContext& ctx, VertexLayoutFlags flags, MaterialInstance const* material, ViewParams const& params);
+    void setup_renderstate(RenderContext& ctx, GraphicsResourceHandle vertexLayout, VertexLayoutFlags flags, MaterialInstance const* material, ViewParams const& params);
 
 	// Rendering
 	void render_post_predebug(RenderContext& ctx);

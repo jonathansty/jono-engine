@@ -7,7 +7,7 @@
 
 #include "GameEngine.h"
 
-const D3D11_INPUT_ELEMENT_DESC ModelUberVertex::InputElements[InputElementCount] = {
+const D3D11_INPUT_ELEMENT_DESC ModelVertex::InputElements[InputElementCount] = {
     { "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     { "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
     { "TANGENT", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D11_APPEND_ALIGNED_ELEMENT, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -77,7 +77,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
     scene = importer.ApplyPostProcessing(aiProcess_GenUVCoords);
     scene = importer.ApplyPostProcessing(aiProcess_CalcTangentSpace);
     scene = importer.ApplyPostProcessing(aiProcess_ConvertToLeftHanded | aiProcessPreset_TargetRealtime_Fast);
-	if (!scene)
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 	{
 		LOG_ERROR(IO, importer.GetErrorString());
 		return false;
@@ -117,7 +117,6 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 		m_AABB.max = (float3)(- std::numeric_limits<float>::max());
 		for (unsigned int i = 0; i < scene->mNumMeshes; ++i)
 		{
-
 			aiMesh const* mesh = scene->mMeshes[i];
             ASSERT(mesh->HasPositions() && mesh->HasNormals());
 
@@ -160,38 +159,24 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 				m_AABB.min = hlslpp::min(v.position, m_AABB.min);
 				m_AABB.max = hlslpp::max(v.position, m_AABB.max);
 
-				if (mesh->HasVertexColors(0))
-				{
-					v.color.x = colors[0][j].r;
-					v.color.y = colors[0][j].g;
-					v.color.z = colors[0][j].b;
-					v.color.w = colors[0][j].a;
+				for(unsigned int k = 0; k < std::min(mesh->GetNumColorChannels(), 4u); ++k)
+                {
+                    if (mesh->HasVertexColors(i))
+                    {
+                        v.color[k].x = colors[k][j].r;
+                        v.color[k].y = colors[k][j].g;
+                        v.color[k].z = colors[k][j].b;
+                        v.color[k].w = colors[k][j].a;
+                    }
 				}
 
-				{
-					u32 n_uv = mesh->GetNumUVChannels();
-					if(n_uv > 0)
-					{
-						v.uv0.x = uv[0][j].x;
-						v.uv0.y = uv[0][j].y;
-					}
-
-					if (n_uv > 1)
-					{
-						v.uv0.x = uv[1][j].x;
-						v.uv0.y = uv[1][j].y;
-					}
-					if (n_uv > 2)
-					{
-						v.uv0.x = uv[2][j].x;
-						v.uv0.y = uv[2][j].y;
-					}
-					if (n_uv > 3)
-					{
-						v.uv0.x = uv[3][j].x;
-						v.uv0.y = uv[3][j].y;
-					}
-				}
+				// Retrieve the UVs
+                u32 n_uv = mesh->GetNumUVChannels();
+                for (unsigned int k = 0; k < std::min(mesh->GetNumUVChannels(), 4u); ++k)
+                {
+                    v.uv[k].x = uv[k][j].x;
+                    v.uv[k].y = uv[k][j].y;
+                }
 
 				if (mesh->HasNormals())
 				{
@@ -211,15 +196,13 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 					aiVector3D bitangent = mesh->mBitangents[j];
 					bitangent *= normalTransform;
 
-					v.tangent.x = tangent.x;
-					v.tangent.y = tangent.y;
-					v.tangent.z = tangent.z;
-					v.tangent.w = 0.0f;
+					v.tangent[0].x = tangent.x;
+					v.tangent[0].y = tangent.y;
+					v.tangent[0].z = tangent.z;
 
-					v.bitangent.x = bitangent.x;
-					v.bitangent.y = bitangent.y;
-					v.bitangent.z = bitangent.z;
-					v.bitangent.w = 0.0f;
+					v.tangent[1].x = bitangent.x;
+					v.tangent[1].y = bitangent.y;
+					v.tangent[1].z = bitangent.z;
 				}
 
 				vertices.push_back(v);
@@ -247,7 +230,6 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 
 		data.pSysMem = vertices.data();
 
-
         char name[512];
         sprintf_s(name, "%s - Index Buffer", path.c_str());
 
@@ -271,7 +253,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 		parameters.load_type = MaterialInitParameters::LoadType_FromFile;
 		parameters.name = IO::get()->ResolvePath("res:/Engine/default.material");
 
-		// #TODO: Data-drive from the model meta information
+		// #TODO: Data-drive from the model meta information or somehow pick the right defines for our material based on what the model provides
         if (strstr(path.c_str(), "Box.gltf") || strstr(path.c_str(), "BoxWithoutIndices.gltf"))
         {
             parameters.name = IO::get()->ResolvePath("res:/Engine/untextured.material");
@@ -309,6 +291,25 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 			aiString aoTexture;
 			aiString emissiveTexture;
 
+			unsigned int diffuseTexCount	= material->GetTextureCount(aiTextureType_DIFFUSE);
+            unsigned int normalTexCount		= material->GetTextureCount(aiTextureType_NORMALS);
+			unsigned int metalnessTexCount  = material->GetTextureCount(aiTextureType_METALNESS);
+			unsigned int roughnessTexCount  = material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS);
+
+			std::vector<TextureHandle> textures;
+			for(unsigned int k = 0; k < diffuseTexCount; ++k)
+            {
+                aiString p;
+                material->GetTexture(aiTextureType_DIFFUSE, k, &p);
+
+				std::string texp = dir_path.string() + "\\" + std::string(p.C_Str());
+                FromFileResourceParameters params{ texp };
+                auto r = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
+
+                u32 slot = m_Materials[j]->get_slot("A");
+                m_Materials[j]->set_texture(slot, r);
+			}
+
 			if (material->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &baseColorTexture) == aiReturn_SUCCESS)
 			{
 				std::string const& tex_path = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
@@ -319,7 +320,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 				m_Materials[j]->set_texture(slot, texture);
 
 			}
-			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
+			if (material->GetTexture(AI_MATKEY_METALLIC_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
 			{
 				std::string const& tex_path = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
 
@@ -367,8 +368,11 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
     {
 		// #TODO: Create input layouts based on the mesh information
 		// #TODO: Store input layout information for the shader (for compatibility)
-
 		aiMesh* m = scene->mMeshes[i];
+
+		uint32_t matIdx = m_Meshes[i].material_index;
+        MaterialInstance const* material = m_Materials[matIdx].get();
+        Graphics::Shader const* s = material->get_vertex_shader().get();
 
 		// Construct the vertex layout flags to track compatibility with material/shaders 
 		VertexLayoutFlags flags = (VertexLayoutFlags)0;
@@ -398,6 +402,51 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 			}
 		}
 
+		// Build the input layout based on the ModelVertex and exclude anything that our mesh is not providing. This allows us to render meshes with error shaders.
+		std::vector<D3D11_INPUT_ELEMENT_DESC> desc;
+        desc.reserve(9);
+
+		UINT offset = 0;
+		if(any(flags & VertexLayoutFlags::Position))
+        {
+            desc.push_back({ "SV_Position", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D11_INPUT_PER_VERTEX_DATA, 0 });
+		}
+        offset += sizeof(Shaders::float3);
+
+		if(any(flags & VertexLayoutFlags::Normal))
+        {
+            desc.push_back({ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D11_INPUT_PER_VERTEX_DATA, 0 });
+		}
+        offset += sizeof(Shaders::float3);
+
+        for (uint32_t t = 0; t < 4; ++t)
+        {
+            if (any(flags & (VertexLayoutFlags::Tangent0 << t)))
+            {
+                desc.push_back({ "TANGENT", t, DXGI_FORMAT_R32G32B32_FLOAT, 0, offset, D3D11_INPUT_PER_VERTEX_DATA, 0 });
+            }
+            offset += sizeof(Shaders::float3);
+        }
+
+        for (uint32_t t = 0; t < 4; ++t)
+        {
+            if (any(flags & (VertexLayoutFlags::Colour0 << t)))
+            {
+                desc.push_back({ "COLOR", t, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, offset, D3D11_INPUT_PER_VERTEX_DATA, 0 });
+            }
+            offset += sizeof(Shaders::float4);
+        }
+
+		for(uint32_t t = 0; t < 4; ++t)
+        {
+            if(any(flags & (VertexLayoutFlags::UV0 << t)))
+            {
+                desc.push_back({ "TEXCOORD", t, DXGI_FORMAT_R32G32_FLOAT, 0, offset, D3D11_INPUT_PER_VERTEX_DATA, 0 });
+			}
+            offset += sizeof(Shaders::float2);
+		}
+
+        m_VertexLayouts.push_back(GetRI()->CreateInputLayout(desc, s->GetByteCode(), (uint32_t)s->GetByteCodeLength()));
         m_VertexLayoutFlags.push_back(flags);
     }
 

@@ -47,6 +47,9 @@ public:
 
 	ShaderStage get_type() const { return m_Type; }
 
+	void* GetByteCode() const { return m_ByteCode; }
+    size_t GetByteCodeLength() const { return m_ByteCodeLength; }
+
 private:
 	ShaderStage m_Type;
 

@@ -282,7 +282,7 @@ ParameterInfo const* Material::find_parameter(Identifier64 const& id) const
 	return nullptr;
 }
 
-void Material::apply(RenderContext& ctx, VertexLayoutFlags flags, Graphics::ViewParams const& params) const
+void Material::apply(RenderContext& ctx, GraphicsResourceHandle vertexLayout, VertexLayoutFlags flags, Graphics::ViewParams const& params) const
 {
 	if (is_double_sided())
 	{
@@ -313,7 +313,7 @@ void Material::apply(RenderContext& ctx, VertexLayoutFlags flags, Graphics::View
 
 	// Bind vertex shader
 	ctx.VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get());
-	ctx.IASetInputLayout(vertex_shader->GetInputLayout());
+	ctx.IASetInputLayout(vertexLayout);
 
 	// In opaque pass, bind the pixel shader and relevant shader resources from the material
 	if (params.pass == Graphics::RenderPass::Opaque)
@@ -377,7 +377,7 @@ void MaterialInstance::bind(IMaterialObject const* obj)
 	m_MaterialData = obj->get_param_data();
 }
 
-void MaterialInstance::apply(RenderContext& ctx, VertexLayoutFlags flags, Graphics::ViewParams const& params) const
+void MaterialInstance::apply(RenderContext& ctx,GraphicsResourceHandle vertexLayout, VertexLayoutFlags flags, Graphics::ViewParams const& params) const
 {
 	if (is_double_sided())
 	{
@@ -419,7 +419,7 @@ void MaterialInstance::apply(RenderContext& ctx, VertexLayoutFlags flags, Graphi
 
 	// Bind vertex shader
 	ctx.VSSetShader(vertex_shader->as<ID3D11VertexShader>().Get());
-	ctx.IASetInputLayout(vertex_shader->GetInputLayout());
+	ctx.IASetInputLayout(vertexLayout);
 
 	// In opaque pass, bind the pixel shader and relevant shader resources from the material
 	if (params.pass == Graphics::RenderPass::Opaque)

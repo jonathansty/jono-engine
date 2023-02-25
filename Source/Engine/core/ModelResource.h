@@ -11,19 +11,21 @@ class TextureHandle;
 using MaterialRef = std::shared_ptr<class MaterialHandle>;
 class MaterialInstance;
 
-struct ModelUberVertex
+// This needs to match VS_IN for the shaders we are trying to use
+struct ModelVertex
 {
 	Shaders::float3 position;
 	Shaders::float3 normal;
-	Shaders::float4 tangent;
-	Shaders::float4 bitangent;
-	Shaders::float4 color;
+
+	// Tangents
+    Shaders::float3 tangent[4];
+
+	// Colours
+	Shaders::float4 color[4];
 
 	// Uvs
-	Shaders::float2 uv0;
-	Shaders::float2 uv1;
-	Shaders::float2 uv2;
-	Shaders::float2 uv3;
+	Shaders::float2 uv[4];
+
 
 	static const std::size_t InputElementCount = 9;
 	static const D3D11_INPUT_ELEMENT_DESC InputElements[InputElementCount];
@@ -54,7 +56,7 @@ class Model
 {
 public:
 
-	using VertexType = ModelUberVertex;
+	using VertexType = ModelVertex;
 
 	Model();
 
@@ -78,6 +80,10 @@ public:
         ASSERTMSG(idx < static_cast<u32>(m_VertexLayoutFlags.size()), "Index out of range.");
         return m_VertexLayoutFlags[idx];
     }
+	inline GraphicsResourceHandle GetVertexLayout(u32 idx) const
+    {
+        return m_VertexLayouts[idx];
+	}
 
 
 	u32 get_material_count() const { return (u32)m_Materials.size(); }
@@ -90,6 +96,7 @@ private:
 	std::vector<std::unique_ptr<MaterialInstance>> m_Materials;
 	std::vector<Mesh> m_Meshes;
     std::vector<VertexLayoutFlags> m_VertexLayoutFlags;
+    std::vector<GraphicsResourceHandle> m_VertexLayouts;
 
 	Math::AABB m_AABB;
 	GraphicsResourceHandle m_VertexBuffer;
