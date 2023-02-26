@@ -72,6 +72,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 	using namespace Assimp;
 	Importer importer = Importer();
     aiScene const* scene = importer.ReadFile(final_path.c_str(), 0);
+    scene = importer.ApplyPostProcessing(aiProcess_PreTransformVertices);
     scene = importer.ApplyPostProcessing(aiProcess_Triangulate);
     scene = importer.ApplyPostProcessing(aiProcess_GenNormals);
     scene = importer.ApplyPostProcessing(aiProcess_GenUVCoords);
@@ -145,15 +146,16 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 			vertices.reserve(mesh->mNumVertices);
 			indices.reserve(int(mesh->mNumFaces) * 3);
 
+			constexpr float scale = 1.0f;
 			for (unsigned int j = 0; j < mesh->mNumVertices; ++j)
 			{
 				aiVector3D pos = positions[j];
 				pos *= transform;
 
 				VertexType v{};
-				v.position.x = pos.x;
-				v.position.y = pos.y;
-				v.position.z = pos.z;
+				v.position.x = pos.x * scale;
+				v.position.y = pos.y * scale;
+				v.position.z = pos.z * scale;
 
 				// Update local AABB
 				m_AABB.min = hlslpp::min(v.position, m_AABB.min);
@@ -254,7 +256,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 		parameters.name = IO::get()->ResolvePath("res:/Engine/default.material");
 
 		// #TODO: Data-drive from the model meta information or somehow pick the right defines for our material based on what the model provides
-        if (strstr(path.c_str(), "Box.gltf") || strstr(path.c_str(), "BoxWithoutIndices.gltf"))
+        if (strstr(path.c_str(), "Box.gltf"))
         {
             parameters.name = IO::get()->ResolvePath("res:/Engine/untextured.material");
 		}
@@ -296,20 +298,6 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 			unsigned int metalnessTexCount  = material->GetTextureCount(aiTextureType_METALNESS);
 			unsigned int roughnessTexCount  = material->GetTextureCount(aiTextureType_DIFFUSE_ROUGHNESS);
 
-			std::vector<TextureHandle> textures;
-			for(unsigned int k = 0; k < diffuseTexCount; ++k)
-            {
-                aiString p;
-                material->GetTexture(aiTextureType_DIFFUSE, k, &p);
-
-				std::string texp = dir_path.string() + "\\" + std::string(p.C_Str());
-                FromFileResourceParameters params{ texp };
-                auto r = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
-
-                u32 slot = m_Materials[j]->get_slot("A");
-                m_Materials[j]->set_texture(slot, r);
-			}
-
 			if (material->GetTexture(AI_MATKEY_BASE_COLOR_TEXTURE, &baseColorTexture) == aiReturn_SUCCESS)
 			{
 				std::string const& tex_path = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
@@ -320,7 +308,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 				m_Materials[j]->set_texture(slot, texture);
 
 			}
-			if (material->GetTexture(AI_MATKEY_METALLIC_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
+			if (material->GetTexture(AI_MATKEY_GLTF_PBRMETALLICROUGHNESS_METALLICROUGHNESS_TEXTURE, &roughnessTexture) == aiReturn_SUCCESS)
 			{
 				std::string const& tex_path = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
 
@@ -336,12 +324,12 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 
 				FromFileResourceParameters params{ tex_path };
 				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
-				u32 slot = m_Materials[j]->get_slot("Normals");
+				u32 slot = m_Materials[j]->get_slot("Normal");
 				m_Materials[j]->set_texture(slot, texture);
 
 			}
 
-			if (material->GetTexture(aiTextureType_LIGHTMAP, 0, &aoTexture) == aiReturn_SUCCESS)
+			if (material->GetTexture(aiTextureType_AMBIENT_OCCLUSION, 0, &aoTexture) == aiReturn_SUCCESS)
 			{
 				std::string const& tex_path = dir_path.string() + "\\" + std::string(aoTexture.C_Str());
 

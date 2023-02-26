@@ -78,7 +78,14 @@ public:
 
 	ConstantBufferRef const& get_cb() const { return _material_cb; }
 
-	u32 get_slot(Identifier64 const& slot_id) const { return _texture_slot_mapping.at(slot_id); }
+	u32 get_slot(Identifier64 const& slot_id) const { 
+		if(auto it = _texture_slot_mapping.find(slot_id); it != _texture_slot_mapping.end())
+        {
+            return it->second;
+		}
+
+        return static_cast<u32>(-1);
+	}
 
 	void set_texture(u32 slot, TextureHandle const& resource) {  _textures[slot] = resource; }
 

@@ -255,7 +255,12 @@ void RenderWorldInstance::finalise()
 
 void RenderWorldInstance::update()
 {
-	Model const* res = _model->get();
+	Model const* res = _model ? _model->get() : nullptr;
+	if(!res)
+    {
+		return;
+	}
+
 	for (u32 i = 0; i < res->get_material_count(); ++i)
 	{
 		GetMaterialInstance(i)->update();

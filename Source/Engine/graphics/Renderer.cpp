@@ -385,7 +385,7 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 	for (std::shared_ptr<RenderWorldInstance> const& inst : world.get_instances())
 	{
 		// Finalise a render instance after it's done loading
-		if (inst->_model->is_loaded() && !inst->is_finalised())
+		if (inst->_model && inst->_model->is_loaded() && !inst->is_finalised())
 		{
 			inst->finalise();
 		}

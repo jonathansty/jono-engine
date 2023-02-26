@@ -8,8 +8,6 @@ info:
 defines: 
   - id: LIGHTING_MODEL
     value: LIGHTING_MODEL_PBR
-  - id: HACK_UNTEX
-    value: 1
 parameters:
   - id: Albedo
     type: float4

@@ -28,10 +28,10 @@ parameters:
     offset: 5
     value: 0
 textures:
-  - id: A
+  - id: Albedo
     path: "*White"
     slot: 0
-  - id: MR
+  - id: MetalnessRoughness
     path: "*MetalnessRoughness"
     slot: 1
   - id: Normal 

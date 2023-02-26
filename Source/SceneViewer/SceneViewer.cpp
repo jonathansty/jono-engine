@@ -273,7 +273,10 @@ void SceneViewer::OpenScene(const char* path)
         rot[1] = (float)atof(result[1].data());
         rot[2] = (float)atof(result[2].data());
 
-        float4x4 transform = float4x4::translation(float3(pos[0], pos[1], pos[2]));
+        float4x4 t = float4x4::translation(float3(pos[0], pos[1], pos[2]));
+        float4x4 s = float4x4::scale(scale[0], scale[1], scale[2]);
+
+        float4x4 transform = hlslpp::mul(s, t);
         render_world->create_instance(transform, mesh);
     }
 
@@ -311,7 +314,7 @@ void SceneViewer::OpenScene(const char* path)
     settings.projection_type = RenderWorldCamera::Projection::Ortographic;
     l->set_settings(settings);
 
-    constexpr f32 c_scale = 0.5f;
+    constexpr f32 c_scale = 1.0f;
     l->set_colour({ 1.0f * c_scale, 1.0f * c_scale, 1.0f * c_scale });
     l->set_casts_shadow(true);
     l->set_view(float4x4::look_at({ 10.0, 10.0f, 0.0f }, float3(0.0f, 0.0f, 0.0f), float3(0.0f, 1.0f, 0.0f)));
@@ -469,6 +472,26 @@ void SceneViewer::OnDebugUI()
             }
         }
     }
+
+    if (ImGui::CollapsingHeader("Lighting"))
+    {
+        if (m_SunLight)
+        {
+            {
+                static float s_Intensity = 1.0f;
+                static float col[3] = { 1.0f, 1.0f, 1.0f };
+                bool bRefresh = false;
+                bRefresh |= ImGui::SliderFloat("Intensity", &s_Intensity, 0.0f, 10.0f);
+                bRefresh |= ImGui::ColorPicker3("Color", col);
+
+                if(bRefresh)
+                {
+                    m_SunLight->set_colour(float3(col[0] * s_Intensity, col[1]* s_Intensity, col[2] * s_Intensity));
+                }
+            }
+        }
+    }
+
 
     // std::shared_ptr<ModelResource> res = _model->_model;
     // Model const* model = res->get();

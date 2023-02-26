@@ -5,30 +5,25 @@ Models:
     rotation: 0,0,0
     mesh: res:/Blockout/plane100x100.glb
   - name: Box
-    position: 0.0,0.5,0
+    position: -2.0,0.5,0
     scale: 1,1,1
     rotation: 0,0.0,0.0
-    mesh: res:/gltf-samples/Box/glTF/Box.gltf
+    mesh: res:/gltf-samples/2.0/Box/glTF/Box.gltf
   - name: BoxTextured
     position: 2.0,0.5,0
     scale: 1,1,1
     rotation: 0,0.0,0.0
-    mesh: res:/gltf-samples/BoxTextured/glTF/BoxTextured.gltf
-  - name: BoxSemantics
-    position: 4.0,0.5,0
-    scale: 1,1,1
-    rotation: 0,0.0,0.0
-    mesh: res:/gltf-samples/BoxSemantics/glTF/BoxSemantics.gltf
-  - name: BoxWithoutIndices
-    position: 6.0,0.5,0
-    scale: 1,1,1
-    rotation: 0,0.0,0.0
-    mesh: res:/gltf-samples/BoxWithoutIndices/glTF/BoxWithoutIndices.gltf
+    mesh: res:/gltf-samples/2.0/BoxTextured/glTF/BoxTextured.gltf
   - name: Avocado
-    position: 0.0,0.5,-4.0
+    position: 8.0,0.5,0.0
+    scale: 100,100,100
+    rotation: 0,0.0,0.0
+    mesh: res:/gltf-samples/2.0/Avocado/glTF/Avocado.gltf
+  - name: Helmet
+    position: 0.0,1.0,0.0
     scale: 1,1,1
     rotation: 0,0.0,0.0
-    mesh: res:/gltf-samples/Avocado/glTF/Avocado.gltf
+    mesh: res:/gltf-samples/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf
 Cameras:
   - name: MainCamera
     type: Free

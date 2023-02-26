@@ -524,7 +524,7 @@ void Dx11RenderContext::SetSamplers(ShaderStage stage, uint32_t startSlot, Span<
     if ((stage & ShaderStage::Vertex) == ShaderStage::Vertex)
         m_Context->VSSetSamplers(startSlot, numViews, rawSamplers);
     if ((stage & ShaderStage::Pixel) == ShaderStage::Pixel)
-        m_Context->VSSetSamplers(startSlot, numViews, rawSamplers);
+        m_Context->PSSetSamplers(startSlot, numViews, rawSamplers);
     if ((stage & ShaderStage::Compute) == ShaderStage::Compute)
         m_Context->CSSetSamplers(startSlot, numViews, rawSamplers);
     if ((stage & ShaderStage::Domain) == ShaderStage::Domain)
