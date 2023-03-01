@@ -27,7 +27,7 @@ bool is_key_event(SDL_Event& msg)
 }
 
 
-bool InputManager::handle_events(SDL_Event& e)
+bool InputManager::HandleEvents(SDL_Event& e)
 {
 	if (is_key_event(e))
 	{
@@ -51,23 +51,23 @@ bool InputManager::handle_events(SDL_Event& e)
 	return false;
 }
 
-void InputManager::register_key_handler(UINT msg, KeyHandler handler)
+void InputManager::RegisterKeyHandler(UINT msg, KeyHandler handler)
 {
-	register_key_handler(std::vector<UINT>{ msg }, handler);
+	RegisterKeyHandler(std::vector<UINT>{ msg }, handler);
 }
 
-void InputManager::register_key_handler(std::vector<UINT> msgs, KeyHandler handler)
+void InputManager::RegisterKeyHandler(std::vector<UINT> msgs, KeyHandler handler)
 {
 	std::for_each(msgs.begin(), msgs.end(), [this, handler](UINT msg)
 			{ m_KeyHandlers[msg - SDL_KEYDOWN] = handler; });
 }
 
-void InputManager::register_mouse_handler(UINT msg, MouseHandler handler)
+void InputManager::RegisterMouseHandler(UINT msg, MouseHandler handler)
 {
-	register_mouse_handler(std::vector<UINT>{ msg }, handler);
+	RegisterMouseHandler(std::vector<UINT>{ msg }, handler);
 }
 
-void InputManager::register_mouse_handler(std::vector<UINT> msgs, MouseHandler handler)
+void InputManager::RegisterMouseHandler(std::vector<UINT> msgs, MouseHandler handler)
 {
 	std::for_each(msgs.begin(), msgs.end(), [this, handler](UINT msg)
 			{ m_MouseHandlers[msg - SDL_MOUSEMOTION] = handler; });
@@ -86,7 +86,7 @@ InputManager::~InputManager(void)
 {
 }
 
-void InputManager::init()
+void InputManager::Init()
 {
 	auto handle_base_keys = [this](SDL_Event& e)
 	{
@@ -95,7 +95,7 @@ void InputManager::init()
 #endif
 		m_Keys[e.key.keysym.scancode].pressed = e.key.state == SDL_PRESSED;
 	};
-	register_key_handler({ SDL_KEYDOWN, SDL_KEYUP}, handle_base_keys);
+	RegisterKeyHandler({ SDL_KEYDOWN, SDL_KEYUP}, handle_base_keys);
 
 	auto handle_mbuttons = [this](SDL_Event& e)
 	{
@@ -109,14 +109,14 @@ void InputManager::init()
 				m_MouseButtons[4][s_curr_frame]);
 #endif
 	};
-	register_mouse_handler(
+	RegisterMouseHandler(
 			{
 					SDL_MOUSEBUTTONDOWN,
 					SDL_MOUSEBUTTONUP,
 			},
 			handle_mbuttons);
 
-	register_mouse_handler(SDL_MOUSEWHEEL, [this](SDL_Event& e)
+	RegisterMouseHandler(SDL_MOUSEWHEEL, [this](SDL_Event& e)
 			{
 				m_MouseWheel = e.wheel.preciseY;
 #if VERBOSE_LOGGING
@@ -126,7 +126,7 @@ void InputManager::init()
 	);
 }
 
-void InputManager::update()
+void InputManager::Update()
 {
 	for (KeyState& it : m_Keys)
 	{
@@ -150,48 +150,43 @@ void InputManager::update()
 	m_MouseWheel = 0;
 }
 
-int2 InputManager::get_mouse_position(bool previousFrame) const
-{
-	return m_MousePos[previousFrame ? 1 : 0];
-}
-
-bool InputManager::is_key_down(KeyCode key) const
+bool InputManager::IsKeyDown(KeyCode key) const
 {
 	SDL_Scancode code = SDL_GetScancodeFromKey((SDL_KeyCode)key);
 	return m_Keys[code].pressed;
 }
 
-bool InputManager::is_mouse_button_down(int button) const
+bool InputManager::IsMouseButtonDown(int button) const
 {
 	return m_MouseButtons[button].pressed;
 }
 
-bool InputManager::is_key_pressed(KeyCode key) const
+bool InputManager::IsKeyPressed(KeyCode key) const
 {
 	SDL_Scancode code = SDL_GetScancodeFromKey((SDL_KeyCode)key);
 	return m_Keys[code].pressed && !m_Keys[code].prevPressed;
 }
 
-bool InputManager::is_mouse_button_pressed(int button) const
+bool InputManager::IsMouseButtonPressed(int button) const
 {
 	KeyState const& button_state = m_MouseButtons[button];
 	return button_state.pressed && !button_state.prevPressed;
 }
 
-bool InputManager::is_key_released(KeyCode key) const
+bool InputManager::IsKeyReleased(KeyCode key) const
 {
 	SDL_Scancode code = SDL_GetScancodeFromKey((SDL_KeyCode)key);
 	KeyState const& state = m_Keys[code];
 	return !state.pressed && state.prevPressed;
 }
 
-bool InputManager::is_mouse_button_released(int button) const
+bool InputManager::IsMouseButtonReleased(int button) const
 {
 	KeyState const& button_state = m_MouseButtons[button];
 	return !button_state.pressed && button_state.prevPressed;
 }
 
-void InputManager::set_cursor_visible(bool visible)
+void InputManager::SetCursorVisible(bool visible)
 {
 	m_CaptureMouse = !visible;
 	SDL_ShowCursor(visible);

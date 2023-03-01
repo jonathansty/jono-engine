@@ -14,19 +14,6 @@ defines:
     value: 1
   - id: _USE_TANGENTS
     value: 1
-parameters:
-  - id: Albedo
-    type: float4
-    offset: 0
-    value: 1,1,1,1
-  - id: Roughness
-    type: float
-    offset: 4
-    value: 0.5
-  - id: Metalness
-    type: float
-    offset: 5
-    value: 0
 textures:
   - id: Albedo
     path: "*White"

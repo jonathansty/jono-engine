@@ -24,6 +24,11 @@ Models:
     scale: 1,1,1
     rotation: 0,0.0,0.0
     mesh: res:/gltf-samples/2.0/DamagedHelmet/glTF/DamagedHelmet.gltf
+  - name: Flight Helmet
+    position: 0.0,0.0,3.0
+    scale: 3,3,3
+    rotation: 0,0.0,0.0
+    mesh: res:/gltf-samples/2.0/FlightHelmet/glTF/FlightHelmet.gltf
 Cameras:
   - name: MainCamera
     type: Free

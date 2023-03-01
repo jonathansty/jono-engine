@@ -70,8 +70,10 @@ float3 F_CookTorrence(float NoH, float NoV, float NoL, float LoH, float VoH, flo
 {
 	// perceptually linear roughness to roughness (see parameterization)
 	float r2 = material.roughness * material.roughness;
+	r2 = max(r2, 0.0001f);
 
 	float  D = D_GGX(NoH, r2);
+	return D;
 	
 	float  k = pow(r2 + 1, 2) / 8.0;
 	float  G = G_Smith(NoV, NoL, k);
@@ -99,19 +101,19 @@ float3 LightingModel_BRDF(in Material material, float3 v, float3 l, float3 n)
 	// Diffuse BRDF
 	float3 diffuseColor = (1.0 - material.metalness) * material.albedo;
 
+ #if 0
 	float level = lerp(6,10, material.roughness);
 	float3 irradiance = g_cube.SampleLevel(g_all_linear_sampler, ReflectedView, level).rgb;
+#endif
 
 	float3 Fd = diffuseColor * Fd_Lambert();
-	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, ReflectedView, material) * irradiance;
+	float3 Fr = F_CookTorrence(NoH, NoV, NoL, LoH, VoH, ReflectedView, material);
 	float3 color =  Fr + Fd;
 
 	color *= NoL * material.ao;
-	
+
 	float3 ambient  = float3(0.002f,0.002f,0.002f);
 	color = color *NoL + (1.0f - NoL) * ambient;
-
-
 
 	return color;
 }
@@ -168,8 +170,6 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 	normal = normalize(mul(float4(material.tangentNormal,0.0f), tbn)).xyz;
 #endif
 
-	float3 final_normal = normal;
-
 	// View vector is different dependent on the pixel that is being processed!
 	float3 view = normalize(g_ViewPosition - vout.worldPosition);
 
@@ -182,7 +182,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 		float3 light_colour = g_Lights[i].colour;
 
 		float4 proj_pos = mul(WorldViewProjection, vout.worldPosition);
-		float4 shadow = compute_shadow(vout.worldPosition, vout.viewPosition, proj_pos, g_Lights[i], final_normal);
+		float4 shadow = compute_shadow(vout.worldPosition, vout.viewPosition, proj_pos, g_Lights[i], normal);
 	#ifdef DEBUG_SHADOW
 		final_colour = shadow;
 		continue;
@@ -195,15 +195,15 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 
 
 		#if LIGHTING_MODEL == LIGHTING_MODEL_PBR
-			lightColour += LightingModel_BRDF(material, view, light, final_normal) * light_colour;
+			lightColour += LightingModel_BRDF(material, view, light, normal) * light_colour;
 		#endif
 
 		#if  LIGHTING_MODEL == LIGHTING_MODEL_PHONG
-			lightColour += LightingModel_Phong(material, view, light, light_colour, final_normal);
+			lightColour += LightingModel_Phong(material, view, light, light_colour, normal);
 		#endif
 
 		#if  LIGHTING_MODEL == LIGHTING_MODEL_BLINN_PHONG
-			lightColour += LightingModel_BlinnPhong(material, view, light,light_colour, final_normal);
+			lightColour += LightingModel_BlinnPhong(material, view, light,light_colour, normal);
 		#endif
 		lightColour *= 1.0 - (shadow * g_shadow_intensity); 
 		final_colour += lightColour;
@@ -257,7 +257,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 			continue;
 		}
 
-		float3 n = final_normal;
+		float3 n = normal;
 		if(light.flags == LIGHT_TYPE_SPOT)
 		{
 			float theta = dot(-l, light.direction);
@@ -267,7 +267,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 			float intensity = saturate((theta - outer_cone) / epsilon);
 			if(theta > outer_cone)
 			{
-				final_colour += (LightingModel_BRDF(material, view, l, final_normal) * intensity * light.color);
+				final_colour += (LightingModel_BRDF(material, view, l, normal) * intensity * light.color);
 			}
 		}
 		else if(light.flags == LIGHT_TYPE_POINT)
@@ -279,7 +279,7 @@ float4 EvaluateLighting(Material material, VS_OUT vout)
 			float sphereFalloff = r2 / d2;
 			// float diskFalloff = r2 / (r2 + d2);
 			float attenuation = sphereFalloff;
-			final_colour += (attenuation * LightingModel_BRDF(material, view, l, final_normal) * light.color);
+			final_colour += (attenuation * LightingModel_BRDF(material, view, l, normal) * light.color);
 		}
 	}
 

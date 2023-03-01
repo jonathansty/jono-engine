@@ -25,6 +25,5 @@ Material EvaluateMaterial(VS_OUT vout)
 	material.metalness = g_MaterialData.metalness;
 	material.albedo = g_MaterialData.albedo;
 	material.F0 = float3(0.04, 0.04, 0.04);
-
 	return material;
 }

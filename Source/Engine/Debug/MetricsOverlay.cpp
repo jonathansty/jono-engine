@@ -31,10 +31,10 @@ void MetricsOverlay::RenderOverlay()
 
 		ImGui::Begin(_name.c_str(), &_isOpen);
 
-		static bool s_EnableVsync = GameEngine::instance()->get_vsync();
+		bool s_EnableVsync = GameEngine::instance()->GetVSyncEnabled();
 		if (ImGui::Checkbox("Enable VSync", &s_EnableVsync))
 		{
-			engine->set_vsync(s_EnableVsync);
+			engine->SetVSyncEnabled(s_EnableVsync);
 		}
 
 		bool enable_limiter = (GameEngine::instance()->m_EngineCfg.m_MaxFrametime > 0.0f);

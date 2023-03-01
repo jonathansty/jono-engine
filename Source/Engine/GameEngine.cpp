@@ -51,9 +51,7 @@ GameEngine::GameEngine()
 	: m_Window(nullptr)
 	, m_GpuTimings()
 	, m_CommandLine()
-	, m_Title()
-	, m_Icon()
-	, m_SmallIcon()
+	, m_WindowTitle()
 	, m_WindowWidth(0)
 	, m_WindowHeight(0)
 	, m_ViewportWidth(0)
@@ -120,9 +118,9 @@ void GameEngine::set_game(unique_ptr<AbstractGame>&& gamePtr)
 
 }
 
-void GameEngine::set_title(const string& titleRef)
+void GameEngine::SetWindowTitle(const string& titleRef)
 {
-	m_Title = titleRef;
+	m_WindowTitle = titleRef;
 }
 
 bool GameEngine::Startup()
@@ -189,7 +187,7 @@ bool GameEngine::Startup()
 	m_FrameTimer->reset();
 
 	m_InputManager = make_unique<InputManager>();
-	m_InputManager->init();
+	m_InputManager->Init();
 
 	ASSERT(!GetGlobalContext()->m_InputManager);
 	GetGlobalContext()->m_InputManager = m_InputManager.get();
@@ -220,7 +218,7 @@ bool GameEngine::Startup()
 		MEMORY_TAG(MemoryCategory::Game);
 		m_Game->ConfigureGame(m_GameCfg);
 	}
-	apply_settings(m_GameCfg);
+	ApplyGameCfg(m_GameCfg);
 
 	{
 		ImGui::SetAllocatorFunctions(
@@ -477,7 +475,7 @@ void GameEngine::Update(f64 dt)
 				m_TimeT += c_FixedPhysicsTimestep;
 
 				// Input manager update takes care of swapping the state
-				m_InputManager->update();
+				m_InputManager->Update();
 			}
 			t.Stop();
 			m_MetricsOverlay->UpdateTimer(MetricsOverlay::Timer::GameUpdateCPU, (float)t.GetTimeInMS());
@@ -626,7 +624,6 @@ bool GameEngine::InitSubSystems()
 
 	}
 
-
 	ResourceLoader::create();
 
 	// Initialize enkiTS
@@ -706,8 +703,8 @@ bool GameEngine::InitWindow(int iCmdShow)
 		flags |= SDL_WINDOW_MAXIMIZED;
 	}
 
-	std::wstring title = std::wstring(m_Title.begin(), m_Title.end());
-	m_Window = SDL_CreateWindow(m_Title.c_str(), g_WindowData.position.x, g_WindowData.position.y, g_WindowData.size.x, g_WindowData.size.y, flags);
+	std::wstring title = std::wstring(m_WindowTitle.begin(), m_WindowTitle.end());
+	m_Window = SDL_CreateWindow(m_WindowTitle.c_str(), g_WindowData.position.x, g_WindowData.position.y, g_WindowData.size.x, g_WindowData.size.y, flags);
 	if (!m_Window)
 	{
 		FAILMSG("Failed to create the SDL window.");
@@ -727,37 +724,14 @@ void GameEngine::Quit()
 	this->m_IsRunning = false;
 }
 
-void GameEngine::enable_aa(bool isEnabled)
-{
-#if 0
-	_d2d_aa_mode = isEnabled ? D2D1_ANTIALIAS_MODE_ALIASED : D2D1_ANTIALIAS_MODE_PER_PRIMITIVE;
-#if FEATURE_D2D
-	if (_d2d_rt)
-	{
-		_d2d_rt->SetAntialiasMode(_d2d_aa_mode);
-	}
-#endif
-	#endif
-}
-
-void GameEngine::enable_physics_debug_rendering(bool isEnabled)
+void GameEngine::SetPhysicsDebugRendering(bool isEnabled)
 {
 	m_DebugPhysicsRendering = isEnabled;
 }
 
-string GameEngine::get_title() const
+string GameEngine::GetWindowTitle() const
 {
-	return m_Title;
-}
-
-WORD GameEngine::get_icon() const
-{
-	return m_Icon;
-}
-
-WORD GameEngine::get_small_icon() const
-{
-	return m_SmallIcon;
+	return m_WindowTitle;
 }
 
 ImVec2 GameEngine::GetWindowSize() const
@@ -770,25 +744,20 @@ ImVec2 GameEngine::GetViewportSize(int) const
 	return { (float)m_ViewportWidth, (float)m_ViewportHeight };
 }
 
-ImVec2 GameEngine::get_viewport_pos(int id /*= 0*/) const
+ImVec2 GameEngine::GetViewportPos(int id /*= 0*/) const
 {
 	SDL_Rect const* rect = SDL_GetWindowMouseRect(m_Window);
 	return ImVec2((float)m_ViewportPos.x - rect->x, (float)m_ViewportPos.y - rect->y);
 }
 
-int GameEngine::get_width() const
+int GameEngine::GetWindowWidth() const
 {
 	return m_WindowWidth;
 }
 
-int GameEngine::get_height() const
+int GameEngine::GetWindowHeight() const
 {
 	return m_WindowHeight;
-}
-
-bool GameEngine::get_sleep() const
-{
-	return m_ShouldSleep ? true : false;
 }
 
 bool GameEngine::WantCaptureMouse() const
@@ -801,58 +770,31 @@ bool GameEngine::WantCaptureKeyboard() const
 	return ImGui::GetIO().WantCaptureKeyboard;
 }
 
-float2 GameEngine::get_mouse_pos_in_window() const
+float2 GameEngine::GetMousePosInWindow() const
 {
 	SDL_Rect const* rect = SDL_GetWindowMouseRect(m_Window);
-	return float2{ (float)m_InputManager->get_mouse_position().x, (float)m_InputManager->get_mouse_position().y } - float2(rect->x, rect->y);
+	return float2{ (float)m_InputManager->GetMousePosition().x, (float)m_InputManager->GetMousePosition().y } - float2(rect->x, rect->y);
 }
 
-float2 GameEngine::get_mouse_pos_in_viewport() const
+float2 GameEngine::GetMousePosInViewport() const
 {
-	float2 tmp = float2(m_InputManager->get_mouse_position());
+	float2 tmp = float2(m_InputManager->GetMousePosition());
 	return float2{ (float)tmp.x, (float)tmp.y } - m_ViewportPos;
 }
 
-unique_ptr<XAudioSystem> const& GameEngine::get_audio_system() const
-{
-	return m_AudioSystem;
-}
-
-void GameEngine::set_icon(WORD wIcon)
-{
-	m_Icon = wIcon;
-}
-
-void GameEngine::set_small_icon(WORD wSmallIcon)
-{
-	m_SmallIcon = wSmallIcon;
-}
-
-void GameEngine::set_width(int iWidth)
-{
-	m_WindowWidth = iWidth;
-	assert(m_WindowWidth > 0);
-}
-
-void GameEngine::set_height(int iHeight)
-{
-	m_WindowHeight = iHeight;
-	assert(m_WindowHeight > 0);
-}
-
-void GameEngine::set_physics_step(bool bEnabled)
+void GameEngine::SetPhysicsStep(bool bEnabled)
 {
 	m_PhysicsStepEnabled = bEnabled;
 }
 
-bool GameEngine::is_viewport_focused() const
+bool GameEngine::IsViewportFocused() const
 {
 	return m_ViewportIsFocused;
 }
 
-bool GameEngine::is_input_captured() const
+bool GameEngine::IsInputCaptured() const
 {
-	if (is_viewport_focused())
+	if (IsViewportFocused())
 	{
 		return false;
 	}
@@ -861,43 +803,20 @@ bool GameEngine::is_input_captured() const
 
 }
 
-void GameEngine::set_sleep(bool bSleep)
+void GameEngine::ApplyGameCfg(GameCfg& game_settings)
 {
-	if (m_FrameTimer == nullptr)
-		return;
-
-	m_ShouldSleep = bSleep;
-	if (bSleep)
-	{
-		m_FrameTimer->stop();
-	}
-	else
-	{
-		m_FrameTimer->start();
-	}
+	m_WindowWidth  = game_settings.m_WindowWidth;
+	m_WindowHeight = game_settings.m_WindowHeight;
+	m_WindowTitle  = game_settings.m_WindowTitle;
+	m_VSyncEnabled = (game_settings.m_WindowFlags & GameCfg::WindowFlags::EnableVSync);
 }
 
-void GameEngine::enable_vsync(bool bEnable)
-{
-	m_VSyncEnabled = bEnable;
-}
-
-void GameEngine::apply_settings(GameCfg& game_settings)
-{
-	enable_aa(m_EngineCfg.m_UseD2DAA);
-
-	set_width(game_settings.m_WindowWidth);
-	set_height(game_settings.m_WindowHeight);
-	set_title(game_settings.m_WindowTitle);
-	enable_vsync(game_settings.m_WindowFlags & GameCfg::WindowFlags::EnableVSync);
-}
-
-void GameEngine::set_vsync(bool vsync)
+void GameEngine::SetVSyncEnabled(bool vsync)
 {
 	m_VSyncEnabled = vsync;
 }
 
-bool GameEngine::get_vsync()
+bool GameEngine::GetVSyncEnabled()
 {
 	return m_VSyncEnabled;
 }
@@ -908,36 +827,6 @@ std::shared_ptr<OverlayManager> const& GameEngine::get_overlay_manager() const
 }
 
 // Input methods
-bool GameEngine::is_key_down(int key) const
-{
-	return m_InputManager->is_key_down((KeyCode)key);
-}
-
-bool GameEngine::is_key_pressed(int key) const
-{
-	return m_InputManager->is_key_pressed((KeyCode)key);
-}
-
-bool GameEngine::is_key_released(int key) const
-{
-	return m_InputManager->is_key_released((KeyCode)key);
-}
-
-bool GameEngine::is_mouse_button_down(int button) const
-{
-	return m_InputManager->is_mouse_button_down(button);
-}
-
-bool GameEngine::is_mouse_button_pressed(int button) const
-{
-	return m_InputManager->is_mouse_button_pressed(button);
-}
-
-bool GameEngine::is_mouse_button_released(int button) const
-{
-	return m_InputManager->is_mouse_button_released(button);
-}
-
 void GameEngine::ProcessEvent(SDL_Event& e)
 {
 	// Route Windows messages to game engine member functions
@@ -1005,7 +894,7 @@ void GameEngine::ProcessEvent(SDL_Event& e)
 	if (!handled)
 	{
 		// Input manager doesn't consume the inputs
-		handled |= m_InputManager->handle_events(e);
+		handled |= m_InputManager->HandleEvents(e);
 	}
 
 	if (handled)

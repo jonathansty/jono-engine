@@ -143,7 +143,7 @@ void SceneViewer::OnStartup()
 		} });
 
     // Capture the mouse in the window
-    GetGlobalContext()->m_InputManager->set_cursor_visible(false);
+    GetGlobalContext()->m_InputManager->SetCursorVisible(false);
 
     // Setup the game world
     using namespace framework;
@@ -346,28 +346,29 @@ void SceneViewer::OnUpdate(double deltaTime)
     Super::OnUpdate(deltaTime);
 
     f32 f32_dt = (f32)deltaTime;
-    auto& input_manager = GameEngine::instance()->get_input();
-    float2 mouse_delta = float2(input_manager->get_mouse_delta());
+    InputManager* inputManager = GetGlobalContext()->m_InputManager;
 
-    if (input_manager->is_key_pressed(KeyCode::Up))
+    float2 mouse_delta = float2(inputManager->GetMouseDelta());
+
+    if (inputManager->IsKeyPressed(KeyCode::Up))
     {
         m_LightT += 0.5f;
     }
-    if (input_manager->is_key_pressed(KeyCode::Down))
+    if (inputManager->IsKeyPressed(KeyCode::Down))
     {
         m_LightT -= 0.5f;
     }
 
-    if (input_manager->is_key_pressed(KeyCode::R) && input_manager->is_key_down(KeyCode::LControl))
+    if (inputManager->IsKeyPressed(KeyCode::R) && inputManager->IsKeyDown(KeyCode::LControl))
     {
         RebuildAllShaders();
     }
 
-    if (input_manager->is_key_pressed(KeyCode::O) && input_manager->is_key_down(KeyCode::LControl))
+    if (inputManager->IsKeyPressed(KeyCode::O) && inputManager->IsKeyDown(KeyCode::LControl))
     {
         OpenFile();
     }
-    if (input_manager->is_key_pressed(KeyCode::P) && input_manager->is_key_down(KeyCode::LControl))
+    if (inputManager->IsKeyPressed(KeyCode::P) && inputManager->IsKeyDown(KeyCode::LControl))
     {
         OpenScene(m_ScenePath.c_str());
     }
@@ -381,11 +382,11 @@ void SceneViewer::OnUpdate(double deltaTime)
         m_FreeCamera->tick(deltaTime);
     }
 
-    bool has_viewport_focus = GameEngine::instance()->is_viewport_focused();
+    bool has_viewport_focus = GameEngine::instance()->IsViewportFocused();
     if (has_viewport_focus)
     {
         // rotate light
-        if (input_manager->is_mouse_button_down(2))
+        if (inputManager->IsMouseButtonDown(2))
         {
             m_LightT -= mouse_delta.x * f32_dt * 0.5f;
         }
@@ -486,6 +487,7 @@ void SceneViewer::OnDebugUI()
 
                 if(bRefresh)
                 {
+                    // Is not thread safe :(
                     m_SunLight->set_colour(float3(col[0] * s_Intensity, col[1]* s_Intensity, col[2] * s_Intensity));
                 }
             }

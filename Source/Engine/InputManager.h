@@ -91,23 +91,23 @@ public:
 	InputManager(const InputManager&) = delete;
 	InputManager& operator=(const InputManager&) = delete;
 
-	void init();
-	void update();
+	void Init();
+	void Update();
 
-	int2 get_mouse_position(bool previousFrame = false) const;
-	int2 get_mouse_delta() const { return m_MouseDelta; }
-	f32  get_scroll_delta() const { return m_MouseWheel; }
+	inline int2 GetMousePosition(bool previousFrame = false) const { return m_MousePos[previousFrame ? 1 : 0]; }
+	inline int2 GetMouseDelta() const { return m_MouseDelta; }
+	inline f32  GetScrollDelta() const { return m_MouseWheel; }
 
-	bool is_key_down(KeyCode key) const;
-	bool is_key_pressed(KeyCode key) const;
-	bool is_key_released(KeyCode key) const;
+	bool IsKeyDown(KeyCode key) const;
+	bool IsKeyPressed(KeyCode key) const;
+	bool IsKeyReleased(KeyCode key) const;
 
-	bool is_mouse_button_down(int button) const;
-	bool is_mouse_button_pressed(int button) const;
-	bool is_mouse_button_released(int button) const;
+	bool IsMouseButtonDown(int button) const;
+	bool IsMouseButtonPressed(int button) const;
+	bool IsMouseButtonReleased(int button) const;
 
 	// #TODO: Remove this from the input manager
-	void set_cursor_visible(bool visible);
+	void SetCursorVisible(bool visible);
 
 private:
 	struct KeyState
@@ -120,13 +120,13 @@ private:
 	using MouseHandler = std::function<void(SDL_Event& e)>;
 
 	// Input handling is done by registering a bunch of handlers into fixed size arrays
-	void register_key_handler(UINT msg, KeyHandler handler);
-	void register_key_handler(std::vector<UINT> msgs, KeyHandler handler);
+	void RegisterKeyHandler(UINT msg, KeyHandler handler);
+	void RegisterKeyHandler(std::vector<UINT> msgs, KeyHandler handler);
 
-	void register_mouse_handler(UINT msg, MouseHandler handler);
-	void register_mouse_handler(std::vector<UINT> msgs, MouseHandler handler);
+	void RegisterMouseHandler(UINT msg, MouseHandler handler);
+	void RegisterMouseHandler(std::vector<UINT> msgs, MouseHandler handler);
 
-	bool handle_events(SDL_Event& e);
+	bool HandleEvents(SDL_Event& e);
 
 
 	// IDs to index into our state arrays

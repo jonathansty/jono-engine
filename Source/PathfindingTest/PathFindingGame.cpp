@@ -208,11 +208,12 @@ void PathFindingGame::OnUpdate(double deltaTime)
 {
     JONO_EVENT();
 
-    if (!GameEngine::instance()->is_input_captured())
+    if (!GameEngine::instance()->IsInputCaptured())
     {
-        auto& input = GameEngine::instance()->get_input();
+        InputManager* input = GetGlobalContext()->m_InputManager;
 
-        float2 pos = GameEngine::instance()->get_mouse_pos_in_viewport();
+
+        float2 pos = GameEngine::instance()->GetMousePosInViewport();
         float4x4 view = hlslpp::mul(float4x4::translation(-m_ViewTranslation), float4x4::scale(m_Zoom));
 
         pos = hlslpp::mul(hlslpp::inverse(view), float4(pos, 0.4f, 1.0f)).xy;
@@ -221,16 +222,16 @@ void PathFindingGame::OnUpdate(double deltaTime)
         float2 grid_pos = world_pos / m_Grid._cell_size;
         grid_pos = hlslpp::clamp(grid_pos, float2(0, 0), float2(m_Grid._width, m_Grid._height));
 
-        if (input->is_key_down(KeyCode::LShift) && input->is_mouse_button_pressed(SDL_BUTTON_LEFT))
+        if (input->IsKeyDown(KeyCode::LShift) && input->IsMouseButtonPressed(SDL_BUTTON_LEFT))
         {
             m_Start = uint2(u32(grid_pos.x), u32(grid_pos.y));
             m_NavGrid = construct_grid_from_pos(m_Grid, m_Start.x, m_Start.y);
         }
-        else if (input->is_key_down(KeyCode::LControl) && input->is_mouse_button_pressed(SDL_BUTTON_LEFT))
+        else if (input->IsKeyDown(KeyCode::LControl) && input->IsMouseButtonPressed(SDL_BUTTON_LEFT))
         {
             m_End = uint2(u32(grid_pos.x), u32(grid_pos.y));
         }
-        else if (input->is_key_down(KeyCode::LAlt) && input->is_mouse_button_pressed(SDL_BUTTON_LEFT))
+        else if (input->IsKeyDown(KeyCode::LAlt) && input->IsMouseButtonPressed(SDL_BUTTON_LEFT))
         {
             if (auto cell = get_cell(m_Grid, u32(grid_pos.x), u32(grid_pos.y)); cell)
             {
@@ -238,35 +239,35 @@ void PathFindingGame::OnUpdate(double deltaTime)
             }
             m_NavGrid = construct_grid_from_pos(m_Grid, m_Start.x, m_Start.y);
         }
-        else if (input->is_mouse_button_down(SDL_BUTTON_LEFT))
+        else if (input->IsMouseButtonDown(SDL_BUTTON_LEFT))
         {
-            int2 delta = input->get_mouse_delta();
+            int2 delta = input->GetMouseDelta();
             m_ViewTranslation -= float3(delta, 0.0f);
         }
 
-        if (f32 scroll = input->get_scroll_delta(); scroll != 0.0f)
+        if (f32 scroll = input->GetScrollDelta(); scroll != 0.0f)
         {
             m_Zoom += scroll * 0.05f;
         }
 
-        if (input->is_key_down(KeyCode::Right))
+        if (input->IsKeyDown(KeyCode::Right))
         {
             m_ViewTranslation.x += 10.0f;
         }
-        if (input->is_key_down(KeyCode::Left))
+        if (input->IsKeyDown(KeyCode::Left))
         {
             m_ViewTranslation.x -= 10.0f;
         }
-        if (input->is_key_down(KeyCode::Up))
+        if (input->IsKeyDown(KeyCode::Up))
         {
             m_ViewTranslation.y -= 10.0f;
         }
-        if (input->is_key_down(KeyCode::Down))
+        if (input->IsKeyDown(KeyCode::Down))
         {
             m_ViewTranslation.y += 10.0f;
         }
 
-        if (input->is_key_pressed(KeyCode::R) && input->is_key_down(KeyCode::LControl))
+        if (input->IsKeyPressed(KeyCode::R) && input->IsKeyDown(KeyCode::LControl))
         {
             rebuild_shaders();
         }

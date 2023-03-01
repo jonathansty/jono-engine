@@ -18,27 +18,27 @@ FreeCam::~FreeCam()
 
 void FreeCam::tick(double deltaTime)
 {
-	unique_ptr<InputManager> const& manager = GameEngine::instance()->get_input();
+    InputManager* manager = GetGlobalContext()->m_InputManager;
 
-	bool has_viewport_focus = GameEngine::instance()->is_viewport_focused();
+	bool has_viewport_focus = GameEngine::instance()->IsViewportFocused();
 	if (!has_viewport_focus)
 		return;
 
-	if(manager->is_mouse_button_pressed(SDL_BUTTON_LEFT))
+	if(manager->IsMouseButtonPressed(SDL_BUTTON_LEFT))
 	{
-		manager->set_cursor_visible(false);
+		manager->SetCursorVisible(false);
 	}
-	if(manager->is_mouse_button_released(SDL_BUTTON_LEFT))
+	if(manager->IsMouseButtonReleased(SDL_BUTTON_LEFT))
 	{
-		manager->set_cursor_visible(true);
+		manager->SetCursorVisible(true);
 	}
 
-	if (!manager->is_mouse_button_down(SDL_BUTTON_LEFT))
+	if (!manager->IsMouseButtonDown(SDL_BUTTON_LEFT))
 	{
 		return;
 	}
 
-	int2 mouse_delta = manager->get_mouse_delta();
+	int2 mouse_delta = manager->GetMouseDelta();
 	shared_ptr<RenderWorldCamera> camera = _world->get_view_camera();
 	
 	constexpr f32 c_rotation_speed = 1.0f;
@@ -52,32 +52,32 @@ void FreeCam::tick(double deltaTime)
 	float3 right = hlslpp::mul(Math::c_right, _rotation);
 
 	constexpr f32 c_speed = 10.0f;
-	if(manager->is_key_down(KeyCode::W))
+	if(manager->IsKeyDown(KeyCode::W))
 	{
 		pos += fwd * c_speed * deltaTime;
 	}
 
-	if (manager->is_key_down(KeyCode::S))
+	if (manager->IsKeyDown(KeyCode::S))
 	{
 		pos -= fwd * c_speed * deltaTime;
 	}
 
-	if (manager->is_key_down(KeyCode::D))
+	if (manager->IsKeyDown(KeyCode::D))
 	{
 		pos += right * c_speed * deltaTime;
 	}
 
-	if (manager->is_key_down(KeyCode::A))
+	if (manager->IsKeyDown(KeyCode::A))
 	{
 		pos -= right * c_speed * deltaTime;
 	}
 
-	if(manager->is_key_down(KeyCode::Space))
+	if(manager->IsKeyDown(KeyCode::Space))
 	{
 		pos += Math::c_up * c_speed * deltaTime;
 	}
 
-	if(manager->is_key_down(KeyCode::LControl))
+	if(manager->IsKeyDown(KeyCode::LControl))
 	{
 		pos -= Math::c_up * c_speed * deltaTime;
 	}

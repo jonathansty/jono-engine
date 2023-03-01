@@ -30,6 +30,7 @@ class PrecisionTimer;
 class b2World;
 class ContactListener;
 struct ImVec2;
+struct SDL_Window;
 
 namespace Perf
 {
@@ -83,76 +84,41 @@ public:
 
 	//! Darkens the output en displays the physics debug rendering
 	//! @param when true it draws the physicsdebug rendering
-	void enable_physics_debug_rendering(bool enable);
-
-	// Input methods
-
-	unique_ptr<InputManager> const& get_input() const { return m_InputManager; };
-
-	//! Returns true when button is down and was down the previous GG
-	//! Example values for key are: VK_LEFT, 'A'. ONLY CAPITALS.
-	bool is_key_down(int key) const;
-	//! Returns true when button is down and was up the previous frame
-	//! Example values for key are: VK_LEFT, 'A'. ONLY CAPITALS.
-	bool is_key_pressed(int key) const;
-	//! Returns true when button is up and was down the previous frame
-	//! Example values for key are: VK_LEFT, 'A'. ONLY CAPITALS.
-	bool is_key_released(int key) const;
-
-	//! Returns true when button is down and was down the previous frame
-	//! Possible values for button are: VK_LBUTTON, VK_RBUTTON and VK_MBUTTON
-	bool is_mouse_button_down(int button) const;
-
-	//! Returns true when button is down and was up the previous frame
-	//! Possible values for button are: VK_LBUTTON, VK_RBUTTON and VK_MBUTTON
-	bool is_mouse_button_pressed(int button) const;
-
-	//! Returns true when button is up and was down the previous frame
-	//! Possible values for button are: VK_LBUTTON, VK_RBUTTON and VK_MBUTTON
-	bool is_mouse_button_released(int button) const;
+	void SetPhysicsDebugRendering(bool enable);
 
 	// Accessor Methods
-	string get_title() const;
-	WORD get_icon() const;
-	WORD get_small_icon() const;
+	string GetWindowTitle() const;
 	ImVec2 GetViewportSize(int id = 0) const;
-	ImVec2 get_viewport_pos(int id = 0) const;
+	ImVec2 GetViewportPos(int id = 0) const;
 	ImVec2 GetWindowSize() const;
-	int get_width() const;
-	int get_height() const;
-	bool get_sleep() const;
+	int	   GetWindowWidth() const;
+	int    GetWindowHeight() const;
 
 	bool WantCaptureMouse() const;
 	bool WantCaptureKeyboard() const;
 
 	// Mouse position relative to the viewport position (Should be used in most cases for game logic)
-	float2 get_mouse_pos_in_viewport() const;
+	float2 GetMousePosInViewport() const;
 
 	// Mouse position relative to the window
-	float2 get_mouse_pos_in_window() const;
+	float2 GetMousePosInWindow() const;
 
-	//! returns pointer to the Audio object
-	unique_ptr<XAudioSystem> const& get_audio_system() const;
-	//! returns pointer to the box2D world object
-	shared_ptr<b2World> const& GetBox2DWorld() const { return m_Box2DWorld; }
+	inline unique_ptr<XAudioSystem> const& GetAudioSystem() const { return m_AudioSystem; }
+	inline shared_ptr<b2World> const& GetBox2DWorld() const { return m_Box2DWorld; }
 
-	void set_icon(WORD wIcon);
-	void set_small_icon(WORD wSmallIcon);
-	void apply_settings(GameCfg& gameSettings);
+	void ApplyGameCfg(GameCfg& gameSettings);
 
-	void set_vsync(bool vsync);
-	bool get_vsync();
+	void SetVSyncEnabled(bool vsync);
+	bool GetVSyncEnabled();
 
 	// The overlay manager manages all active IMGUI debug overlays
 	shared_ptr<OverlayManager> const& get_overlay_manager() const;
 
-
-
 	// Enables/disables physics simulation stepping.
-	void set_physics_step(bool bEnabled);
+	void SetPhysicsStep(bool bEnabled);
 
-	bool is_viewport_focused() const;
-	bool is_input_captured() const;
+	bool IsViewportFocused() const;
+	bool IsInputCaptured() const;
 
 
 	// Returns the platform IO interface
@@ -173,7 +139,7 @@ public:
 
 	IDWriteFactory* GetDWriteFactory() const { return m_Renderer->get_raw_dwrite_factory(); }
 
-	struct SDL_Window* GetWindow() const { return m_Window; }
+	SDL_Window* GetWindow() const { return m_Window; }
 
 	ImGuiID GetPropertyDockID() const { return m_PropertyDockID; }
 
@@ -192,15 +158,7 @@ private:
 
 	void ProcessEvent(SDL_Event& e);
 
-	void set_sleep(bool bSleep);
-
-	void set_title(const string& titleRef);
-
-	void set_width(int iWidth);
-	void set_height(int iHeight);
-	void enable_vsync(bool bEnable = true);
-
-	void enable_aa(bool isEnabled);
+	void SetWindowTitle(const string& titleRef);
 
 #if FEATURE_D2D
 	// Direct2D methods
@@ -243,14 +201,17 @@ private:
 	std::array<Perf::Timer, 50> m_GpuTimings;
 	cli::CommandLine m_CommandLine;
 
-	string m_Title;
-	WORD m_Icon, m_SmallIcon;
-
+	// Window properties
+	string  m_WindowTitle;
 	s32     m_WindowWidth;
 	s32     m_WindowHeight;
+
+	// Viewport properties
 	u32     m_ViewportWidth;
 	u32     m_ViewportHeight;
 	float2  m_ViewportPos;
+
+	// Imgui Window IDs
 	ImGuiID m_ViewportImGuiID;
 	ImGuiID m_DockImGuiID;
 	ImGuiID m_PropertyDockID;

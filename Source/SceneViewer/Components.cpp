@@ -6,6 +6,8 @@
 #include "Core/MaterialResource.h"
 #include "Core/Material.h"
 
+#include "Engine/InputManager.h"
+
 
 //RTTR_REGISTRATION{
 //	using namespace rttr;
@@ -165,14 +167,16 @@ void CameraComponent::update(float dt)
 {
 
 	// Ignore any input if ImGui is focused
+    InputManager* input = GetGlobalContext()->m_InputManager;
+
 	bool bSkip = GameEngine::instance()->WantCaptureMouse() || GameEngine::instance()->WantCaptureKeyboard() ;
-	if (bSkip || !GameEngine::instance()->is_viewport_focused() || !GameEngine::instance()->is_mouse_button_down(VK_LBUTTON))
+	if (bSkip || !GameEngine::instance()->IsViewportFocused() || !input->IsMouseButtonDown(VK_LBUTTON))
 	{
-		_prev_position = GameEngine::instance()->get_mouse_pos_in_viewport();
+		_prev_position = GameEngine::instance()->GetMousePosInViewport();
 		return;
 	}
 
-	if (GameEngine::instance()->is_key_pressed('R')) {
+	if (input->IsKeyPressed(KeyCode::R)) {
 		get_entity()->set_local_position(float3{0, 0, 0});
 		get_entity()->set_rotation(quaternion::identity());
 		return;
@@ -192,34 +196,40 @@ void CameraComponent::update(float dt)
 	float4 movement = float4(0.0f);
 	float fly_speed = _fly_speed;
 
-	if (GameEngine::instance()->is_key_down(VK_LSHIFT)) {
+	if (input->IsKeyDown(KeyCode::LShift)) {
 		fly_speed *= 1.5f;
 	}
 
 
-	if (GameEngine::instance()->is_key_down('W')) {
-		movement += movement + forward * fly_speed * dt;
-	}
+	if (input->IsKeyDown(KeyCode::W))
+    {
+        movement += movement + forward * fly_speed * dt;
+    }
 
-	if (GameEngine::instance()->is_key_down('S')) {
-		movement += movement + forward * -fly_speed * dt;
-	}
+    if (input->IsKeyDown(KeyCode::S))
+    {
+        movement += movement + forward * -fly_speed * dt;
+    }
 
-	if (GameEngine::instance()->is_key_down('A')) {
-		movement += right * -fly_speed * dt;
-	}
+    if (input->IsKeyDown(KeyCode::D))
+    {
+        movement += right * -fly_speed * dt;
+    }
 
-	if (GameEngine::instance()->is_key_down('D')) {
-		movement += right * fly_speed * dt;
-	}
+    if (input->IsKeyDown(KeyCode::A))
+    {
+        movement += right * fly_speed * dt;
+    }
 
-	if (GameEngine::instance()->is_key_down(VK_SPACE)) {
-		movement += up * (fly_speed * 0.5f) * dt;
-	}
+    if (input->IsKeyDown(KeyCode::Space))
+    {
+        movement += up * (fly_speed * 0.5f) * dt;
+    }
 
-	if (GameEngine::instance()->is_key_down(VK_LCONTROL)) {
-		movement -= up * (fly_speed * 0.5f) * dt;
-	}
+    if (input->IsKeyDown(KeyCode::LControl))
+    {
+        movement -= up * (fly_speed * 0.5f) * dt;
+    }
 
 
 	float4 pos = ent->get_local_position();
@@ -228,7 +238,7 @@ void CameraComponent::update(float dt)
 
 	// Handle rotation
 	{
-		float2 current = GameEngine::instance()->get_mouse_pos_in_viewport();
+		float2 current = GameEngine::instance()->GetMousePosInViewport();
 		double x = current.x - _prev_position.x;
 		double y = current.y - _prev_position.y;
 		_prev_position = current;

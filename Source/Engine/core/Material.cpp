@@ -120,74 +120,77 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 			result->_debug_pixel_shader = debug_shader;
 
 			u32 param_data_byte_size = 0; 
-			for (auto it = root["parameters"].Begin(); it != root["parameters"].End(); it++)
-			{
-				// Offset in floats
-				u32 offset = (*it).second["offset"].As<u32>();
-				std::string parameter_name = (*it).second["id"].As<std::string>();
-				Identifier64 param_hash = Identifier64(parameter_name);
-				std::string parameter_type = (*it).second["type"].As<std::string>();
-				std::string parameter_value = (*it).second["value"].As<std::string>();
+			if (!root["parameters"].IsNone())
+            {
+                for (auto it = root["parameters"].Begin(); it != root["parameters"].End(); it++)
+                {
+                    // Offset in floats
+                    u32 offset = (*it).second["offset"].As<u32>();
+                    std::string parameter_name = (*it).second["id"].As<std::string>();
+                    Identifier64 param_hash = Identifier64(parameter_name);
+                    std::string parameter_type = (*it).second["type"].As<std::string>();
+                    std::string parameter_value = (*it).second["value"].As<std::string>();
 
-				static std::unordered_map<Identifier64, size_t> s_TypeSizes = {
-					{ Identifier64("float"), sizeof(f32) },
-					{ Identifier64("float2"), 2 * sizeof(f32) },
-					{ Identifier64("float3"), 3 * sizeof(f32) },
-					{ Identifier64("float4"), 4 * sizeof(f32) },
-					{ Identifier64("int"), sizeof(int) }
-				};
+                    static std::unordered_map<Identifier64, size_t> s_TypeSizes = {
+                        { Identifier64("float"), sizeof(f32) },
+                        { Identifier64("float2"), 2 * sizeof(f32) },
+                        { Identifier64("float3"), 3 * sizeof(f32) },
+                        { Identifier64("float4"), 4 * sizeof(f32) },
+                        { Identifier64("int"), sizeof(int) }
+                    };
 
-				ParameterInfo info{};
-				info.offset = offset; // Convert to offset in bytes
+                    ParameterInfo info{};
+                    info.offset = offset; // Convert to offset in bytes
 
-				u32 byte_size = (u32)s_TypeSizes[Identifier64(parameter_type)];
-				info.size = byte_size;
+                    u32 byte_size = (u32)s_TypeSizes[Identifier64(parameter_type)];
+                    info.size = byte_size;
 
-				param_data_byte_size += byte_size;
-				result->_param_data.resize(param_data_byte_size);
+                    param_data_byte_size += byte_size;
+                    result->_param_data.resize(param_data_byte_size);
 
-				float* data = (float*)result->_param_data.data();
+                    float* data = (float*)result->_param_data.data();
 
-				if (parameter_type == "float3" || parameter_type == "float4")
-				{
-					// Parse float3 
-					float values[4] = {};
+                    if (parameter_type == "float3" || parameter_type == "float4")
+                    {
+                        // Parse float3
+                        float values[4] = {};
 
-					u32 i = 0;
-					while (parameter_value.find(',') != std::string::npos)
-					{
-						size_t pos = parameter_value.find(',');
-						std::string value = parameter_value.substr(0, pos);
-						values[i++] = std::stof(value.c_str());
+                        u32 i = 0;
+                        while (parameter_value.find(',') != std::string::npos)
+                        {
+                            size_t pos = parameter_value.find(',');
+                            std::string value = parameter_value.substr(0, pos);
+                            values[i++] = std::stof(value.c_str());
 
-						parameter_value = parameter_value.substr(pos + 1);
-					}
+                            parameter_value = parameter_value.substr(pos + 1);
+                        }
 
-					if(!parameter_value.empty())
-					{
-						values[i++] = std::stof(parameter_value.c_str());
-					}
+                        if (!parameter_value.empty())
+                        {
+                            values[i++] = std::stof(parameter_value.c_str());
+                        }
 
-					for(u32 j = 0; j < i; ++j)
-					{
-						data[offset + j] = values[j];
-					}
-				}
-				else if (parameter_type == "float")
-				{
-					// Parse float
-					float value = stof(parameter_value);
-					data[offset] = value;
-				}
-				else
-				{
-					FAILMSG("Type unsupported!");
-				}
+                        for (u32 j = 0; j < i; ++j)
+                        {
+                            data[offset + j] = values[j];
+                        }
+                    }
+                    else if (parameter_type == "float")
+                    {
+                        // Parse float
+                        float value = stof(parameter_value);
+                        data[offset] = value;
+                    }
+                    else
+                    {
+                        FAILMSG("Type unsupported!");
+                    }
 
-				result->_parameters[param_hash] = info;
-			}
+                    result->_parameters[param_hash] = info;
+                }
+                result->_material_cb = ConstantBuffer::create(GetRI(), param_data_byte_size, false, BufferUsage::Default, result->_param_data.data());
+            }
 
-			result->_material_cb = ConstantBuffer::create(GetRI(), param_data_byte_size, false, BufferUsage::Default, result->_param_data.data());
 
 			#if 1 
 			for (auto it = root["textures"].Begin(); it != root["textures"].End(); it++)
@@ -443,8 +446,11 @@ void MaterialInstance::apply(RenderContext& ctx,GraphicsResourceHandle vertexLay
 		ASSERTMSG(views.size() <= Texture_MaterialSlotEnd, "Currently we do not support more than 5 textures per material.");
 		ctx.SetShaderResources(ShaderStage::Pixel, Texture_MaterialSlotStart, views);
 
-		GraphicsResourceHandle buffer[1] = { get_cb()->get_buffer() };
-        ctx.SetConstantBuffers(ShaderStage::Pixel, Buffer_Material, buffer);
+		if(get_cb())
+        {
+            GraphicsResourceHandle buffer[1] = { get_cb()->get_buffer() };
+            ctx.SetConstantBuffers(ShaderStage::Pixel, Buffer_Material, buffer);
+		}
 	}
 	else
 	{

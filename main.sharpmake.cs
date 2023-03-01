@@ -27,6 +27,8 @@ public class CoreModule : Module
     public CoreModule() : base()
     {
         Name = "Core";
+
+        NatvisFiles.Add(Path.Combine(RootPath, "External/hlslpp/include/hlsl++.natvis"));
     }
 
     public override void ConfigureAll(Configuration conf, Target target)

@@ -30,12 +30,15 @@ Material EvaluateMaterial(VS_OUT vout)
 	float3 albedo = g_albedo.Sample(g_all_linear_sampler, uv).rgb;
 	float3 normals = g_normal.Sample(g_all_linear_sampler, uv).rgb * 2.0 - 1.0;
 	float ao = g_ao.Sample(g_all_linear_sampler, uv).r;
+
 	material.tangentNormal = normals;
 	material.ao = ao;
-	material.roughness = metallic_roughness.g * g_MaterialData.roughness;
-	material.metalness = metallic_roughness.b * g_MaterialData.metalness;
-	material.albedo = albedo * g_MaterialData.albedo.rgb;
-	material.F0 = float3(0.04, 0.04, 0.04);
+	material.roughness = metallic_roughness.g;
+	material.metalness = metallic_roughness.b;
+	material.albedo = albedo.rgb;
+
+	// material.F0 = lerp(float3(0.04, 0.04, 0.04), albedo.rgb, material.metalness);
+	// material.albedo  = lerp(albedo.rgb, float3(0.0,0.0,0.0), material.metalness);
 
 	return material;
 }

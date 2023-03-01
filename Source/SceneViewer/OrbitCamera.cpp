@@ -18,26 +18,27 @@ OrbitCamera::~OrbitCamera()
 void OrbitCamera::Tick(double dt)
 {
 	f32 f32_dt = (f32)dt;
-	unique_ptr<InputManager> const& input_manager = GameEngine::instance()->get_input();
+    InputManager* input_manager = GetGlobalContext()->m_InputManager;
+
 
 	shared_ptr<RenderWorldCamera> camera = m_World->get_view_camera();
 
 	// Handle the input
 	{
-		if (input_manager->is_key_pressed(KeyCode::Right))
+		if (input_manager->IsKeyPressed(KeyCode::Right))
 		{
 			m_Timer -= 0.5f;
 		}
-		if (input_manager->is_key_pressed(KeyCode::Left))
+		if (input_manager->IsKeyPressed(KeyCode::Left))
 		{
 			m_Timer += 0.5f;
 		}
 	}
 
-	bool has_viewport_focus = GameEngine::instance()->is_viewport_focused();
+	bool has_viewport_focus = GameEngine::instance()->IsViewportFocused();
 	if (has_viewport_focus)
 	{
-		f32 scroll_delta = input_manager->get_scroll_delta();
+		f32 scroll_delta = input_manager->GetScrollDelta();
 		f32 zoom_factor = m_Zoom * 0.05f;
 		if (scroll_delta != 0)
 		{
@@ -46,8 +47,8 @@ void OrbitCamera::Tick(double dt)
 		}
 
 		// Rotate camera
-		float2 mouse_delta = float2(input_manager->get_mouse_delta());
-		if (input_manager->is_mouse_button_down(SDL_BUTTON_LEFT))
+		float2 mouse_delta = float2(input_manager->GetMouseDelta());
+		if (input_manager->IsMouseButtonDown(SDL_BUTTON_LEFT))
 		{
 			m_Timer -= mouse_delta.x * f32_dt * 0.5f;
 			m_UpTimer += mouse_delta.y * f32_dt * 0.5f;
@@ -59,7 +60,7 @@ void OrbitCamera::Tick(double dt)
 		float3 pos = camera->get_position();
 
 		float3 localPan = float3(0.0f, 0.0f, 0.0f);
-		if (input_manager->is_mouse_button_down(SDL_BUTTON_RIGHT))
+		if (input_manager->IsMouseButtonDown(SDL_BUTTON_RIGHT))
 		{
 			float4x4 view = camera->get_view();
 
@@ -70,7 +71,7 @@ void OrbitCamera::Tick(double dt)
 		}
 		m_Center += localPan;
 
-		if (input_manager->is_key_pressed(KeyCode::Z))
+		if (input_manager->IsKeyPressed(KeyCode::Z))
 		{
 			LOG_INFO(Input, "Resetting view.");
 			m_Timer = 0.0f;

@@ -377,8 +377,8 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 
             if(m->HasTangentsAndBitangents())
             {
-                flags |= (VertexLayoutFlags::Tangent0 << (i *2));
-                flags |= (VertexLayoutFlags::Tangent0 << (i*2+1));
+                flags |= (VertexLayoutFlags::Tangent0 << (j *2));
+                flags |= (VertexLayoutFlags::Tangent0 << (j*2+1));
 			}
 		}
 
