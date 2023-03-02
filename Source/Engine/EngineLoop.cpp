@@ -16,8 +16,8 @@ int EngineLoop::Run(cli::CommandLine cmdLine)
     MemoryTracker::init();
 
     // Create global singletons
+    // #TODO: Get rid of GameEngine instance 
     GameEngine::create();
-
     m_Engine = GameEngine::instance();
 
     // Bind singletons to our global context

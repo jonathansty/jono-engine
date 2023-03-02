@@ -47,9 +47,6 @@ namespace framework
 class Entity;
 }
 
-
-
-
 class ENGINE_API GameEngine : public TSingleton<GameEngine>, public b2ContactListener
 {
 	friend class TSingleton<GameEngine>;
@@ -175,6 +172,7 @@ private:
 	void BuildEditorUI();
 	void BuildDebugLogUI(ImGuiID* dockID = nullptr);
 	void BuildViewportUI(ImGuiID* dockID = nullptr);
+    void BuildContentBrowserUI(ImGuiID* dockID = nullptr);
 	void BuildMenuBarUI();
 
 
@@ -271,7 +269,6 @@ private:
 	bool m_PhysicsStepEnabled : 1; 
 
 	// State for debug tools
-	bool m_ShowDebugLog;
 	bool m_ShowViewport;
 	bool m_ShowImguiDemo;
 	bool m_ShowImplotDemo;

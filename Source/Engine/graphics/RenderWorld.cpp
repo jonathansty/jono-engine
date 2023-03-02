@@ -78,7 +78,7 @@ std::shared_ptr<RenderWorldInstance> RenderWorld::create_instance(float4x4 trans
 
 	ModelHandle::init_parameters params{};
 	params.path = mesh;
-	inst->_model = ResourceLoader::instance()->load<ModelHandle>(params, false, true);
+	inst->_model = ResourceLoader::instance()->load<ModelHandle>(params, false, false);
 
 	_instances.push_back(inst);
 
@@ -259,6 +259,11 @@ void RenderWorldInstance::update()
 	if(!res)
     {
 		return;
+	}
+
+	if(!_model->is_loaded())
+    {
+        return;
 	}
 
 	for (u32 i = 0; i < res->get_material_count(); ++i)
