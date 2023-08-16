@@ -917,7 +917,7 @@ void GameEngine::BeginContact(b2Contact* contactPtr)
 	// body UserData is ContactlistenerPtr to call
 
 	//is A a contactlistener?
-	if (fixAPtr->GetBody()->GetUserData() != nullptr)
+	if (fixAPtr->GetBody()->GetUserData().pointer != 0)
 	{
 		// the object to call
 		contactData.contactListenerPtr = fixAPtr->GetBody()->GetUserData();
@@ -927,7 +927,7 @@ void GameEngine::BeginContact(b2Contact* contactPtr)
 		contactData.actOtherPtr = fixBPtr->GetUserData();
 		// check for removed actors, this method can be called from within the PhysicsActor destructor
 		// when one of two overlapping actors is deleted
-		if (contactData.actThisPtr != nullptr && contactData.actOtherPtr != nullptr)
+		if (contactData.actThisPtr.pointer && contactData.actOtherPtr.pointer)
 		{
 			// store in caller list
 			m_Box2DBeginContactData.push_back(contactData);
@@ -935,7 +935,7 @@ void GameEngine::BeginContact(b2Contact* contactPtr)
 	}
 
 	//is B a contactlistener?
-	if (fixBPtr->GetBody()->GetUserData() != nullptr)
+	if (fixBPtr->GetBody()->GetUserData().pointer)
 	{
 		// the object to call
 		contactData.contactListenerPtr = fixBPtr->GetBody()->GetUserData();
@@ -945,7 +945,7 @@ void GameEngine::BeginContact(b2Contact* contactPtr)
 		contactData.actOtherPtr = fixAPtr->GetUserData();
 		// check for removed actors, this method can be called from within the PhysicsActor destructor
 		// when one of two overlapping actors is deleted
-		if (contactData.actThisPtr != nullptr && contactData.actOtherPtr != nullptr)
+		if (contactData.actThisPtr.pointer && contactData.actOtherPtr.pointer)
 		{
 			// store in caller list
 			m_Box2DBeginContactData.push_back(contactData);
@@ -963,7 +963,7 @@ void GameEngine::EndContact(b2Contact* contactPtr)
 	// body UserData is ContactlistenerPtr to call
 
 	//is A a contactlistener?
-	if (fixAPtr->GetBody()->GetUserData() != nullptr)
+	if (fixAPtr->GetBody()->GetUserData().pointer)
 	{
 		// the object to call
 		contactData.contactListenerPtr = fixAPtr->GetBody()->GetUserData();
@@ -973,7 +973,7 @@ void GameEngine::EndContact(b2Contact* contactPtr)
 		contactData.actOtherPtr = fixBPtr->GetUserData();
 		// check for removed actors, this method can be called from within the PhysicsActor destructor
 		// when one of two overlapping actors is deleted
-		if (contactData.actThisPtr != nullptr && contactData.actOtherPtr != nullptr)
+		if (contactData.actThisPtr.pointer && contactData.actOtherPtr.pointer)
 		{
 			// store in caller list
 			m_Box2DEndContactData.push_back(contactData);
@@ -981,7 +981,7 @@ void GameEngine::EndContact(b2Contact* contactPtr)
 	}
 
 	//is B a contactlistener?
-	if (fixBPtr->GetBody()->GetUserData() != nullptr)
+	if (fixBPtr->GetBody()->GetUserData().pointer)
 	{
 		// the object to call
 		contactData.contactListenerPtr = fixBPtr->GetBody()->GetUserData();
@@ -991,7 +991,7 @@ void GameEngine::EndContact(b2Contact* contactPtr)
 		contactData.actOtherPtr = fixAPtr->GetUserData();
 		// check for removed actors, this method can be called from within the PhysicsActor destructor
 		// when one of two overlapping actors is deleted
-		if (contactData.actThisPtr != nullptr && contactData.actOtherPtr != nullptr)
+		if (contactData.actThisPtr.pointer && contactData.actOtherPtr.pointer)
 		{
 			// store in caller list
 			m_Box2DEndContactData.push_back(contactData);
@@ -1011,8 +1011,8 @@ void GameEngine::PostSolve(b2Contact* contactPtr, const b2ContactImpulse* impuls
 	ImpulseData impulseData;
 	impulseData.contactListenerAPtr = fixAPtr->GetBody()->GetUserData();
 	impulseData.contactListenerBPtr = fixBPtr->GetBody()->GetUserData();
-	impulseData.actAPtr = fixAPtr->GetUserData();
-	impulseData.actBPtr = fixBPtr->GetUserData();
+	impulseData.actAPtr = (void*)fixAPtr->GetUserData().pointer;
+	impulseData.actBPtr = (void*)fixBPtr->GetUserData().pointer;
 
 	// normalImpulses[1] seems to be always 0, add them up
 	if (impulsePtr->count > 0)
@@ -1032,28 +1032,28 @@ void GameEngine::CallListeners()
 	// begin contact
 	for (size_t i = 0; i < m_Box2DBeginContactData.size(); i++)
 	{
-		ContactListener* contactListenerPtr = reinterpret_cast<ContactListener*>(m_Box2DBeginContactData[i].contactListenerPtr);
+		ContactListener* contactListenerPtr = reinterpret_cast<ContactListener*>(m_Box2DBeginContactData[i].contactListenerPtr.pointer);
 		contactListenerPtr->BeginContact(
-				reinterpret_cast<PhysicsActor*>(m_Box2DBeginContactData[i].actThisPtr),
-				reinterpret_cast<PhysicsActor*>(m_Box2DBeginContactData[i].actOtherPtr));
+            reinterpret_cast<PhysicsActor*>(m_Box2DBeginContactData[i].actThisPtr.pointer),
+            reinterpret_cast<PhysicsActor*>(m_Box2DBeginContactData[i].actOtherPtr.pointer));
 	}
 	m_Box2DBeginContactData.clear();
 
 	// end contact
 	for (size_t i = 0; i < m_Box2DEndContactData.size(); i++)
 	{
-		ContactListener* contactListenerPtr = reinterpret_cast<ContactListener*>(m_Box2DEndContactData[i].contactListenerPtr);
+        ContactListener* contactListenerPtr = reinterpret_cast<ContactListener*>(m_Box2DEndContactData[i].contactListenerPtr.pointer);
 		contactListenerPtr->EndContact(
-				reinterpret_cast<PhysicsActor*>(m_Box2DEndContactData[i].actThisPtr),
-				reinterpret_cast<PhysicsActor*>(m_Box2DEndContactData[i].actOtherPtr));
+            reinterpret_cast<PhysicsActor*>(m_Box2DEndContactData[i].actThisPtr.pointer),
+            reinterpret_cast<PhysicsActor*>(m_Box2DEndContactData[i].actOtherPtr.pointer));
 	}
 	m_Box2DEndContactData.clear();
 
 	// impulses
 	for (size_t i = 0; i < m_Box2DImpulseData.size(); i++)
 	{
-		ContactListener* contactListenerAPtr = reinterpret_cast<ContactListener*>(m_Box2DImpulseData[i].contactListenerAPtr);
-		ContactListener* contactListenerBPtr = reinterpret_cast<ContactListener*>(m_Box2DImpulseData[i].contactListenerBPtr);
+        ContactListener* contactListenerAPtr = reinterpret_cast<ContactListener*>(m_Box2DImpulseData[i].contactListenerAPtr.pointer);
+		ContactListener* contactListenerBPtr = reinterpret_cast<ContactListener*>(m_Box2DImpulseData[i].contactListenerBPtr.pointer);
 		if (contactListenerAPtr != nullptr)
 			contactListenerAPtr->ContactImpulse(reinterpret_cast<PhysicsActor*>(m_Box2DImpulseData[i].actAPtr), m_Box2DImpulseData[i].impulseA);
 		if (contactListenerBPtr != nullptr)

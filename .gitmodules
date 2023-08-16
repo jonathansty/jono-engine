@@ -7,3 +7,15 @@
 [submodule "External/rttr"]
 	path = External/rttr
 	url = https://github.com/rttrorg/rttr.git
+[submodule "External/enkiTS"]
+	path = External/enkiTS
+	url = git@github.com:dougbinks/enkiTS.git
+[submodule "External/box2d"]
+	path = External/box2d
+	url = git@github.com:erincatto/box2d.git
+[submodule "External/fmt"]
+	path = External/fmt
+	url = git@github.com:fmtlib/fmt.git
+[submodule "External/assimp"]
+	path = External/assimp
+	url = git@github.com:assimp/assimp.git

@@ -19,7 +19,7 @@ PhysicsActor::~PhysicsActor()
 {
     for (b2Fixture* fixturePtr = m_BodyPtr->GetFixtureList(); fixturePtr != nullptr; fixturePtr = fixturePtr->GetNext())
     {
-        fixturePtr->SetUserData(nullptr);
+        fixturePtr->GetUserData().pointer = 0;
     }
 
     // remove the body from the scene
@@ -90,7 +90,7 @@ bool PhysicsActor::AddBoxShape(double width, double height, double restitution, 
 	fixtureDef.friction = (float)friction;
 
 	// store this for contact information
-	fixtureDef.userData = (void *) this;
+	fixtureDef.userData.pointer = (uintptr_t) this;
 
 	// Add the shape to the body.
 	b2Fixture *fixturePtr = m_BodyPtr->CreateFixture(&fixtureDef);
@@ -120,7 +120,7 @@ bool PhysicsActor::AddBoxShapeWithOffset(double width, double height, float2 off
     fixtureDef.friction = (float)friction;
 
     // store this for contact information
-    fixtureDef.userData = (void *) this;
+    fixtureDef.userData.pointer = (uintptr_t) this;
 
     // Add the shape to the body.
     b2Fixture *fixturePtr = m_BodyPtr->CreateFixture(&fixtureDef);
@@ -153,7 +153,7 @@ bool PhysicsActor::AddCircleShape(double radius, float2 offset, double restituti
 	fixtureDef.friction = (float)friction;
 
 	// store this for contact information
-	fixtureDef.userData = (void *) this;
+	fixtureDef.userData.pointer = (uintptr_t) this;
 
 	// Add the shape to the body.
 	b2Fixture *fixturePtr = m_BodyPtr->CreateFixture(&fixtureDef);
@@ -189,7 +189,8 @@ bool PhysicsActor::AddPolygonShape(const std::vector<float2>& vertexArrRef, doub
 	fixtureDef.friction = (float)friction;
 
 	// store this for contact information
-	fixtureDef.userData = (void *) this;
+    fixtureDef.userData.pointer = (uintptr_t)this;
+
 
 	// Add the shape to the body.
 	b2Fixture *fixturePtr = m_BodyPtr->CreateFixture(&fixtureDef);
@@ -242,7 +243,8 @@ bool PhysicsActor::AddChainShape(const std::vector<float2>& vertexArrRef, bool c
 	fixtureDef.friction = (float)friction;
 
 	// store this for contact information
-	fixtureDef.userData = (void *) this;
+    fixtureDef.userData.pointer = (uintptr_t)this;
+
 
 	// Add the shape to the body.
 	b2Fixture *fixturePtr = m_BodyPtr->CreateFixture(&fixtureDef);
@@ -341,7 +343,7 @@ bool PhysicsActor::Raycast(float2 point1, float2 point2, float2& intersectionRef
 	input.p1.Set((float)point1.x, (float)point1.y);
 	input.p2.Set((float)point2.x, (float)point2.y);
 	input.maxFraction = 1.0f;
-	b2RayCastOutput output, closestOutput;
+    b2RayCastOutput output{}, closestOutput{};
 	closestOutput.fraction = 1; //start with end of line as p2
 	//check every fixture of every body to find closest 
 	for (b2Fixture* fixturePtr = m_BodyPtr->GetFixtureList(); fixturePtr != nullptr; fixturePtr = fixturePtr->GetNext())
@@ -535,18 +537,18 @@ std::vector<float2> PhysicsActor::GetContactList()
 void PhysicsActor::AddContactListener(ContactListener *listenerPtr)
 {
 	//store the pointer in userdata to be used by the ContactCaller
-	m_BodyPtr->SetUserData((void*)listenerPtr);
+	m_BodyPtr->GetUserData().pointer = ((uintptr_t)listenerPtr);
 }
 
 void PhysicsActor::RemoveContactListener(ContactListener *)
 {
 	//reset the pointer in userdata to be used by the ContactCaller
-	m_BodyPtr->SetUserData((void*)nullptr);
+    m_BodyPtr->GetUserData().pointer = 0;
 }
 
 ContactListener *PhysicsActor::GetContactListener()
 {
-	return reinterpret_cast <ContactListener *>(m_BodyPtr->GetUserData());
+	return reinterpret_cast <ContactListener *>(m_BodyPtr->GetUserData().pointer);
 }
 
 void PhysicsActor::SetCollisionFilter(const b2Filter &filterRef)

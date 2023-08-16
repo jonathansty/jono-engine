@@ -42,7 +42,7 @@ using Microsoft::WRL::ComPtr;
 #include <box2d/b2_world_callbacks.h>
 #include <box2d/box2d.h>
 
-#include <enkiTS/TaskScheduler.h>
+#include <TaskScheduler.h>
 
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>

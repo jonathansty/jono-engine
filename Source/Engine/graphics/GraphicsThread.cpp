@@ -333,10 +333,9 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 			}
 			else if(renderData.m_TotalVertices > 0)
 			{
-				D3D11_MAPPED_SUBRESOURCE mapped_resource{};
-                ctx.Map(renderData.m_VertexBuffer);
+                void* pData = ctx.Map(renderData.m_VertexBuffer);
 
-				SimpleVertex2D* data = (SimpleVertex2D*)mapped_resource.pData;
+				SimpleVertex2D* data = (SimpleVertex2D*)pData;
 				memcpy(data, vertices.data(), vertices.size() * sizeof(SimpleVertex2D));
                 ctx.Unmap(renderData.m_VertexBuffer);
 			}
@@ -356,9 +355,8 @@ void GraphicsThread::RenderD2D(RenderContext& ctx)
 			}
 			else if(renderData.m_TotalIndices > 0)
 			{
-				D3D11_MAPPED_SUBRESOURCE mapped_resource{};
-                ctx.Map(renderData.m_IndexBuffer);
-				u32* data = (u32*)mapped_resource.pData;
+                void* pData = ctx.Map(renderData.m_IndexBuffer);
+                u32* data = (u32*)pData;
 				memcpy(data, indices.data(), indices.size() * sizeof(u32));
                 ctx.Unmap(renderData.m_IndexBuffer);
 			}

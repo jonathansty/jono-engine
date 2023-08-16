@@ -66,15 +66,16 @@ using std::unordered_set;
 #endif
 
 // Store Box2D contactdata retrieved from userData pointers
+#include <box2d/b2_settings.h>
 struct ContactData
 {
-	void *contactListenerPtr = nullptr;
-	void *actThisPtr = nullptr, *actOtherPtr = nullptr;
+    b2BodyUserData contactListenerPtr;
+	b2FixtureUserData actThisPtr, actOtherPtr;
 };
 
 struct ImpulseData
 {
-	void *contactListenerAPtr = nullptr, *contactListenerBPtr = nullptr;
+	b2BodyUserData contactListenerAPtr, contactListenerBPtr;
 	double impulseA = 0, impulseB = 0;
 	void *actAPtr = nullptr, *actBPtr = nullptr;
 };

@@ -18,6 +18,8 @@ public class CliModule : Module
     public override void ConfigureAll(Configuration conf, Target target)
     {
         base.ConfigureAll(conf, target);
+
+        conf.AddPublicDependency<FmtLib>(target);
     }
 }
 
@@ -39,6 +41,9 @@ public class CoreModule : Module
         conf.AddPublicDependency<OpTick>(target);
         conf.AddPublicDependency<Rttr>(target);
         conf.AddPublicDependency<Hlslpp>(target);
+        conf.AddPublicDependency<EnkiTS>(target);
+        conf.AddPublicDependency<Box2D>(target);
+        conf.AddPublicDependency<Assimp>(target);
     }
 }
 
@@ -162,7 +167,7 @@ public class EngineTestProject : Application
         conf.SolutionFolder = "tests";
 
         // Private dependencies
-        conf.AddPrivateDependency<EngineModule>(target, DependencySetting.DefaultWithoutBuildSteps);
+        conf.AddPrivateDependency<EngineModule>(target);
 
         // Compile C++17 
         conf.Output = Configuration.OutputType.Dll;
@@ -370,7 +375,6 @@ public static class Main
 
     private static void Builder_EventPreSolutionConfigure(Solution solution)
     {
-        ConanDependencies.ParseConanFile(solution);
     }
 
     private static void Builder_EventPostProjectLink(Project project)

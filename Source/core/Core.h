@@ -57,7 +57,7 @@
 #include <fmt/printf.h>
 #include <fmt/xchar.h>
 
-#include "enkiTS/TaskScheduler.h"
+#include <TaskScheduler.h>
 
 #include <cassert>
 #include <filesystem>

@@ -8,7 +8,7 @@
 #include "PlatformIO.h"
 #include "Framework/World.h"
 #include "EngineCfg.h"
-#include "EnkiTS/TaskScheduler.h"
+#include <TaskScheduler.h>
 #include "Graphics/Perf.h"
 #include "Graphics/RenderWorld.h"
 #include "Graphics/GraphicsThread.h"

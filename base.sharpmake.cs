@@ -45,6 +45,7 @@ public class Utils
         conf.AddPrivateDependency<ImGui>(target);
         conf.AddPrivateDependency<SDL2>(target);
         conf.AddPrivateDependency<OpTick>(target);
+        conf.AddPrivateDependency<Assimp>(target);
     }
 }
 
@@ -68,6 +69,7 @@ public abstract class Module : Project
         Utils.ConfigureProjectName(conf, target);
         conf.SolutionFolder = Utils.g_FilterFolderEngine;
 
+        conf.Options.Add(Options.Vc.Compiler.RTTI.Enable);
         conf.Options.Add(Options.Vc.General.WindowsTargetPlatformVersion.Latest);
         conf.Options.Add(Options.Vc.Compiler.Exceptions.EnableWithSEH);
         conf.Options.Add(Options.Vc.Compiler.MinimalRebuild.Enable);
@@ -132,9 +134,6 @@ public abstract class Module : Project
         conf.IncludePaths.Add(@"[project.SourceRootPath]");
         conf.IncludePaths.Add(@"[project.SourceRootPath]/" + Utils.SourceFolderName);
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]");
-
-        // Handle all conan packages
-        conf.AddPublicDependency<ConanDependencies>(target);
     }
 
     [Configure(Blob.Blob)]
@@ -189,6 +188,7 @@ public abstract class Application : Project
         conf.Defines.Add("FEATURE_XAUDIO");
 
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP20);
+        conf.Options.Add(Options.Vc.Compiler.RTTI.Enable);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);
         conf.Options.Add(new Options.Vc.Compiler.DisableSpecificWarnings(
             "4100", // Unused method variables
@@ -207,9 +207,9 @@ public abstract class Application : Project
         conf.IncludePaths.Add(@"[project.SourceRootPath]/" + Utils.SourceFolderName);
         conf.IncludePaths.Add(@"[project.SharpmakeCsPath]");
 
-        // Handle all conan packages
-        conf.AddPublicDependency<ConanDependencies>(target);
         conf.AddPublicDependency<DirectXTK>(target);
+
+
     }
 
     [Configure(Blob.Blob)]
