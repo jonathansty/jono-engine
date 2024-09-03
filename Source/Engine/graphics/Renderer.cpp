@@ -292,6 +292,10 @@ void Renderer::ResizeSwapchain(u32 w, u32 h)
 	DXGI_SWAP_CHAIN_DESC desc{};
 	if (_swapchain)
 	{
+        // Release swapchain resources before trying to resize
+        GetRI()->ReleaseResource(_swapchain_rtv);
+        GetRI()->ReleaseResource(_swapchain_srv);
+
         GetRI()->ResizeSwapchain(_swapchain, w, h);
 	}
 	else
@@ -333,6 +337,7 @@ void Renderer::ResizeSwapchain(u32 w, u32 h)
 	assert(backBuffer);
     _swapchain_rtv = GetRI()->CreateRenderTargetView(backBuffer,   "Swapchain RTV");
     _swapchain_srv = GetRI()->CreateShaderResourceView(backBuffer, "Swapchain SRV");
+	GetRI()->ReleaseResource(backBuffer);
 
 	////ComPtr<ID3D11Texture2D> backBuffer;
 	////_swapchain->GetBuffer(0, IID_PPV_ARGS(&backBuffer));

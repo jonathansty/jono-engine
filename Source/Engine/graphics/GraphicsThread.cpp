@@ -105,27 +105,41 @@ void GraphicsThread::Sync()
 		m_FrameData.m_Render2DData.m_ProjectionMatrix = engine->m_D2DRenderContext->m_ProjectionMatrix;
 	}
 
-	// Copy over ImDrawData for next frame
-	ImDrawData* drawData = ImGui::GetDrawData();
-	ImDrawData* gtDrawData = &m_FrameData.m_DrawData;
-	if (gtDrawData->CmdLists != nullptr)
+	// #TODO: Fix this hacky stuff.
+	// The reason it's hacky is because of multithreading. We copy main thread imgui commands so when we resize the swapchain 
+	// we can no longer rely on those. For swapchain resizes we should somehow create a sync point before the main thread does a frame.
+	if(m_FrameData.m_RecreateSwapchain)
 	{
-		for (int i = 0; i < gtDrawData->CmdListsCount; i++)
-		{
-			delete gtDrawData->CmdLists[i];
-		}
-		delete gtDrawData->CmdLists;
-		gtDrawData->CmdLists = nullptr;
+        Graphics::Renderer* renderer = GetGlobalContext()->m_Engine->m_Renderer.get();
+        renderer->ResizeSwapchain(engine->m_WindowWidth, engine->m_WindowHeight);
+		m_FrameData.m_RecreateSwapchain = false;
+        ImDrawData* gtDrawData = &m_FrameData.m_DrawData;
+		gtDrawData->Clear();
 	}
-	gtDrawData->Clear();
-	{
-		*gtDrawData = *drawData;
-		gtDrawData->CmdLists = new ImDrawList*[drawData->CmdListsCount];
-		for (int i = 0; i < drawData->CmdListsCount; i++)
-		{
-			gtDrawData->CmdLists[i] = drawData->CmdLists[i]->CloneOutput();
-		}
-	}
+	else
+    {
+        // Copy over ImDrawData for next frame
+        ImDrawData* drawData = ImGui::GetDrawData();
+        ImDrawData* gtDrawData = &m_FrameData.m_DrawData;
+        if (gtDrawData->CmdLists != nullptr)
+        {
+            for (int i = 0; i < gtDrawData->CmdListsCount; i++)
+            {
+                delete gtDrawData->CmdLists[i];
+            }
+            delete gtDrawData->CmdLists;
+            gtDrawData->CmdLists = nullptr;
+        }
+        gtDrawData->Clear();
+        {
+            *gtDrawData = *drawData;
+            gtDrawData->CmdLists = new ImDrawList*[drawData->CmdListsCount];
+            for (int i = 0; i < drawData->CmdListsCount; i++)
+            {
+                gtDrawData->CmdLists[i] = drawData->CmdLists[i]->CloneOutput();
+            }
+        }
+    }
 }
 
 void GraphicsThread::DoFrame()
