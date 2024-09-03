@@ -186,12 +186,12 @@ public class FmtLib : ExternalProject
         if(target.GetOptimization() == Optimization.Release)
         {
             conf.LibraryFiles.Add("fmt.lib");
-            conf.LibraryPaths.Add("build/fmt/Release/");
+            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]/build/fmt/x64/Release/");
         }
         else
         {
             conf.LibraryFiles.Add("fmtd.lib");
-            conf.LibraryPaths.Add("build/fmt/Debug/");
+            conf.LibraryPaths.Add(@"[project.SharpmakeCsPath]/build/fmt/x64/Debug/");
         }
     }
 }
