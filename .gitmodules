@@ -19,3 +19,6 @@
 [submodule "External/assimp"]
 	path = External/assimp
 	url = git@github.com:assimp/assimp.git
+[submodule "Resources/gltf-samples"]
+	path = Resources/gltf-samples
+	url = https://github.com/KhronosGroup/glTF-Sample-Assets.git
