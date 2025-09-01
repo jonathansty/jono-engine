@@ -17,6 +17,9 @@ Shader::Shader(ShaderStage type, const u8* byte_code, uint32_t size, const char*
 {
 	// #TODO: Replace with RI
 	// Think about dx12 and pipeline based APIs, these require shaders to be specified as part of the PSO
+    if (!GetRI())
+        return;
+
     ComPtr<ID3D11Device> ri = GetRI()->Dx11GetDevice();
 	switch (type)
 	{

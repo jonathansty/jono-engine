@@ -4,6 +4,7 @@
 
 #include "GameEngine.h"
 
+#include <stb_image.h>
 #include <algorithm>
 
 
@@ -102,6 +103,8 @@ void TextureHandle::create_from_memory(uint32_t width, uint32_t height, DXGI_FOR
 void Texture::LoadFromMemory(uint32_t width, uint32_t height, DXGI_FORMAT format, TextureType type, void* data, const char* debug_name)
 {
 	RenderInterface* ri = GetRI();
+    if (!ri)
+        return;
 
 	m_Desc = CD3D11_TEXTURE2D_DESC(format, width, height);
     m_Desc.MipLevels = m_Desc.ArraySize = 1;

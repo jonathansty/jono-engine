@@ -37,7 +37,7 @@ cmake --build "build/fmt/x64" --config release
 
 echo Building Assimp
 SET BINARIES_DIR="build/assimp/x64"
-cmake "build/assimp" -G "Visual Studio 17 2022" -A x64 -S "External/assimp" -B "%BINARIES_DIR%" -DBUILD_SHARED_LIBS=OFF -DASSIMP_BUILD_ASSIMP_TOOLS=ON -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=ON -DASSIMP_BUILD_ZLIB=ON
+cmake "build/assimp" -G "Visual Studio 17 2022" -A x64 -S "External/assimp" -B "%BINARIES_DIR%" -DBUILD_SHARED_LIBS=OFF -DASSIMP_BUILD_ASSIMP_TOOLS=ON -DASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT=ON -DASSIMP_BUILD_ZLIB=ON -DASSIMP_USE_STB_IMAGE_STATIC=ON
 cmake --build %BINARIES_DIR% --config debug
 cmake --build %BINARIES_DIR% --config release
 

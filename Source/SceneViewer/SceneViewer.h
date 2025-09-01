@@ -59,6 +59,8 @@ private:
 	framework::EntityDebugOverlay* m_EntityOverlay;
 
 	float m_LightT;
+
+    void CreateCamera(std::shared_ptr<RenderWorld> render_world);
 };
 
 

@@ -41,8 +41,8 @@ ModelHandle::ModelHandle(FromFileResourceParameters params)
 {
 }
 
- Model::Model()
-		: _index_count(0)
+Model::Model()
+		: m_IndexCount(0)
 		, m_Materials()
 		, m_Meshes()
 		, m_VertexBuffer()
@@ -52,8 +52,11 @@ ModelHandle::ModelHandle(FromFileResourceParameters params)
 
  Model::~Model()
 {
-    GetRI()->ReleaseResource(m_IndexBuffer);
-    GetRI()->ReleaseResource(m_VertexBuffer);
+     if (GetRI())
+     {
+         GetRI()->ReleaseResource(m_IndexBuffer);
+         GetRI()->ReleaseResource(m_VertexBuffer);
+     }
  }
 
 bool Model::Load(enki::ITaskSet* parent, std::string const& path)
@@ -220,33 +223,39 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 			}
 		}
 
+		m_Vertices = std::move(vertices);
+        m_Indices = std::move(indices);
+
 		// Create our buffers
 		BufferDesc bufferDesc{};
 		SubresourceData data{};
 
-		bufferDesc.ByteWidth = UINT(vertices.size() * sizeof(vertices[0]));
-		bufferDesc.StructureByteStride = UINT(sizeof(vertices[0]));
+		bufferDesc.ByteWidth = UINT(m_Vertices.size() * sizeof(m_Vertices[0]));
+        bufferDesc.StructureByteStride = UINT(sizeof(m_Vertices[0]));
 		bufferDesc.Usage = D3D11_USAGE_IMMUTABLE;
 		bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		bufferDesc.CPUAccessFlags = 0;
 
-		data.pSysMem = vertices.data();
+		data.pSysMem = m_Vertices.data();
 
-        char name[512];
-        sprintf_s(name, "%s - Index Buffer", path.c_str());
+		if (GetRI())
+		{
+            char name[512];
+            sprintf_s(name, "%s - Index Buffer", path.c_str());
 
-		m_VertexBuffer = GetRI()->CreateBuffer(bufferDesc, &data, name);
-        ASSERT(m_VertexBuffer.IsValid());
+            m_VertexBuffer = GetRI()->CreateBuffer(bufferDesc, &data, name);
+            ASSERT(m_VertexBuffer.IsValid());
 
-		bufferDesc.ByteWidth = UINT(indices.size() * sizeof(indices[0]));
-		bufferDesc.StructureByteStride = sizeof(indices[0]);
-		bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-		data.pSysMem = indices.data();
+            bufferDesc.ByteWidth = UINT(m_Indices.size() * sizeof(m_Indices[0]));
+            bufferDesc.StructureByteStride = sizeof(m_Indices[0]);
+            bufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+            data.pSysMem = m_Indices.data();
 
-        sprintf_s(name, "%s - Vertex Buffer", path.c_str());
-        m_IndexBuffer = GetRI()->CreateBuffer(bufferDesc, &data, name);
-        ASSERT(m_IndexBuffer.IsValid());
-		_index_count = indices.size();
+            sprintf_s(name, "%s - Vertex Buffer", path.c_str());
+            m_IndexBuffer = GetRI()->CreateBuffer(bufferDesc, &data, name);
+            ASSERT(m_IndexBuffer.IsValid());
+            m_IndexCount = m_Indices.size();
+		}
 	}
 
 	if (scene->HasMaterials())
@@ -261,12 +270,12 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
             parameters.name = IO::get()->ResolvePath("res:/Engine/untextured.material");
 		}
 
-		std::shared_ptr<MaterialHandle> base_material = ResourceLoader::instance()->load<MaterialHandle>(parameters, false, true);
+		std::shared_ptr<MaterialHandle> baseMaterial = ResourceLoader::instance()->load<MaterialHandle>(parameters, false, true);
 
-		if(!base_material)
+		if(!baseMaterial)
         {
-            LOG_ERROR(IO, "Failed to load mesh material");
-            return false;
+            LOG_WARNING(IO, "Failed to load mesh material");
+            baseMaterial = std::make_shared<MaterialHandle>(parameters);
 		}
 
 		// Resize our materials and textures 
@@ -283,7 +292,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 				parameters.double_sided = double_sided;
 			}
 
-			m_Materials[j] = std::make_unique<MaterialInstance>(base_material);
+			m_Materials[j] = std::make_unique<MaterialInstance>(baseMaterial);
 
 			// Load the required textures from the assimp imported file
 			aiString baseColorTexture;
@@ -356,35 +365,35 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
     {
 		// #TODO: Create input layouts based on the mesh information
 		// #TODO: Store input layout information for the shader (for compatibility)
-		aiMesh* m = scene->mMeshes[i];
+		aiMesh* mesh = scene->mMeshes[i];
 
 		uint32_t matIdx = m_Meshes[i].material_index;
         MaterialInstance const* material = m_Materials[matIdx].get();
-        Graphics::Shader const* s = material->get_vertex_shader().get();
+        Graphics::Shader const* shader = material->get_vertex_shader().get();
 
 		// Construct the vertex layout flags to track compatibility with material/shaders 
 		VertexLayoutFlags flags = (VertexLayoutFlags)0;
-        ASSERT(m->HasPositions() && m->HasNormals());
+        ASSERT(mesh->HasPositions() && mesh->HasNormals());
         flags |= VertexLayoutFlags::Position;
         flags |= VertexLayoutFlags::Normal;
 
-		for(unsigned int j = 0; j < m->GetNumUVChannels(); ++j)
+		for(unsigned int j = 0; j < mesh->GetNumUVChannels(); ++j)
         {
-            if(m->HasTextureCoords(j))
+            if(mesh->HasTextureCoords(j))
             {
                 flags |= (VertexLayoutFlags::UV0 << j);
 			}
 
-            if(m->HasTangentsAndBitangents())
+            if(mesh->HasTangentsAndBitangents())
             {
                 flags |= (VertexLayoutFlags::Tangent0 << (j *2));
                 flags |= (VertexLayoutFlags::Tangent0 << (j*2+1));
 			}
 		}
 
-		for(unsigned int j = 0; j < m->GetNumColorChannels(); ++j)
+		for(unsigned int j = 0; j < mesh->GetNumColorChannels(); ++j)
         {
-			if(m->HasVertexColors(j))
+			if(mesh->HasVertexColors(j))
             {
                 flags |= (VertexLayoutFlags::Colour0 << j);
 			}
@@ -434,8 +443,12 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
             offset += sizeof(Shaders::float2);
 		}
 
-        m_VertexLayouts.push_back(GetRI()->CreateInputLayout(desc, s->GetByteCode(), (uint32_t)s->GetByteCodeLength()));
         m_VertexLayoutFlags.push_back(flags);
+		if (GetRI())
+        {
+            auto il = GetRI()->CreateInputLayout(desc, shader->GetByteCode(), (uint32_t)shader->GetByteCodeLength());
+            m_VertexLayouts.push_back(il);
+        }
     }
 
 

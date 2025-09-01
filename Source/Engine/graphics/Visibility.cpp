@@ -30,14 +30,14 @@ void VisibilityManager::run(VisibilityParams const& params)
 			bool is_visible = true;
 
 			// Do visibility check
-			Math::AABB box = inst->_model->get()->get_bounding_box();
+			Math::AABB box = inst->_model->get()->GetBoundingBox();
 
 			// #TODO: Technically this is *correct* but for some reason instances still get culled to early on the left of the frustum
 			float3 radius = box.size() / 2.0f;
 
 			// For now just do position checking of the instance
 			float3 inst_position = inst->_transform._41_42_43;
-			float3 bounding_box_center = inst->_model->get()->get_bounding_box().center();
+			float3 bounding_box_center = inst->_model->get()->GetBoundingBox().center();
 			inst_position += bounding_box_center;
 
 			radius = hlslpp::mul(inst->_transform, float4(radius, 0.0f)).xyz;

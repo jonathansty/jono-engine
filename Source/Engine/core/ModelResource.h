@@ -86,12 +86,16 @@ public:
 	}
 
 
-	u32 get_material_count() const { return (u32)m_Materials.size(); }
+	u32 GetMaterialCount() const { return (u32)m_Materials.size(); }
 
-	Math::AABB get_bounding_box() const { return m_AABB; }
+	Math::AABB GetBoundingBox() const { return m_AABB; }
 
 private:
-	u64 _index_count;
+	u64 m_IndexCount;
+
+	// CPU side source data, when changing this it would require a flush to the update the gpu buffers
+	std::vector<VertexType> m_Vertices;
+    std::vector<u32>		m_Indices;
 
 	std::vector<std::unique_ptr<MaterialInstance>> m_Materials;
 	std::vector<Mesh> m_Meshes;
@@ -99,6 +103,8 @@ private:
     std::vector<GraphicsResourceHandle> m_VertexLayouts;
 
 	Math::AABB m_AABB;
+
+	// GPU Side data
 	GraphicsResourceHandle m_VertexBuffer;
 	GraphicsResourceHandle m_IndexBuffer;
 };

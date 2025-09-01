@@ -202,6 +202,29 @@ public class SceneViewerProject : Application
 }
 
 [Generate]
+public class UVPacker : Application
+{
+    public UVPacker() : base()
+    {
+        Name = "UVPacker";
+    }
+
+    public override void ConfigureAll(Configuration conf, Target target)
+    {
+        base.ConfigureAll(conf, target);
+        conf.SolutionFolder = Utils.g_FilterFolderGame;
+
+        CompileHLSL.ConfigureShaderIncludes(conf);
+        Utils.ReferenceAllEngineLibraries(conf, target);
+
+        conf.Options.Add(Options.Vc.Linker.SubSystem.Console);
+        conf.Output = Configuration.OutputType.Exe;
+
+        conf.IncludePaths.Add(@"[project.SourceRootPath]");
+    }
+}
+
+[Generate]
 public class PathFindingProject : Application
 {
     public PathFindingProject() : base()
@@ -278,6 +301,7 @@ public class EngineSolution : Solution
         conf.AddProject<EngineModule>(target);
         conf.AddProject<SceneViewerProject>(target);
         conf.AddProject<PathFindingProject>(target);
+        conf.AddProject<UVPacker>(target);
     }
 }
 

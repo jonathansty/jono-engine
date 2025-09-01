@@ -237,9 +237,9 @@ void RenderWorldInstance::finalise()
 	if (!_finalised)
 	{
 		Model const* res = _model->get();
-		_material_overrides.resize(res->get_material_count());
+		_material_overrides.resize(res->GetMaterialCount());
 
-		for (u32 i = 0; i < res->get_material_count(); ++i)
+		for (u32 i = 0; i < res->GetMaterialCount(); ++i)
 		{
 			if (_material_overrides[i])
 			{
@@ -266,7 +266,7 @@ void RenderWorldInstance::update()
         return;
 	}
 
-	for (u32 i = 0; i < res->get_material_count(); ++i)
+	for (u32 i = 0; i < res->GetMaterialCount(); ++i)
 	{
 		GetMaterialInstance(i)->update();
 	}

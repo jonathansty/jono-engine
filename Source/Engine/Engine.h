@@ -33,11 +33,13 @@ using Microsoft::WRL::ComPtr;
 #include <optick.h>
 
 //#pragma GCC diagnostic ignored "-Wpragma-pack"
+
 #include <assimp/GltfMaterial.h>
 #include <assimp/material.h>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include <assimp/Importer.hpp>
+#include <Assimp/Exporter.hpp>
 
 #include <box2d/b2_world_callbacks.h>
 #include <box2d/box2d.h>
@@ -54,7 +56,6 @@ using Microsoft::WRL::ComPtr;
 #include <backends/imgui_impl_sdl.h>
 
 #include "Parsing/tinyxml2/tinyxml2.h"
-#include <stb_image.h>
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_syswm.h>

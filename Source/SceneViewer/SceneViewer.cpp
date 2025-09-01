@@ -111,9 +111,12 @@ std::string ShowFileDialog(SDL_Window* owner)
 
 void SceneViewer::OnStartup()
 {
+    using namespace framework;
+
     Super::OnStartup();
 
-    auto ge = GameEngine::instance();
+    GameEngine* ge = GetGameEngine();
+    InputManager* im = GetInputManager();
 
     ge->set_build_menu_callback([ge, this](GameEngine::BuildMenuOrder order)
         {
@@ -142,15 +145,18 @@ void SceneViewer::OnStartup()
 			}
 		} });
 
-    // Capture the mouse in the window
-    GetGlobalContext()->m_InputManager->SetCursorVisible(false);
+    im->SetCursorVisible(false);
 
-    // Setup the game world
-    using namespace framework;
-    m_World = GameEngine::instance()->get_world();
+    m_World = ge->get_world();
+
+    CreateCamera(ge->get_render_world());
 
     const char* path = "res:/Scenes/default.scene";
-    OpenScene(path);
+    if (GetPlatformIO()->Exists(path))
+    {
+		OpenScene(path);
+    }
+
 
    
     // Disabled for now as this app is not using the entity system
@@ -234,7 +240,7 @@ void SceneViewer::OpenScene(const char* path)
 {
     m_ScenePath = path;
 
-    std::string resolvedPath = IO::get()->ResolvePath(path);
+    std::string resolvedPath = GetPlatformIO()->ResolvePath(path);
     yaml::Document doc = yaml::Document(resolvedPath.c_str());
 
     auto render_world = GameEngine::instance()->get_render_world();
@@ -251,6 +257,11 @@ void SceneViewer::OpenScene(const char* path)
         std::string scaleT = (*it).second["scale"].As<std::string>();
         std::string rotation = (*it).second["rotation"].As<std::string>();
         std::string mesh = (*it).second["mesh"].As<std::string>();
+
+        if (!GetPlatformIO()->Exists(mesh.c_str()))
+        {
+            continue;
+        }
 
         float pos[3];
         float scale[3];
@@ -280,32 +291,11 @@ void SceneViewer::OpenScene(const char* path)
         render_world->create_instance(transform, mesh);
     }
 
-    ImVec2 size = GameEngine::instance()->GetViewportSize();
-    const float aspect = (float)size.x / (float)size.y;
-    const float near_plane = 0.5f;
-    const float far_plane = 250.0f;
+    CreateCamera(render_world);
 
-    // Create Cam 1
-    auto rw_cam = render_world->create_camera();
-    RenderWorldCamera::CameraSettings settings{};
-    settings.aspect = aspect;
-    settings.far_clip = far_plane;
-    settings.near_clip = near_plane;
-    settings.fov = hlslpp::radians(float1(45.0f)); // 45 deg fov
-    settings.projection_type = RenderWorldCamera::Projection::Perspective;
-    rw_cam->set_settings(settings);
-    rw_cam->set_view(float4x4::translation(0.0f, 0.0f, -2.0f));
-
-    // Copy our cam into debug cam
-    auto new_cam = render_world->create_camera();
-    settings.far_clip = 500.0f;
-    new_cam->set_settings(settings);
-
-    m_CameraType = 0;
-    m_OrbitCamera = JONO_NEW(OrbitCamera, render_world);
-    m_FreeCamera = JONO_NEW(FreeCam, render_world);
 
     auto l = render_world->create_light(RenderWorldLight::LightType::Directional);
+    RenderWorldCamera::CameraSettings settings{};
     settings.aspect = 1.0f;
     settings.near_clip = 0.0f;
     settings.far_clip = 25.0f;
@@ -373,16 +363,19 @@ void SceneViewer::OnUpdate(double deltaTime)
         OpenScene(m_ScenePath.c_str());
     }
 
-    if (m_CameraType == 0)
+    if (m_OrbitCamera)
     {
-        m_OrbitCamera->Tick(deltaTime);
-    }
-    else
-    {
-        m_FreeCamera->tick(deltaTime);
+        if (m_CameraType == 0)
+        {
+            m_OrbitCamera->Tick(deltaTime);
+        }
+        else
+        {
+            m_FreeCamera->tick(deltaTime);
+        }
     }
 
-    bool has_viewport_focus = GameEngine::instance()->IsViewportFocused();
+    bool has_viewport_focus = GetGameEngine()->IsViewportFocused();
     if (has_viewport_focus)
     {
         // rotate light
@@ -392,7 +385,7 @@ void SceneViewer::OnUpdate(double deltaTime)
         }
     }
 
-    RenderWorldRef world = GameEngine::instance()->get_render_world();
+    RenderWorldRef world = GetGameEngine()->get_render_world();
     auto camera = world->get_view_camera();
 
     if (m_SunLight)
@@ -670,4 +663,32 @@ void SceneViewer::SwapModel(const char* path)
 
     m_CurrentModel = GameEngine::instance()->get_render_world()->create_instance(float4x4::identity(), path);
     m_CurrentModel->set_dynamic_material(0, std::make_unique<MaterialInstance>());
+}
+
+void SceneViewer::CreateCamera(std::shared_ptr<RenderWorld> render_world)
+{
+    ImVec2 size = GameEngine::instance()->GetViewportSize();
+    const float aspect = (float)size.x / (float)size.y;
+    const float near_plane = 0.5f;
+    const float far_plane = 250.0f;
+
+    // Create Cam 1
+    auto rw_cam = render_world->create_camera();
+    RenderWorldCamera::CameraSettings settings{};
+    settings.aspect = aspect;
+    settings.far_clip = far_plane;
+    settings.near_clip = near_plane;
+    settings.fov = hlslpp::radians(float1(45.0f)); // 45 deg fov
+    settings.projection_type = RenderWorldCamera::Projection::Perspective;
+    rw_cam->set_settings(settings);
+    rw_cam->set_view(float4x4::translation(0.0f, 0.0f, -2.0f));
+
+    // Copy our cam into debug cam
+    auto new_cam = render_world->create_camera();
+    settings.far_clip = 500.0f;
+    new_cam->set_settings(settings);
+
+    m_CameraType = 0;
+    m_OrbitCamera = JONO_NEW(OrbitCamera, render_world);
+    m_FreeCamera = JONO_NEW(FreeCam, render_world);
 }

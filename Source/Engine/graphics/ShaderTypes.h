@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Types.h"
+#include "DirectXMath.h"
+#include "d3d11.h"
 
 // Shaders namespace contains utility functions to convert from and to predictable memory layouts for shaders
 namespace Shaders
