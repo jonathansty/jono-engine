@@ -3,7 +3,7 @@ template <typename T>
 TypeRegistrationHelper<T>::TypeRegistrationHelper(const char* typePath, const char* typeName)
   : m_Path(typePath)
 {
-    m_Data = TypeManager::instance()->AddType(m_Path);
+    m_Data = TypeManager::Instance()->AddType(m_Path);
 
     m_Data->m_Name = typeName;
     m_Data->m_Path = typePath;
@@ -26,5 +26,5 @@ TypeRegistrationHelper<T>::TypeRegistrationHelper(const char* typePath, const ch
 template <typename T>
 TypeRegistrationHelper<T>::~TypeRegistrationHelper()
 {
-    TypeManager::instance()->RemoveType(m_Path);
+    TypeManager::Instance()->RemoveType(m_Path);
 }

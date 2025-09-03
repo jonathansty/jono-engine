@@ -17,12 +17,12 @@ int EngineLoop::Run(cli::CommandLine cmdLine)
 
     // Create global singletons
     // #TODO: Get rid of GameEngine instance 
-    GameEngine::create();
-    m_Engine = GameEngine::instance();
+    GameEngine::Create();
+    m_Engine = GameEngine::Instance();
 
     // Bind singletons to our global context
     GlobalContext* ctx = GetGlobalContext();
-    ctx->m_TypeManager = TypeManager::instance();
+    ctx->m_TypeManager = TypeManager::Instance();
 
     // Construct the game from type 
     AbstractGame* rawGame = ctx->m_TypeManager->CreateObject<AbstractGame>(m_GameType);

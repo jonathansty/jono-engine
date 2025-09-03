@@ -22,17 +22,17 @@ public:
 	{
 	}
 
-	static T* instance();
+	static T* Instance();
 
-	static void create();
-	static void shutdown();
+	static void Create();
+	static void Shutdown();
 
 private:
 	static T* _obj;
 };
 
 template <typename T, bool LazyCreate>
-void TSingleton<T, LazyCreate>::shutdown()
+void TSingleton<T, LazyCreate>::Shutdown()
 {
 	ASSERTMSG(_obj, "Singleton was never created! This is an invalid shutdown.");
 	delete _obj;
@@ -40,13 +40,13 @@ void TSingleton<T, LazyCreate>::shutdown()
 }
 
 template <typename T, bool LazyCreate>
-T* TSingleton<T, LazyCreate>::instance()
+T* TSingleton<T, LazyCreate>::Instance()
 {
 	if constexpr(LazyCreate)
 	{
 		if(!_obj)
 		{
-			create();
+			Create();
 		}
 	}
 	else
@@ -57,7 +57,7 @@ T* TSingleton<T, LazyCreate>::instance()
 }
 
 template <typename T, bool LazyCreate>
-void TSingleton<T, LazyCreate>::create()
+void TSingleton<T, LazyCreate>::Create()
 {
 	ASSERTMSG(!_obj, "Singleton already contains an instance. Double create called!");
 	_obj = JONO_NEW(T);

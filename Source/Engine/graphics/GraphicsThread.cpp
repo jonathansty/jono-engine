@@ -65,6 +65,7 @@ void GraphicsThread::Run()
 		DoFrame();
 	}
 	ChangeStage(Stage::Cleanup);
+	DoCleanup();
 	LOG_INFO(Graphics, "Shutting down render thread...");
 	ChangeStage(Stage::Terminated);
 	m_Running = false;
@@ -76,9 +77,10 @@ void GraphicsThread::Sync()
 	{
 		using namespace Graphics;
 		ShaderCreateParams params = ShaderCreateParams::vertex_shader("Source/Engine/Shaders/default_2d.vx.hlsl");
-		m_VertexShader = ShaderCache::instance()->find_or_create(params);
+		m_VertexShader = ShaderCache::Instance()->find_or_create(params);
+
 		params = ShaderCreateParams::pixel_shader("Source/Engine/Shaders/default_2d.px.hlsl");
-		m_PixelShader = ShaderCache::instance()->find_or_create(params);
+		m_PixelShader = ShaderCache::Instance()->find_or_create(params);
 
 		m_GlobalCB = ConstantBuffer::create(GetRI(), sizeof(Shaders::float4x4) + sizeof(Shaders::float4), true, BufferUsage::Dynamic);
 	}
@@ -140,6 +142,13 @@ void GraphicsThread::Sync()
             }
         }
     }
+}
+
+void GraphicsThread::DoCleanup()
+{
+	m_VertexShader = nullptr;
+	m_PixelShader = nullptr;
+    m_GlobalCB = nullptr;
 }
 
 void GraphicsThread::DoFrame()

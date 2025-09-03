@@ -13,7 +13,8 @@
 int main(int argcs, char** argvs)
 {
 #ifdef USE_ENGINE_LOOP
-	EngineLoop engine("/Types/Games/SceneViewer");
+	const char* s_GameType = "/Types/Games/SceneViewer";
+	EngineLoop engine(s_GameType);
 
     cli::CommandLine cmd = cli::parse(argvs, argcs);
 	return engine.Run(cmd);

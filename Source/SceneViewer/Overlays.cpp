@@ -149,12 +149,12 @@ void EntityDebugOverlay::render_object(rttr::instance& obj)
 
 void EntityDebugOverlay::RenderOverlay()
 {
-	if (!_isOpen)
+	if (!m_IsOpen)
 		return;
 #ifdef ENABLE_RTTR
 
 	static int s_current = 0;
-	if (ImGui::Begin("Scene Outliner", &_isOpen))
+	if (ImGui::Begin("Scene Outliner", &m_IsOpen))
 	{
 		ImGui::Text("Number Of Entities: %d", _world->_entities.size());
 

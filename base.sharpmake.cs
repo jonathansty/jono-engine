@@ -21,7 +21,7 @@ public class Utils
                   Platform.win64,
                   DevEnv.vs2022,
                   Optimization.Debug | Optimization.Release,
-                  OutputType.Lib | OutputType.Dll)
+                  OutputType.Lib)
             };
         }
     }

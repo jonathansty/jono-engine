@@ -48,8 +48,10 @@ JONO_INLINE void Thread::Execute()
 
 JONO_INLINE void Thread::Join()
 {
-	assert(m_Thread.joinable());
-	m_Thread.join();
+    if(m_Thread.joinable())
+    {
+        m_Thread.join();
+	}
 }
 
 JONO_INLINE void Thread::Terminate()

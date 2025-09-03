@@ -24,14 +24,14 @@ public:
 	DebugOverlay(bool isOpen, std::string name);
 	virtual ~DebugOverlay() = default;
 
-	const char* get_name() const;
+	const char* GetName() const;
 
-	bool get_visible() const { return _isOpen; }
-	void set_visible(bool visible);
+	bool GetVisible() const { return m_IsOpen; }
+	void SetVisible(bool visible);
 
 protected:
-	bool _isOpen;
-	std::string _name;
+	bool m_IsOpen;
+	std::string m_Name;
 
 private:
 	friend class OverlayManager;

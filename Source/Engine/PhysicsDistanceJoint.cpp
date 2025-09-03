@@ -16,13 +16,13 @@ PhysicsDistanceJoint::PhysicsDistanceJoint(PhysicsActor *actAPtr, float2 anchorA
 	// #TODO: Add stiffness
 	DistanceJointDef.damping = (float)dampingRatio;
 
-	m_DistanceJointPtr = reinterpret_cast<b2DistanceJoint*>((GameEngine::instance())->GetBox2DWorld()->CreateJoint(&DistanceJointDef));
+	m_DistanceJointPtr = reinterpret_cast<b2DistanceJoint*>((GameEngine::Instance())->GetBox2DWorld()->CreateJoint(&DistanceJointDef));
 
 }
 
 PhysicsDistanceJoint::~PhysicsDistanceJoint()
 {
-	(GameEngine::instance())->GetBox2DWorld()->DestroyJoint(m_DistanceJointPtr);
+	(GameEngine::Instance())->GetBox2DWorld()->DestroyJoint(m_DistanceJointPtr);
 }
 
 double PhysicsDistanceJoint::GetLength() const

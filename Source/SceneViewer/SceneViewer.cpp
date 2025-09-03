@@ -243,7 +243,7 @@ void SceneViewer::OpenScene(const char* path)
     std::string resolvedPath = GetPlatformIO()->ResolvePath(path);
     yaml::Document doc = yaml::Document(resolvedPath.c_str());
 
-    auto render_world = GameEngine::instance()->get_render_world();
+    auto render_world = GameEngine::Instance()->get_render_world();
     render_world->Clear();
 
     Yaml::Node& node = doc.GetRoot();
@@ -524,7 +524,7 @@ static const char* s_world_path = "Scenes/test_world.scene";
 void SceneViewer::OpenFile()
 {
     LOG_VERBOSE(UI, "Opening file...");
-    std::string file = ShowFileDialog(GameEngine::instance()->GetWindow());
+    std::string file = ShowFileDialog(GameEngine::Instance()->GetWindow());
     if (!file.empty())
     {
         this->OpenScene(file.c_str());
@@ -534,9 +534,9 @@ void SceneViewer::OpenFile()
 void SceneViewer::RebuildAllShaders()
 {
     using namespace Graphics;
-    auto world = GameEngine::instance()->get_render_world();
+    auto world = GameEngine::Instance()->get_render_world();
 
-    ShaderCache::instance()->clear();
+    ShaderCache::Instance()->clear();
 
     for (auto const& res : MaterialHandle::s_Resources)
     {
@@ -659,9 +659,9 @@ void SceneViewer::SaveWorld(const char* path)
 
 void SceneViewer::SwapModel(const char* path)
 {
-    GameEngine::instance()->get_render_world()->remove_instance(m_CurrentModel);
+    GameEngine::Instance()->get_render_world()->remove_instance(m_CurrentModel);
 
-    m_CurrentModel = GameEngine::instance()->get_render_world()->create_instance(float4x4::identity(), path);
+    m_CurrentModel = GameEngine::Instance()->get_render_world()->create_instance(float4x4::identity(), path);
     m_CurrentModel->set_dynamic_material(0, std::make_unique<MaterialInstance>());
 }
 

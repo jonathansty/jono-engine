@@ -12,7 +12,7 @@ public:
 
 	virtual void RenderOverlay() override
 	{
-		ImGui::ShowDemoWindow(&_isOpen);
+		ImGui::ShowDemoWindow(&m_IsOpen);
 	}
 };
 
@@ -26,6 +26,6 @@ public:
 
 	virtual void RenderOverlay() override
 	{
-		ImGui::ShowAboutWindow(&_isOpen);
+		ImGui::ShowAboutWindow(&m_IsOpen);
 	}
 };

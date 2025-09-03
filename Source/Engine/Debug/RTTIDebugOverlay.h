@@ -11,9 +11,9 @@ public:
 	virtual void RenderOverlay() override
 	{
 		#ifdef ENABLE_RTTR
-		if (_isOpen)
+		if (m_IsOpen)
 		{
-			ImGui::Begin("Types", &_isOpen);
+			ImGui::Begin("Types", &m_IsOpen);
 
 			using namespace rttr;
 			ImGui::Columns(5);

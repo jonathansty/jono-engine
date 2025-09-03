@@ -20,7 +20,7 @@ void FreeCam::tick(double deltaTime)
 {
     InputManager* manager = GetGlobalContext()->m_InputManager;
 
-	bool has_viewport_focus = GameEngine::instance()->IsViewportFocused();
+	bool has_viewport_focus = GameEngine::Instance()->IsViewportFocused();
 	if (!has_viewport_focus)
 		return;
 

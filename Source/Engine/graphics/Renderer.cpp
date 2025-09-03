@@ -50,7 +50,7 @@ void Renderer::Init(EngineCfg const& settings, GameCfg const& game_settings, cli
     _device = m_RI->m_Device.Get();
 
 	_debug_tool = std::make_unique<RendererDebugTool>(this);
-	GameEngine::instance()->get_overlay_manager()->register_overlay(_debug_tool.get());
+	GameEngine::Instance()->get_overlay_manager()->register_overlay(_debug_tool.get());
 
 	m_CBGlobal = ConstantBuffer::create(m_RI, sizeof(GlobalCB), true, BufferUsage::Dynamic, nullptr);
 	m_CBModel = ConstantBuffer::create(m_RI, sizeof(ModelCB), true, BufferUsage::Dynamic, nullptr);
@@ -161,7 +161,7 @@ void Renderer::DeInit()
 {
 	MEMORY_TAG(MemoryCategory::Graphics);
 
-	GameEngine::instance()->get_overlay_manager()->unregister_overlay(_debug_tool.get());
+	GameEngine::Instance()->get_overlay_manager()->unregister_overlay(_debug_tool.get());
 
 	GetRI()->Flush();
 
@@ -539,8 +539,8 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 	{
 
 		constexpr u32 tile_res = FPLUS_TILE_RES;
-		float width = GameEngine::instance()->GetWindowSize().x;
-		float height = GameEngine::instance()->GetWindowSize().y;
+		float width = GameEngine::Instance()->GetWindowSize().x;
+		float height = GameEngine::Instance()->GetWindowSize().y;
 
 		u32 tiles_x = (u32)ceilf(width / tile_res);
 		u32 tiles_y = (u32)ceilf(height / tile_res);
@@ -565,7 +565,7 @@ void Renderer::PreRender(RenderContext& ctx, RenderWorld const& world)
 
 			ShaderCreateParams cs_params = ShaderCreateParams::compute_shader("Source/Engine/shaders/ForwardPlus_Cull.hlsl");
 			cs_params.params.flags = ShaderCompiler::CompilerFlags::CompileDebug;
-			_fplus_cull_shader = ShaderCache::instance()->find_or_create(cs_params);
+			_fplus_cull_shader = ShaderCache::Instance()->find_or_create(cs_params);
 
 			_fplus_cb = ConstantBuffer::create(GetRI(), sizeof(FPlusCB), true, BufferUsage::Dynamic);
 		}
@@ -887,7 +887,7 @@ void Renderer::BeginFrame(RenderContext& ctx)
 
 	m_FrameStats = {};
 
-	GameEngine* engine = GameEngine::instance();
+	GameEngine* engine = GameEngine::Instance();
 	Viewport vp = Viewport{ 0.0f, 0.0f, engine->GetViewportSize().x, engine->GetViewportSize().y };
 
     ctx.BeginFrame();
@@ -946,10 +946,10 @@ void Renderer::render_post_predebug(RenderContext& ctx)
 	GPU_SCOPED_EVENT(&ctx, "Post:PreDebug");
 
 	ShaderCreateParams params = ShaderCreateParams::pixel_shader("Source/Engine/Shaders/default_post_px.hlsl");
-	ShaderRef post_shader = ShaderCache::instance()->find_or_create(params);
+	ShaderRef post_shader = ShaderCache::Instance()->find_or_create(params);
 
 	params = ShaderCreateParams::vertex_shader("Source/Engine/Shaders/default_post_vx.hlsl");
-	ShaderRef post_vs_shader = ShaderCache::instance()->find_or_create(params);
+	ShaderRef post_vs_shader = ShaderCache::Instance()->find_or_create(params);
 
 	ctx.IASetIndexBuffer(GraphicsResourceHandle::Invalid(), DXGI_FORMAT_UNKNOWN,0);
     ctx.IASetInputLayout(post_vs_shader->GetInputLayout());

@@ -41,6 +41,7 @@ struct GlobalData {
 // Global type storage that we query to find a type based on an ID
 GlobalData g_TypeStorage{};
 
+#endif
 
 namespace Helpers
 {
@@ -88,4 +89,3 @@ rttr::type const& Helpers::get_type_by_id(u64 id)
 #endif
 
 } // namespace helpers
-#endif

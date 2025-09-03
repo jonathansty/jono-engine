@@ -78,7 +78,7 @@ std::shared_ptr<RenderWorldInstance> RenderWorld::create_instance(float4x4 trans
 
 	ModelHandle::init_parameters params{};
 	params.path = mesh;
-	inst->_model = ResourceLoader::instance()->load<ModelHandle>(params, false, false);
+	inst->_model = ResourceLoader::Instance()->load<ModelHandle>(params, false, false);
 
 	_instances.push_back(inst);
 

@@ -28,7 +28,7 @@ unique_ptr<Bitmap> Bitmap::load(string const& filename)
     bmp->m_FileName = path;
 
     FromFileResourceParameters params{ path };
-    bmp->m_Resource = ResourceLoader::instance()->load<TextureHandle>(params, false, true);
+    bmp->m_Resource = ResourceLoader::Instance()->load<TextureHandle>(params, false, true);
 
     // for now we don't support async bitmap loading and we assume in our rendering that bitmaps are always loaded and ready to render
     LOG_WARNING(IO, "Bitmap sync load!");

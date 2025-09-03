@@ -34,16 +34,16 @@ bool MaterialHandle::load(enki::ITaskSet* parent)
 		ShaderCreateParams create_params{};
 		create_params.params = params;
 		create_params.path = "Source/Engine/Shaders/DefaultGGX_Opaque.px.hlsl";
-		auto pixel_shader = ShaderCache::instance()->find_or_create(create_params);
+		auto pixel_shader = ShaderCache::Instance()->find_or_create(create_params);
 
 		// Get debug vertex shader
 		create_params.params = params;
 		create_params.path = "Source/Engine/Shaders/DefaultGGX_Debug.px.hlsl";
-		auto debug_shader = ShaderCache::instance()->find_or_create(create_params);
+		auto debug_shader = ShaderCache::Instance()->find_or_create(create_params);
 
 		create_params.params.stage = ShaderStage::Vertex;
 		create_params.path = "Source/Engine/Shaders/DefaultVertex.vx.hlsl";
-		auto vertex_shader = ShaderCache::instance()->find_or_create(create_params);
+		auto vertex_shader = ShaderCache::Instance()->find_or_create(create_params);
 
 		if (!pixel_shader)
 		{
@@ -102,7 +102,7 @@ bool MaterialHandle::load(enki::ITaskSet* parent)
 			}
 			else
 			{
-				TextureHandle res = *ResourceLoader::instance()->load<TextureHandle>({ paths[textureType] }, true);
+				TextureHandle res = *ResourceLoader::Instance()->load<TextureHandle>({ paths[textureType] }, true);
 				_resource->_textures.push_back(res);
 			}
 		}

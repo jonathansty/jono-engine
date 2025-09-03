@@ -270,7 +270,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
             parameters.name = IO::get()->ResolvePath("res:/Engine/untextured.material");
 		}
 
-		std::shared_ptr<MaterialHandle> baseMaterial = ResourceLoader::instance()->load<MaterialHandle>(parameters, false, true);
+		std::shared_ptr<MaterialHandle> baseMaterial = ResourceLoader::Instance()->load<MaterialHandle>(parameters, false, true);
 
 		if(!baseMaterial)
         {
@@ -312,7 +312,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 				std::string const& tex_path = dir_path.string() + "\\" + std::string(baseColorTexture.C_Str());
 
 				FromFileResourceParameters params{ tex_path };
-				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
+				auto texture = ResourceLoader::Instance()->load<TextureHandle>(params, true, true);
 				u32 slot = m_Materials[j]->get_slot("Albedo");
 				m_Materials[j]->set_texture(slot, texture);
 
@@ -322,7 +322,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 				std::string const& tex_path = dir_path.string() + "\\" + std::string(roughnessTexture.C_Str());
 
 				FromFileResourceParameters params{ tex_path };
-				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
+				auto texture = ResourceLoader::Instance()->load<TextureHandle>(params, true, true);
 				u32 slot = m_Materials[j]->get_slot("MetalnessRoughness");
 				m_Materials[j]->set_texture(slot, texture);
 			}
@@ -332,7 +332,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 				std::string const& tex_path = dir_path.string() + "\\" + std::string(normalTexture.C_Str());
 
 				FromFileResourceParameters params{ tex_path };
-				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
+				auto texture = ResourceLoader::Instance()->load<TextureHandle>(params, true, true);
 				u32 slot = m_Materials[j]->get_slot("Normal");
 				m_Materials[j]->set_texture(slot, texture);
 
@@ -343,7 +343,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 				std::string const& tex_path = dir_path.string() + "\\" + std::string(aoTexture.C_Str());
 
 				FromFileResourceParameters params{ tex_path };
-				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
+				auto texture = ResourceLoader::Instance()->load<TextureHandle>(params, true, true);
 				u32 slot = m_Materials[j]->get_slot("AO");
 				m_Materials[j]->set_texture(slot, texture);
 			}
@@ -353,7 +353,7 @@ bool Model::Load(enki::ITaskSet* parent, std::string const& path)
 				std::string const& tex_path = dir_path.string() + "\\" + std::string(emissiveTexture.C_Str());
 
 				FromFileResourceParameters params{ tex_path };
-				auto texture = ResourceLoader::instance()->load<TextureHandle>(params, true, true);
+				auto texture = ResourceLoader::Instance()->load<TextureHandle>(params, true, true);
 				u32 slot = m_Materials[j]->get_slot("Emissive");
 				m_Materials[j]->set_texture(slot, texture);
 			}

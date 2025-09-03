@@ -40,6 +40,7 @@ public:
 
 private:
 
+    void DoCleanup();
 	void DoFrame();
 
 	void Present(RenderContext& ctx);

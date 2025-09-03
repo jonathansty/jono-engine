@@ -372,7 +372,7 @@ bool GameEngine::Startup()
 	if (!get_render_world()->get_view_camera())
 	{
 		RenderWorldCameraRef camera = get_render_world()->create_camera();
-		ImVec2 size = GameEngine::instance()->GetViewportSize();
+		ImVec2 size = GameEngine::Instance()->GetViewportSize();
 		const float aspect = (float)size.x / (float)size.y;
 		const float near_plane = 5.0f;
 		const float far_plane = 1000.0f;
@@ -421,7 +421,7 @@ void GameEngine::Update(f64 dt)
 		SDL_Event e;
 		while (SDL_PollEvent(&e))
 		{
-			GameEngine::instance()->ProcessEvent(e);
+			GameEngine::Instance()->ProcessEvent(e);
 		}
 
 		MSG msg{};
@@ -514,7 +514,7 @@ void GameEngine::Update(f64 dt)
 		}
 	}
 
-	ResourceLoader::instance()->update();
+	ResourceLoader::Instance()->update();
 
 	// First sync our game update to the RT
 	m_SignalGraphicsToMain.acquire();
@@ -541,8 +541,8 @@ void GameEngine::Shutdown()
 
 	Perf::shutdown();
 
-	ResourceLoader::instance()->unload_all();
-	ResourceLoader::shutdown();
+	ResourceLoader::Instance()->unload_all();
+	ResourceLoader::Shutdown();
 
 	ImGui_ImplDX11_Shutdown();
 	ImGui_ImplSDL2_Shutdown();
@@ -590,8 +590,8 @@ bool GameEngine::InitSubSystems()
 		GetGlobalContext()->m_PlatformIO = m_PlatformIO.get();
 	}
 
-	Logger::create();
-	Logger::instance()->init();
+	Logger::Create();
+	Logger::Instance()->init();
 
 	// Load the engine config to decide what other sub systems are needed
 	{
@@ -626,7 +626,7 @@ bool GameEngine::InitSubSystems()
 
 	}
 
-	ResourceLoader::create();
+	ResourceLoader::Create();
 
 	// Initialize enkiTS
 	GlobalContext* globalContext = GetGlobalContext();
@@ -718,7 +718,7 @@ bool GameEngine::InitWindow(int iCmdShow)
 
 void GameEngine::DeInitSubSystems()
 {
-	TypeManager::shutdown();
+	TypeManager::Shutdown();
 }
 
 void GameEngine::Quit()
@@ -854,7 +854,7 @@ void GameEngine::ProcessEvent(SDL_Event& e)
 
 			if (e.window.event == SDL_WINDOWEVENT_CLOSE)
 			{
-				GameEngine::instance()->Quit();
+				GameEngine::Instance()->Quit();
 				return;
 			}
 			else if (e.window.event == SDL_WINDOWEVENT_MAXIMIZED)
@@ -875,7 +875,7 @@ void GameEngine::ProcessEvent(SDL_Event& e)
 		case SDL_KEYUP:
 			if ((e.key.keysym.mod & KMOD_CTRL ) && e.key.keysym.sym == SDLK_F9)
 			{
-				m_OverlayManager->set_visible(!m_OverlayManager->get_visible());
+				m_OverlayManager->SetVisible(!m_OverlayManager->GetVisible());
 			}
 			break;
 	}
@@ -1324,7 +1324,7 @@ void GameEngine::BuildMenuBarUI()
 				m_ShowEntityEditor = !m_ShowEntityEditor;
 				if (auto editor = get_overlay_manager()->get_overlay("EntityEditor"))
 				{
-					get_overlay_manager()->get_overlay("EntityDebugOverlay")->set_visible(m_ShowEntityEditor);
+					get_overlay_manager()->get_overlay("EntityDebugOverlay")->SetVisible(m_ShowEntityEditor);
 				}
 			}
 
@@ -1336,21 +1336,21 @@ void GameEngine::BuildMenuBarUI()
 		{
 			if (ImGui::IsItemClicked())
 			{
-				get_overlay_manager()->set_visible(!get_overlay_manager()->get_visible());
+				get_overlay_manager()->SetVisible(!get_overlay_manager()->GetVisible());
 			}
 
 			for (auto overlay : get_overlay_manager()->get_overlays())
 			{
-				bool enabled = overlay->get_visible();
-				if (ImGui::Checkbox(fmt::format("##{}", overlay->get_name()).c_str(), &enabled))
+				bool enabled = overlay->GetVisible();
+				if (ImGui::Checkbox(fmt::format("##{}", overlay->GetName()).c_str(), &enabled))
 				{
-					overlay->set_visible(enabled);
+					overlay->SetVisible(enabled);
 				}
 
 				ImGui::SameLine();
-				if (ImGui::MenuItem(overlay->get_name()))
+				if (ImGui::MenuItem(overlay->GetName()))
 				{
-					overlay->set_visible(!overlay->get_visible());
+					overlay->SetVisible(!overlay->GetVisible());
 				}
 			}
 			ImGui::EndMenu();
@@ -1389,7 +1389,6 @@ int GameEngine::Run(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iC
 
     EngineLoop loop = EngineLoop(game->GetType()->m_Path);
     result = loop.Run(cmdLine);
-	GameEngine::shutdown();
 
 #if defined(DEBUG) | defined(_DEBUG)
 	if (pDXGIDebug)

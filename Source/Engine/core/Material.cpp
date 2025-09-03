@@ -85,15 +85,15 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 			ShaderCreateParams create_params{};
 			create_params.params = params;
 			create_params.path = IO::get()->ResolvePath(pixel_path);
-			auto pixel_shader = ShaderCache::instance()->find_or_create(create_params);
+			auto pixel_shader = ShaderCache::Instance()->find_or_create(create_params);
 
 			create_params.params = params;
 			create_params.path = IO::get()->ResolvePath(debug_pixel_path);
-			auto debug_shader = ShaderCache::instance()->find_or_create(create_params);
+			auto debug_shader = ShaderCache::Instance()->find_or_create(create_params);
 
 			create_params.params.stage = ShaderStage::Vertex;
 			create_params.path = IO::get()->ResolvePath(vertex_shader_path);
-			auto vertex_shader = ShaderCache::instance()->find_or_create(create_params);
+			auto vertex_shader = ShaderCache::Instance()->find_or_create(create_params);
 
 			if (!pixel_shader)
 			{
@@ -226,7 +226,7 @@ std::unique_ptr<Material> Material::load(std::string const& path)
 				{
 					TextureHandle::init_parameters load_params{};
 					load_params.path = texture_path;
-					auto handle = *ResourceLoader::instance()->load<TextureHandle>(load_params, true, true);
+					auto handle = *ResourceLoader::Instance()->load<TextureHandle>(load_params, true, true);
 					result->_textures[slot] = handle;
 				}
 

@@ -15,12 +15,12 @@ PhysicsRevoluteJoint::PhysicsRevoluteJoint(PhysicsActor *actAPtr, float2 anchorA
 	revoluteJointDef.collideConnected = collide;
 	revoluteJointDef.referenceAngle = (float)referenceAngle;
 
-	m_RevoluteJointPtr = reinterpret_cast<b2RevoluteJoint*>((GameEngine::instance())->GetBox2DWorld()->CreateJoint(&revoluteJointDef));
+	m_RevoluteJointPtr = reinterpret_cast<b2RevoluteJoint*>((GameEngine::Instance())->GetBox2DWorld()->CreateJoint(&revoluteJointDef));
 }
 
 PhysicsRevoluteJoint::~PhysicsRevoluteJoint()
 {
-	(GameEngine::instance())->GetBox2DWorld()->DestroyJoint(m_RevoluteJointPtr);
+	(GameEngine::Instance())->GetBox2DWorld()->DestroyJoint(m_RevoluteJointPtr);
 }
 
 void PhysicsRevoluteJoint::EnableJointLimits(bool enableLimits, double lowerAngle, double upperAngle)

@@ -36,7 +36,7 @@ bool s_EnableCSM3 = true;
 
 void init()
 {
-	ShaderCache::create();
+	ShaderCache::Create();
 
 	// Create error shaders
 	{
@@ -47,12 +47,12 @@ void init()
 		parameters.params.stage = ShaderStage::Pixel;
 		parameters.params.defines.push_back({ "LIGHTING_MODEL", "LIGHTING_MODEL_BLINN_PHONG" });
 
-		s_ErrorPS = ShaderCache::instance()->find_or_create(parameters);
+		s_ErrorPS = ShaderCache::Instance()->find_or_create(parameters);
 		ASSERTMSG(s_ErrorPS, "Failed to create error shader (\"{}\")", parameters.path.c_str());
 
 		parameters.path = "Source/Engine/Shaders/Error.hlsl";
 		parameters.params.stage = ShaderStage::Vertex;
-		s_ErrorVS = ShaderCache::instance()->find_or_create(parameters);
+		s_ErrorVS = ShaderCache::Instance()->find_or_create(parameters);
 		ASSERTMSG(s_ErrorVS, "Failed to create error shader (\"{}\")", parameters.path.c_str());
 
 
@@ -140,7 +140,7 @@ void deinit()
 	s_ErrorVS.reset();
 
 	TextureHandle::deinit();
-	ShaderCache::shutdown();
+	ShaderCache::Shutdown();
 
 	auto clear_fn = [](GraphicsResourceHandle& ptr)
 	{

@@ -15,8 +15,8 @@ public:
 private:
 	shared_ptr<RenderWorld> m_World;
 
-	float3 m_Center;
-	float m_Zoom;
-	float m_Timer;
-	float m_UpTimer;
+	float3 _center;
+	float _zoom;
+	float _timer;
+	float _up_timer;
 };

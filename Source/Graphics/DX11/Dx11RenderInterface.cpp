@@ -1,5 +1,5 @@
 #include "Graphics.pch.h"
-#include "GlobalContext.h"
+#include "Core/GlobalContext.h"
 #include "RenderInterface.h"
 
 
@@ -397,6 +397,9 @@ GraphicsResourceHandle Dx11RenderInterface::GetSwapchainBuffer(SwapchainHandle h
 
 void Dx11RenderInterface::ReleaseResource(GraphicsResourceHandle& h)
 {
+    if(!h.IsValid())
+        return;
+
     auto slotHandle = SlotHandle{
         h.data.id, h.data.gen
     };

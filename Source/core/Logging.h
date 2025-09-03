@@ -173,7 +173,7 @@ void log(const char* file, int line, LogCategory category, LogSeverity severity,
 	entry._file = file;
 	entry._line = line;
 	entry._category = category;
-	Logger::instance()->log(entry);
+	Logger::Instance()->log(entry);
 }
 
 } // namespace Logging

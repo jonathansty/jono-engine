@@ -23,12 +23,12 @@ void DebugLog::Build(ImGuiID* dockID)
         ImGui::SameLine();
         if (ImGui::Button("Clear"))
         {
-            Logger::instance()->clear();
+            Logger::Instance()->clear();
         }
 
         // ImGui::BeginTable("LogData", 3);
         ImGui::BeginChild("123", ImVec2(0, 0), false, ImGuiWindowFlags_AlwaysHorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-        auto const& buffer = Logger::instance()->GetBuffer();
+        auto const& buffer = Logger::Instance()->GetBuffer();
         for (auto it = buffer.begin(); it != buffer.end(); ++it)
         {
             LogEntry const* entry = *it;
@@ -66,9 +66,9 @@ void DebugLog::Build(ImGuiID* dockID)
             ImGui::Text("[%s(%d)][%s][%s] %s", filename.c_str(), it->_line, logging::to_string(it->_category), logging::to_string(it->_severity), it->_message.c_str());
             ImGui::PopStyleColor();
         }
-        if (Logger::instance()->_hasNewMessages && s_scroll_to_bottom)
+        if (Logger::Instance()->_hasNewMessages && s_scroll_to_bottom)
         {
-            Logger::instance()->_hasNewMessages = false;
+            Logger::Instance()->_hasNewMessages = false;
             ImGui::SetScrollHereY();
         }
         // ImGui::EndTable();

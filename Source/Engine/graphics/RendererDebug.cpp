@@ -190,7 +190,7 @@ void RendererDebugTool::render_shader_tool()
 			ImGui::TableSetupColumn("Button");
 			ImGui::TableHeadersRow();
 
-			auto shaders = ShaderCache::instance()->_shaders;
+			auto shaders = ShaderCache::Instance()->_shaders;
 			for (auto it : shaders)
 			{
 				ImGui::TableNextRow();
@@ -201,7 +201,7 @@ void RendererDebugTool::render_shader_tool()
 				ImGui::PushID(it.first.path.c_str());
 				if (ImGui::Button("Build"))
 				{
-					ShaderCache::instance()->reload(it.first);
+					ShaderCache::Instance()->reload(it.first);
 				}
 				ImGui::PopID();
 			}
@@ -213,7 +213,7 @@ void RendererDebugTool::render_shader_tool()
 
 void RendererDebugTool::render_debug_tool()
 {
-	if (ImGui::Begin("RendererDebug"), _isOpen)
+	if (ImGui::Begin("RendererDebug"), m_IsOpen)
 	{
 		ImGui::Checkbox("Enable Shadow Rendering", &Graphics::s_EnableShadowRendering);
 		ImGui::Checkbox("CSM0", &Graphics::s_EnableCSM0);
@@ -235,7 +235,7 @@ void RendererDebugTool::render_debug_tool()
 				_renderer->_active_cam = 0;
 			}
 
-			auto world = GameEngine::instance()->get_render_world();
+			auto world = GameEngine::Instance()->get_render_world();
 			if(_renderer->_active_cam >= world->get_cameras().size())
 			{
 				std::shared_ptr<RenderWorldCamera> cam = world->create_camera();

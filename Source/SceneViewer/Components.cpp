@@ -99,7 +99,7 @@ void ModelComponent::on_attach(Entity* ent)
 {
 	__super::on_attach(ent);
 
-	RenderWorldRef _render_world = GameEngine::instance()->get_render_world();
+	RenderWorldRef _render_world = GameEngine::Instance()->get_render_world();
 	_instance = _render_world->create_instance(ent->get_world_transform(), get_model_path());
 }
 
@@ -107,7 +107,7 @@ void ModelComponent::on_detach(Entity* ent)
 {
 	__super::on_detach(ent);
 
-	RenderWorldRef _render_world = GameEngine::instance()->get_render_world();
+	RenderWorldRef _render_world = GameEngine::Instance()->get_render_world();
 	_render_world->remove_instance(_instance);
 }
 
@@ -169,10 +169,10 @@ void CameraComponent::update(float dt)
 	// Ignore any input if ImGui is focused
     InputManager* input = GetGlobalContext()->m_InputManager;
 
-	bool bSkip = GameEngine::instance()->WantCaptureMouse() || GameEngine::instance()->WantCaptureKeyboard() ;
-	if (bSkip || !GameEngine::instance()->IsViewportFocused() || !input->IsMouseButtonDown(VK_LBUTTON))
+	bool bSkip = GameEngine::Instance()->WantCaptureMouse() || GameEngine::Instance()->WantCaptureKeyboard() ;
+	if (bSkip || !GameEngine::Instance()->IsViewportFocused() || !input->IsMouseButtonDown(VK_LBUTTON))
 	{
-		_prev_position = GameEngine::instance()->GetMousePosInViewport();
+		_prev_position = GameEngine::Instance()->GetMousePosInViewport();
 		return;
 	}
 
@@ -238,7 +238,7 @@ void CameraComponent::update(float dt)
 
 	// Handle rotation
 	{
-		float2 current = GameEngine::instance()->GetMousePosInViewport();
+		float2 current = GameEngine::Instance()->GetMousePosInViewport();
 		double x = current.x - _prev_position.x;
 		double y = current.y - _prev_position.y;
 		_prev_position = current;

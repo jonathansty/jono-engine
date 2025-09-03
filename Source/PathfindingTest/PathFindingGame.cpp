@@ -114,7 +114,7 @@ void PathFindingGame::OnPaint2D(Graphics::D2DRenderContext& ctx)
     JONO_EVENT();
 
     float4x4 zoom = float4x4::scale(m_Zoom);
-    auto engine = GameEngine::instance();
+    auto engine = GameEngine::Instance();
     float4x4 view = hlslpp::mul(float4x4::translation(-m_ViewTranslation), zoom);
     ctx.set_view_matrix(view);
     ctx.draw_background(MK_COLOR(33, 33, 33, 255));
@@ -188,9 +188,9 @@ void PathFindingGame::OnPaint2D(Graphics::D2DRenderContext& ctx)
     re.top = 0;
     re.bottom = s_frame_height;
 
-    re.left = (s_counter)*s_frame_width;
-    re.right = (s_counter + 1) * s_frame_width;
-    ctx.draw_bitmap(m_Bitmap.get(), { 0, 0 }, re);
+    //re.left = (s_counter)*s_frame_width;
+    //re.right = (s_counter + 1) * s_frame_width;
+    //ctx.draw_bitmap(m_Bitmap.get(), { 0, 0 }, re);
 
     ctx.set_color(MK_COLOR(255, 0, 0, 255));
     ctx.draw_ellipse(0, 0, 50, 50);
@@ -201,19 +201,19 @@ void rebuild_shaders()
 {
     using namespace Graphics;
 
-    ShaderCache::instance()->reload_all();
+    ShaderCache::Instance()->reload_all();
 }
 
 void PathFindingGame::OnUpdate(double deltaTime)
 {
     JONO_EVENT();
 
-    if (!GameEngine::instance()->IsInputCaptured())
+    if (!GameEngine::Instance()->IsInputCaptured())
     {
         InputManager* input = GetGlobalContext()->m_InputManager;
 
 
-        float2 pos = GameEngine::instance()->GetMousePosInViewport();
+        float2 pos = GameEngine::Instance()->GetMousePosInViewport();
         float4x4 view = hlslpp::mul(float4x4::translation(-m_ViewTranslation), float4x4::scale(m_Zoom));
 
         pos = hlslpp::mul(hlslpp::inverse(view), float4(pos, 0.4f, 1.0f)).xy;

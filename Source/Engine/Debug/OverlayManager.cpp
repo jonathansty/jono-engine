@@ -3,14 +3,14 @@
 
 void OverlayManager::register_overlay(DebugOverlay* overlay)
 {
-	assert(_overlays.find(overlay->get_name()) == _overlays.end());
-	_overlays[overlay->get_name()] = overlay;
+	assert(_overlays.find(overlay->GetName()) == _overlays.end());
+	_overlays[overlay->GetName()] = overlay;
 }
 
 void OverlayManager::unregister_overlay(DebugOverlay* overlay)
 {
-	assert(_overlays.find(overlay->get_name()) != _overlays.end());
-	_overlays.erase(overlay->get_name());
+	assert(_overlays.find(overlay->GetName()) != _overlays.end());
+	_overlays.erase(overlay->GetName());
 }
 
 DebugOverlay* OverlayManager::get_overlay(std::string const& name)
@@ -37,16 +37,16 @@ OverlayManager::~OverlayManager()
 
 void OverlayManager::RenderOverlay()
 {
-	if (_isOpen)
+	if (m_IsOpen)
 	{
-		if (ImGui::Begin(_name.c_str(), &_isOpen))
+		if (ImGui::Begin(m_Name.c_str(), &m_IsOpen))
 		{
 			for (auto& overlay : _overlays)
 			{
 				ImGui::PushID(overlay.second);
-				ImGui::Checkbox("", &overlay.second->_isOpen);
+				ImGui::Checkbox("", &overlay.second->m_IsOpen);
 				ImGui::SameLine();
-				char const* const d = overlay.second->get_name();
+				char const* const d = overlay.second->GetName();
 				ImGui::Text(d);
 				ImGui::PopID();
 			}
@@ -57,7 +57,7 @@ void OverlayManager::RenderOverlay()
 
 	for (auto& overlay : _overlays)
 	{
-		if (overlay.second->_isOpen)
+		if (overlay.second->m_IsOpen)
 		{
 			overlay.second->RenderOverlay();
 		}
@@ -68,7 +68,7 @@ void OverlayManager::RenderViewport()
 {
 	for (auto& overlay : _overlays)
 	{
-		if (overlay.second->_isOpen)
+		if (overlay.second->m_IsOpen)
 		{
 			overlay.second->RenderViewport();
 		}
@@ -79,7 +79,7 @@ void OverlayManager::Render3D(RenderContext& ctx)
 {
 	for (auto& overlay : _overlays)
 	{
-		if (overlay.second->_isOpen)
+		if (overlay.second->m_IsOpen)
 		{
 			overlay.second->Render3D(ctx);
 		}
@@ -87,21 +87,21 @@ void OverlayManager::Render3D(RenderContext& ctx)
 }
 
  DebugOverlay::DebugOverlay(bool isOpen, std::string name)
-		: _isOpen(isOpen)
-		, _name(name)
+		: m_IsOpen(isOpen)
+		, m_Name(name)
 {
 }
 
-const char* DebugOverlay::get_name() const
+const char* DebugOverlay::GetName() const
 {
-	return _name.c_str();
+	return m_Name.c_str();
 }
 
-void DebugOverlay::set_visible(bool visible)
+void DebugOverlay::SetVisible(bool visible)
 {
-	if (!_isOpen)
+	if (!m_IsOpen)
 	{
 		ImGui::SetWindowFocus("Overlays");
 	}
-	_isOpen = visible;
+	m_IsOpen = visible;
 }

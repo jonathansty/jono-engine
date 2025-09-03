@@ -8,11 +8,14 @@ ipch/
 *.v12.suo
 *.VC.db
 *.aps
+*.vcxproj
+*.vcxproj.filters
 *.vcxproj.user
 build/
 generated/
 Intermediate/
 output/
+bin/
 
 *.csproj
 *.csproj.user

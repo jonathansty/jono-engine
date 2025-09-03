@@ -19,8 +19,8 @@ MetricsOverlay::~MetricsOverlay()
 
 void MetricsOverlay::RenderOverlay()
 {
-	auto engine = GameEngine::instance();
-	if (_isOpen)
+	auto engine = GameEngine::Instance();
+	if (m_IsOpen)
 	{
 
 		ImGuiID propertyDockID = GetGlobalContext()->m_Engine->GetPropertyDockID();
@@ -29,15 +29,15 @@ void MetricsOverlay::RenderOverlay()
 			ImGui::SetNextWindowDockID(propertyDockID, ImGuiCond_Once);
 		}
 
-		ImGui::Begin(_name.c_str(), &_isOpen);
+		ImGui::Begin(m_Name.c_str(), &m_IsOpen);
 
-		bool s_EnableVsync = GameEngine::instance()->GetVSyncEnabled();
+		bool s_EnableVsync = GameEngine::Instance()->GetVSyncEnabled();
 		if (ImGui::Checkbox("Enable VSync", &s_EnableVsync))
 		{
 			engine->SetVSyncEnabled(s_EnableVsync);
 		}
 
-		bool enable_limiter = (GameEngine::instance()->m_EngineCfg.m_MaxFrametime > 0.0f);
+		bool enable_limiter = (GameEngine::Instance()->m_EngineCfg.m_MaxFrametime > 0.0f);
 		s32 s_target = enable_limiter ? s32(1.0 / engine->m_EngineCfg.m_MaxFrametime) : 0;
 		if (ImGui::Checkbox("Enable Frame Limiter", &enable_limiter))
 		{

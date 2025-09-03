@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Parsing/mini-yaml/MiniYaml.hpp"
+#include "Core/Parsing/mini-yaml/MiniYaml.hpp"
 #include "FileStream_i.h"
 
 struct IniSectionInfo
