@@ -64,7 +64,9 @@ private:
 
 		struct Render2DData
 		{
+        #if FEATURE_2D
 			std::vector<Graphics::DrawCmd> m_DrawCommands;
+        #endif
 			u32 m_TotalVertices = 0;
 			u32 m_TotalIndices = 0;
 

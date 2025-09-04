@@ -1402,6 +1402,7 @@ int GameEngine::Run(HINSTANCE hInstance, cli::CommandLine const& cmdLine, int iC
 
 void GameEngine::RenderD2D()
 {
+#if FEATURE_2D
 	//#TODO: Revisit thread safety here. Remove engine->m_DefaultFont
 
 	GameEngine* engine = this;
@@ -1458,6 +1459,7 @@ void GameEngine::RenderD2D()
 		//this->Terminate();
 		engine->m_IsRunning = false;
 	}
+#endif
 }
 
 #ifdef ENGINE_DLL

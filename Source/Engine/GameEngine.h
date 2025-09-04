@@ -9,6 +9,7 @@
 #include "Framework/World.h"
 #include "EngineCfg.h"
 #include <TaskScheduler.h>
+#include <memory>
 #include "Graphics/Perf.h"
 #include "Graphics/RenderWorld.h"
 #include "Graphics/GraphicsThread.h"
@@ -23,7 +24,6 @@
 class Bitmap;
 class Font;
 class InputManager;
-class XAudioSystem;
 class AbstractGame;
 class XAudioSystem;
 class PrecisionTimer;
@@ -100,7 +100,7 @@ public:
 	// Mouse position relative to the window
 	float2 GetMousePosInWindow() const;
 
-	inline unique_ptr<XAudioSystem> const& GetAudioSystem() const { return m_AudioSystem; }
+	inline unique_ptr<struct IAudioSystem> const& GetAudioSystem() const { return m_AudioSystem; }
 	inline shared_ptr<b2World> const& GetBox2DWorld() const { return m_Box2DWorld; }
 
 	void ApplyGameCfg(GameCfg& gameSettings);
@@ -157,10 +157,8 @@ private:
 
 	void SetWindowTitle(const string& titleRef);
 
-#if FEATURE_D2D
 	// Direct2D methods
 	void RenderD2D();
-#endif
 
 	// Trigger Contacts are stored as pairs in a std::vector.
 	// Iterates the vector and calls the ContactListeners
@@ -232,9 +230,10 @@ private:
 	float2 m_Gravity;
 
 	// Systems
-	unique_ptr<PrecisionTimer> m_FrameTimer;
-	unique_ptr<InputManager> m_InputManager;
-	unique_ptr<XAudioSystem> m_AudioSystem = nullptr;
+	std::unique_ptr<PrecisionTimer> m_FrameTimer;
+	std::unique_ptr<InputManager> m_InputManager;
+
+	std::unique_ptr<struct IAudioSystem> m_AudioSystem;
 
 	MetricsOverlay* m_MetricsOverlay;
 	std::shared_ptr<OverlayManager> m_OverlayManager;
@@ -249,7 +248,9 @@ private:
 	std::shared_ptr<framework::World> m_World;
 	unique_ptr<AbstractGame>          m_Game;
 
+#if FEATURE_2D
 	SharedPtr<class Graphics::D2DRenderContext> m_D2DRenderContext;
+#endif
 
 	GraphicsThread m_GraphicsThread;
 	std::binary_semaphore m_SignalMainToGraphics;

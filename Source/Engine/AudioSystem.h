@@ -7,7 +7,7 @@
 
 #pragma once
 
-interface IAudioSystem
+struct IAudioSystem
 {
 	HRESULT intialize();
 

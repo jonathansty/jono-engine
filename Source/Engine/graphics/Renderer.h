@@ -23,7 +23,6 @@
 #if FEATURE_D2D
 #include "2DRenderContext.h"
 #endif
-#include <Source/Engine/graphics/2DRenderContext.h>
 
 #include "Graphics/RenderInterface.h"
 #include "Graphics/VertexLayout.h"

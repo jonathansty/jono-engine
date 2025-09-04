@@ -667,7 +667,7 @@ void SceneViewer::SwapModel(const char* path)
 
 void SceneViewer::CreateCamera(std::shared_ptr<RenderWorld> render_world)
 {
-    ImVec2 size = GameEngine::instance()->GetViewportSize();
+    ImVec2 size = GameEngine::Instance()->GetViewportSize();
     const float aspect = (float)size.x / (float)size.y;
     const float near_plane = 0.5f;
     const float far_plane = 250.0f;

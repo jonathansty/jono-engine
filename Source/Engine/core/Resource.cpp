@@ -1,4 +1,3 @@
-#include "Resource.h"
 #include "engine.pch.h"
 
 #include "Resource.h"

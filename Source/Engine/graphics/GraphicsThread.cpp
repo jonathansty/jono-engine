@@ -99,6 +99,7 @@ void GraphicsThread::Sync()
 	m_FrameData.m_ViewportSize = uint2(engine->GetViewportSize().x, engine->GetViewportSize().y);
 	m_FrameData.m_WindowSize = uint2(engine->GetWindowSize().x, engine->GetWindowSize().y);
 
+	#if FEATURE_2D
 	if(engine->m_D2DRenderContext.IsValid())
 	{
 		m_FrameData.m_Render2DData.m_DrawCommands = engine->m_D2DRenderContext->GetCommands();
@@ -106,6 +107,7 @@ void GraphicsThread::Sync()
 		m_FrameData.m_Render2DData.m_TotalVertices = engine->m_D2DRenderContext->m_TotalVertices;
 		m_FrameData.m_Render2DData.m_ProjectionMatrix = engine->m_D2DRenderContext->m_ProjectionMatrix;
 	}
+	#endif
 
 	// #TODO: Fix this hacky stuff.
 	// The reason it's hacky is because of multithreading. We copy main thread imgui commands so when we resize the swapchain 

@@ -10,7 +10,7 @@
  * \note
 */
 
-
+#include <hlsl++.h>
 
 using u8 = unsigned __int8;
 using u16 = unsigned __int16;

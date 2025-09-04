@@ -30,5 +30,9 @@ HRESULT XAudioSystem::init()
 #endif
 
 std::shared_ptr<IAudioSystem> create_audio_system() {
+    #if FEATURE_XAUDIO
 	return std::make_shared<XAudioSystem>();
+	#else
+	return nullptr;
+	#endif
 }

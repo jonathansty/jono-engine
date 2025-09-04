@@ -35,6 +35,11 @@ workspace "jono-engine"
    
 group "Libraries"
     LibraryProject(LibEnkiTS)
+    LibraryProject(LibOptick)
+    LibraryProject(LibImgui)
+
+    LibraryProject(LibImPlot)
+        LinkLibrary(LibImgui)
 
 group "Engine"
 
@@ -86,7 +91,6 @@ project "Graphics"
     AddLibraryIncludes(LibFmt)
     LinkLibrary(LibEnkiTS)
 
-    
 
 
 project "Engine"
@@ -102,7 +106,23 @@ project "Engine"
    }
 
    links { "Core", "Graphics" }
-   includedirs { SourceDirectory .. "/Core", SourceDirectory .. "/Graphics" }
+   includedirs { 
+        SourceDirectory .. "/Engine", 
+        SourceDirectory .. "/CLI", 
+        SourceDirectory .. "/Core", 
+        SourceDirectory .. "/Graphics"
+    }
+    AddLibraryIncludes(LibHlslpp)
+    AddLibraryIncludes(LibFmt)
+
+    LinkLibrary(LibEnkiTS)
+    LinkLibrary(LibBox2D)
+    LinkLibrary(LibOptick)
+    LinkLibrary(LibAssimp)
+    LinkLibrary(LibImgui)
+    LinkLibrary(LibImPlot)
+    LinkLibrary(LibSDL2)
+    LinkLibrary(LibDirectXTK)
 
    filter "configurations:Debug"
       defines { "DEBUG" }
@@ -123,4 +143,29 @@ project "SceneViewer"
         SourceDirectory .. "SceneViewer/**.h", 
         SourceDirectory .. "SceneViewer/**.cpp" 
     }
-    links { "Core", "Graphics", "Engine" }
+    includedirs
+    {
+        SourceDirectory .. "Engine",
+        SourceDirectory .. "Core",
+        SourceDirectory .. "CLI",
+        SourceDirectory .. "Graphics"
+    }
+
+    links { 
+        "Core", 
+        "Graphics", 
+        "Engine",
+        "CLI" 
+    }
+
+    AddLibraryIncludes(LibHlslpp)
+    AddLibraryIncludes(LibFmt)
+
+    LinkLibrary(LibEnkiTS)
+    LinkLibrary(LibBox2D)
+    LinkLibrary(LibOptick)
+    LinkLibrary(LibAssimp)
+    LinkLibrary(LibImgui)
+    LinkLibrary(LibImPlot)
+    LinkLibrary(LibSDL2)
+    LinkLibrary(LibDirectXTK)
