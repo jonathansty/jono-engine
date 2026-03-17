@@ -113,7 +113,7 @@ public abstract class Module : Project
         conf.Defines.Add("NOMINMAX");
 
         conf.Defines.Add("FEATURE_D2D");
-        conf.Defines.Add("FEATURE_XAUDIO");
+        // conf.Defines.Add("FEATURE_XAUDIO");
 
         conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP20);
         conf.Options.Add(Options.Vc.General.CharacterSet.Unicode);

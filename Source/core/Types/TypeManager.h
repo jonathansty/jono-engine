@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Core/Singleton.h"
+#include "Singleton.h"
 
 class IniStream;
 

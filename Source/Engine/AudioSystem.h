@@ -9,10 +9,14 @@
 
 struct IAudioSystem
 {
+    virtual ~IAudioSystem() {};
+
 	HRESULT intialize();
 
 	// Placeholder API
 	HRESULT create_source_voice();
+
+	virtual HRESULT init() = 0;
 };
 
 std::shared_ptr<IAudioSystem> create_audio_system();

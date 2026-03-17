@@ -1,0 +1,17 @@
+Models:
+  - name: Ground Plane
+    position: 0,0,0
+    scale: 1,1,1
+    rotation: 0,0,0
+    mesh: res:/Blockout/plane100x100.glb
+  - name: Helmet
+    position: 0.0,1.5,0.0
+    scale: 1,1,1
+    rotation: 0,0,0
+    mesh: res:/gltf-samples/Models/SciFiHelmet/glTF/SciFiHelmet.gltf
+Cameras:
+  - name: MainCamera
+    type: Free
+  - name: OrbitCamera
+    type: Orbit
+Lights:
